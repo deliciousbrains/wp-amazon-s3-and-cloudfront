@@ -1,0 +1,32 @@
+<?php
+$dir = dirname(__FILE__);
+$pluginRootURL = get_option('siteurl').substr($dir, strpos($dir, '/wp-content'));
+if (!ereg('media-upload.php', $_SERVER['REQUEST_URI'])): // WP < 2.5
+?>
+
+<script type="text/javascript">
+addLoadEvent(function () {
+    var div = document.getElementById('upload-menu');
+    var as = div.getElementsByTagName('a')
+    for (var i=0;i<as.length;i++) {
+        var pos = as[i].innerHTML.indexOf('S3');
+        if (pos >= 0) {
+            as[i].innerHTML = '<span style="padding:0 20px 0 0;background:url(<?php echo $pluginRootURL;?>/database.png) no-repeat right;">' + as[i].innerHTML + '</span>';
+        }
+    }
+    <?php if ($this->options['wp-uploads'] && $this->options['bucket']):?>
+    var upload = document.getElementById('upload');
+    if (upload && upload.name == 'image') {
+        var span = document.createElement('span');
+        span.id = 'disable_amazonS3_span';
+        span.innerHTML = '<label for="disable_amazonS3"> don\'t upload to amazon s3 </label><input type="checkbox" name="disable_amazonS3" id="disable_amazonS3" value="1" />';
+        var btns = document.getElementById('buttons')
+        var tds = btns.getElementsByTagName('td')
+        tds[0].appendChild(span);
+    }
+    <?php endif;?>
+});
+</script>
+<?php endif;?>
+<script type="text/javascript" src="<?php echo $pluginRootURL;?>/admin-tab.js"></script>
+<link rel='stylesheet' href='<?php echo $pluginRootURL;?>/styles/styles.css' type='text/css' />

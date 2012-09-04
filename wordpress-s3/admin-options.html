@@ -1,0 +1,217 @@
+<?php if ($error):?>
+<div id="message" class="error fade"><p><strong><?php echo $error?></strong></p></div>
+<?php elseif ($message):?>
+<div id="message" class="updated fade"><p><strong><?php echo $message?></strong></p></div>
+<?php endif;?>
+<script type="text/javascript">
+function s3_selectBucket(obj) {
+    if (obj.options[obj.selectedIndex].value == 'new') {
+        var bucket = prompt("Bucket name: ");
+        if (bucket) {
+            var len = obj.options.length
+            obj.options[len] = new Option("New bucket: " + bucket, bucket);
+            obj.options[len].selected = true;
+        }
+    }
+}
+</script>
+<style type="text/css">
+fieldset.options {
+    clear:both;
+    border:1px solid #ccc;
+}
+fieldset.options legend {
+    font-family: Georgia,"Times New Roman",Times,serif;
+    font-size: 22px;
+}
+
+div.album {
+    float:left;
+    width:200px;
+    height:150px;
+    margin-right:15px;
+}
+div.album td {
+    font-size:0.9em;
+}
+div.album-hidden img {
+    opacity:0.5;
+}
+</style>
+
+
+<div class="wrap">
+<h2 id="write-post">Amazon S3 Plugin for WordPress</h2>
+<?php
+global $TanTanVersionCheck;
+if (is_object($TanTanVersionCheck)):?>
+<div style="width:200px; border:1px solid #ccc;padding:10px; float:right; margin:0 0 10px 10px;">
+<strong>Plugin Updates:</strong><br />
+<a href="plugins.php?page=tantan/version-check.php">Check for updates to this plugin &gt;</a>
+</div>
+<?php endif;?>
+
+<p>
+This plugin allows you to easily upload, retrieve, and link to files stored on Amazon's S3 web service from within WordPress. 
+
+</p>
+<p><strong>Amazon S3 Setup:</strong> If you don't have an Amazon S3 account yet, here's a <a href="http://www.brightcove.com/title.jsp?title=769277068&channel=770166766">quick video tutorial</a> that'll show
+you how to set one up. <a href="http://www.amazon.com/s3/">Sign up for Amazon S3 &gt;</a>
+</p>
+
+<p><strong>Plugin Installation and Usage:</strong> Just follow the onscreen prompts to link this plugin to your Amazon S3 account. </p>
+
+
+<div  style="float:right;width:250px;background:#eee;padding:10px;font-size:0.9em;">
+If you find this plugin helpful, please consider donating a few dollars to support this plugin. Thanks!
+<br /><br />
+
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+<input type="hidden" name="cmd" value="_donations" />
+<input type="hidden" name="business" value="joetan54@gmail.com" />
+<input type="hidden" name="item_name" value="TanTanNoodles Plugin Donation" />
+<input type="hidden" name="item_number" value="WordPress S3" />
+<input type="hidden" name="page_style" value="Primary" />
+
+<input type="hidden" name="no_shipping" value="1" />
+<input type="hidden" name="return" value="http://tantannoodles.com/donation-thankyou/" />
+<input type="hidden" name="cancel_return" value="http://tantannoodles.com/" />
+<input type="hidden" name="currency_code" value="USD" />
+<input type="hidden" name="tax" value="0" />
+<input type="hidden" name="cn" value="Message / Note" />
+<input type="hidden" name="lc" value="US" />
+<input type="hidden" name="bn" value="PP-DonationsBF" />
+<div style="float:left;width:150px;padding-top:10px">
+Amount: $<input type="text" name="amount" value="" style="width:50px;" /> <br />
+</div>
+<div style="float:right;width:100px">
+<input type="image" src="https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif" border="0" name="submit" alt="Make payments with PayPal - it's fast, free and secure!" />
+</div>
+<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" style="clear:both;" />
+</form>
+
+</div>
+
+
+<p>
+This plugin is provided by <a href="http://www.tantannoodles.com">TanTanNoodles</a> 
+and licensed free of charge for you to use under the GPL.
+This plugin is <em>unsupported</em> and comes with no official technical support. 
+</p>
+<p>
+You can check the following pages for the latest updates to this plugin, along with any unofficial technical support:<br />
+<br />
+<strong>Release Page:</strong> <a href="http://tantannoodles.com/toolkit/wordpress-s3/">tantannoodles.com/toolkit/wordpress-s3/</a><br />
+<strong>Project Page:</strong> <a href="http://code.google.com/p/wordpress-s3/">code.google.com/p/wordpress-s3/</a><br />
+</p>
+<p>
+<strong>RSS Updates:</strong> Subscribe to the <a href="http://feeds.feedburner.com/TanTanToolkit">TanTanToolkit feed</a> and get notified when there's an update to this plugin.
+</p>
+
+
+
+
+<fieldset class="options">
+<legend>Amazon S3 Settings</legend>
+
+<table width="100%" cellspacing="2" cellpadding="5" class="editform"> 
+<form method="post">
+<input type="hidden" name="action" value="save" />
+<tr valign="top">
+<th width="33%" scope="row">AWS Access Key ID:</th> 
+<td><input type="text" name="options[key]" value="<?php echo $options['key'];?>" size="50" /></td> 
+</tr>
+<tr valign="top">
+<th width="33%" scope="row">Secret Key:</th> 
+<td><input type="text" name="options[secret]" value="<?php echo ($options['secret'] ? '-- not shown --' : '');?>" size="50" /><br />
+<small><a href="http://aws-portal.amazon.com/gp/aws/developer/account/index.html/?ie=UTF8&action=access-key">Login to Amazon.com to retrieve your Secret Key &gt;</a></small></td> 
+</tr>
+<?php if (!$buckets):?>
+<tr valign="top">
+<td colspan="2">
+<p class="submit">
+<input type="submit" value="Authenticate Account &gt;" />
+</p>
+</td>
+</tr>
+<?php else:?>
+	<tr valign="top">
+	<th width="33%" scope="row">Use this bucket:</th> 
+	<td>
+	<select name="options[bucket]" size="1" onchange="return s3_selectBucket(this)">
+	<option value="">Please select a bucket...</option>
+	<?php if (is_array($buckets)) foreach ($buckets as $bucket):?>
+	    <option value="<?php echo $bucket?>" <?php echo ($bucket == $options['bucket'] ? 'selected="selected"' : '')?>>&nbsp; &nbsp; <?php echo $bucket?></option>
+	<?php endforeach;?>
+	<option></option>
+	<option value="new">Create a new bucket...</option>
+	</select><br />
+	</td> 
+	</tr>
+
+	<tr valign="top">
+	<th width="33%" scope="row">Host name settings:</th> 
+	<td>
+		<input type="checkbox" name="options[virtual-host]" value="1" id="virtual-host" <?php echo ($options['virtual-host'] ? 'checked="checked" ' : '');?> />
+			<label for="virtual-host"> Bucket is setup for virtual hosting.</label> (<a href="http://docs.amazonwebservices.com/AmazonS3/2006-03-01/VirtualHosting.html">more info</a>)
+	</td> 
+	</tr>
+
+	<tr valign="top">
+	<th width="33%" scope="row">File Uploads:</th> 
+	<td>
+		<input type="checkbox" name="options[wp-uploads]" value="1" id="wp-uploads" <?php echo ($options['wp-uploads'] ? 'checked="checked" ' : '');?> />
+			<label for="wp-uploads"> Use Amazon S3 for storage when uploading via WordPress' upload tab.</label>
+			<br /><small>Note: Uncheck this to revert back to using your own web host for storage at anytime.</small>
+	</td> 
+	</tr>
+    
+	<tr valign="top">
+	<th width="33%" scope="row">Expires Header:</th> 
+	<td>
+		<input type="checkbox" name="options[expires]" value="315360000" id="expires" <?php echo ($options['expires']? 'checked="checked" ' : '');?> />
+		<label for="expires"> Set a <a href="http://developer.yahoo.com/performance/rules.html#expires" target="_blank">far future HTTP expiration header</a> for uploaded files <em>(recommended)</em>.</label>
+	</td> 
+	</tr>
+    
+	<tr valign="top">
+	<th width="33%" scope="row">File Permissions:</th> 
+	<td>
+		<input type="checkbox" name="options[permissions]" value="public" id="permissions" <?php echo ($options['permissions']=='public' ? 'checked="checked" ' : '');?> />
+		<label for="permissions"> Make sure all files in the selected bucket are publicly accessible.</label>
+	</td> 
+	</tr>
+
+
+<tr valign="top">
+<th width="33%" scope="row">&nbsp;</th> 
+<td>
+Uploading files <em>directly</em> to your Amazon S3 account is not currently supported by this plugin (uploads must temporarily pass through your blog).
+But, there are a some free tools to help you upload and manage your files on directly on Amazon S3. <a href="http://code.google.com/p/wordpress-s3/wiki/S3Tools">See this page for some suggested tools</a>.
+</td>
+</tr>
+
+<tr>
+<td colspan="2">
+<p class="submit">
+<input type="submit" value="Save &gt;" />
+</p>
+</td>
+</tr>
+<?php endif;?>
+
+
+</form>
+
+</table>
+
+
+
+</fieldset>
+
+
+
+
+
+
+</div>
