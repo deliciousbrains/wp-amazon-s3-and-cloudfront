@@ -19,7 +19,7 @@ class TanTanWordPressS3PluginPublic {
         if (!$this->options) $this->options = get_option('tantan_wordpress_s3');
         
         if ($this->options['wp-uploads'] && ($amazon = get_post_meta($postID, 'amazonS3_info', true))) {
-            $accessDomain = $this->options['virtual-host'] ? $amazon['bucket'] : $amazon['bucket'].'.s3.amazonaws.com';
+            $accessDomain = ($this->options['cloudfront'] != '' ? $this->options['cloudfront'] : ($this->options['virtual-host'] ? $amazon['bucket'] : $amazon['bucket'].'.s3.amazonaws.com'));
             return 'http://'.$accessDomain.'/'.$amazon['key'];
         } else {
             return $url;
