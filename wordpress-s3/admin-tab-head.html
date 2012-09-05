@@ -1,6 +1,6 @@
 <?php
 $dir = dirname(__FILE__);
-$pluginRootURL = get_option('siteurl').substr($dir, strpos($dir, '/wp-content'));
+$pluginRootURL = plugins_url( '', __FILE__ );
 if (!ereg('media-upload.php', $_SERVER['REQUEST_URI'])): // WP < 2.5
 ?>
 
