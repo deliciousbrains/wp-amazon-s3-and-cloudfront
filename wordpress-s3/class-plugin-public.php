@@ -29,7 +29,7 @@ class TanTanWordPressS3PluginPublic {
 				$accessDomain = $amazon['bucket'] . '.s3.amazonaws.com';
 	        }
 
-	        $url = 'https://'.$accessDomain.'/'.$amazon['key'];
+	        $url = 'http://'.$accessDomain.'/'.$amazon['key'];
 
 	        $url = apply_filters( 'wps3_get_attachment_url', $url, $postID, $this );
 	    }
