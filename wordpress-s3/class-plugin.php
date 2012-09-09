@@ -198,7 +198,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
 
        	$data['file'] = get_attached_file($postID, true);
 		
-		$acl = apply_filters( 'wps3_upload_acl', 'public-read', $this, $postID, $data, $type );
+		$acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $postID, $this );
 
 		if (file_exists($data['file'])) {
 			$file = array(
