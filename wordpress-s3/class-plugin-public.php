@@ -36,4 +36,59 @@ class TanTanWordPressS3PluginPublic {
 
         return $url;
     }
+
+
+	/**
+	* Generate a link to download a file from Amazon S3 using query string
+	* authentication. This link is only valid for a limited amount of time.
+	*
+	* @param $bucket The name of the bucket in which the file is stored.
+	* @param $filekey The key of the file, excluding the leading slash.
+	* @param $expires The amount of time the link is valid (in seconds).
+	* @param $operation The type of HTTP operation. Either GET or HEAD.
+	*/
+	function get_secure_attachment_url($postID, $expires = 900, $operation = 'GET') {
+        if (!$this->options) $this->options = get_option('tantan_wordpress_s3');
+
+        if (
+			!$this->options['wp-uploads'] || !$this->options['key'] || !$this->options['secret']
+			|| !$this->options['bucket'] || !($amazon = get_post_meta($postID, 'amazonS3_info', true))
+		) {
+			return false;
+		}
+
+		$accessDomain = $this->options['virtual-host'] ? $amazon['bucket'] : $amazon['bucket'].'.s3.amazonaws.com';
+		
+		$expire_time = time() + $expires;
+		$filekey = rawurlencode($amazon['key']);
+		$filekey = str_replace('%2F', '/', $filekey);
+		$path = $amazon['bucket'] .'/'. $filekey;
+
+		/**
+		* StringToSign = HTTP-VERB + "\n" +
+		* Content-MD5 + "\n" +
+		* Content-Type + "\n" +
+		* Expires + "\n" +
+		* CanonicalizedAmzHeaders +
+		* CanonicalizedResource;
+		*/
+		
+		$stringtosign =
+			$operation ."\n". // type of HTTP request (GET/HEAD)
+			"\n". // Content-MD5 is meaningless for GET
+			"\n". // Content-Type is meaningless for GET
+			$expire_time ."\n". // set the expire date of this link
+			"/$path"; // full path (incl bucket), starting with a /
+
+		require_once(dirname(__FILE__).'/lib.s3.php');
+		$s3 = new TanTanS3($this->options['key'], $this->options['secret']);
+		$signature = urlencode($s3->constructSig($stringtosign));
+		
+		return sprintf('http://%s/%s?AWSAccessKeyId=%s&Expires=%u&Signature=%s', $accessDomain, $filekey, $this->options['key'], $expire_time, $signature);
+	}
+}
+
+function wps3_get_secure_attachment_url($postID, $expires = 900, $operation = 'GET') {
+	global $TanTanWordPressS3Plugin;
+	return $TanTanWordPressS3Plugin->get_secure_attachment_url($postID, $expires, $operation);
 }
