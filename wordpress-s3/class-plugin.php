@@ -68,7 +68,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         }
     }
     function admin() {
-        if ($_POST['action'] == 'save') {
+        if ( array_key_exists( 'action', $_POST ) && $_POST['action'] == 'save' ) {
             if (!is_array($_POST['options'])) $_POST['options'] = array();
             $options = get_option('tantan_wordpress_s3');
             
@@ -197,7 +197,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         $type = get_post_mime_type($postID);
 
        	$data['file'] = get_attached_file($postID, true);
-		
+
 		$acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $postID, $this );
 
 		if (file_exists($data['file'])) {
