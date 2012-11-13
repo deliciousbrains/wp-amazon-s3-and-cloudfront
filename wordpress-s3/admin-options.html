@@ -1,6 +1,6 @@
-<?php if ($error):?>
+<?php if ( isset($error) && $error ):?>
 <div id="message" class="error fade"><p><strong><?php echo $error?></strong></p></div>
-<?php elseif ($message):?>
+<?php elseif ( isset($message) && $message ):?>
 <div id="message" class="updated fade"><p><strong><?php echo $message?></strong></p></div>
 <?php endif;?>
 <script type="text/javascript">
@@ -152,7 +152,7 @@ You can check the following pages for the latest updates to this plugin, along w
 	<tr valign="top">
 	<th width="33%" scope="row">Host name settings:</th> 
 	<td>
-		<input type="checkbox" name="options[virtual-host]" value="1" id="virtual-host" <?php echo ($options['virtual-host'] ? 'checked="checked" ' : '');?> />
+		<input type="checkbox" name="options[virtual-host]" value="1" id="virtual-host" <?php echo ( array_key_exists('virtual-host', $options) && $options['virtual-host'] ) ? 'checked="checked" ' : '';?> />
 			<label for="virtual-host"> Bucket is setup for virtual hosting.</label> (<a href="http://docs.amazonwebservices.com/AmazonS3/2006-03-01/VirtualHosting.html">more info</a>)
 	</td> 
 	</tr>
@@ -183,10 +183,10 @@ You can check the following pages for the latest updates to this plugin, along w
 	</tr>
 
 	<tr valign="top">
-	<th width="33%" scope="row">Cloud Front:</th> 
+	<th width="33%" scope="row">Cloud Front:</th>
 	<td>
 		<input type="text" name="options[cloudfront]" value="<?php echo $options['cloudfront']; ?>" size="50" /><br />
-	</td> 
+	</td>
 	</tr>
 
 <tr valign="top">
