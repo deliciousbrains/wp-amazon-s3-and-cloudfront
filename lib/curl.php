@@ -55,6 +55,11 @@ class TanTanHTTPRequestCurl {
     }
     
     function setMethod($method) {
+
+        // setting default values for constants if they're not present
+        if ( !defined('HTTP_REQUEST_METHOD_PUT') ) define('HTTP_REQUEST_METHOD_PUT', null);
+        if ( !defined('HTTP_REQUEST_METHOD_POST') ) define('HTTP_REQUEST_METHOD_POST', null);
+
         switch ($method) {
             case 'DELETE':
                 curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
@@ -196,9 +201,11 @@ class TanTanHTTPRequestCurl {
         $response_header_array = array();
         foreach($response_header_lines as $header_line) {
             list($header,$value) = explode(': ', $header_line, 2);
-            $response_header_array[$header] .= $value."\n";
+            if ( array_key_exists( $header, $response_header_array ) ) {
+                $response_header_array[$header] .= $value."\n";
+            }
         }
-        return array("code" => $response_code, "header" => $response_header_array, "body" => $response_body); 
+        return array("code" => $response_code, "header" => $response_header_array, "body" => $response_body);
     }
 }
 ?>
