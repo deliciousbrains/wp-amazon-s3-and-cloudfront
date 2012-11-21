@@ -68,7 +68,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         }
     }
     function admin() {
-        if ( array_key_exists( 'action', $_POST ) && $_POST['action'] == 'save' ) {
+        if ( isset( $_POST['action'] ) && $_POST['action'] == 'save' ) {
             if (!is_array($_POST['options'])) $_POST['options'] = array();
             $options = get_option('tantan_wordpress_s3');
             

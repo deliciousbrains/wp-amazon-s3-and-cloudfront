@@ -201,7 +201,7 @@ class TanTanHTTPRequestCurl {
         $response_header_array = array();
         foreach($response_header_lines as $header_line) {
             list($header,$value) = explode(': ', $header_line, 2);
-            if ( array_key_exists( $header, $response_header_array ) ) {
+            if ( isset( $response_header_array[$header] ) ) {
                 $response_header_array[$header] .= $value."\n";
             }
         }

@@ -152,7 +152,7 @@ You can check the following pages for the latest updates to this plugin, along w
 	<tr valign="top">
 	<th width="33%" scope="row">Host name settings:</th> 
 	<td>
-		<input type="checkbox" name="options[virtual-host]" value="1" id="virtual-host" <?php echo ( array_key_exists('virtual-host', $options) && $options['virtual-host'] ) ? 'checked="checked" ' : '';?> />
+		<input type="checkbox" name="options[virtual-host]" value="1" id="virtual-host" <?php echo ( isset( $options['virtual-host'] ) && $options['virtual-host'] ) ? 'checked="checked" ' : '';?> />
 			<label for="virtual-host"> Bucket is setup for virtual hosting.</label> (<a href="http://docs.amazonwebservices.com/AmazonS3/2006-03-01/VirtualHosting.html">more info</a>)
 	</td> 
 	</tr>
