@@ -1,9 +1,4 @@
 <?php
-/*
-$Revision: 89650 $
-$Date: 2009-01-27 02:01:33 +0000 (Tue, 27 Jan 2009) $
-$Author: joetan $
-*/
 require_once(dirname(__FILE__).'/class-plugin-public.php');
 class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
     
