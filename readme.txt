@@ -19,7 +19,7 @@ You'll also find a new icon next to the "Add Media" button when editing a post. 
 
 *This plugin is a fork of 
 [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/) 
-which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3. See the [Change Log](https://github.com/bradt/wp-tantan-s3/commits/master) to see what has been done so far.*
+which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3. See the Change Log to see what has been done so far.*
 
 == Installation ==
 
