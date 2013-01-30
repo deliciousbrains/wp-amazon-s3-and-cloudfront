@@ -210,7 +210,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
 
 			if ($this->s3->putObjectStream($this->options['bucket'], $prefix.$file['name'], $file, $acl)) {
 			    
-			    if ($data['thumb']) {
+			    if (isset( $data['thumb'] ) && $data['thumb']) {
 			        $thumbpath = str_replace( basename( $data['file'] ), $data['thumb'], $data['file'] );
 			        $filethumb = array(
                         'name' => $data['thumb'],

@@ -257,7 +257,7 @@ class TanTanS3 {
         $header[] = "Content-Type: $contentType";
         $header[] = "Content-Length: $contentLength";
         $header[] = "Expect: ";
-		if (is_numeric($this->options['expires'])) {
+		if (isset( $this->options['expires'] ) && is_numeric($this->options['expires'])) {
 			$header[] = "Expires: ".date('D, d M Y H:i:s O', time()+$this->options['expires']);
 		}
         $header[] = "Transfer-Encoding: ";
