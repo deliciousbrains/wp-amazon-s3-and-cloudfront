@@ -11,7 +11,9 @@ Automatically copies media uploads to Amazon S3 for storage and delivery. Option
 
 == Description ==
 
-This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon Simple Storage Service](http://aws.amazon.com/s3/) (S3). It then automatically replaces the URL to each media file with their respective S3 URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/) (CF), the respective CF URL. Image thumbnails are also copied to S3 and delivered through S3 or CF.
+This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon Simple Storage Service](http://aws.amazon.com/s3/) (S3). It then automatically replaces the URL to each media file with their respective S3 URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/), the respective CloudFront URL. Image thumbnails are also copied to S3 and delivered through S3/CloudFront.
+
+Uploading files *directly* to your S3 account is not currently supported by this plugin. Also, if you're adding this plugin to a site that's been around for a while, your existing media files will not be copied or served from S3. Only newly uploaded files will be copied and served from S3.
 
 You'll also find a new icon next to the "Add Media" button when editing a post. This allows you to easily browse and manage files in S3.
 
