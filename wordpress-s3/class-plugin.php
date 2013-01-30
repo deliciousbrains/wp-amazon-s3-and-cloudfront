@@ -76,7 +76,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             
             update_option('tantan_wordpress_s3', $_POST['options']);
             
-            if ($_POST['options']['bucket']) {
+            if (isset($_POST['options']['bucket']) && $_POST['options']['bucket']) {
                 $options = get_option('tantan_wordpress_s3');
                 require_once(dirname(__FILE__).'/lib.s3.php');
                 $s3 = new TanTanS3($options['key'], $options['secret']);
@@ -93,7 +93,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             } else {
                 $message = "Saved Amazon S3 authentication information. ";
             }
-            if (function_exists('dns_get_record') && $_POST['options']['virtual-host']) {
+            if (function_exists('dns_get_record') && isset( $_POST['options']['virtual-host'] ) && $_POST['options']['virtual-host'] ) {
                 $record = dns_get_record($_POST['options']['bucket']);
                 if (($record[0]['type'] != 'CNAME') || ($record[0]['target'] != $_POST['options']['bucket'].'s3.amazonaws.com')) {
                     $error = "Warning: Your DNS doesn't seem to be setup correctly to virtually host the domain <em>".$_POST['options']['bucket']."</em>. ".
