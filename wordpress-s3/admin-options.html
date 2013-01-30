@@ -1,6 +1,6 @@
-<?php if ( isset($error) && $error ):?>
+<?php if ( isset( $error ) && $error ):?>
 <div id="message" class="error fade"><p><strong><?php echo $error?></strong></p></div>
-<?php elseif ( isset($message) && $message ):?>
+<?php elseif ( isset( $message ) && $message ):?>
 <div id="message" class="updated fade"><p><strong><?php echo $message?></strong></p></div>
 <?php endif;?>
 <script type="text/javascript">
@@ -82,8 +82,8 @@ div.album-hidden img {
 <div id="icon-options-general" class="icon32"><br></div>
 <h2 id="write-post">Amazon S3 and CloudFront</h2>
 <?php
-global $TanTanVersionCheck;
-if (is_object($TanTanVersionCheck)):?>
+	global $TanTanVersionCheck;
+if ( is_object( $TanTanVersionCheck ) ):?>
 <div style="width:200px; border:1px solid #ccc;padding:10px; float:right; margin:0 0 10px 10px;">
 <strong>Plugin Updates:</strong><br />
 <a href="plugins.php?page=tantan/version-check.php">Check for updates to this plugin &gt;</a>
@@ -97,24 +97,24 @@ if (is_object($TanTanVersionCheck)):?>
 <td colspan="2">
 	<h3>AWS Access Credentials</h3>
 	<p>
-		If you don't have an Amazon S3 account yet, you need to 
+		If you don't have an Amazon S3 account yet, you need to
 		<a href="http://aws.amazon.com/s3/">sign up</a>.<br />
 
-		Once you've signed up, you can retrieve your access credentials from the 
+		Once you've signed up, you can retrieve your access credentials from the
 		<a href="https://portal.aws.amazon.com/gp/aws/securityCredentials">Security Credentials</a>
 		page of your Amazon Web Services account.
 	</p>
 </td>
 </tr>
 <tr valign="top">
-<th width="33%" scope="row">Access Key ID:</th> 
-<td><input type="text" name="options[key]" value="<?php echo $options['key'];?>" size="50" /></td> 
+<th width="33%" scope="row">Access Key ID:</th>
+<td><input type="text" name="options[key]" value="<?php echo $options['key'];?>" size="50" /></td>
 </tr>
 <tr valign="top">
-<th width="33%" scope="row">Secret Access Key:</th> 
-<td><input type="text" name="options[secret]" value="<?php echo ($options['secret'] ? '-- not shown --' : '');?>" size="50" /></td>
+<th width="33%" scope="row">Secret Access Key:</th>
+<td><input type="text" name="options[secret]" value="<?php echo $options['secret'] ? '-- not shown --' : '';?>" size="50" /></td>
 </tr>
-<?php if (!isset($buckets) || !$buckets):?>
+<?php if ( !isset( $buckets ) || !$buckets ):?>
 <tr valign="top">
 <td colspan="2">
 <p class="submit">
@@ -129,11 +129,11 @@ if (is_object($TanTanVersionCheck)):?>
 	</td>
 	</tr>
 	<tr valign="top">
-	<th width="33%" scope="row">&nbsp;</th> 
+	<th width="33%" scope="row">&nbsp;</th>
 	<td>
 		<select name="options[bucket]" size="1" onchange="return s3_selectBucket(this)" style="margin-bottom: 5px; width: 380px;">
 		<option value="">-- Select an S3 Bucket --</option>
-		<?php if (is_array($buckets)) foreach ($buckets as $bucket):?>
+		<?php if ( is_array( $buckets ) ) foreach ( $buckets as $bucket ):?>
 		    <option value="<?php echo $bucket?>" <?php echo ( isset( $options['bucket'] ) && $bucket == $options['bucket'] ) ? 'selected="selected"' : ''; ?>><?php echo $bucket?></option>
 		<?php endforeach;?>
 		<option value="new">Create a new bucket...</option>
@@ -150,16 +150,16 @@ if (is_object($TanTanVersionCheck)):?>
 		<input type="checkbox" name="options[permissions]" value="public" id="permissions" <?php echo ( isset( $options['permissions'] ) && $options['permissions'] == 'public' ) ? 'checked="checked" ' : ''; ?> />
 		<label for="permissions"> Force set the permissions on all files in the bucket to public</label>
 
-	</td> 
+	</td>
 	</tr>
-    
+
 	<tr valign="top">
 	<td colspan="2">
 		<h3>CloudFront Settings</h3>
 	</td>
 	</tr>
 	<tr valign="top">
-	<th width="33%" scope="row">Domain Name</th> 
+	<th width="33%" scope="row">Domain Name</th>
 	<td>
 		<input type="text" name="options[cloudfront]" value="<?php echo isset( $options['cloudfront'] ) ? $options['cloudfront'] : ''; ?>" size="50" />
 		<p class="description">Leave blank if you aren't using CloudFront.</p>
@@ -170,15 +170,15 @@ if (is_object($TanTanVersionCheck)):?>
 	<td colspan="2">
 		<h3>Plugin Settings</h3>
 	</td>
-	</tr>	
+	</tr>
 
 	<tr valign="top">
-	<th width="33%" scope="row">&nbsp;</th> 
+	<th width="33%" scope="row">&nbsp;</th>
 	<td>
 		<input type="checkbox" name="options[wp-uploads]" value="1" id="wp-uploads" <?php echo ( isset( $options['wp-uploads'] ) && $options['wp-uploads'] ) ? 'checked="checked" ' : ''; ?> />
 		<label for="wp-uploads"> Enable copying of media files to S3 and serving media files from S3/CloudFront</label>
 		<p class="description">Uncheck this to revert back to using your own web host for storage and delivery at anytime.</p>
-	</td> 
+	</td>
 	</tr>
 
 <tr>

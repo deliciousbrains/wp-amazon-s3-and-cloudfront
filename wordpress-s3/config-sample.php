@@ -11,5 +11,4 @@ $TanTanWordPressS3Config = array(
 	'hideAmazonS3UploadTab' => false, // hide the Amazon S3 tab in the WordPress upload widget
 	'expires' => 315360000, // set http expires header 10 years into the future
 	'cloudfront' => '', //this can be your cloudfront DNS name (*.cloudfront.net) or a CNAME alias
-	);
-?>
+);

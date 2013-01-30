@@ -1,6 +1,6 @@
-<?php if ($error):?>
+<?php if ( $error ):?>
 <div id="message" class="error fade"><p><strong><?php echo $error?></strong></p></div>
-<?php elseif ($message):?>
+<?php elseif ( $message ):?>
 <div id="message" class="updated fade"><p><strong><?php echo $message?></strong></p></div>
 <?php endif;?>
 
@@ -36,18 +36,18 @@ div.album-hidden img {
     Use the coupon code
     <b>TANTAN50COUPON</b>
      when you signup to get a $50 discount, and you'll
-    help support this plugin in the process. 
+    help support this plugin in the process.
     That works out to be less than $6.00 per month for the first year.
-    
+
 </div>
 <h3>Error</h3>
 <p>
-Sorry, this plugin requires at least PHP <strong>5.0</strong> and WordPress <strong>2.1</strong> in order to work correctly. 
+Sorry, this plugin requires at least PHP <strong>5.0</strong> and WordPress <strong>2.1</strong> in order to work correctly.
 Please contact your systems administrator about getting your version of PHP and/or WordPress upgraded.
 </p>
 <p>
-Your PHP version: <strong style="<?php echo (version_compare(phpversion(), '5.0.0', '<') ? 'color:red;' : '');?>"><?php echo phpversion();?></strong><br />
-Your WordPress version: <strong style="<?php echo (version_compare(get_bloginfo('version'), '2.1', '<') ? 'color:red;' : '');?>"><?php bloginfo('version'); ?></strong>
+Your PHP version: <strong style="<?php echo version_compare( phpversion(), '5.0.0', '<' ) ? 'color:red;' : '';?>"><?php echo phpversion();?></strong><br />
+Your WordPress version: <strong style="<?php echo version_compare( get_bloginfo( 'version' ), '2.1', '<' ) ? 'color:red;' : '';?>"><?php bloginfo( 'version' ); ?></strong>
 <br />
 </p>
 
