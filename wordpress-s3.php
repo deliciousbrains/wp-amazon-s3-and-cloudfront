@@ -37,7 +37,7 @@ if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) >= 0 ) { // just load in ad
         class TanTanWordPressS3Error {
             function TanTanWordPressS3Error() {add_action( 'admin_menu', array( &$this, 'addhooks' ) );}
             function addhooks() {add_options_page( 'Amazon S3', 'Amazon S3', 10, __FILE__, array( &$this, 'admin' ) );}
-            function admin() {include dirname( __FILE__ ).'/wordpress-s3/admin-version-error.html';}
+            function admin() {include dirname( __FILE__ ).'/wordpress-s3/admin-version-error.php';}
         }
         $error = new TanTanWordPressS3Error();
     }

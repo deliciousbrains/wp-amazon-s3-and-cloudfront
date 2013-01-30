@@ -123,7 +123,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         }
 
 
-        include dirname( __FILE__ ).'/admin-options.html';
+        include dirname( __FILE__ ).'/admin-options.php';
     }
 
 
@@ -353,7 +353,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
 
         $accessDomain = $this->get_access_domain();
 
-        include dirname( __FILE__ ).'/admin-tab-head.html';
+        include dirname( __FILE__ ).'/admin-tab-head.php';
     }
     function upload_files_upload() {
         // javascript here to inject javascript and allow the upload from to post to amazon s3 instead
@@ -404,7 +404,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
                 $prefixes[$k] = str_replace( $restrictPrefix, '', $v );
             }
         }
-        include dirname( __FILE__ ).'/admin-tab.html';
+        include dirname( __FILE__ ).'/admin-tab.php';
     }
 
     function getErrorMessage( $parsed_xml, $responseCode ) {
