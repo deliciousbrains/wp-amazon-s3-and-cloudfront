@@ -37,6 +37,7 @@ which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins
 
 = 0.5 - 2013-01-29 =
 * Forked [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/)
+* Cleaned up the UI to fit with today's WP UI
 * Fixed issues causing error messages when WP_DEBUG is on
 * [Delete files on S3 when deleting WP attachment](https://github.com/bradt/wp-tantan-s3/commit/e777cd49a4b6999f999bd969241fb24cbbcece60)
 * [Added filter to the get_attachment_url function](https://github.com/bradt/wp-tantan-s3/commit/bbe1aed5c2ae900e9ba1b16ba6806c28ab8e2f1c)
