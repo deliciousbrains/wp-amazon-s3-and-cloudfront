@@ -363,7 +363,7 @@ class TanTanS3 {
                 `response` TEXT NOT NULL ,
                 `timestamp` DATETIME NOT NULL ,
                 PRIMARY KEY ( `request` )
-            ) TYPE = MYISAM");	    
+            )");	    
 	}
 	function setCache($key, $data) {
         global $wpdb;
