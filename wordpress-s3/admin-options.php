@@ -114,7 +114,7 @@ if ( is_object( $TanTanVersionCheck ) ):?>
 <th width="33%" scope="row">Secret Access Key:</th>
 <td><input type="text" name="options[secret]" value="<?php echo $options['secret'] ? '-- not shown --' : '';?>" size="50" /></td>
 </tr>
-<?php if ( !isset( $buckets ) || !$buckets ):?>
+<?php if ( !isset( $buckets ) || !is_array( $buckets ) ):?>
 <tr valign="top">
 <td colspan="2">
 <p class="submit">

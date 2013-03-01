@@ -110,7 +110,8 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         if ( $options['key'] && $options['secret'] ) {
             require_once dirname( __FILE__ ).'/lib.s3.php';
             $s3 = new TanTanS3( $options['key'], $options['secret'] );
-            if ( !( $buckets = $s3->listBuckets() ) ) {
+            $buckets = $s3->listBuckets();
+            if ( !is_array( $buckets ) ) {
                 $error = $this->getErrorMessage( $s3->parsed_xml, $s3->responseCode );
             }
 
