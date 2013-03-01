@@ -43,7 +43,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
     }
 
     function settings() {
-        add_options_page( 'Amazon S3', 'Amazon S3', 10, __FILE__, array( &$this, 'admin' ) );
+        add_options_page( 'Amazon S3', 'Amazon S3', 'manage_options', __FILE__, array( &$this, 'admin' ) );
         $this->version_check();
     }
     function addhooks() {
