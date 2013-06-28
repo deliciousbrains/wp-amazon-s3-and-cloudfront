@@ -19,17 +19,27 @@ class TanTanWordPressS3PluginPublic {
 		if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
 
 		if ( $this->options['wp-uploads'] && ( $amazon = get_post_meta( $postID, 'amazonS3_info', true ) ) ) {
+			if ( is_ssl() ) {
+				$url = 'https://';
+			}
+			else {
+				$url = 'http://';
+			}
+
 			if ( isset( $this->options['cloudfront'] ) && $this->options['cloudfront'] ) {
 				$accessDomain = $this->options['cloudfront'];
 			}
 			elseif ( isset( $this->options['virtual-host'] ) && $this->options['virtual-host'] ) {
 				$accessDomain = $this->options['bucket'];
 			}
+			elseif ( is_ssl() ) {
+				$accessDomain = 's3.amazonaws.com/' . $amazon['bucket'];
+			}
 			else {
 				$accessDomain = $amazon['bucket'] . '.s3.amazonaws.com';
 			}
 
-			$url = 'http://'.$accessDomain.'/'.$amazon['key'];
+			$url .= $accessDomain.'/'.$amazon['key'];
 
 			$url = apply_filters( 'wps3_get_attachment_url', $url, $postID, $this );
 		}
