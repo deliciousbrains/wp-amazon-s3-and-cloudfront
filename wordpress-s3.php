@@ -30,7 +30,7 @@ if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) >= 0 ) { // just load in ad
     if ( version_compare( phpversion(), '5.0', '>=' ) && version_compare( $ver, '2.1', '>=' ) ) {
         require_once dirname( __FILE__ ).'/wordpress-s3/class-plugin.php';
         $TanTanWordPressS3Plugin = new TanTanWordPressS3Plugin();
-    } elseif ( ereg( 'wordpress-mu-', $ver ) ) {
+    } elseif ( preg_match( '!wordpress-mu-!', $ver ) ) {
         require_once dirname( __FILE__ ).'/wordpress-s3/class-plugin.php';
         $TanTanWordPressS3Plugin = new TanTanWordPressS3Plugin();
     } else {

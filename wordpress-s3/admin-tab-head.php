@@ -1,7 +1,7 @@
 <?php
 $dir = dirname( __FILE__ );
 $pluginRootURL = plugins_url( '', __FILE__ );
-if ( !ereg( 'media-upload.php', $_SERVER['REQUEST_URI'] ) ): // WP < 2.5
+if ( !preg_match( '!media-upload.php!', $_SERVER['REQUEST_URI'] ) ): // WP < 2.5
 ?>
 
 <script type="text/javascript">

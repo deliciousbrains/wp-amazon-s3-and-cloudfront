@@ -70,7 +70,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             $_POST['options']['key'] = trim( $_POST['options']['key'] );
             $_POST['options']['secret'] = trim( $_POST['options']['secret'] );
 
-            if ( !$_POST['options']['secret'] || ereg( 'not shown', $_POST['options']['secret'] ) ) {
+            if ( !$_POST['options']['secret'] || preg_match( '!not shown!', $_POST['options']['secret'] ) ) {
                 $_POST['options']['secret'] = $options['secret'];
             }
 
@@ -451,12 +451,12 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
                 $key = (string) $content->Key;
                 if ( $this->isPublic( $key ) ) $keys[] = $key;
                 else {
-                    if ( !( $p1 = ereg( '^\.', $key ) ) &&
-                        !( $p2 = ereg( '_\$folder\$$', $key ) ) &&
-                        !( $p3 = ereg( 'placeholder.ns3', $key ) ) ) {
+                    if ( !( $p1 = preg_match( '!^\.!', $key ) ) &&
+                        !( $p2 = preg_match( '!_\$folder\$$!', $key ) ) &&
+                        !( $p3 = preg_match( '!placeholder.ns3!', $key ) ) ) {
                         $privateKeys[] = $key;
                     } elseif ( $p2 ) {
-                        $prefix = ereg_replace( '(_\$folder\$$)', '/', $key );
+                        $prefix = preg_replace( '!(_\$folder\$$)!', '/', $key );
                         if ( !in_array( $prefix, $prefixes ) ) $prefixes[] = $prefix;
                     } else {
 
@@ -485,7 +485,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         $acl = (array) $this->s3->parsed_xml->AccessControlList;
         if ( is_array( $acl['Grant'] ) ) foreach ( $acl['Grant'] as $grant ) {
                 $grant = (array) $grant;
-                if ( $grant['Grantee'] && ( ereg( 'AllUsers', (string) $grant['Grantee']->URI ) ) ) {
+                if ( $grant['Grantee'] && ( preg_match( '!AllUsers!', (string) $grant['Grantee']->URI ) ) ) {
                     $perm = (string) $grant['Permission'];
                     if ( $perm == 'READ' || $perm == 'FULL_CONTROL' ) return true;
                 }
