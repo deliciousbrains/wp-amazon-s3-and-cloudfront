@@ -470,9 +470,18 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             }
         }
 
-        foreach ( $keys as $i => $key ) {
-            $meta[$i] = $this->s3->getMetadata( $this->options['bucket'], $key );
+        $defaultkeys = array('content-length','content-type','date');
+            foreach ($keys as $i => $key) {
+                $meta[$i] = $this->s3->getMetadata($this->options['bucket'], $key);
+                // IOK 2013-08-14 for some reason, this can happen, that is, no metadata. So fake it.
+                foreach($defaultkeys as $dk) {
+                 if (!isset($meta[$i][$dk])) {
+                  $meta[$i][$dk] = null;
+                 }
+                }
         }
+
+
         natcasesort( $keys );
         natcasesort( $prefixes );
 
