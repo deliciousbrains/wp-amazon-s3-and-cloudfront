@@ -168,6 +168,8 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         }
 
         $this->s3->deleteObject( $amazon['bucket'], $amazon['key'] );
+        // IOK 2013-03-15 Ensure this is called when attachment deleted from S3
+        delete_post_meta($post_id,'amazonS3_info');
     }
 
     function wp_get_attachment_metadata( $data=false, $postID=false ) {
