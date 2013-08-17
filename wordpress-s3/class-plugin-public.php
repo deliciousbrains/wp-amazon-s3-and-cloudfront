@@ -18,7 +18,7 @@ class TanTanWordPressS3PluginPublic {
 	function wp_get_attachment_url( $url, $postID ) {
 		if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
 
-		if ( $this->options['wp-uploads'] && ( $amazon = get_post_meta( $postID, 'amazonS3_info', true ) ) ) {
+		if ( isset($this->options['wp-uploads']) && $this->options['wp-uploads'] && ( $amazon = get_post_meta( $postID, 'amazonS3_info', true ) ) ) {
 			if ( is_ssl() ) {
 				$url = 'https://';
 			}
@@ -61,7 +61,7 @@ class TanTanWordPressS3PluginPublic {
 		if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
 
 		if (
-			!$this->options['wp-uploads'] || !$this->options['key'] || !$this->options['secret']
+			!isset($this->options['wp-uploads']) || !$this->options['wp-uploads'] || !$this->options['key'] || !$this->options['secret']
 			|| !$this->options['bucket'] || !( $amazon = get_post_meta( $postID, 'amazonS3_info', true ) )
 		) {
 			return false;

@@ -134,7 +134,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
     function delete_attachment( $post_id ) {
         if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
 
-        if ( !$this->options['wp-uploads'] || !$this->options['bucket'] || !$this->options['secret'] ) {
+        if ( !isset($this->options['wp-uploads']) || !$this->options['wp-uploads'] || !$this->options['bucket'] || !$this->options['secret'] ) {
             return;
         }
 
@@ -180,7 +180,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
     function wp_update_attachment_metadata( $data, $postID ) {
         if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
 
-        if ( !$this->options['wp-uploads'] || !$this->options['bucket'] || !$this->options['secret'] ) {
+        if ( !isset($this->options['wp-uploads']) || !$this->options['wp-uploads'] || !$this->options['bucket'] || !$this->options['secret'] ) {
             return $data;
         }
 
@@ -366,7 +366,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             $restrictPrefix = ltrim( $this->upload_path().'/files/', '/' );
         }
 
-        if ( is_array( $_FILES['newfile'] ) ) {
+        if ( isset($_FILES['newfile'])  && is_array( $_FILES['newfile'] ) ) {
             $file = $_FILES['newfile'];
             if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
             require_once dirname( __FILE__ ).'/lib.s3.php';
@@ -374,7 +374,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             $this->s3->setOptions( $this->options );
             $this->s3->putObjectStream( $this->options['bucket'], $restrictPrefix.$_GET['prefix'].$file['name'], $file );
         }
-        if ( $_POST['newfolder'] ) {
+        if ( isset($_POST['newfolder']) && $_POST['newfolder'] ) {
             if ( !$this->options ) $this->options = get_option( 'tantan_wordpress_s3' );
             require_once dirname( __FILE__ ).'/lib.s3.php';
             $this->s3 = new TanTanS3( $this->options['key'], $this->options['secret'] );
@@ -389,7 +389,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
             $restrictPrefix = ltrim( $this->upload_path().'/files/', '/' );
         }
 
-        $offsetpage = (int) $_GET['paged'];
+        $offsetpage = (int) isset($_GET['paged']) ? $_GET['paged'] : 0;
         if ( !$offsetpage ) $offsetpage = 1;
 
         if ( !$this->options['key'] || !$this->options['secret'] ) {
@@ -398,7 +398,7 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         $bucket = $this->options['bucket'];
         $accessDomain = $this->get_access_domain();
 
-        $prefix = $_GET['prefix'] ? $_GET['prefix'] : '';
+        $prefix = (isset($_GET['prefix']) && $_GET['prefix']) ? $_GET['prefix'] : '';
         list( $prefixes, $keys, $meta, $privateKeys ) = $this->getKeys( $restrictPrefix.$prefix );
         if ( $restrictPrefix ) {
             foreach ( $prefixes as $k=>$v ) {
