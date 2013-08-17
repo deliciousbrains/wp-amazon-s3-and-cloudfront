@@ -58,7 +58,7 @@ class TanTanS3 {
 		$this->serviceUrl=$serviceUrl;
 		$this->accessKeyId=$accessKeyId;
 		$this->secretKey=$secretKey;
-		$this->req =& new TanTanHTTPRequestCurl( $this->serviceUrl );
+		$this->req = new TanTanHTTPRequestCurl( $this->serviceUrl );
 		$this->options = array();
 		$this->options['cache_table'] = $wpdb->prefix . 'tantan_wordpress_s3_cache';
 		//$this->req = new HTTP_Request($this->serviceUrl);
@@ -349,7 +349,7 @@ class TanTanS3 {
 	}
 
 	function constructSig( $str ) {
-		$hasher =& new TanTanCrypt_HMAC( $this->secretKey, "sha1" );
+		$hasher = new TanTanCrypt_HMAC( $this->secretKey, "sha1" );
 		$signature = $this->hex2b64( $hasher->hash( $str ) );
 		return $signature;
 	}
