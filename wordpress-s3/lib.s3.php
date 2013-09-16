@@ -3,6 +3,9 @@
 Calculates RFC 2104 compliant HMACs.
 Based on code from  http://pear.php.net/package/Crypt_HMAC
 */
+
+require_once('S3.php');
+
 class TanTanCrypt_HMAC {
 	var $_func;var $_ipad;var $_opad;var $_pack;
 	function TanTanCrypt_HMAC( $key, $func = 'md5' ) {$this->setFunction( $func );$this->setKey( $key );}
@@ -62,6 +65,7 @@ class TanTanS3 {
 		$this->options = array();
 		$this->options['cache_table'] = $wpdb->prefix . 'tantan_wordpress_s3_cache';
 		//$this->req = new HTTP_Request($this->serviceUrl);
+        S3::setAuth($accessKeyId, $secretKey);
 	}
 
 	function setOptions( $options ) {
@@ -229,6 +233,14 @@ class TanTanS3 {
 	 * - [bool] $md5: the MD5 hash of the object (OPTIONAL)
 	 */
 	function putObjectStream( $bucket, $key, $fileInfo, $acl='public-read', $metadataArray=array(), $md5=false ) {
+
+        $fileName = $fileInfo['tmp_name'];
+        $destinationFileName = 'wp-content/uploads' . substr($fileName, strrpos($fileName, 'uploads/') + 7);
+        S3::putObject(S3::inputFile($fileName, false), $bucket, $destinationFileName, $acl);
+        return true;
+
+        //This code below isn't needed anymore, but I've kept it around in case the original plugin author still wants it for something.
+        /*
 		$serviceUrl = 'http://'.$bucket.'.s3.amazonaws.com/';
 
 		sort( $metadataArray );
@@ -296,6 +308,7 @@ class TanTanS3 {
 		fclose( $this->fp );
 		curl_close( $curl_inst );
 		return true;
+        */
 	}
 	function stream_function( $handle, $fd, $length ) {return fread( $this->fp, $length );}
 

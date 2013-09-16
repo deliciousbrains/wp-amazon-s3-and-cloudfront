@@ -5,7 +5,14 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
     function TanTanWordPressS3Plugin() {
         parent::TanTanWordPressS3PluginPublic();
         if ( !file_exists( dirname( __FILE__ ).'/config.php' ) ) {
-            add_action( 'admin_menu', array( &$this, 'settings' ) );
+
+            if ( is_multisite() ) {
+                add_action( 'network_admin_menu', array( &$this, 'multisite_settings' ) );
+            }
+            else {
+                add_action( 'admin_menu', array( &$this, 'admin_settings' ) );
+            }
+
         }
         if ( !isset( $this->options['hideAmazonS3UploadTab'] ) || !$this->options['hideAmazonS3UploadTab'] ) {
             add_action( 'load-upload.php', array( &$this, 'addPhotosTab' ) ); // WP < 2.5
@@ -42,10 +49,16 @@ class TanTanWordPressS3Plugin extends TanTanWordPressS3PluginPublic {
         add_action( 'admin_notices', create_function( '', 'echo \'<div id="message" class="updated fade"><p>Amazon S3 Plugin for WordPress <strong>activated</strong>. <a href="options-general.php?page=tantan/wordpress-s3/class-plugin.php">Configure the plugin &gt;</a></p></div>\';' ) );
     }
 
-    function settings() {
+    function multisite_settings() {
+        add_submenu_page( 'settings.php', 'Amazon S3', 'Amazon S3', 'manage_network_options', 'wp-tantan-s3', array( &$this, 'admin' ) );
+        $this->version_check();
+    }
+
+    function admin_settings() {
         add_options_page( 'Amazon S3', 'Amazon S3', 'manage_options', __FILE__, array( &$this, 'admin' ) );
         $this->version_check();
     }
+
     function addhooks() {
         parent::addhooks();
         if ( !isset( $_POST['disable_amazonS3'] ) || !$_POST['disable_amazonS3'] ) {
