@@ -31,6 +31,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return '1';
 		}
 
+		// Default object prefix
+		if ( 'object-prefix' == $key && !isset( $settings['object-prefix'] ) ) {
+	        $uploads = wp_upload_dir();
+	        $parts = parse_url( $uploads['baseurl'] );
+	        return substr( $parts['path'], 1 ) . '/';
+		}
+
 		return parent::get_setting( $key );
 	}
 
@@ -92,10 +99,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return $data;
         }
 
-        $uploads = wp_upload_dir();
-        $parts = parse_url( $uploads['url'] );
+		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix() ), '/' );
 
-        $prefix = substr( $parts['path'], 1 ) .'/';
         $type = get_post_mime_type( $post_id );
 
         $file_path = get_attached_file( $post_id, true );
@@ -337,7 +343,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->set_settings( array() );
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'copy-to-s3', 'serve-from-s3' );
+		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3' );
 		foreach ( $post_vars as $var ) {
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
@@ -362,5 +368,28 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 		
 		$this->aws->render_view( 'footer' );
+	}
+
+	function get_dynamic_prefix() {
+        $uploads = wp_upload_dir();
+        return str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+	}
+
+	// Without the multisite subdirectory
+	function get_base_upload_path() {	
+		if ( defined( 'UPLOADS' ) && ! ( is_multisite() && get_site_option( 'ms_files_rewriting' ) ) ) {
+			return ABSPATH . UPLOADS;
+		}
+
+		$upload_path = trim( get_option( 'upload_path' ) );
+
+		if ( empty( $upload_path ) || 'wp-content/uploads' == $upload_path ) {
+			return WP_CONTENT_DIR . '/uploads';
+		} elseif ( 0 !== strpos( $upload_path, ABSPATH ) ) {
+			// $dir is absolute, $upload_path is (maybe) relative to ABSPATH
+			return path_join( ABSPATH, $upload_path );
+		} else {
+			return $upload_path;
+		}
 	}
 }

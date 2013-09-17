@@ -38,7 +38,14 @@ endif;
 
 		<input type="checkbox" name="expires" value="1" id="expires" <?php echo $this->get_setting( 'expires' ) ? 'checked="checked" ' : ''; ?> />
 		<label for="expires"> <?php printf( __( 'Set a <a href="%s" target="_blank">far future HTTP expiration header</a> for uploaded files <em>(recommended)</em>', 'as3cf' ), 'http://developer.yahoo.com/performance/rules.html#expires' ); ?></label>
+	</td>
+</tr>
 
+<tr valign="top">
+	<td>
+		<label><?php _e( 'Object Path:', 'as3cf' ); ?></label>&nbsp;&nbsp;
+		<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" />
+		<label><?php echo trailingslashit( $this->get_dynamic_prefix() ); ?></label>
 	</td>
 </tr>
 
