@@ -23,8 +23,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ) );
 	}
 
+	function get_setting( $key ) {
+		$settings = $this->get_settings();
+
+		// If legacy setting set, migrate settings
+		if ( isset( $settings['wp-uploads'] ) && $settings['wp-uploads'] && in_array( $key, array( 'copy-to-s3', 'serve-from-s3' ) ) ) {
+			return '1';
+		}
+
+		return parent::get_setting( $key );
+	}
+
     function delete_attachment( $post_id ) {
-        if ( !$this->is_plugin_enabled() || !$this->is_plugin_setup() ) {
+        if ( !$this->is_plugin_setup() ) {
             return;
         }
 
@@ -77,7 +88,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
     }
 
     function wp_update_attachment_metadata( $data, $post_id ) {
-        if ( !$this->is_plugin_enabled() || !$this->is_plugin_setup() ) {
+        if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
             return $data;
         }
 
@@ -177,10 +188,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return get_post_meta( $post_id, 'amazonS3_info', true );
 	}
 
-	function is_plugin_enabled() {
-		return (bool) $this->get_setting( 'wp-uploads' );
-	}
-
 	function is_plugin_setup() {
 		return (bool) $this->get_setting( 'bucket' ) && !is_wp_error( $this->aws->get_client() );
 	}
@@ -197,7 +204,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function get_attachment_url( $post_id, $expires = null ) {
-		if ( !$this->is_plugin_enabled() || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		if ( !$this->get_setting( 'serve-from-s3' ) || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
 
@@ -330,7 +337,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->set_settings( array() );
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'wp-uploads' );
+		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'copy-to-s3', 'serve-from-s3' );
 		foreach ( $post_vars as $var ) {
 			if ( !isset( $_POST[$var] ) ) {
 				continue;

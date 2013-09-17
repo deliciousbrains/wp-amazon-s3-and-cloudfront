@@ -54,11 +54,16 @@ endif;
 
 <tr valign="top">
 	<td>
-		<h3><?php _e( 'WordPress Settings', 'as3cf' ); ?></h3>
+		<h3><?php _e( 'Plugin Settings', 'as3cf' ); ?></h3>
 
-		<input type="checkbox" name="wp-uploads" value="1" id="wp-uploads" <?php echo $this->get_setting( 'wp-uploads' ) ? 'checked="checked" ' : ''; ?> />
-		<label for="wp-uploads"> <?php _e( 'Copy files to S3 as they are uploaded to the Media Library and automatically point all URLs to S3/CloudFront', 'as3cf' ); ?></label>
-		<p class="description"><?php _e( 'Uncheck this to revert back to using your own web host for storage and delivery at anytime.', 'as3cf' ); ?></p>
+		<input type="checkbox" name="copy-to-s3" value="1" id="copy-to-s3" <?php echo $this->get_setting( 'copy-to-s3' ) ? 'checked="checked" ' : ''; ?> />
+		<label for="copy-to-s3"> <?php _e( 'Copy files to S3 as they are uploaded to the Media Library', 'as3cf' ); ?></label>
+		<br />
+
+		<input type="checkbox" name="serve-from-s3" value="1" id="serve-from-s3" <?php echo $this->get_setting( 'serve-from-s3' ) ? 'checked="checked" ' : ''; ?> />
+		<label for="serve-from-s3"> <?php _e( 'Point file URLs to S3/CloudFront for files that have been copied to S3', 'as3cf' ); ?></label>
+		<br />
+
 
 	</td>
 </tr>
