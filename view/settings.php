@@ -13,6 +13,16 @@ if ( is_wp_error( $buckets ) ) :
 	</div>
 	<?php
 endif;
+
+if ( isset( $_GET['updated'] ) ) {
+	?>
+	<div class="updated">
+		<p>
+			<?php _e( 'Settings saved.', 'as3cf' ); ?>
+		</p>
+	</div>
+	<?php
+}
 ?>
 
 <form method="post">

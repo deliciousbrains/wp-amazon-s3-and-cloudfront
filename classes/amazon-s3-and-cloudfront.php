@@ -353,6 +353,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		$this->save_settings();
+
+		wp_redirect( 'admin.php?page=' . $this->plugin_slug . '&updated=1' );
+		exit;
 	}
 
 	function render_page() {
