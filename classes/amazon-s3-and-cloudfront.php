@@ -19,8 +19,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 9, 2 );
-		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 9, 2 );
-		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ) );
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 20, 2 );
+		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
+
+		// Works with WP Retina 2x plugin (http://wordpress.org/plugins/wp-retina-2x/)
+		add_action( 'wr2x_retina_file_added', array( $this, 'wr2x_retina_file_added' ), 10, 2 );
+		add_action( 'wr2x_retina_file_removed', array( $this, 'wr2x_retina_file_removed' ), 10, 2 );
 	}
 
 	function get_setting( $key ) {
@@ -94,7 +98,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         delete_post_meta( $post_id, 'amazonS3_info' );
     }
 
-    function wp_update_attachment_metadata( $data, $post_id ) {
+    function wp_generate_attachment_metadata( $data, $post_id ) {
         if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
             return $data;
         }
@@ -120,7 +124,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $file_path = get_attached_file( $post_id, true );
 
         $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
-        $acl = apply_filters( 'as3cf_upload_acl', $acl, $type, $data, $post_id, $this );
+        $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         if ( !file_exists( $file_path ) ) {
         	return $data;
@@ -423,4 +427,68 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $upload_path;
 		}
 	}
+
+    function wr2x_retina_file_removed( $post_id, $full_path ) {
+        if ( !$this->is_plugin_setup() ) {
+            return;
+        }
+
+        if ( !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+            return;
+        }
+
+        $s3_path = dirname( $s3object['key'] );
+
+		try {
+	        $this->get_s3client()->deleteObject( array( 
+	        	'Bucket' => $s3object['bucket'],
+	        	'Key' => path_join( $s3_path, basename( $full_path ) )
+	        ) );
+		}
+		catch ( Exception $e ) {
+			error_log( 'Error removing file from S3: ' . $e->getMessage() );
+			return;
+		}
+    }
+
+    function wr2x_retina_file_added( $post_id, $full_path ) {
+        if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() || !file_exists( $full_path ) ) {
+            return;
+        }
+
+        $s3_path = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		$s3_path .= str_replace( $this->get_base_upload_path(), '', $full_path );
+
+        $acl = apply_filters( 'as3cf_wr2x_upload_acl', 'public-read', $post_id, $full_path );
+
+        $s3client = $this->get_s3client();
+
+        $bucket = $this->get_setting( 'bucket' );
+
+        $args = array(
+			'Bucket'     => $bucket,
+			'Key'        => $s3_path,
+			'SourceFile' => $full_path,
+			'ACL'        => $acl
+        );
+
+        // If far future expiration checked (10 years)
+		if ( $this->get_setting( 'expires' ) ) {
+			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
+		}
+
+		try {
+			$s3client->putObject( $args );
+		}
+		catch ( Exception $e ) {
+			error_log( 'Error uploading ' . $full_path . ' to S3: ' . $e->getMessage() );
+			return;
+		}
+
+        if ( $this->get_setting( 'remove-local-file' ) ) {
+        	$this->remove_local_files( array( $full_path ) );
+        }
+
+    }
+
 }
