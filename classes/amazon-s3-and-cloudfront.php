@@ -99,8 +99,21 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return $data;
         }
 
+		$time = current_time( 'mysql' );
+
+        // Media files attached to a post use the post's date 
+        // to determine the folder path they are placed in
+        $attach = get_post( $post_id );
+        if ( $attach->post_parent ) {
+			if ( $post = get_post( $attach->post_parent ) ) {
+				if ( substr( $post->post_date, 0, 4 ) > 0 ) {
+					$time = $post->post_date;
+				}
+			}
+        }
+
 		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
-        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix() ), '/' );
+        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
 
         $type = get_post_mime_type( $post_id );
 
@@ -388,8 +401,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->aws->render_view( 'footer' );
 	}
 
-	function get_dynamic_prefix() {
-        $uploads = wp_upload_dir();
+	function get_dynamic_prefix( $time = null ) {
+        $uploads = wp_upload_dir( $time );
         return str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
 	}
 
