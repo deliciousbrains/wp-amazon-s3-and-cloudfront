@@ -114,6 +114,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         }
 
         $file_name = basename( $file_path );
+        $files_to_remove = array( $file_path );
 
         $s3client = $this->get_s3client();
 
@@ -154,6 +155,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				'Key'        => $prefix . $data['thumb'],
 				'SourceFile' => $path
         	);
+        	$files_to_remove[] = $path;
         } 
         elseif ( count( $data['sizes'] ) ) {
         	foreach ( $data['sizes'] as $size ) {
@@ -162,6 +164,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 					'Key'        => $prefix . $size['file'],
 					'SourceFile' => $path
 	        	);
+	        	$files_to_remove[] = $path;
             }
         }
 
@@ -175,7 +178,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
         }
 
+        if ( $this->get_setting( 'remove-local-file' ) ) {
+        	$this->remove_local_files( $files_to_remove );
+        }
+
         return $data;
+    }
+
+    function remove_local_files( $file_paths ) {
+    	foreach ( $file_paths as $path ) {
+    		if ( !@unlink( $path ) ) {
+    			error_log( 'Error removing local file ' . $path );
+    		}
+    	}
     }
 
 	function wp_get_attachment_url( $url, $post_id ) {
@@ -343,7 +358,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->set_settings( array() );
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3' );
+		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file' );
 		foreach ( $post_vars as $var ) {
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
