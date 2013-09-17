@@ -217,7 +217,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 		
 		$new_url = apply_filters( 'wps3_get_attachment_url', $new_url, $post_id, $this ); // Old naming convention, will be deprecated soon
-		$new_url = apply_filters( 'as3cf_wp_get_attachment_url', $new_url, $post_id, $this );
+		$new_url = apply_filters( 'as3cf_wp_get_attachment_url', $new_url, $post_id );
 
 		return $new_url;
 	}
@@ -246,7 +246,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return false;
 		}
 
-		if ( is_ssl() ) {
+		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
 			$scheme = 'https';
 		}
 		else {
@@ -259,7 +259,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		elseif ( $this->get_setting( 'virtual-host' ) ) {
 			$domain_bucket = $s3object['bucket'];
 		}
-		elseif ( is_ssl() ) {
+		elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
 			$domain_bucket = 's3.amazonaws.com/' . $s3object['bucket'];
 		}
 		else {
@@ -375,7 +375,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->set_settings( array() );
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file' );
+		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl' );
 		foreach ( $post_vars as $var ) {
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
