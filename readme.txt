@@ -2,38 +2,55 @@
 Contributors: bradt
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5VPMGLLK94XJC
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
-Requires at least: 2.3
-Tested up to: 3.5.1
-Stable tag: 0.5
+Requires at least: 3.5
+Tested up to: 3.6.1
+Stable tag: 0.6
 License: GPLv3
 
-Automatically copies media uploads to Amazon S3 for storage and delivery. Optionally configure Amazon CloudFront for even faster delivery.
+Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
 
 == Description ==
 
 This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon Simple Storage Service](http://aws.amazon.com/s3/) (S3). It then automatically replaces the URL to each media file with their respective S3 URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/), the respective CloudFront URL. Image thumbnails are also copied to S3 and delivered through S3/CloudFront.
 
-Uploading files *directly* to your S3 account is not currently supported by this plugin. Also, if you're adding this plugin to a site that's been around for a while, your existing media files will not be copied or served from S3. Only newly uploaded files will be copied and served from S3.
+Uploading files *directly* to your S3 account is not currently supported by this plugin. They are uploaded to your server first, then copied to S3. There is an option to automatically remove the files from your server once they are copied to S3 however.
 
-You'll also find a new icon next to the "Add Media" button when editing a post. This allows you to easily browse and manage files in S3.
+If you're adding this plugin to a site that's been around for a while, your existing media files will not be copied or served from S3. Only newly uploaded files will be copied and served from S3.
 
-**Request features, report bugs, and submit pull requests on [Github](https://github.com/bradt/wp-tantan-s3/)**
+**[Request features, report bugs, and submit pull requests on Github](https://github.com/bradt/wp-tantan-s3/issues)**
 
-*This plugin is a fork of 
+*This plugin has been completely rewritten, but was originally a fork of 
 [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/) 
-which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3. See the Change Log to see what has been done so far.*
+which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3.*
 
 == Installation ==
 
-1. Use WordPress' built-in installer
-2. Access the Amazon S3 option under Settings and configure your Amazon details
+1. Install the required [Amazon Web Services plugin](http://wordpress.org/extend/plugins/amazon-web-services/) using WordPress' built-in installer
+2. Follow the instructions to setup your AWS access keys
+3. Install this plugin using WordPress' built-in installer
+4. Access the *S3 and CloudFront* option under *AWS* and configure
 
 == Screenshots ==
 
-1. The settings screen for the plugin
-2. Browse files in a Amazon S3 bucket
+1. Settings screen
+
+== Upgrade Notice ==
+
+= 0.6 =
+This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= 0.6 - 2013-09-20 =
+* Complete rewrite
+* Now requires PHP 5.3.3+
+* Now requires the [Amazon Web Services plugin](http://wordpress.org/extend/plugins/amazon-web-services) which contains the latest PHP libraries from Amazon
+* Now works with multisite
+* New Option: Custom S3 object path
+* New Option: Always serve files over https (SSL)
+* New Option: Enable object versioning by appending a timestamp to the S3 file path
+* New Option: Remove uploaded file from local filesystem once it has been copied to S3
+* New Option: Copy any HiDPI (@2x) images to S3 (works with WP Retina 2x plugin)
 
 = 0.5 - 2013-01-29 =
 * Forked [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/)
