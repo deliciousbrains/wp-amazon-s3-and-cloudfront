@@ -117,21 +117,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return $data;
         }
 
-		$time = current_time( 'mysql' );
-
-        // Media files attached to a post use the post's date 
-        // to determine the folder path they are placed in
-        $attach = get_post( $post_id );
-        if ( $attach->post_parent ) {
-			if ( $post = get_post( $attach->post_parent ) ) {
-				if ( substr( $post->post_date, 0, 4 ) > 0 ) {
-					$time = $post->post_date;
-				}
-			}
-        }
+        $time = $this->get_attachment_folder_time( $post_id );
+        $time = date( 'Y/m', $time );
 
 		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
         $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+
+        if ( $this->get_setting( 'object-versioning' ) ) {
+        	$prefix .= $this->get_object_version_string( $post_id );
+        }
 
         $type = get_post_mime_type( $post_id );
 
@@ -247,6 +241,46 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$hidpi_suffix = apply_filters( 'as3cf_hidpi_suffix', '@2x' );
 		$pathinfo = pathinfo( $orig_path );
 		return $pathinfo['dirname'] . '/' . $pathinfo['filename'] . $hidpi_suffix . '.' . $pathinfo['extension'];
+    }
+
+    function get_object_version_string( $post_id ) {
+		if ( get_option( 'uploads_use_yearmonth_folders' ) ) {
+			$date_format = 'dHis';
+		}
+		else {
+			$date_format = 'YmdHis';
+		}
+
+		$time = $this->get_attachment_folder_time( $post_id );
+
+		$object_version = date( $date_format, $time ) . '/';
+		$object_version = apply_filters( 'as3cf_get_object_version_string', $object_version );
+		
+		return $object_version;
+    }
+
+    // Media files attached to a post use the post's date 
+    // to determine the folder path they are placed in
+    function get_attachment_folder_time( $post_id ) {
+		$time = current_time( 'timestamp' );
+
+        if ( !( $attach = get_post( $post_id ) ) ) {
+        	return $time;
+        }
+
+        if ( !$attach->post_parent ) {
+        	return $time;
+        }
+
+		if ( !( $post = get_post( $attach->post_parent ) ) ) {
+			return $time;
+		}
+
+		if ( substr( $post->post_date_gmt, 0, 4 ) > 0 ) {
+			return strtotime( $post->post_date_gmt . ' +0000' );
+		}
+
+        return $time;
     }
 
 	function wp_get_attachment_url( $url, $post_id ) {
@@ -414,7 +448,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->set_settings( array() );
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images' );
+		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
 		foreach ( $post_vars as $var ) {
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
