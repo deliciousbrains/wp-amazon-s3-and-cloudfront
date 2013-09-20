@@ -182,7 +182,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         	);
         	$files_to_remove[] = $path;
         } 
-        elseif ( count( $data['sizes'] ) ) {
+        elseif ( !empty( $data['sizes'] ) ) {
         	foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
 	        	$additional_images[] = array(
