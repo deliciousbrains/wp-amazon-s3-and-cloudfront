@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.5
 Tested up to: 3.6.1
-Stable tag: 0.6.1
+Stable tag: 0.6.2
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -25,7 +25,7 @@ which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins
 
 == Installation ==
 
-1. Install the required [Amazon Web Services plugin](https://github.com/deliciousbrains/wp-amazon-web-services) using WordPress' built-in installer
+1. Install the required [Amazon Web Services plugin](http://wordpress.org/extend/plugins/amazon-web-services/) using WordPress' built-in installer
 2. Follow the instructions to setup your AWS access keys
 3. Install this plugin using WordPress' built-in installer
 4. Access the *S3 and CloudFront* option under *AWS* and configure
@@ -42,7 +42,13 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 = 0.6.1 =
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
+= 0.6.2 =
+This version requires PHP 5.3.3+ and the Amazon Web Services plugin
+
 == Changelog ==
+
+= 0.6.2 - 2013-09-26 =
+* WP.org download of Amazon Web Services plugin is working again
 
 = 0.6.1 - 2013-09-21 =
 * WP.org download of Amazon Web Services plugin is giving a 404 Not Found, so directing people to download from Github instead
@@ -50,7 +56,7 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 = 0.6 - 2013-09-20 =
 * Complete rewrite
 * Now requires PHP 5.3.3+
-* Now requires the [Amazon Web Services plugin](https://github.com/deliciousbrains/wp-amazon-web-services) which contains the latest PHP libraries from Amazon
+* Now requires the [Amazon Web Services plugin](http://wordpress.org/extend/plugins/amazon-web-services/) which contains the latest PHP libraries from Amazon
 * Now works with multisite
 * New Option: Custom S3 object path
 * New Option: Always serve files over https (SSL)
