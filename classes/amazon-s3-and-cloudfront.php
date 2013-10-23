@@ -480,7 +480,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function get_dynamic_prefix( $time = null ) {
 		$uploads = wp_upload_dir( $time );
-		return str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		return is_multisite()
+        ? untrailingslashit( str_replace( WP_CONTENT_DIR, '', $uploads['path'] ) )
+        : str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
 	}
 
 	// Without the multisite subdirectory
