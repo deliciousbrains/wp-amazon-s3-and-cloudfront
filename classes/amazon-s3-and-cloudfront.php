@@ -18,7 +18,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
-        add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1, 2 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1, 2 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 9, 2 );
 		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 20, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
@@ -284,52 +284,48 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         return $time;
     }
 
-    function s3_file_exists( $file ){
-        return false;
-    }
+	function wp_handle_upload_prefilter( $file ){
+		if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
+			return $file;
+		}
 
-    function wp_handle_upload_prefilter( $file ){
-        if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
-            return $file;
-        }
+		// Perform a best-effort pre-filtering of the filename
+		// so that our reliance on wp_unique_filename is minimized.
 
-        // Perform a best-effort pre-filtering of the filename
-        // so that our reliance on wp_unique_filename is minimized.
+		$filename = $file['name'];
 
-        $filename = $file['name'];
+		// sanitize the file name before we begin processing
+		$filename = sanitize_file_name($filename);
 
-        // sanitize the file name before we begin processing
-        $filename = sanitize_file_name($filename);
+		// separate the filename into a name and extension
+		$info = pathinfo($filename);
+		$ext = !empty($info['extension']) ? '.' . $info['extension'] : '';
+		$name = basename($filename, $ext);
 
-        // separate the filename into a name and extension
-        $info = pathinfo($filename);
-        $ext = !empty($info['extension']) ? '.' . $info['extension'] : '';
-        $name = basename($filename, $ext);
+		// edge case: if file is named '.ext', treat as an empty name
+		if ( $name === $ext )
+			$name = '';
 
-        // edge case: if file is named '.ext', treat as an empty name
-        if ( $name === $ext )
-            $name = '';
+		$time = current_time( 'timestamp' );
+		$time = date( 'Y/m', $time );
 
-        $time = current_time( 'timestamp' );
-        $time = date( 'Y/m', $time );
+		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		$prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+		$s3client = $this->get_s3client();
 
-        $prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
-        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
-        $s3client = $this->get_s3client();
+		$bucket = $this->get_setting( 'bucket' );
 
-        $bucket = $this->get_setting( 'bucket' );
+		$number = '';
+		while ($s3client->doesObjectExist($bucket, $prefix . $filename) !== false) {
+			if ( '' == $number )
+				$filename = $name . '_' . ++$number . $ext;
+			else
+				$filename = str_replace( "_$number$ext", '_' . ++$number . $ext, $filename );
+		}
 
-        $number = '';
-        while ($s3client->doesObjectExist($bucket, $prefix . $filename) !== false) {
-            if ( '' == $number )
-                $filename = $name . '_' . ++$number . $ext;
-            else
-                $filename = str_replace( "_$number$ext", '_' . ++$number . $ext, $filename );
-        }
-
-        $file['name'] = $filename;
-        return $file;
-    }
+		$file['name'] = $filename;
+		return $file;
+	}
 
 	function wp_get_attachment_url( $url, $post_id ) {
 		$new_url = $this->get_attachment_url( $post_id );
