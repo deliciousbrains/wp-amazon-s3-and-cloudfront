@@ -113,10 +113,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
     }
 
     function wp_generate_attachment_metadata( $data, $post_id ) {
-        if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
+    	if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
             return $data;
         }
-
+                
         $time = $this->get_attachment_folder_time( $post_id );
         $time = date( 'Y/m', $time );
 
@@ -137,7 +137,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         if ( !file_exists( $file_path ) ) {
         	return $data;
         }
-
         $file_name = basename( $file_path );
         $files_to_remove = array( $file_path );
 
@@ -295,6 +294,20 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $new_url;
 	}
 
+	function get_attachment_without_s3_info() {
+		$args = array(
+				'posts_per_page'   => -1,
+				'meta_query' => array(
+						array(
+								'key' => 'amazonS3_info',
+								'compare' => 'NOT EXISTS'
+						)
+				),
+				'post_type'        => 'attachment',
+		);
+		return get_posts( $args );
+	}
+	
 	function get_attachment_s3_info( $post_id ) {
 		return get_post_meta( $post_id, 'amazonS3_info', true );
 	}
@@ -438,7 +451,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function handle_post_request() {
-		if ( empty( $_POST['action'] ) || 'save' != $_POST['action'] ) {
+		if ( empty( $_POST['action'] ) || !in_array($_POST['action'], array('save', 'migrate')) ) {
 			return;
 		}
 
@@ -446,23 +459,38 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$this->set_settings( array() );
-
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
-		foreach ( $post_vars as $var ) {
-			if ( !isset( $_POST[$var] ) ) {
-				continue;
-			}
-
-			$this->set_setting( $var, $_POST[$var] );
+		if ( 'migrate' == $_POST['action'] ) {
+			$this->bulk_upload_to_s3();
 		}
-
-		$this->save_settings();
-
+		elseif ( 'save' == $_POST['action'] ) {
+		
+			$this->set_settings( array() );
+	
+			$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+			foreach ( $post_vars as $var ) {
+				if ( !isset( $_POST[$var] ) ) {
+					continue;
+				}
+	
+				$this->set_setting( $var, $_POST[$var] );
+			}
+	
+			$this->save_settings();
+		}
+		
 		wp_redirect( 'admin.php?page=' . $this->plugin_slug . '&updated=1' );
 		exit;
 	}
 
+	function bulk_upload_to_s3() {
+		$attachments = $this->get_attachment_without_s3_info();
+		foreach ($attachments as $attachment) {
+			$file = get_attached_file( $attachment->ID );
+			$data = wp_generate_attachment_metadata( $attachment->ID, $file );
+			$this->wp_generate_attachment_metadata(array(), $attachment->ID);
+		}
+	}
+	
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
 		
