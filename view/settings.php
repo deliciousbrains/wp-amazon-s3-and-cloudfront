@@ -106,4 +106,28 @@ if ( isset( $_GET['updated'] ) ) {
 
 </form>
 
+<form method="post">
+<input type="hidden" name="action" value="migrate" />
+<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
+
+<table class="form-table">
+<tr valign="top">
+	<td>
+		<h3><?php _e( 'Migration', 'as3cf' ); ?></h3>
+		<input type="checkbox" name="migrate-to-s3" value="1" id="migrate-to-s3" />
+		<label for="migrate-to-s3"> <?php printf( __( '%d file(s) can be migrate to S3.', 'as3cf' ), count($this->get_attachment_without_s3_info()) ); ?></label>
+		<br />
+
+	</td>
+</tr>
+<tr valign="top">
+	<td>
+		<button type="submit" class="button button-primary"><?php _e( 'Start', 'amazon-web-services' ); ?></button>
+	</td>
+</tr>
+</table>
+</form>
+
+
+
 </div>
