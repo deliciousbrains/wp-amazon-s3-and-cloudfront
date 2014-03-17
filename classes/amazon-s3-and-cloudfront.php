@@ -19,7 +19,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 9, 2 );
-		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 20, 2 );
+		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 20, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
 
@@ -112,7 +112,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         delete_post_meta( $post_id, 'amazonS3_info' );
     }
 
-    function wp_generate_attachment_metadata( $data, $post_id ) {
+    function wp_update_attachment_metadata( $data, $post_id ) {
         if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
             return $data;
         }
@@ -134,16 +134,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
-        if ( !file_exists( $file_path ) ) {
-        	return $data;
-        }
-
-        $file_name = basename( $file_path );
-        $files_to_remove = array( $file_path );
-
         $s3client = $this->get_s3client();
 
         $bucket = $this->get_setting( 'bucket' );
+
+        $file_name = basename( $file_path );
 
         $args = array(
 			'Bucket'     => $bucket,
@@ -157,13 +152,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
 		}
 
-		try {
-			$s3client->putObject( $args );
-		}
-		catch ( Exception $e ) {
-			error_log( 'Error uploading ' . $file_path . ' to S3: ' . $e->getMessage() );
-			return $data;
-		}
+        $files_to_remove = array();
+        if (file_exists($file_path)) {
+            $files_to_remove[] = $file_path;
+            try {
+                $s3client->putObject( $args );
+            }
+            catch ( Exception $e ) {
+                error_log( 'Error uploading ' . $file_path . ' to S3: ' . $e->getMessage() );
+                return $data;
+            }
+        }
 
         delete_post_meta( $post_id, 'amazonS3_info' );
 
