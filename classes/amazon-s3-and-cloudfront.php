@@ -153,7 +153,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
         $files_to_remove = array();
-        if (file_exists($file_path)) {
+        if ( file_exists( $file_path ) ) {
             $files_to_remove[] = $file_path;
             try {
                 $s3client->putObject( $args );
