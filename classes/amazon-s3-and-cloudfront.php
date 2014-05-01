@@ -39,7 +39,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// Allow bucket to be set via config file (useful for multiple enivornments)
-		if ($key == 'bucket' & defined('S3_BUCKET')) return S3_BUCKET;
+		if ( $key == 'bucket' & defined( 'S3_BUCKET' ) ) return S3_BUCKET;
 
 		return parent::get_setting( $key );
 	}
