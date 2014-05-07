@@ -309,11 +309,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param mixed $post_id Post ID of the attachment or null to use the loop
 	 * @param int $expires Seconds for the link to live
 	 */
-	function get_secure_attachment_url( $post_id, $expires = 900 ) {
-		return $this->get_attachment_url( $post_id, $expires );
+	function get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
+		return $this->get_attachment_url( $post_id, $expires, $size = null );
 	}
 
-	function get_attachment_url( $post_id, $expires = null ) {
+	function get_attachment_url( $post_id, $expires = null, $size = null ) {
 		if ( !$this->get_setting( 'serve-from-s3' ) || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
@@ -337,6 +337,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			$domain_bucket = $s3object['bucket'] . '.s3.amazonaws.com';
 		}
+        
+        if($size) {
+            $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
+            if(isset($meta['sizes'][$size]['file'])) {
+                $s3object['key'] = dirname($s3object['key']) . '/' . $meta['sizes'][$size]['file'];
+            }
+        }
 
 		$url = $scheme . '://' . $domain_bucket . '/' . $s3object['key'];
 
