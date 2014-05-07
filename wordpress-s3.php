@@ -6,6 +6,7 @@ Description: Automatically copies media uploads to Amazon S3 for storage and del
 Author: Brad Touesnard
 Version: 0.6.2
 Author URI: http://bradt.ca
+Network: True
 
 // Copyright (c) 2013 Brad Touesnard. All rights reserved.
 //
