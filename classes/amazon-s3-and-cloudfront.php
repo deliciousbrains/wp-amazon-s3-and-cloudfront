@@ -38,10 +38,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	        return substr( $parts['path'], 1 ) . '/';
 		}
 
-		// Allow bucket to be set via config file (useful for multiple enivornments)
-		if ( $key == 'bucket' && defined( 'S3_BUCKET' ) ) return S3_BUCKET;
+		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
+			$value = AS3CF_BUCKET;
+		}
+		else {
+			$value = parent::get_setting( $key );
+		}
 
-		return parent::get_setting( $key );
+		return apply_filters( 'as3cf_setting_' . $key, $value );
 	}
 
     function delete_attachment( $post_id ) {
