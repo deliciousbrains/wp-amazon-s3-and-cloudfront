@@ -160,7 +160,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
         $files_to_remove = array();
-        if (file_exists($file_path)) {
+        if ( file_exists( $file_path ) ) {
             $files_to_remove[] = $file_path;
             try {
                 $s3client->putObject( $args );
@@ -182,20 +182,24 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
         if ( isset( $data['thumb'] ) && $data['thumb'] ) {
 			$path = str_replace( $file_name, $data['thumb'], $file_path );
-        	$additional_images[] = array(
-				'Key'        => $prefix . $data['thumb'],
-				'SourceFile' => $path
-        	);
-        	$files_to_remove[] = $path;
-        } 
+            if ( file_exists( $path ) ) {
+                $additional_images[] = array(
+                    'Key'        => $prefix . $data['thumb'],
+                    'SourceFile' => $path
+                );
+                $files_to_remove[] = $path;
+            }
+        }
         elseif ( !empty( $data['sizes'] ) ) {
         	foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
-	        	$additional_images[] = array(
-					'Key'        => $prefix . $size['file'],
-					'SourceFile' => $path
-	        	);
-	        	$files_to_remove[] = $path;
+                if ( file_exists( $path ) ) {
+                    $additional_images[] = array(
+                        'Key'        => $prefix . $size['file'],
+                        'SourceFile' => $path
+                    );
+                    $files_to_remove[] = $path;
+                }
             }
         }
 
