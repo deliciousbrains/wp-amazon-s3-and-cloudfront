@@ -65,6 +65,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return;
         }
 
+        $s3client = $this->get_s3client();
+
+        // Deleting images may fail when buckets name contains dots so we specify the region
+        $this->set_region_from_bucket( $s3object['bucket'] );
+
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
 
@@ -93,7 +98,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         	}
 
 			try {
-		        $this->get_s3client()->deleteObjects( array( 
+				$s3client->deleteObjects( array( 
 		        	'Bucket' => $s3object['bucket'],
 		        	'Objects' => $hidpi_images
 		        ) );
@@ -106,7 +111,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         );
 
 		try {
-	        $this->get_s3client()->deleteObjects( array( 
+			$s3client->deleteObjects( array( 
 	        	'Bucket' => $s3object['bucket'],
 	        	'Objects' => $objects
 	        ) );
@@ -144,6 +149,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $s3client = $this->get_s3client();
 
         $bucket = $this->get_setting( 'bucket' );
+
+		// Uploading may fail when buckets name contains dots so we specify the region
+		$this->set_region_from_bucket($bucket);
 
         $file_name = basename( $file_path );
 
@@ -242,6 +250,20 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
     		}
     	}
     }
+
+	function set_region_from_bucket( $bucket ) {
+		$s3client = $this->get_s3client();
+		$bucketLocation = $s3client->getBucketLocation(array('Bucket' => $bucket));
+		switch ($bucketLocation['Location']) {
+			case "":
+				break;
+			case "EU":
+				$s3client->setRegion('eu-west-1');
+				break;
+			default:
+				$s3client->setRegion($bucketLocation['Location']);
+		}
+	}
 
     function get_hidpi_file_path( $orig_path ) {
 		$hidpi_suffix = apply_filters( 'as3cf_hidpi_suffix', '@2x' );
