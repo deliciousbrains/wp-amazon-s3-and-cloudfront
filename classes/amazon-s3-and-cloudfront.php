@@ -65,6 +65,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return;
         }
 
+	    $bucket = $this->get_bucket( $s3object['bucket'] );
+
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
 
@@ -94,7 +96,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 			try {
 		        $this->get_s3client()->deleteObjects( array( 
-		        	'Bucket' => $s3object['bucket'],
+		        	'Bucket' => $bucket,
 		        	'Objects' => $hidpi_images
 		        ) );
 			}
@@ -107,7 +109,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		try {
 	        $this->get_s3client()->deleteObjects( array( 
-	        	'Bucket' => $s3object['bucket'],
+	        	'Bucket' => $bucket,
 	        	'Objects' => $objects
 	        ) );
 		}
@@ -143,7 +145,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
         $s3client = $this->get_s3client();
 
-        $bucket = $this->get_setting( 'bucket' );
+        $bucket = $this->get_bucket();
 
         $file_name = basename( $file_path );
 
@@ -419,6 +421,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $this->s3client;
+	}
+
+	/**
+	 * Retrieves the saved bucket and sets the region of the S3 client to the buckets location
+	 *
+	 * @param null $bucket - use passed in $bucket instead
+	 *
+	 * @return mixed|null|string|void - S3 bucket
+	 */
+	function get_bucket( $bucket = null ) {
+		if ( is_null( $bucket ) ) {
+			$bucket = $this->get_setting( 'bucket' );
+		}
+
+		// get the bucket's location
+		$location = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
+		// set the region based
+		$this->get_s3client()->setRegion( $location['Location'] );
+
+		return $bucket;
 	}
 
 	function get_buckets() {
