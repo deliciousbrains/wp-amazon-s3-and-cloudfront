@@ -18,7 +18,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1, 2 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 9, 2 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
@@ -290,27 +290,38 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         return $time;
     }
 
+	/**
+	 * Create unique names for file to be uploaded to AWS
+	 * This only applies when the remove local file option is enabled
+	 *
+	 * @param array $file An array of data for a single file.
+	 *
+	 * @return array $file The altered file array with AWS unique filename.
+	 */
 	function wp_handle_upload_prefilter( $file ){
-		if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
+		if ( ! $this->get_setting( 'copy-to-s3' ) || ! $this->is_plugin_setup() ) {
 			return $file;
 		}
 
-		// Perform a best-effort pre-filtering of the filename
-		// so that our reliance on wp_unique_filename is minimized.
+		// only do this when we are removing local versions of files
+		if ( ! $this->get_setting( 'remove-local-file' ) ) {
+			return $file;
+		}
 
 		$filename = $file['name'];
 
 		// sanitize the file name before we begin processing
-		$filename = sanitize_file_name($filename);
+		$filename = sanitize_file_name( $filename );
 
 		// separate the filename into a name and extension
-		$info = pathinfo($filename);
-		$ext = !empty($info['extension']) ? '.' . $info['extension'] : '';
-		$name = basename($filename, $ext);
+		$info = pathinfo( $filename );
+		$ext  = ! empty( $info['extension'] ) ? '.' . $info['extension'] : '';
+		$name = basename( $filename, $ext );
 
 		// edge case: if file is named '.ext', treat as an empty name
-		if ( $name === $ext )
+		if ( $name === $ext ) {
 			$name = '';
+		}
 
 		$time = current_time( 'timestamp' );
 		$time = date( 'Y/m', $time );
@@ -322,14 +333,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$bucket = $this->get_setting( 'bucket' );
 
 		$number = '';
-		while ($s3client->doesObjectExist($bucket, $prefix . $filename) !== false) {
-			if ( '' == $number )
-				$filename = $name . '_' . ++$number . $ext;
-			else
-				$filename = str_replace( "_$number$ext", '_' . ++$number . $ext, $filename );
+		while ( $s3client->doesObjectExist( $bucket, $prefix . $filename ) !== false ) {
+			if ( '' == $number ) {
+				$filename = $name . ++ $number . $ext;
+			} else {
+				$filename = str_replace( "$number$ext", ++ $number . $ext, $filename );
+			}
 		}
 
 		$file['name'] = $filename;
+
 		return $file;
 	}
 
