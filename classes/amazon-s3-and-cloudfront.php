@@ -141,7 +141,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
-        $s3client = $this->get_s3client();
+	    $remove_local_file = $this->get_setting( 'remove-local-file' );
+
+	    $s3client = $this->get_s3client();
 
         $bucket = $this->get_setting( 'bucket' );
 
@@ -175,7 +177,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
         add_post_meta( $post_id, 'amazonS3_info', array(
 	        'bucket' => $bucket,
-	        'key'    => $prefix . $file_name
+	        'key'    => $prefix . $file_name,
+	        'local'  => ! (bool) $remove_local_file, // record if local file will remain
         ) );
 
 		$additional_images = array();
@@ -228,7 +231,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
         }
 
-        if ( $this->get_setting( 'remove-local-file' ) ) {
+        if ( $remove_local_file ) {
         	$this->remove_local_files( $files_to_remove );
         }
 
@@ -321,7 +324,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function get_attachment_url( $post_id, $expires = null, $size = null ) {
-		if ( !$this->get_setting( 'serve-from-s3' ) || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+			return false;
+		}
+
+		// check that the local file was not removed at the time of upload
+		// default to local not existing for images uploaded pre 'local' key in the amazonS3_info meta
+		$local_exists = ( isset( $s3object['local'] ) ) ? $s3object['local'] : false;
+
+		// don't serve S3 image if setting not checked AND a local file exists
+		if ( ! $this->get_setting( 'serve-from-s3' ) && $local_exists ) {
 			return false;
 		}
 
