@@ -334,10 +334,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$number = '';
 		while ( $s3client->doesObjectExist( $bucket, $prefix . $filename ) !== false ) {
-			if ( '' == $number ) {
-				$filename = $name . ++ $number . $ext;
+			$previous = $number;
+			++$number;
+			if ( '' == $previous ) {
+				$filename = $name . $number . $ext;
 			} else {
-				$filename = str_replace( "$number$ext", ++ $number . $ext, $filename );
+				$filename = str_replace( "$number$ext", $number . $ext, $filename );
 			}
 		}
 
