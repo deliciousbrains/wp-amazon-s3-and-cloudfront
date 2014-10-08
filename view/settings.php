@@ -79,7 +79,11 @@ if ( isset( $_GET['updated'] ) ) {
 		<br />
 
 		<input type="checkbox" name="serve-from-s3" value="1" id="serve-from-s3" <?php echo $this->get_setting( 'serve-from-s3' ) ? 'checked="checked" ' : ''; ?> />
-		<label for="serve-from-s3"> <?php _e( 'Point file URLs to S3/CloudFront for files that have been copied to S3', 'as3cf' ); ?></label>
+		<label for="serve-from-s3"> <?php _e( 'Point file URLs to S3/CloudFront for files that have been copied to S3', 'as3cf' ); ?>
+			<span class="tooltip" data-tooltip="<?php _e( 'When this is option unchecked, your Media Library images and other files will be served from your server instead of S3/CloudFront. If any images were removed from your server, they will be broken.', 'as3cf' ); ?>">
+				<span class="dashicons dashicons-editor-help"></span>
+			</span>
+		</label>
 		<br />
 
 		<input type="checkbox" name="remove-local-file" value="1" id="remove-local-file" <?php echo $this->get_setting( 'remove-local-file' ) ? 'checked="checked" ' : ''; ?> />
