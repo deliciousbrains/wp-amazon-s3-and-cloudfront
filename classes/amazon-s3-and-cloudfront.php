@@ -339,7 +339,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			if ( '' == $previous ) {
 				$filename = $name . $number . $ext;
 			} else {
-				$filename = str_replace( "$number$ext", $number . $ext, $filename );
+				$filename = str_replace( "$previous$ext", $number . $ext, $filename );
 			}
 		}
 
