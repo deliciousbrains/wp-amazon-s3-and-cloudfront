@@ -323,6 +323,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$name = '';
 		}
 
+		// rebuild filename with lowercase extension as S3 will have converted extension on upload
+		$ext      = strtolower( $ext );
+		$filename = $info['filename'] . $ext;
+
 		$time = current_time( 'timestamp' );
 		$time = date( 'Y/m', $time );
 
