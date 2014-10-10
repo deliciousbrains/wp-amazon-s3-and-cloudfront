@@ -4,6 +4,8 @@ use Aws\S3\S3Client;
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
+    private $default_region = 'us-east-1';
+
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -66,7 +68,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return;
         }
 
-	    $bucket = $this->get_bucket( $s3object['bucket'] );
+	    $bucket = $s3object['bucket'];
+
+	    $this->set_region( $s3object, $post_id );
 
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
@@ -140,17 +144,23 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $type = get_post_mime_type( $post_id );
 
         $file_path = get_attached_file( $post_id, true );
+	    $file_name = basename( $file_path );
 
         $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         $s3client = $this->get_s3client();
 
-        $bucket = $this->get_bucket();
+	    $bucket = $this->get_setting( 'bucket' );
 
-        $file_name = basename( $file_path );
+	    $s3object = array(
+		    'bucket' => $bucket,
+		    'key'    => $prefix . $file_name
+	    );
 
-        $args = array(
+	    $s3object['region'] = $this->set_region( $s3object, $post_id );
+
+	    $args = array(
 			'Bucket'     => $bucket,
 			'Key'        => $prefix . $file_name,
 			'SourceFile' => $file_path,
@@ -176,10 +186,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
         delete_post_meta( $post_id, 'amazonS3_info' );
 
-        add_post_meta( $post_id, 'amazonS3_info', array(
-	        'bucket' => $bucket,
-	        'key'    => $prefix . $file_name
-        ) );
+	    add_post_meta( $post_id, 'amazonS3_info', $s3object );
 
 		$additional_images = array();
 
@@ -401,6 +408,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$scheme = 'http';
 		}
 
+		$region = $this->get_region( $s3object, $post_id );
+		$prefix = ( $region == $this->default_region ) ? 's3' : 's3-' . $region;
+
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
 			$domain_bucket = $this->get_setting( 'cloudfront' );
 		}
@@ -408,10 +418,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$domain_bucket = $s3object['bucket'];
 		}
 		elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
-			$domain_bucket = 's3.amazonaws.com/' . $s3object['bucket'];
+			$domain_bucket = $prefix . '.amazonaws.com/' . $s3object['bucket'];
 		}
 		else {
-			$domain_bucket = $s3object['bucket'] . '.s3.amazonaws.com';
+			$domain_bucket = $s3object['bucket'] . '.' . $prefix . '.amazonaws.com';
 		}
         
         if($size) {
@@ -491,23 +501,45 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
-	 * Retrieves the saved bucket and sets the region of the S3 client to the buckets location
+	 * Get the region of the bucket.
 	 *
-	 * @param null $bucket - use passed in $bucket instead
 	 *
-	 * @return mixed|null|string|void - S3 bucket
+	 * @param $s3object
+	 * @param $post_id - if supplied will update the s3 meta if no region found
+	 *
+	 * @return string - region name
 	 */
-	function get_bucket( $bucket = null ) {
-		if ( is_null( $bucket ) ) {
-			$bucket = $this->get_setting( 'bucket' );
+	function get_region( $s3object, $post_id = null ) {
+		if ( ! isset( $s3object['region'] ) || ( isset( $s3object['region'] ) && '' == $s3object['region'] ) ) {
+			// if region hasn't been stored in the s3 metadata retrieve using the bucket
+			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
+			// if no location returned use default us-east-1
+			$s3object['region'] = ( '' == $region['Location'] ) ? $this->default_region : $region['Location'];
+
+			if ( ! is_null( $post_id ) ) {
+				// retrospectively update s3 metadata with region
+				update_post_meta( $post_id, 'amazonS3_info', $s3object );
+			}
 		}
 
-		// get the bucket's location
-		$location = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
-		// set the region based
-		$this->get_s3client()->setRegion( $location['Location'] );
+		return $s3object['region'];
+	}
 
-		return $bucket;
+	/**
+	 * Set the region of the AWS client based on the bucket.
+	 *
+	 * This is needed for non US standard buckets to add and delete files.
+	 *
+	 * @param $s3object
+	 * @param $post_id
+	 *
+	 * @return string - region name
+	 */
+	function set_region( $s3object, $post_id = null  ) {
+		$region = $this->get_region( $s3object, $post_id );
+		$this->get_s3client()->setRegion( $region );
+
+		return $region;
 	}
 
 	function get_buckets() {
