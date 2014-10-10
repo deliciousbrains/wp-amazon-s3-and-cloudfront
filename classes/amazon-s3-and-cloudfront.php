@@ -522,13 +522,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function plugin_load() {
+		$version = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? time() : $this->plugin_version;
+
 		$src = plugins_url( 'assets/css/styles.css', $this->plugin_file_path );
-		wp_enqueue_style( 'as3cf-styles', $src, array(), $this->get_installed_version() );
+		wp_enqueue_style( 'as3cf-styles', $src, array(), $version );
 
 		$suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
 
 		$src = plugins_url( 'assets/js/script' . $suffix . '.js', $this->plugin_file_path );
-		wp_enqueue_script( 'as3cf-script', $src, array( 'jquery' ), $this->get_installed_version(), true );
+		wp_enqueue_script( 'as3cf-script', $src, array( 'jquery' ), $version, true );
 		
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
