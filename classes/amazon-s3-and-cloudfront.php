@@ -49,6 +49,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return apply_filters( 'as3cf_setting_' . $key, $value );
 	}
 
+	/**
+	 * Allowed mime types array that can be edited for specific S3 uploading
+	 *
+	 * @return array
+	 */
+	function get_allowed_mime_types() {
+		return apply_filters( 'as3cf_allowed_mime_types', get_allowed_mime_types() );
+	}
+
     function delete_attachment( $post_id ) {
         if ( !$this->is_plugin_setup() ) {
             return;
@@ -127,6 +136,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return $data;
         }
 
+	    $type          = get_post_mime_type( $post_id );
+	    $allowed_types = $this->get_allowed_mime_types();
+
+	    // check mime type of file is in allowed S3 mime types
+	    if ( ! in_array( $type, $allowed_types ) ) {
+		    return $data;
+	    }
+
         $time = $this->get_attachment_folder_time( $post_id );
         $time = date( 'Y/m', $time );
 
@@ -136,8 +153,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         if ( $this->get_setting( 'object-versioning' ) ) {
         	$prefix .= $this->get_object_version_string( $post_id );
         }
-
-        $type = get_post_mime_type( $post_id );
 
         $file_path = get_attached_file( $post_id, true );
 
