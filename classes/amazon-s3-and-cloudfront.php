@@ -81,7 +81,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         if ( is_array( $backup_sizes ) ) {
             foreach ( $backup_sizes as $size ) {
 	            $objects[] = array(
-	            	'Key' => path_join( $amazon_path, $del_file )
+	            	'Key' => path_join( $amazon_path, $size['file'] )
 	            );
             }
         }
