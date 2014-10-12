@@ -406,7 +406,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$scheme = 'http';
 		}
 
-		$region = $this->get_s3object_region( $s3object, $post_id );
+		// We don't use $this->get_s3object_region() here because we don't want
+		// to make an AWS API call and slow down page loading
+		if ( isset( $s3object['region'] ) ) {
+			$region = $s3object['region'];
+		}
+		else {
+			$region = '';
+		}
+
 		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
 
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
