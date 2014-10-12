@@ -70,7 +70,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	    $bucket = $s3object['bucket'];
 
-	    $this->set_region( $s3object, $post_id );
+	    $this->set_s3client_region( $s3object, $post_id );
 
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
@@ -408,7 +408,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$scheme = 'http';
 		}
 
-		$region = $this->get_region( $s3object, $post_id );
+		$region = $this->get_s3object_region( $s3object, $post_id );
 		$prefix = ( $region == $this->default_region ) ? 's3' : 's3-' . $region;
 
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
@@ -509,7 +509,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return string - region name
 	 */
-	function get_region( $s3object, $post_id = null ) {
+	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) || ( isset( $s3object['region'] ) && '' == $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
@@ -535,8 +535,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return string - region name
 	 */
-	function set_region( $s3object, $post_id = null  ) {
-		$region = $this->get_region( $s3object, $post_id );
+	function set_s3client_region( $s3object, $post_id = null  ) {
+		$region = $this->get_s3object_region( $s3object, $post_id );
 		$this->get_s3client()->setRegion( $region );
 
 		return $region;
