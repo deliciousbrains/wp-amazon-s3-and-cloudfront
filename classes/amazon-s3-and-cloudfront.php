@@ -4,8 +4,6 @@ use Aws\S3\S3Client;
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
-    private $default_region = 'us-east-1';
-
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -409,7 +407,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		$region = $this->get_s3object_region( $s3object, $post_id );
-		$prefix = ( $region == $this->default_region ) ? 's3' : 's3-' . $region;
+		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
 
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
 			$domain_bucket = $this->get_setting( 'cloudfront' );
@@ -510,11 +508,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string - region name
 	 */
 	function get_s3object_region( $s3object, $post_id = null ) {
-		if ( ! isset( $s3object['region'] ) || ( isset( $s3object['region'] ) && '' == $s3object['region'] ) ) {
+		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
-			// if no location returned use default us-east-1
-			$s3object['region'] = ( '' == $region['Location'] ) ? $this->default_region : $region['Location'];
+
+			$s3object['region'] = $region['Location'];
 
 			if ( ! is_null( $post_id ) ) {
 				// retrospectively update s3 metadata with region
@@ -537,8 +535,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function set_s3client_region( $s3object, $post_id = null  ) {
 		$region = $this->get_s3object_region( $s3object, $post_id );
-		
-		if ( $region != $this->default_region ) {
+
+		if ( $region ) {
 			$this->get_s3client()->setRegion( $region );
 		}
 
