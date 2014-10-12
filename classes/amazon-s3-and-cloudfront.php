@@ -68,7 +68,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	    $bucket = $s3object['bucket'];
 
-	    $this->set_s3client_region( $s3object, $post_id );
+	    $this->set_s3client_region( $s3object );
 
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
