@@ -537,7 +537,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function set_s3client_region( $s3object, $post_id = null  ) {
 		$region = $this->get_s3object_region( $s3object, $post_id );
-		$this->get_s3client()->setRegion( $region );
+		
+		if ( $region != $this->default_region ) {
+			$this->get_s3client()->setRegion( $region );
+		}
 
 		return $region;
 	}
