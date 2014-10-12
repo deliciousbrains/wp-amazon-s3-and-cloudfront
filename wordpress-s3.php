@@ -24,6 +24,8 @@ Network: True
 // Then completely rewritten.
 */
 
+$GLOBALS['aws_meta']['wp-amazon-s3-and-cloudfront']['version'] = '0.6.2-dev';
+
 function as3cf_check_required_plugin() {
     if ( class_exists( 'Amazon_Web_Services' ) || !is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
         return;
