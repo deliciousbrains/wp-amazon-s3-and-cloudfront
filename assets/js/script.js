@@ -31,7 +31,7 @@
 							if ($(this).val() == bucket_name) {
 								return false;
 							}
-							if ($(this).val() > bucket_name) {
+							if ($(this).val() > bucket_name || 'new' == $(this).val() ) {
 								$(opt).insertBefore($(this));
 								return false;
 							}
