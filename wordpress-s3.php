@@ -24,7 +24,7 @@ Network: True
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['wp-amazon-s3-and-cloudfront']['version'] = '0.6.2-dev';
+$GLOBALS['aws_meta'][ basename( __FILE__, '.php' ) ]['version'] = '0.6.2-dev';
 
 function as3cf_check_required_plugin() {
     if ( class_exists( 'Amazon_Web_Services' ) || !is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
@@ -35,8 +35,19 @@ function as3cf_check_required_plugin() {
     deactivate_plugins( __FILE__ );
 
     $msg = sprintf( __( 'Amazon S3 and CloudFront has been deactivated as it requires the <a href="%s">Amazon&nbsp;Web&nbsp;Services</a> plugin.', 'as3cf' ), 'http://wordpress.org/extend/plugins/amazon-web-services/' ) . '<br /><br />';
-    
-    if ( file_exists( WP_PLUGIN_DIR . '/amazon-web-services/amazon-web-services.php' ) ) {
+
+    // check if AWS plugin is installed without relying on plugin folder name
+    $all_plugins   = get_plugins();
+    $aws_installed = false;
+    $aws_key       = 'amazon-web-services.php';
+    foreach ( $all_plugins as $key => $plugin ) {
+        if ( stripos( $key, $aws_key ) !== false ) {
+            $aws_installed = true;
+            break;
+        }
+    }
+
+    if ( $aws_installed ) {
         $activate_url = wp_nonce_url( 'plugins.php?action=activate&amp;plugin=amazon-web-services/amazon-web-services.php', 'activate-plugin_amazon-web-services/amazon-web-services.php' );
         $msg .= sprintf( __( 'It appears to already be installed. <a href="%s">Click here to activate it.</a>', 'as3cf' ), $activate_url );
     }
