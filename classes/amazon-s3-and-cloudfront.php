@@ -146,8 +146,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    return $data;
 	    }
 
-        $time = $this->get_attachment_folder_time( $post_id );
-        $time = date( 'Y/m', $time );
+	    if ( isset( $data['file'] ) ) {
+		    $time = untrailingslashit( dirname( $data['file'] ) );
+	    } else {
+		    $time = $this->get_attachment_folder_time( $post_id );
+		    $time = date( 'Y/m', $time );
+	    }
 
 		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
         $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
