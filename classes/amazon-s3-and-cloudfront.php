@@ -140,6 +140,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return $data;
         }
 
+	    // allow S3 upload to be cancelled for any reason
+	    $pre = apply_filters( 'as3cf_pre_update_attachment_metadata', false, $data, $post_id );
+	    if ( false !== $pre ) {
+		    return $data;
+	    }
+
 	    $type          = get_post_mime_type( $post_id );
 	    $allowed_types = $this->get_allowed_mime_types();
 
