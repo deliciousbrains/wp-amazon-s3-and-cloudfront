@@ -13,6 +13,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->aws = $aws;
 
+		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
+		add_action( 'schedule_cron_job', array( $this, 'process_cron_job' ) );
+		$this->plugin_upgrades();
+
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
 
 		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
@@ -26,7 +30,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
 
-	function get_setting( $key ) {
+	function get_setting( $key, $default = '' ) {
 		$settings = $this->get_settings();
 
 		// If legacy setting set, migrate settings
@@ -45,7 +49,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$value = AS3CF_BUCKET;
 		}
 		else {
-			$value = parent::get_setting( $key );
+			$value = parent::get_setting( $key, $default );
 		}
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
@@ -667,4 +671,175 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 	}
 
+	/**
+	 * Process any migrations or data changes needed after a plugin update
+	 */
+	function plugin_upgrades() {
+		if ( ! is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+			return;
+		}
+
+		$current_version = $this->get_setting( 'version' );
+		if ( version_compare( $this->plugin_version, $current_version, '==' ) ) {
+			return;
+		}
+
+		if ( version_compare( $current_version, '0.6.2', '<' ) ) {
+			// update s3 meta with bucket region where missing
+			$this->update_meta_with_region();
+		}
+
+		$this->set_setting( 'version', $this->plugin_version );
+		$this->save_settings();
+	}
+
+	/**
+	 * Add custom cron interval schedules
+	 *
+	 * @param array $schedules
+	 *
+	 * @return array
+	 */
+	function cron_schedules( $schedules ) {
+		// Adds every 10 minutes to the existing schedules.
+		$schedules['as3cf_minutes_10'] = array(
+			'interval' => 600,
+			'display'  => __( 'Every 10 Minutes', 'as3cf' )
+		);
+
+		return $schedules;
+	}
+
+	/**
+	 * Helper to compare the version stored in a setting
+	 *
+	 * @param $setting         - name of the setting key
+	 * @param $compare_version - version to compare against
+	 * @param $operator
+	 *
+	 * @return bool
+	 */
+	function check_setting_version( $setting, $compare_version, $operator = '<' ) {
+		$setting_version = $this->get_setting( $setting );
+
+		return version_compare( $setting_version, $compare_version, $operator );
+	}
+
+	/**
+	 * Wrapper for scheduling a cron for a specific job
+	 *
+	 * @param        $job      - callback
+	 * @param string $schedule - schedule interval
+	 */
+	function schedule_event( $job, $schedule = 'hourly' ) {
+		if ( ! wp_next_scheduled( 'schedule_cron_job' ) ) {
+			wp_schedule_event( current_time( 'timestamp' ), $schedule, 'schedule_cron_job', array( 'job' => $job ) );
+		}
+	}
+
+	/**
+	 * Wrapper for clearing scheduled events for a specific cron job
+	 *
+	 * @param $job - callback
+	 */
+	function clear_scheduled_event( $job ) {
+		$timestamp = wp_next_scheduled( 'schedule_cron_job', array( 'job' => $job ) );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, 'schedule_cron_job', array( 'job' => $job ) );
+		}
+	}
+
+	/**
+	 * Main cron job to run various jobs, hooked into the 'schedule_cron_job' action
+	 *
+	 * @param       $job  - method callback
+	 * @param array $args - additional args passed to the callback
+	 */
+	function process_cron_job( $job, $args = array() ) {
+		if ( method_exists( 'Amazon_S3_And_CloudFront', $job ) ) {
+			call_user_func( array( $this, $job ), $args );
+		}
+	}
+
+	/**
+	 * Wrapper for the cron job to update the region of the bucket in s3 metadata
+	 */
+	function update_meta_with_region() {
+		// only run update of region if post_meta_version is less than 1
+		if ( ! $this->check_setting_version( 'post_meta_version', 1 ) ) {
+			return;
+		}
+		// spawn the cron job to batch update s3 meta with bucket region
+		$this->schedule_event( 'cron_update_meta_with_region', 'as3cf_minutes_10' );
+	}
+
+	/**
+	 * Cron jon to update the region of the bucket in s3 metadata
+	 */
+	function cron_update_meta_with_region() {
+		// check if the cron should even be running
+		if ( ! $this->check_setting_version( 'post_meta_version', 1 ) ) {
+			// remove schedule
+			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
+
+			return;
+		}
+
+		global $wpdb;
+		$prefix = $wpdb->prefix;
+
+		// get the last post ID processed
+		$last_post_id = $this->get_setting( 'upgrade_post_meta_last_post_id' );
+		if ( '' == $last_post_id ) {
+			$last_post_id = 0;
+		}
+
+		// query all attachment posts with amazons3_info
+		// without region key in meta, ID greater than the last post ID process
+		$sql = $wpdb->prepare(
+			"SELECT `{$prefix}posts`.`ID` AS 'ID', pm2.`meta_value` AS 's3object'
+			FROM `{$prefix}posts`
+			INNER JOIN `{$prefix}postmeta` pm1 ON `{$prefix}posts`.`ID` = pm1.`post_id` AND pm1.`meta_key` = '_wp_attached_file'
+			INNER JOIN `{$prefix}postmeta` pm2 ON `{$prefix}posts`.`ID` = pm2.`post_id` AND pm2.`meta_key` = %s
+			WHERE `{$prefix}posts`.`post_type` = 'attachment'
+			AND  `{$prefix}posts`.`ID` > %d
+			AND pm2.`meta_value` NOT LIKE %s
+			ORDER BY `{$prefix}posts`.`ID`",
+			'amazonS3_info',
+			$last_post_id,
+			'%"region"%'
+		);
+
+		$attachments = $wpdb->get_results( $sql, OBJECT );
+
+		if ( 0 == count( $attachments ) ) {
+			// update post_meta_version
+			$this->set_setting( 'post_meta_version', 1 );
+			// delete the last post ID
+			$this->remove_setting( 'upgrade_post_meta_last_post_id' );
+			$this->save_settings();
+			// remove schedule
+			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
+
+			return;
+		}
+
+		// only process the loop for a certain amount of time
+		$finish = time() + 480; // 8 minutes so won't run into another instance of cron
+
+		// loop through and update s3 meta with region
+		foreach ( $attachments as $i => $attachment ) {
+			if ( time() >= $finish ) {
+				break;
+			}
+			$last_post_id = $attachment->ID;
+			$s3object     = unserialize( $attachment->s3object );
+			// retrieve region and update the attachment metadata
+			$this->get_s3object_region( $s3object, $attachment->ID );
+		}
+
+		// Update last post id
+		$this->set_setting( 'upgrade_post_meta_last_post_id', $last_post_id );
+		$this->save_settings();
+	}
 }
