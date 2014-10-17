@@ -54,6 +54,7 @@ add_action( 'plugins_loaded', 'as3cf_check_required_plugin' );
 
 function as3cf_init( $aws ) {
     global $as3cf;
+    require_once 'classes/AS3CF_Upgrade.php';
     require_once 'classes/amazon-s3-and-cloudfront.php';
     $as3cf = new Amazon_S3_And_CloudFront( __FILE__, $aws );
 }
