@@ -416,6 +416,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param mixed $post_id Post ID of the attachment or null to use the loop
 	 * @param int $expires Seconds for the link to live
+	 * @param mixed $size Size of the image to get
 	 */
 	function get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
 		return $this->get_attachment_url( $post_id, $expires, $size = null );
