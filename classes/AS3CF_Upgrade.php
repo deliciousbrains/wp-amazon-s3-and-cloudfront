@@ -10,7 +10,9 @@
  */
 
 // Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * AS3CF_Upgrade Class
@@ -155,35 +157,22 @@ class AS3CF_Upgrade {
 		global $wpdb;
 		$prefix = $wpdb->prefix;
 
-		// get the last post ID processed
-		$last_post_id = $this->get_setting( 'upgrade_post_meta_last_post_id' );
-		if ( '' == $last_post_id ) {
-			$last_post_id = 0;
-		}
+		// set the batch size limit for the query
+		$limit = apply_filters( 'as3cf_update_meta_with_region_batch_size', 500 );
+		$limit = is_numeric( $limit ) ? round( $limit ) : 500;
 
-		// query all attachment posts with amazons3_info
-		// without region key in meta, ID greater than the last post ID process
-		$sql = $wpdb->prepare(
-			"SELECT `{$prefix}posts`.`ID` AS 'ID', pm2.`meta_value` AS 's3object'
-			FROM `{$prefix}posts`
-			INNER JOIN `{$prefix}postmeta` pm1 ON `{$prefix}posts`.`ID` = pm1.`post_id` AND pm1.`meta_key` = '_wp_attached_file'
-			INNER JOIN `{$prefix}postmeta` pm2 ON `{$prefix}posts`.`ID` = pm2.`post_id` AND pm2.`meta_key` = %s
-			WHERE `{$prefix}posts`.`post_type` = 'attachment'
-			AND  `{$prefix}posts`.`ID` > %d
-			AND pm2.`meta_value` NOT LIKE %s
-			ORDER BY `{$prefix}posts`.`ID`",
-			'amazonS3_info',
-			$last_post_id,
-			'%"region"%'
-		);
+		// query all attachment posts with amazons3_info without region key in meta
+		$sql = "SELECT `post_id` as `ID`, `meta_value` AS 's3object'
+    			FROM `{$prefix}postmeta`
+   				WHERE `meta_key` = 'amazonS3_info'
+    			AND `meta_value` NOT LIKE '%\"region\"%'
+				LIMIT $limit";
 
 		$attachments = $wpdb->get_results( $sql, OBJECT );
 
 		if ( 0 == count( $attachments ) ) {
 			// update post_meta_version
 			$this->as3cf->set_setting( 'post_meta_version', 1 );
-			// delete the last post ID
-			$this->as3cf->remove_setting( 'upgrade_post_meta_last_post_id' );
 			$this->as3cf->save_settings();
 			// remove schedule
 			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
@@ -199,14 +188,9 @@ class AS3CF_Upgrade {
 			if ( time() >= $finish ) {
 				break;
 			}
-			$last_post_id = $attachment->ID;
-			$s3object     = unserialize( $attachment->s3object );
+			$s3object = unserialize( $attachment->s3object );
 			// retrieve region and update the attachment metadata
 			$this->as3cf->get_s3object_region( $s3object, $attachment->ID );
 		}
-
-		// Update last post id
-		$this->as3cf->set_setting( 'upgrade_post_meta_last_post_id', $last_post_id );
-		$this->as3cf->save_settings();
 	}
 }
