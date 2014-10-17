@@ -464,6 +464,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             }
         }
 
+        // properly encode the file name to be safe
+        $file_name = urlencode( basename( $s3object['key'] ) );
+        $s3object['key'] = str_replace( basename( $s3object['key'] ), $file_name, $s3object['key'] );
+
 		$url = $scheme . '://' . $domain_bucket . '/' . $s3object['key'];
 
 		if ( !is_null( $expires ) ) {
