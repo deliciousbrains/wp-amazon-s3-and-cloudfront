@@ -162,11 +162,15 @@ class AS3CF_Upgrade {
 		$limit = is_numeric( $limit ) ? round( $limit ) : 500;
 
 		// query all attachment posts with amazons3_info without region key in meta
-		$sql = "SELECT `post_id` as `ID`, `meta_value` AS 's3object'
+		$sql = $wpdb->prepare(
+				"SELECT `post_id` as `ID`, `meta_value` AS 's3object'
     			FROM `{$prefix}postmeta`
    				WHERE `meta_key` = 'amazonS3_info'
-    			AND `meta_value` NOT LIKE '%\"region\"%'
-				LIMIT $limit";
+    			AND `meta_value` NOT LIKE %s
+				LIMIT %d",
+				'%"region"%',
+				$limit
+		);
 
 		$attachments = $wpdb->get_results( $sql, OBJECT );
 
