@@ -166,9 +166,8 @@ class AS3CF_Upgrade {
 				"SELECT `post_id` as `ID`, `meta_value` AS 's3object'
     			FROM `{$prefix}postmeta`
    				WHERE `meta_key` = 'amazonS3_info'
-    			AND `meta_value` NOT LIKE %s
+    			AND `meta_value` NOT LIKE '%%\"region\"%%'
 				LIMIT %d",
-				'%"region"%',
 				$limit
 		);
 
