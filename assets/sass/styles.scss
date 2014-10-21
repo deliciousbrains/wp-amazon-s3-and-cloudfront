@@ -1,9 +1,10 @@
 .aws-main {
   .error {
+  	max-width: 800px;
 	pre {
 	  background: #eaeaea;
 	  background: rgba(0, 0, 0, 0.07);
-	  display: inline-block;
+	  display: block;
 	  padding: 10px 15px;
 	  code {
 		background: none;
