@@ -595,13 +595,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Stores the result in a transient tied to the access key
 	 *
 	 * @param string $bucket
+	 * @param bool   $force_check - overrides the transient set
 	 *
 	 * @return bool
 	 */
-	function check_write_permission( $bucket ) {
+	function check_write_permission( $bucket, $force_check = false ) {
 		// simple encode of access key so it is not stored in db in raw form
 		$transient_key = base64_encode( $this->aws->get_access_key_id() ) . '_permission';
-		if ( false === ( $can_write = get_transient( $transient_key ) ) ) {
+		if ( $force_check || false === ( $can_write = get_transient( $transient_key ) ) ) {
 			// fire up the filesystem API
 			WP_Filesystem();
 			global $wp_filesystem;
