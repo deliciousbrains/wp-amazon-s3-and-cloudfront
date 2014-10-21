@@ -622,10 +622,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$this->set_settings( array() );
-
 		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+
 		foreach ( $post_vars as $var ) {
+			$this->remove_setting( $var );
+
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
 			}
