@@ -42,7 +42,7 @@ if ( ! $can_write ) : ?>
 				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
 			</strong>&mdash;
 			<?php printf( __( 'You need to go to  <a href="%s">Identity and Access Management</a> in your AWS console and manage the policy for the user you\'re using for this plugin. Your policy should look something like the following:', 'as3cf' ), 'https://console.aws.amazon.com/iam/home' ); ?>
-			<br>
+		</p>
 <pre><code>{
   "Version": "2012-10-17",
   "Statement": [
@@ -53,8 +53,8 @@ if ( ! $can_write ) : ?>
     }
   ]
 }</code></pre>
-		<br><a href="<?php echo self_admin_url( 'admin.php?page='. $this->plugin_slug . '&action=check_permission' ); ?>"><?php _e( 'Check again', 'as3cf' ); ?></a>
-		</p>
+		<p><a href="<?php echo self_admin_url( 'admin.php?page='. $this->plugin_slug . '&action=check_permission' ); ?>"><?php _e( 'Check again', 'as3cf' ); ?></a></p>
+		
 	</div>
 <?php
 	// don't show the rest of the settings if cannot write
