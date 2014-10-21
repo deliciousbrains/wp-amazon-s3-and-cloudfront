@@ -602,43 +602,45 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function check_write_permission( $bucket, $force_check = false ) {
 		// simple encode of access key so it is not stored in db in raw form
 		$transient_key = base64_encode( $this->aws->get_access_key_id() ) . '_permission';
-		if ( $force_check || false === ( $can_write = get_transient( $transient_key ) ) ) {
-			// fire up the filesystem API
-			WP_Filesystem();
-			global $wp_filesystem;
-
-			$uploads       = wp_upload_dir();
-			$file_name     = 'as3cf-permission-check.txt';
-			$file          = trailingslashit( $uploads['basedir'] ) . $file_name;
-			$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
-			// create a temp file to upload
-			$wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
-
-			$args = array(
-				'Bucket'     => $bucket,
-				'Key'        => $file_name,
-				'SourceFile' => $file,
-				'ACL'        => 'public-read'
-			);
-
-			try {
-				// attempt to create the test file
-				$this->get_s3client()->putObject( $args );
-				// delete it straight away if created
-				$this->get_s3client()->deleteObject( array(
-					'Bucket' => $bucket,
-					'Key'    => $file_name
-				) );
-				$can_write = true;
-			} catch ( Exception $e ) {
-				// write permission not found
-				$can_write = false;
-			}
-
-			// delete temp file
-			$wp_filesystem->delete( $file );
-			set_transient( $transient_key, $can_write, 12 * HOUR_IN_SECONDS );
+		if ( ! $force_check && false !== ( $can_write = get_transient( $transient_key ) ) ) {
+			return $can_write;
 		}
+
+		// fire up the filesystem API
+		WP_Filesystem();
+		global $wp_filesystem;
+
+		$uploads       = wp_upload_dir();
+		$file_name     = 'as3cf-permission-check.txt';
+		$file          = trailingslashit( $uploads['basedir'] ) . $file_name;
+		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
+		// create a temp file to upload
+		$wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
+
+		$args = array(
+			'Bucket'     => $bucket,
+			'Key'        => $file_name,
+			'SourceFile' => $file,
+			'ACL'        => 'public-read'
+		);
+
+		try {
+			// attempt to create the test file
+			$this->get_s3client()->putObject( $args );
+			// delete it straight away if created
+			$this->get_s3client()->deleteObject( array(
+				'Bucket' => $bucket,
+				'Key'    => $file_name
+			) );
+			$can_write = true;
+		} catch ( Exception $e ) {
+			// write permission not found
+			$can_write = false;
+		}
+
+		// delete temp file
+		$wp_filesystem->delete( $file );
+		set_transient( $transient_key, $can_write, 12 * HOUR_IN_SECONDS );
 
 		return $can_write;
 	}
