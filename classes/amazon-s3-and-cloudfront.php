@@ -607,15 +607,21 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// fire up the filesystem API
-		WP_Filesystem();
+		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
+		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
+			return new WP_Error( 'exception', __( 'There was an error attempting to access the file system', 'as3cf') );
+		}
 
 		$uploads       = wp_upload_dir();
 		$file_name     = 'as3cf-permission-check.txt';
 		$file          = trailingslashit( $uploads['basedir'] ) . $file_name;
 		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
 		// create a temp file to upload
-		$wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
+		$temp_file = $wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
+		if ( false === $temp_file ) {
+			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf') );
+		}
 
 		$args = array(
 			'Bucket'     => $bucket,
