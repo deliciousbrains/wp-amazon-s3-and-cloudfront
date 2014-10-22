@@ -17,7 +17,18 @@ Uploading files *directly* to your S3 account is not currently supported by this
 
 If you're adding this plugin to a site that's been around for a while, your existing media files will not be copied or served from S3. Only newly uploaded files will be copied and served from S3.
 
-**[Request features, report bugs, and submit pull requests on Github](https://github.com/bradt/wp-tantan-s3/issues)**
+**Pro Version**
+
+We’re working on a pro version that will include the following features:
+
+* Copy existing Media Library to S3
+* Serve theme JS & CSS from S3/CloudFront
+* WooCommerce & EDD integration
+* Awesome email support
+
+[Sign up for news about the pro version](https://confirmsubscription.com/h/t/295CA85AEB94E879)
+
+[Request features, report bugs, and submit pull requests on Github](https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront/issues)
 
 *This plugin has been completely rewritten, but was originally a fork of 
 [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/) 
@@ -68,6 +79,6 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 * Forked [Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/)
 * Cleaned up the UI to fit with today's WP UI
 * Fixed issues causing error messages when WP_DEBUG is on
-* [Delete files on S3 when deleting WP attachment](https://github.com/bradt/wp-tantan-s3/commit/e777cd49a4b6999f999bd969241fb24cbbcece60)
-* [Added filter to the get_attachment_url function](https://github.com/bradt/wp-tantan-s3/commit/bbe1aed5c2ae900e9ba1b16ba6806c28ab8e2f1c)
-* [Added function to get a temporary, secure download URL for private files](https://github.com/bradt/wp-tantan-s3/commit/11f46ec2714d34907009e37ad3b97f4421aefed3)
+* [Delete files on S3 when deleting WP attachment](https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront/commit/e777cd49a4b6999f999bd969241fb24cbbcece60)
+* [Added filter to the get_attachment_url function](https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront/commit/bbe1aed5c2ae900e9ba1b16ba6806c28ab8e2f1c)
+* [Added function to get a temporary, secure download URL for private files](https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront/commit/11f46ec2714d34907009e37ad3b97f4421aefed3)
