@@ -112,4 +112,6 @@ if ( isset( $_GET['updated'] ) ) {
 
 </form>
 
+<?php $this->render_view( 'sidebar' ); ?>
+
 </div>

@@ -1,7 +1,24 @@
 .as3cf-settings {
+	position: relative;
+	width: 550px;
+	min-height: 800px;
+	
 	select.bucket {
 		margin-bottom: 5px;
 		width: 380px;
+	}
+
+	.form-table {
+		td {
+			padding-left: 0;
+			padding-right: 0;
+		}
+
+		tr:first-child {
+			h3 {
+				margin-top: 0;
+			}
+		}
 	}
 
 	.tooltip {
@@ -67,3 +84,148 @@
 	}
 }
 
+.as3cf-sidebar {
+	position: absolute;
+	top: 17px;
+	right: -312px;
+	width: 292px;
+
+	.block {
+		padding: 20px;
+		border: 1px solid #ccc;
+	}
+
+	.subscribe {
+		border-top: none;
+
+		h2 {
+			padding: 0;
+			margin: 0;
+			margin-bottom: 0.5em;
+			color: #666;
+			font-size: 20px;
+			line-height: 1.2em;
+			float: none;
+		}
+
+		h3 {
+			font-size: 16px;
+			margin: 0;
+		}
+
+		p {
+			margin: 0;
+		}
+
+		.intro {
+			margin-bottom: 1em;
+			line-height: 1.4;
+		}
+
+		ul {
+			margin-left: 20px;
+			list-style-type: disc;
+		}
+
+		li {
+			line-height: 1.4;
+		}
+
+		.links {
+			margin-bottom: 2em;
+
+			a {
+				text-decoration: none;
+			}
+		}
+
+		.promise {
+			color: #999;
+			font-size: 12px;
+			line-height: 1.4em;
+		}
+
+		.field {
+			margin-bottom: 0.5em;
+
+			p {
+				margin-bottom: 0.3em;
+			}
+
+			&.submit-button {
+				margin-bottom: 1em;
+			}
+		}
+	}
+
+	.credits {
+		border-top: 0;
+
+		h4 {
+			font-size: 16px;
+			margin-top: 0;
+			margin-bottom: 10px;
+		}
+
+		ul {
+			margin: 0;
+		}
+
+		li {
+			overflow: hidden;
+		}
+
+		li:last-child {
+			margin-bottom: 0;
+		}
+
+		img {
+			float: left;
+			margin-right: 10px;
+		}
+
+		span {
+			float: left;
+			display: block;
+			line-height: 32px;
+		}
+
+		a {
+			display: block;
+			text-decoration: none;
+			color: #444;
+			font-size: 16px;
+			text-align: center;
+
+			&:hover {
+				color: #888;
+			}
+		}
+	}
+
+	@media (min--moz-device-pixel-ratio: 1.3),
+		(-o-min-device-pixel-ratio: 2.6/2),
+		(-webkit-min-device-pixel-ratio: 1.3),
+		(min-device-pixel-ratio: 1.3),
+		(min-resolution: 1.3dppx) {
+
+		.as3cf-banner {
+			background-image: url(../img/snail@2x.jpg);
+			background-size: 292px 165px;
+			width: 292px;
+			height: 165px;
+			display: block;
+
+			img {
+				display: none;
+			}
+		}
+	}
+
+	@media screen and (max-width: 1252px) {
+		position: relative;
+		top: auto;
+		right: auto;
+		margin-top: 50px;
+	}
+}

@@ -26,7 +26,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
 
-	function get_setting( $key ) {
+	function get_setting( $key, $default = '' ) {
 		$settings = $this->get_settings();
 
 		// If legacy setting set, migrate settings
