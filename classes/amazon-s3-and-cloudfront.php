@@ -600,9 +600,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return bool
 	 */
 	function check_write_permission( $bucket, $force_check = false ) {
-		// simple encode of access key so it is not stored in db in raw form
-		$transient_key = base64_encode( $this->aws->get_access_key_id() ) . '_permission';
-		if ( ! $force_check && false !== ( $can_write = get_transient( $transient_key ) ) ) {
+		// simple encode of access key so it is not stored in db in raw form (40 char or less for _site_transient)
+		$transient_key = substr( base64_encode( $this->aws->get_access_key_id() ), 0, 29 )  . '_permission';
+		if ( ! $force_check && false !== ( $can_write = get_site_transient( $transient_key ) ) ) {
 			return $can_write;
 		}
 
@@ -646,7 +646,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// delete temp file
 		$wp_filesystem->delete( $file );
-		set_transient( $transient_key, $can_write, 12 * HOUR_IN_SECONDS );
+		set_site_transient( $transient_key, $can_write, 12 * HOUR_IN_SECONDS );
 
 		return $can_write;
 	}
