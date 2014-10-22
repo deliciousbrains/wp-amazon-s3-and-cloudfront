@@ -677,4 +677,28 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $upload_path;
 		}
 	}
+
+	/**
+	 * Get all the blog IDs for the multisite network used for table prefixes
+	 *
+	 * @return array
+	 */
+	function get_blogs() {
+		global $wpdb;
+		$blogs = $wpdb->get_results(
+			"SELECT blog_id
+			FROM {$wpdb->blogs}
+			WHERE spam = '0'
+			AND deleted = '0'
+			AND archived = '0'
+			AND blog_id != 1
+		" );
+
+		$clean_blogs = array();
+		foreach ( $blogs as $blog ) {
+			$clean_blogs[] = $blog->blog_id;
+		}
+
+		return $clean_blogs;
+	}
 }

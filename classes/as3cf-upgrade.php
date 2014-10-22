@@ -162,18 +162,25 @@ class AS3CF_Upgrade {
 		$limit = is_numeric( $limit ) ? round( $limit ) : 500;
 
 		// query all attachment posts with amazons3_info without region key in meta
-		$sql = $wpdb->prepare(
-				"SELECT `post_id` as `ID`, `meta_value` AS 's3object'
-    			FROM `{$prefix}postmeta`
-   				WHERE `meta_key` = 'amazonS3_info'
-    			AND `meta_value` NOT LIKE '%%\"region\"%%'
-				LIMIT %d",
-				$limit
-		);
+		$all_attachments    = array();
+		$attachments        = $this->get_attachments_without_region( $prefix, $limit );
+		$count              = count( $attachments );
+		$all_attachments[1] = $attachments;
 
-		$attachments = $wpdb->get_results( $sql, OBJECT );
+		if ( is_multisite() ) {
+			$blogs = $this->as3cf->get_blogs();
+			foreach ( $blogs as $blog ) {
+				if ( $count >= $limit ) {
+					break;
+				}
+				$blog_prefix      = $prefix . $blog . '_';
+				$blog_attachments = $this->get_attachments_without_region( $blog_prefix, $limit );
+				$count += count( $blog_attachments );
+				$all_attachments[ $blog ] = $blog_attachments;
+			}
+		}
 
-		if ( 0 == count( $attachments ) ) {
+		if ( 0 == $count ) {
 			// update post_meta_version
 			$this->as3cf->set_setting( 'post_meta_version', 1 );
 			$this->as3cf->save_settings();
@@ -187,13 +194,43 @@ class AS3CF_Upgrade {
 		$finish = time() + 480; // 8 minutes so won't run into another instance of cron
 
 		// loop through and update s3 meta with region
-		foreach ( $attachments as $i => $attachment ) {
-			if ( time() >= $finish ) {
-				break;
+		foreach ( $all_attachments as $blog_id => $attachments ) {
+			if ( 1 != $blog_id && is_multisite() ) {
+				switch_to_blog( $blog_id );
 			}
-			$s3object = unserialize( $attachment->s3object );
-			// retrieve region and update the attachment metadata
-			$this->as3cf->get_s3object_region( $s3object, $attachment->ID );
+			foreach( $attachments as $attachment ) {
+				if ( time() >= $finish ) {
+					break;
+				}
+				$s3object = unserialize( $attachment->s3object );
+				// retrieve region and update the attachment metadata
+				$this->as3cf->get_s3object_region( $s3object, $attachment->ID );
+			}
+			if ( 1 != $blog_id && is_multisite() ) {
+				restore_current_blog();
+			}
 		}
+	}
+
+	/**
+	 * Get all attachments that don't have region in their S3 meta
+	 *
+	 * @param $prefix
+	 * @param $limit
+	 *
+	 * @return mixed
+	 */
+	function get_attachments_without_region( $prefix, $limit ) {
+		global $wpdb;
+		$sql = $wpdb->prepare(
+			"SELECT `post_id` as `ID`, `meta_value` AS 's3object'
+    			FROM `{$prefix}postmeta`
+   				WHERE `meta_key` = 'amazonS3_info'
+    			AND `meta_value` NOT LIKE '%%\"region\"%%'
+				LIMIT %d",
+			$limit
+		);
+
+		return $wpdb->get_results( $sql, OBJECT );
 	}
 }
