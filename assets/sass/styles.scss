@@ -1,3 +1,20 @@
+.aws-main {
+  .error {
+  	max-width: 800px;
+	pre {
+	  background: #eaeaea;
+	  background: rgba(0, 0, 0, 0.07);
+	  display: block;
+	  padding: 10px 15px;
+
+	  code {
+	  	padding: 0;
+		background: none;
+	  }
+	}
+  }
+}
+
 .as3cf-settings {
 	select.bucket {
 		margin-bottom: 5px;
