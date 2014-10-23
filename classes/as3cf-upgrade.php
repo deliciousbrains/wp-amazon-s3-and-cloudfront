@@ -168,7 +168,7 @@ class AS3CF_Upgrade {
 		$all_attachments[1] = $attachments;
 
 		if ( is_multisite() ) {
-			$blogs = $this->as3cf->get_blogs();
+			$blogs = $this->as3cf->get_blog_ids();
 			foreach ( $blogs as $blog ) {
 				if ( $count >= $limit ) {
 					break;

@@ -683,22 +683,24 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return array
 	 */
-	function get_blogs() {
-		global $wpdb;
-		$blogs = $wpdb->get_results(
-			"SELECT blog_id
-			FROM {$wpdb->blogs}
-			WHERE spam = '0'
-			AND deleted = '0'
-			AND archived = '0'
-			AND blog_id != 1
-		" );
+	function get_blog_ids() {
+		$args = array(
+			'limit'    => false,
+			'spam'     => 0,
+			'deleted'  => 0,
+			'archived' => 0
+		);
+		$blogs = wp_get_sites( $args );
 
-		$clean_blogs = array();
+		$blog_ids = array();
 		foreach ( $blogs as $blog ) {
-			$clean_blogs[] = $blog->blog_id;
+			if ( 1 == $blog['blog_id'] ) {
+				// ignore the first blog which doesn't have the ID in the table prefix
+				continue;
+			}
+			$blog_ids[] = $blog['blog_id'];
 		}
 
-		return $clean_blogs;
+		return $blog_ids;
 	}
 }
