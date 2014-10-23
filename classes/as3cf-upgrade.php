@@ -164,10 +164,19 @@ class AS3CF_Upgrade {
 		$limit = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
 
 		// query all attachments with amazons3_info without region key in meta
-		$table_prefixes[1] = $prefix;
+		$table_prefixes = array();
+		// find the blog IDs that have been processed so we can skip them
+		$processed_blog_ids = $this->as3cf->get_setting( 'process_blog_ids', array() );
+
+		if ( ! in_array( 1, $processed_blog_ids ) ) {
+			$table_prefixes[1] = $prefix;
+		}
 		if ( is_multisite() ) {
 			$blog_ids = $this->as3cf->get_blog_ids();
 			foreach ( $blog_ids as $blog_id ) {
+				if ( in_array( $blog_id, $processed_blog_ids ) ) {
+					continue;
+				}
 				$table_prefixes[ $blog_id ] = $prefix . $blog_id . '_';
 			}
 		}
@@ -178,25 +187,39 @@ class AS3CF_Upgrade {
 		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
 			$attachments = $this->get_attachments_without_region( $table_prefix, $limit );
 			$count = count( $attachments );
-			$all_count += $count;
-			$all_attachments[ $blog_id ] = $attachments;
+
+			if ( 0 == $count ) {
+				$processed_blog_ids[] = $blog_id;
+			} else {
+				if ( $all_count + $count > $limit ) {
+					$count = $count - ( ( $all_count + $count ) - $limit );
+					$chunks = array_chunk( $attachments, $count );
+					$attachments = $chunks[0];
+				}
+				$all_count += $count;
+				$all_attachments[ $blog_id ] = $attachments;
+			}
 
 			if ( $all_count >= $limit ) {
 				break;
 			}
-
-			$limit = $limit - $count;
 		}
 
 		if ( 0 == $all_count ) {
 			// update post_meta_version
 			$this->as3cf->set_setting( 'post_meta_version', 1 );
+			// remove process_blog_ids temporary setting
+			$this->as3cf->remove_setting( 'process_blog_ids' );
 			$this->as3cf->save_settings();
 			// remove schedule
 			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
 
 			return;
 		}
+
+		// save the new array of processed blog IDs
+		$this->as3cf->set_setting( 'process_blog_ids', $processed_blog_ids );
+		$this->as3cf->save_settings();
 
 		// only process the loop for a certain amount of time
 		$minutes = ( $this->ten_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
