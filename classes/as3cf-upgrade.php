@@ -25,6 +25,7 @@ class AS3CF_Upgrade {
 
 	private $as3cf;
 	private $cron_hook = 'as3cf_schedule_cron_job';
+	private $ten_minutes;
 
 	/**
 	 * Start it up
@@ -33,6 +34,8 @@ class AS3CF_Upgrade {
 	 */
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
+
+		$this->ten_minutes = $this->sanitize_integer( 'as3cf_upgrade_ten_minutes', 10 ); // filtered for testing
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 		add_action( $this->cron_hook, array( $this, 'process_cron_job' ) );
@@ -72,8 +75,8 @@ class AS3CF_Upgrade {
 	function cron_schedules( $schedules ) {
 		// Adds every 10 minutes to the existing schedules.
 		$schedules['as3cf_minutes_10'] = array(
-			'interval' => 600,
-			'display'  => __( 'Every 10 Minutes', 'as3cf' )
+			'interval' => $this->ten_minutes * 60,
+			'display'  => __( 'Every ' . $this->ten_minutes . ' Minutes', 'as3cf' )
 		);
 
 		return $schedules;
@@ -158,8 +161,7 @@ class AS3CF_Upgrade {
 		$prefix = $wpdb->prefix;
 
 		// set the batch size limit for the query
-		$limit = apply_filters( 'as3cf_update_meta_with_region_batch_size', 500 );
-		$limit = is_numeric( $limit ) ? round( $limit ) : 500;
+		$limit = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
 
 		// query all attachment posts with amazons3_info without region key in meta
 		$all_attachments    = array();
@@ -191,7 +193,8 @@ class AS3CF_Upgrade {
 		}
 
 		// only process the loop for a certain amount of time
-		$finish = time() + 480; // 8 minutes so won't run into another instance of cron
+		$minutes = ( $this->ten_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
+		$finish  = time() + $minutes;
 
 		// loop through and update s3 meta with region
 		foreach ( $all_attachments as $blog_id => $attachments ) {
@@ -232,5 +235,19 @@ class AS3CF_Upgrade {
 		);
 
 		return $wpdb->get_results( $sql, OBJECT );
+	}
+
+	/**
+	 * Sanitize an integer passed through a filter
+	 *
+	 * @param $filter - filter tag
+	 * @param $default
+	 *
+	 * @return float
+	 */
+	function sanitize_integer( $filter, $default ) {
+		$number = apply_filters( $filter, $default );
+
+		return is_numeric( $number ) ? round( $number ) : $default;
 	}
 }
