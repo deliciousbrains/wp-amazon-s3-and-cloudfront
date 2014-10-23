@@ -163,26 +163,32 @@ class AS3CF_Upgrade {
 		// set the batch size limit for the query
 		$limit = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
 
-		// query all attachment posts with amazons3_info without region key in meta
-		$all_attachments    = array();
-		$attachments        = $this->get_attachments_without_region( $prefix, $limit );
-		$count              = count( $attachments );
-		$all_attachments[1] = $attachments;
-
+		// query all attachments with amazons3_info without region key in meta
+		$table_prefixes[1] = $prefix;
 		if ( is_multisite() ) {
-			$blogs = $this->as3cf->get_blog_ids();
-			foreach ( $blogs as $blog ) {
-				if ( $count >= $limit ) {
-					break;
-				}
-				$blog_prefix      = $prefix . $blog . '_';
-				$blog_attachments = $this->get_attachments_without_region( $blog_prefix, $limit );
-				$count += count( $blog_attachments );
-				$all_attachments[ $blog ] = $blog_attachments;
+			$blog_ids = $this->as3cf->get_blog_ids();
+			foreach ( $blog_ids as $blog_id ) {
+				$table_prefixes[ $blog_id ] = $prefix . $blog_id . '_';
 			}
 		}
 
-		if ( 0 == $count ) {
+		$all_attachments = array();
+		$all_count = 0;
+
+		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
+			$attachments = $this->get_attachments_without_region( $table_prefix, $limit );
+			$count = count( $attachments );
+			$all_count += $count;
+			$all_attachments[ $blog_id ] = $attachments;
+
+			if ( $all_count >= $limit ) {
+				break;
+			}
+
+			$limit = $limit - $count;
+		}
+
+		if ( 0 == $all_count ) {
 			// update post_meta_version
 			$this->as3cf->set_setting( 'post_meta_version', 1 );
 			$this->as3cf->save_settings();
