@@ -592,25 +592,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	/**
 	 * Checks the user has write permission for S3
-	 * Stores the result in a transient tied to the access key
 	 *
 	 * @param string $bucket
-	 * @param bool   $force_check - overrides the transient set
 	 *
 	 * @return bool
 	 */
-	function check_write_permission( $bucket, $force_check = false ) {
-		// simple encode of access key so it is not stored in db in raw form
-		$transient_key = base64_encode( $this->aws->get_access_key_id() ) . '_permission';
-		if ( ! $force_check && false !== ( $can_write = get_transient( $transient_key ) ) ) {
-			return $can_write;
-		}
-
+	function check_write_permission( $bucket ) {
 		// fire up the filesystem API
 		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
 		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
-			return new WP_Error( 'exception', __( 'There was an error attempting to access the file system', 'as3cf') );
+			return new WP_Error( 'exception', __( 'There was an error attempting to access the file system', 'as3cf' ) );
 		}
 
 		$uploads       = wp_upload_dir();
@@ -620,7 +612,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		// create a temp file to upload
 		$temp_file = $wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
 		if ( false === $temp_file ) {
-			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf') );
+			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf' ) );
 		}
 
 		$args = array(
@@ -646,7 +638,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// delete temp file
 		$wp_filesystem->delete( $file );
-		set_transient( $transient_key, $can_write, 12 * HOUR_IN_SECONDS );
 
 		return $can_write;
 	}

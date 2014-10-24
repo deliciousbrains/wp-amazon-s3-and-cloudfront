@@ -26,8 +26,7 @@ if ( isset( $_GET['updated'] ) ) {
 
 $can_write = true;
 if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
-	$force_check = ( isset( $_GET['action'] ) && 'check_permission' == $_GET['action'] );
-	$can_write = $this->check_write_permission( $buckets[0]['Name'], $force_check );
+	$can_write = $this->check_write_permission( $buckets[0]['Name'] );
 	// catch any file system issues
 	if ( is_wp_error( $can_write ) ) {
 		$this->render_view( 'error', array( 'error' => $can_write ) );
@@ -53,8 +52,6 @@ if ( ! $can_write ) : ?>
     }
   ]
 }</code></pre>
-		<p><a href="<?php echo self_admin_url( 'admin.php?page='. $this->plugin_slug . '&action=check_permission' ); ?>"><?php _e( 'Check again', 'as3cf' ); ?></a></p>
-		
 	</div>
 <?php
 	// don't show the rest of the settings if cannot write

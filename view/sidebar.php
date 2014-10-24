@@ -1,6 +1,6 @@
 <div class="as3cf-sidebar">
 
-	<div class="as3cf-banner"><img src="<?php echo plugins_url( 'asset/img/snail.jpg', $this->plugin_file_path ); ?>" width="292" height="292" alt="" /></div>
+	<div class="as3cf-banner"><img src="<?php echo plugins_url( 'assets/img/snail.jpg', $this->plugin_file_path ); ?>" width="292" height="165" alt="" /></div>
 
 	<form method="post" action="https://deliciousbrains.createsend.com/t/t/s/dlihik/" target="_blank" class="subscribe block">
 		<h2><?php _e( 'Pro Version?', 'as3cf' ); ?></h2>

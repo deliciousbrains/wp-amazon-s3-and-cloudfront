@@ -101,6 +101,12 @@
 	}
 }
 
+.as3cf-banner {
+	img {
+		display: block;
+	}
+}
+
 .as3cf-sidebar {
 	position: absolute;
 	top: 17px;
@@ -239,7 +245,7 @@
 		}
 	}
 
-	@media screen and (max-width: 1252px) {
+	@media screen and (max-width: 1052px) {
 		position: relative;
 		top: auto;
 		right: auto;
