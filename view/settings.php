@@ -146,4 +146,6 @@ endif;
 
 </form>
 
+<?php $this->render_view( 'sidebar' ); ?>
+
 </div>
