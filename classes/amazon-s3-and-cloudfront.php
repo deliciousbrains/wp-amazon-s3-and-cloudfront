@@ -18,6 +18,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
 		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
 
+		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
@@ -109,7 +110,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         	}
 
 			try {
-		        $this->get_s3client()->deleteObjects( array( 
+		        $this->get_s3client()->deleteObjects( array(
 		        	'Bucket' => $bucket,
 		        	'Objects' => $hidpi_images
 		        ) );
@@ -122,7 +123,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         );
 
 		try {
-	        $this->get_s3client()->deleteObjects( array( 
+	        $this->get_s3client()->deleteObjects( array(
 	        	'Bucket' => $bucket,
 	        	'Objects' => $objects
 	        ) );
@@ -224,7 +225,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		        );
 		        $files_to_remove[]   = $path;
 	        }
-        } 
+        }
         elseif ( !empty( $data['sizes'] ) ) {
         	foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
@@ -300,11 +301,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$object_version = date( $date_format, $time ) . '/';
 		$object_version = apply_filters( 'as3cf_get_object_version_string', $object_version );
-		
+
 		return $object_version;
     }
 
-    // Media files attached to a post use the post's date 
+    // Media files attached to a post use the post's date
     // to determine the folder path they are placed in
     function get_attachment_folder_time( $post_id ) {
 		$time = current_time( 'timestamp' );
@@ -395,7 +396,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( false === $new_url ) {
 			return $url;
 		}
-		
+
 		$new_url = apply_filters( 'wps3_get_attachment_url', $new_url, $post_id, $this ); // Old naming convention, will be deprecated soon
 		$new_url = apply_filters( 'as3cf_wp_get_attachment_url', $new_url, $post_id );
 
@@ -457,7 +458,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			$domain_bucket = $s3object['bucket'] . '.' . $prefix . '.amazonaws.com';
 		}
-        
+
         if($size) {
             $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
             if(isset($meta['sizes'][$size]['file'])) {
@@ -507,7 +508,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		echo json_encode( $out );
-		exit;		
+		exit;
 	}
 
 	function create_bucket( $bucket_name ) {
@@ -579,6 +580,29 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $region;
 	}
 
+	/**
+	 * AJAX handler for get_buckets()
+	 */
+	function ajax_get_buckets() {
+		$this->verify_ajax_request();
+
+		$result = $this->get_buckets();
+		if ( is_wp_error( $result ) ) {
+			$out = array( 'error' => $result->get_error_message() );
+		}
+		else {
+			$out = array( 'success' => '1', 'buckets' => $result );
+		}
+
+		echo json_encode( $out );
+		exit;
+	}
+
+	/**
+	 * Get a list of buckets from S3
+	 *
+	 * @return array - list of buckets
+	 */
 	function get_buckets() {
 		try {
 			$result = $this->get_s3client()->listBuckets();
@@ -652,7 +676,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$src = plugins_url( 'assets/js/script' . $suffix . '.js', $this->plugin_file_path );
 		wp_enqueue_script( 'as3cf-script', $src, array( 'jquery' ), $version, true );
-		
+
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
 			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
@@ -690,7 +714,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
-		
+
 		$aws_client = $this->aws->get_client();
 
 		if ( is_wp_error( $aws_client ) ) {
@@ -699,7 +723,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			$this->render_view( 'settings' );
 		}
-		
+
 		$this->aws->render_view( 'footer' );
 	}
 
@@ -709,7 +733,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	// Without the multisite subdirectory
-	function get_base_upload_path() {	
+	function get_base_upload_path() {
 		if ( defined( 'UPLOADS' ) && ! ( is_multisite() && get_site_option( 'ms_files_rewriting' ) ) ) {
 			return ABSPATH . UPLOADS;
 		}
