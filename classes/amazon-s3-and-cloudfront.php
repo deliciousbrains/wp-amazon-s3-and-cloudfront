@@ -464,22 +464,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             }
         }
 
-        // properly encode the file name to be safe
-        $file_name = urlencode( basename( $s3object['key'] ) );
-        $s3object['key'] = str_replace( basename( $s3object['key'] ), $file_name, $s3object['key'] );
-
 		$url = $scheme . '://' . $domain_bucket . '/' . $s3object['key'];
 
 		if ( !is_null( $expires ) ) {
 			try {
 				$expires = time() + $expires;
 			    $secure_url = $this->get_s3client()->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires );
-			    $url .= substr( $secure_url, strpos( $secure_url, '?' ) );
 			}
 			catch ( Exception $e ) {
 				return new WP_Error( 'exception', $e->getMessage() );
 			}
 		}
+
+		// properly encode the file name to be safe
+        $file_name = urlencode( basename( $s3object['key'] ) );
+        $s3object['key'] = str_replace( basename( $s3object['key'] ), $file_name, $s3object['key'] );
+
+        $url = $scheme . '://' . $domain_bucket . '/' . $s3object['key'];
+        if( isset( $secure_url ) ) {
+        	$url .= substr( $secure_url, strpos( $secure_url, '?' ) );
+        }
 
 	    return apply_filters( 'as3cf_get_attachment_url', $url, $s3object, $post_id, $expires );
 	}
