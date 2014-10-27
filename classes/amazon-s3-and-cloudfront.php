@@ -657,6 +657,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$this->render_view( 'error', array( 'error' => $aws_client ) );
 		}
 		else {
+			do_action( 'as3cf_pre_settings_render' );
 			$this->render_view( 'settings' );
 		}
 		
