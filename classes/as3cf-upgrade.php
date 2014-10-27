@@ -26,6 +26,7 @@ class AS3CF_Upgrade {
 	private $as3cf;
 	private $cron_hook = 'as3cf_schedule_cron_job';
 	private $ten_minutes;
+	private $error_threshold;
 
 	/**
 	 * Start it up
@@ -35,10 +36,14 @@ class AS3CF_Upgrade {
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
-		$this->ten_minutes = $this->sanitize_integer( 'as3cf_upgrade_ten_minutes', 10 ); // filtered for testing
+		$this->ten_minutes     = $this->sanitize_integer( 'as3cf_upgrade_ten_minutes', 10 ); // filtered for testing
+		$this->error_threshold = $this->sanitize_integer( 'as3cf_upgrade_error_threshold', 20 );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 		add_action( $this->cron_hook, array( $this, 'process_cron_job' ) );
+
+		add_action( 'as3cf_pre_settings_render', array( $this, 'upgrade_notices' ) );
+		add_action( 'admin_init', array( $this, 'restart_job' ) );
 
 		$this->plugin_upgrades();
 	}
@@ -51,18 +56,74 @@ class AS3CF_Upgrade {
 			return;
 		}
 
+		// check if there are any jobs queued to be restarted
+		$restart = $this->as3cf->get_setting( 'restart_jobs' );
+
 		$current_version = $this->as3cf->get_setting( 'version' );
-		if ( version_compare( $this->as3cf->get_plugin_version(), $current_version, '==' ) ) {
+		if ( ! $restart && version_compare( $this->as3cf->get_plugin_version(), $current_version, '==' ) ) {
 			return;
 		}
 
-		if ( version_compare( $current_version, '0.6.2', '<' ) ) {
-			// update s3 meta with bucket region where missing
-			$this->update_meta_with_region();
-		}
+		// 0.6.2 - update s3 meta with bucket region where missing
+		$this->update_meta_with_region();
 
 		$this->as3cf->set_setting( 'version', $this->as3cf->get_plugin_version() );
 		$this->as3cf->save_settings();
+	}
+
+	/**
+	 * Adds notices about issues with upgrades allowing user to restart them
+	 */
+	function upgrade_notices() {
+		if ( 2 == $this->as3cf->get_setting( 'post_meta_version' ) ) {
+			$msg = __( 'There were a number of errors in our upgrade routine to retrieve the bucket region for uploaded images.', 'as3cf' );
+			$msg .= ' <a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&job=post_meta_version' ) . '">' . __( 'Run again', 'as3cf' ) . '</a>';
+
+			$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
+		}
+	}
+
+	/**
+	 * Generic method to trigger a job to be restarted
+	 */
+	function restart_job() {
+		if ( isset( $_GET['page'] ) && $this->as3cf->get_plugin_slug() && isset( $_GET['job'] ) ) {
+			// reset specific job indicator
+			$this->as3cf->set_setting( $_GET['job'], 0 );
+			// add the job to the array of restart jobs to get passed the version check for upgrade
+			$this->add_job_to_restart_queue( $_GET['job'] );
+			$this->as3cf->save_settings();
+
+			wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
+		}
+	}
+
+	/**
+	 * Add a job to the saved queue of jobs to be restarted
+	 *
+	 * @param $job
+	 */
+	function add_job_to_restart_queue( $job ) {
+		$jobs         = $this->as3cf->get_setting( 'restart_jobs', array() );
+		$jobs[ $job ] = 1;
+		$this->as3cf->set_setting( 'restart_jobs', $jobs );
+	}
+
+	/**
+	 * Removes a job from the saved queue of jobs to be restarted
+	 *
+	 * @param $job
+	 */
+	function remove_job_from_restart_queue( $job ) {
+		$jobs = $this->as3cf->get_setting( 'restart_jobs', array() );
+		if ( isset( $jobs[ $job ] ) ) {
+			unset( $jobs[ $job ] );
+			if ( count( $jobs ) > 0 ) {
+				$this->as3cf->set_setting( 'restart_jobs', $jobs );
+			} else {
+				$this->as3cf->remove_setting( 'restart_jobs' );
+			}
+		}
 	}
 
 	/**
@@ -91,8 +152,8 @@ class AS3CF_Upgrade {
 	 *
 	 * @return bool
 	 */
-	function check_setting_version( $setting, $compare_version, $operator = '<' ) {
-		$setting_version = $this->as3cf->get_setting( $setting );
+	function check_setting_version( $setting, $compare_version, $default_value = '', $operator = '<' ) {
+		$setting_version = $this->as3cf->get_setting( $setting, $default_value );
 
 		return version_compare( $setting_version, $compare_version, $operator );
 	}
@@ -135,10 +196,12 @@ class AS3CF_Upgrade {
 
 	/**
 	 * Wrapper for the cron job to update the region of the bucket in s3 metadata
+	 *
+	 * 'post_meta_version' 0 = not completed, 1 = completed, 2 = failed with errors
 	 */
 	function update_meta_with_region() {
-		// only run update of region if post_meta_version is less than 1
-		if ( ! $this->check_setting_version( 'post_meta_version', 1 ) ) {
+		// only run update of region if post_meta_version is 0
+		if ( $this->check_setting_version( 'post_meta_version', 0, 0, '!=' ) ) {
 			return;
 		}
 		// spawn the cron job to batch update s3 meta with bucket region
@@ -149,25 +212,33 @@ class AS3CF_Upgrade {
 	 * Cron jon to update the region of the bucket in s3 metadata
 	 */
 	function cron_update_meta_with_region() {
+		$job      = __FUNCTION__;
+		$meta_key = 'post_meta_version';
+
 		// check if the cron should even be running
-		if ( ! $this->check_setting_version( 'post_meta_version', 1 ) ) {
+		if ( ! $this->check_setting_version( $meta_key, 1 ) ) {
 			// remove schedule
-			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
+			$this->clear_scheduled_event( $job );
 
 			return;
 		}
+
+		// clear from restart queue if present
+		$this->remove_job_from_restart_queue( $meta_key );
 
 		global $wpdb;
 		$prefix = $wpdb->prefix;
 
 		// set the batch size limit for the query
-		$limit = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
+		$limit     = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
 		$all_limit = $limit;
 
 		// query all attachments with amazons3_info without region key in meta
 		$table_prefixes = array();
+		$job_meta       = $this->as3cf->get_setting( $job, array() );
 		// find the blog IDs that have been processed so we can skip them
-		$processed_blog_ids = $this->as3cf->get_setting( 'process_blog_ids', array() );
+		$processed_blog_ids = isset( $job_meta['processed_blog_ids'] ) ? $job_meta['processed_blog_ids'] : array();
+		$errors             = isset( $job_meta['errors'] ) ? $job_meta['errors'] : 0;
 
 		if ( ! in_array( 1, $processed_blog_ids ) ) {
 			$table_prefixes[1] = $prefix;
@@ -183,11 +254,11 @@ class AS3CF_Upgrade {
 		}
 
 		$all_attachments = array();
-		$all_count = 0;
+		$all_count       = 0;
 
 		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
 			$attachments = $this->get_attachments_without_region( $table_prefix, $limit );
-			$count = count( $attachments );
+			$count       = count( $attachments );
 
 			if ( 0 == $count ) {
 				// no more attachments, record the blog ID to skip next time
@@ -206,19 +277,12 @@ class AS3CF_Upgrade {
 
 		if ( 0 == $all_count ) {
 			// update post_meta_version
-			$this->as3cf->set_setting( 'post_meta_version', 1 );
-			// remove process_blog_ids temporary setting
-			$this->as3cf->remove_setting( 'process_blog_ids' );
-			$this->as3cf->save_settings();
-			// remove schedule
-			$this->clear_scheduled_event( 'cron_update_meta_with_region' );
+			$this->as3cf->set_setting( $meta_key, 1 ); // 1 = upgrade finished
+			// remove temporary settings
+			$this->abort_upgrade_job( $job );
 
 			return;
 		}
-
-		// save the new array of processed blog IDs
-		$this->as3cf->set_setting( 'process_blog_ids', $processed_blog_ids );
-		$this->as3cf->save_settings();
 
 		// only process the loop for a certain amount of time
 		$minutes = ( $this->ten_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
@@ -229,18 +293,49 @@ class AS3CF_Upgrade {
 			if ( 1 != $blog_id && is_multisite() ) {
 				switch_to_blog( $blog_id );
 			}
-			foreach( $attachments as $attachment ) {
+			foreach ( $attachments as $attachment ) {
 				if ( time() >= $finish ) {
 					break;
 				}
 				$s3object = unserialize( $attachment->s3object );
 				// retrieve region and update the attachment metadata
-				$this->as3cf->get_s3object_region( $s3object, $attachment->ID );
+				$region = $this->as3cf->get_s3object_region( $s3object, $attachment->ID );
+				if ( is_wp_error( $region ) ) {
+					// log the error
+					$errors ++;
+					if ( $errors >= $this->error_threshold ) {
+						// abort upgrade process
+						$this->as3cf->set_setting( $meta_key, 2 ); // 2 = aborted with errors
+						$this->abort_upgrade_job( $job );
+
+						return;
+					}
+				}
 			}
 			if ( 1 != $blog_id && is_multisite() ) {
 				restore_current_blog();
 			}
 		}
+
+		// save upgrade related data
+		$job_meta['processed_blog_ids'] = $processed_blog_ids;
+		$job_meta['errors']             = $errors;
+		$this->as3cf->set_setting( $job, $job_meta );
+		$this->as3cf->save_settings();
+	}
+
+	/**
+	 * Abort a scheduled job and remove temporary job related setting
+	 *
+	 * @param       $job
+	 */
+	function abort_upgrade_job( $job ) {
+		// remove the related setting for the job
+		$this->as3cf->remove_setting( $job );
+		// save settings
+		$this->as3cf->save_settings();
+		// remove schedule
+		$this->clear_scheduled_event( $job );
 	}
 
 	/**
