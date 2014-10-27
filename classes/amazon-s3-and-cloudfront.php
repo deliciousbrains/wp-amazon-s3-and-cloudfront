@@ -549,8 +549,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
-			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
-
+			try {
+				$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
+			}
+			catch ( Exception $e ) {
+				return new WP_Error( 'exception', $e->getMessage() );
+			}
 			$s3object['region'] = $region['Location'];
 
 			if ( ! is_null( $post_id ) ) {
@@ -574,6 +578,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function set_s3client_region( $s3object, $post_id = null  ) {
 		$region = $this->get_s3object_region( $s3object, $post_id );
+
+		if ( is_wp_error( $region ) ) {
+			return '';
+		}
 
 		if ( $region ) {
 			$this->get_s3client()->setRegion( $region );
