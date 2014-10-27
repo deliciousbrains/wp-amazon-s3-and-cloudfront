@@ -162,6 +162,7 @@ class AS3CF_Upgrade {
 
 		// set the batch size limit for the query
 		$limit = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
+		$all_limit = $limit;
 
 		// query all attachments with amazons3_info without region key in meta
 		$table_prefixes = array();
@@ -189,20 +190,18 @@ class AS3CF_Upgrade {
 			$count = count( $attachments );
 
 			if ( 0 == $count ) {
+				// no more attachments, record the blog ID to skip next time
 				$processed_blog_ids[] = $blog_id;
 			} else {
-				if ( $all_count + $count > $limit ) {
-					$count = $count - ( ( $all_count + $count ) - $limit );
-					$chunks = array_chunk( $attachments, $count );
-					$attachments = $chunks[0];
-				}
 				$all_count += $count;
 				$all_attachments[ $blog_id ] = $attachments;
 			}
 
-			if ( $all_count >= $limit ) {
+			if ( $all_count >= $all_limit ) {
 				break;
 			}
+
+			$limit = $limit - $count;
 		}
 
 		if ( 0 == $all_count ) {
