@@ -13,13 +13,45 @@
 	  }
 	}
   }
+
+  .as3cf-can-write-error { display: none; }
 }
 
 .as3cf-settings {
 	position: relative;
 	width: 550px;
 	min-height: 800px;
-	
+
+	.as3cf-main-settings { display: none; }
+	&.as3cf-has-bucket {
+		.as3cf-bucket-select { display: none; }
+		.as3cf-main-settings { display: block; }
+	}
+
+	.as3cf-bucket-list {
+		background: #fff;
+		padding: 15px 20px;
+		max-height: 300px;
+		overflow: auto;
+		margin-bottom: 2em;
+
+		li {
+			font-size: 14px;
+			margin: 5px 0;
+		}
+		a {
+			color: #444;
+			text-decoration: none;
+			&:hover { color: #0074A2; }
+			.dashicons { margin-right: 5px; }
+		}
+		&.saving { opacity: 0.5; }
+	}
+
+	.as3cf-create-bucket-form {
+		input[type="text"] { width: 86%; }
+	}
+
 	select.bucket {
 		margin-bottom: 5px;
 		width: 380px;
