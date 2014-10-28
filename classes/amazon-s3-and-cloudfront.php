@@ -19,6 +19,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
 
 		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
+		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
@@ -496,14 +497,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->verify_ajax_request();
 
 		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
-			wp_die( __( 'No bucket name provided.', 'as3cf' ) );
+			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
+			exit;
 		}
 
 		$result = $this->create_bucket( $_POST['bucket_name'] );
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
-		}
-		else {
+		} else {
+			$this->save_bucket( $_POST['bucket_name'] );
 			$out = array( 'success' => '1', '_nonce' => wp_create_nonce( 'as3cf-create-bucket' ) );
 		}
 
@@ -520,6 +522,30 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return true;
+	}
+
+	function ajax_save_bucket() {
+		$this->verify_ajax_request();
+
+		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
+			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
+			exit;
+		}
+
+		$this->save_bucket( $_POST['bucket_name'] );
+
+		$out = array( 'success' => '1' );
+
+		echo json_encode( $out );
+		exit;
+	}
+
+	function save_bucket( $bucket_name ) {
+		if( $bucket_name ) {
+			$this->set_settings( array() );
+			$this->set_setting( 'bucket', $bucket_name );
+			$this->save_settings();
+		}
 	}
 
 	function admin_menu( $aws ) {
@@ -589,9 +615,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$result = $this->get_buckets();
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
-		}
-		else {
-			$out = array( 'success' => '1', 'buckets' => $result );
+		} else {
+			$out = array( 'success' => '1', 'buckets' => $result, 'can_write' => true );
+
+			$can_write = true;
+			if ( is_array( $result ) ) {
+				$can_write = $this->check_write_permission( $result[0]['Name'] );
+				// catch any file system issues
+				if ( is_wp_error( $can_write ) ) {
+					$out['can_write'] = false;
+				}
+			}
 		}
 
 		echo json_encode( $out );
@@ -680,7 +714,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
 			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
-			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' )
+			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
+			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
+			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
+			'save_bucket_error'		=> __( 'Error saving bucket: ', 'as3cf' ),
+			'save_bucket_nonce'		=> wp_create_nonce( 'as3cf-save-bucket' )
 		) );
 
 		$this->handle_post_request();
