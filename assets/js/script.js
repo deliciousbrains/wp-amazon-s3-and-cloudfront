@@ -5,73 +5,112 @@
 		$('.as3cf-settings').each(function() {
 			var $container = $(this);
 
-			$('select.bucket', $container).change(function() {
-				var $select = $(this);
+			if(!$container.hasClass('as3cf-has-bucket')){
+				loadBuckets();
+			}
 
-				if ($select.val() !== 'new') {
-					return;
-				}
+			var $createBucketForm = $container.find('.as3cf-create-bucket-form');
+			if($createBucketForm.length){
+				var $createBucketButton = $createBucketForm.find('button'),
+					origButtonText = $createBucketButton.text();
 
-				var error_func = function(jqXHR, textStatus, errorThrown) {
-					alert(as3cf_i18n.create_bucket_error + errorThrown);
-					$select[0].selectedIndex = 0;
-					console.log( jqXHR );
-					console.log( textStatus );
-					console.log( errorThrown );
-				};
+				$createBucketForm.on('submit', function(e){
+					e.preventDefault();
+					$createBucketButton.text($createBucketButton.attr('data-working'));
 
-				var success_func = function(data, textStatus, jqXHR) {
+					var data = {
+						action: 		'as3cf-create-bucket',
+						bucket_name: 	$createBucketForm.find('input[name="bucket_name"]').val(),
+						_nonce:			as3cf_i18n.create_bucket_nonce
+					};
+
+					$.ajax({
+						url:		ajaxurl,
+						type: 		'POST',
+						dataType: 	'JSON',
+						data: 		data,
+						error: function(jqXHR, textStatus, errorThrown) {
+							$createBucketButton.text(origButtonText);
+							alert(as3cf_i18n.create_bucket_error + errorThrown);
+						},
+						success: function(data, textStatus, jqXHR) {
+							$createBucketButton.text(origButtonText);
+							if (typeof data['success'] !== 'undefined') {
+								$('.as3cf-settings').addClass('as3cf-has-bucket');
+							} else {
+								alert(as3cf_i18n.create_bucket_error + data['error']);
+							}
+						}
+					});
+				});
+			}
+
+		});
+
+		function loadBuckets() {
+			var $bucketList = $('.as3cf-bucket-list');
+			$bucketList.html('<li class="loading">'+ $bucketList.attr('data-working') +'</li>');
+
+			var data = {
+				action: 'as3cf-get-buckets',
+				_nonce: as3cf_i18n.get_buckets_nonce
+			};
+
+			$.ajax({
+				url:		ajaxurl,
+				type: 		'POST',
+				dataType: 	'JSON',
+				data: 		data,
+				error: function(jqXHR, textStatus, errorThrown) {
+					$bucketList.html('');
+					alert(as3cf_i18n.get_buckets_error + errorThrown);
+				},
+				success: function(data, textStatus, jqXHR) {
+					$bucketList.html('');
 					if (typeof data['success'] !== 'undefined') {
-						var opt = document.createElement('option');
-						opt.value = opt.innerHTML = bucket_name;
-						var inserted_at_position = 0;
-						$('option', $select).each(function() {
-							// For some reason, no error occurs when
-							// adding a bucket you've already added
-							if ($(this).val() == bucket_name) {
-								return false;
-							}
-							if ($(this).val() > bucket_name || 'new' == $(this).val() ) {
-								$(opt).insertBefore($(this));
-								return false;
-							}
-							inserted_at_position = inserted_at_position + 1;
+						if(data['can_write'] === false){
+							$('.as3cf-can-write-error').show();
+						}
+
+						$(data['buckets']).each(function(idx, bucket){
+							$bucketList.append('<li><a href="#" data-bucket="'+ bucket.Name +'"><span class="dashicons dashicons-portfolio"></span> '+ bucket.Name +'</a></li>');
 						});
-						$select[0].selectedIndex = inserted_at_position;
-
-						// If they decided to create a new bucket before refreshing
-						// the page, we need another nonce
-						as3cf_i18n.create_bucket_nonce = data['_nonce'];
+					} else {
+						alert(as3cf_i18n.get_buckets_error + data['error']);
 					}
-					else {
-						alert(as3cf_i18n.create_bucket_error + data['error']);
-						$select[0].selectedIndex = 0;
-					}
-				};
-
-				var bucket_name = window.prompt(as3cf_i18n.create_bucket_prompt);
-				if (!bucket_name) {
-					$select[0].selectedIndex = 0;
-					return;
 				}
+			});
+
+			$bucketList.on('click', 'a', function(e){
+				e.preventDefault();
+				$bucketList.addClass('saving');
 
 				var data = {
-					action: 		'as3cf-create-bucket',
-					bucket_name: 	bucket_name,
-					_nonce:			as3cf_i18n.create_bucket_nonce
+					action: 'as3cf-save-bucket',
+					bucket_name: $(this).attr('data-bucket'),
+					_nonce: as3cf_i18n.save_bucket_nonce
 				};
 
 				$.ajax({
 					url:		ajaxurl,
 					type: 		'POST',
 					dataType: 	'JSON',
-					success: 	success_func,
-					error: 		error_func,
-					data: 		data
+					data: 		data,
+					error: function(jqXHR, textStatus, errorThrown) {
+						$bucketList.removeClass('saving');
+						alert(as3cf_i18n.save_bucket_error + errorThrown);
+					},
+					success: function(data, textStatus, jqXHR) {
+						$bucketList.removeClass('saving');
+						if (typeof data['success'] !== 'undefined') {
+							$('.as3cf-settings').addClass('as3cf-has-bucket');
+						} else {
+							alert(as3cf_i18n.save_bucket_error + data['error']);
+						}
+					}
 				});
 			});
-
-		});
+		}
 
 	});
 
