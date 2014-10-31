@@ -6,8 +6,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
-	function __construct( $plugin_file_path, $aws ) {
-		$this->plugin_slug = 'amazon-s3-and-cloudfront';
+	function __construct( $plugin_file_path, $aws, $plugin_slug = false ) {
+
+		$this->plugin_slug = ( $plugin_slug ) ? $plugin_slug : 'amazon-s3-and-cloudfront';
 
 		parent::__construct( $plugin_file_path );
 
