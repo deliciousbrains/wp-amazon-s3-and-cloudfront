@@ -19,6 +19,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 9, 2 );
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 20, 3 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
@@ -93,7 +94,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         	}
 
 			try {
-		        $this->get_s3client()->deleteObjects( array( 
+		        $this->get_s3client()->deleteObjects( array(
 		        	'Bucket' => $s3object['bucket'],
 		        	'Objects' => $hidpi_images
 		        ) );
@@ -106,7 +107,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         );
 
 		try {
-	        $this->get_s3client()->deleteObjects( array( 
+	        $this->get_s3client()->deleteObjects( array(
 	        	'Bucket' => $s3object['bucket'],
 	        	'Objects' => $objects
 	        ) );
@@ -119,7 +120,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         delete_post_meta( $post_id, 'amazonS3_info' );
     }
 
+
     function wp_update_attachment_metadata( $data, $post_id ) {
+    	return $this->wp_generate_attachment_metadata( $data, $post_id, true );
+    }
+
+    function wp_generate_attachment_metadata( $data, $post_id, $updating = false ) {
         if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
             return $data;
         }
@@ -141,27 +147,52 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
-        $s3client = $this->get_s3client();
+        $file_name = basename( $file_path );
+        $files_to_remove = array( $file_path );
+
+        //let's determine if we are restoring or not
+        $restoring = false;
+        if ( $updating && ! empty( $_POST['do'] ) && $_POST['do'] == 'restore' ) {
+        	$restoring = true;
+        }
+
+        //if restoring then the file will not exist anyways.
+
+        if ( ! $restoring && ! file_exists( $file_path ) ) {
+        	return $data;
+        }
 
         $bucket = $this->get_setting( 'bucket' );
 
-        $file_name = basename( $file_path );
-
-        $args = array(
-			'Bucket'     => $bucket,
-			'Key'        => $prefix . $file_name,
-			'SourceFile' => $file_path,
-			'ACL'        => $acl
+        $s3_postmeta_args = array(
+	        'bucket' => $bucket,
+	        'key'    => $prefix . $file_name
         );
 
-        // If far future expiration checked (10 years)
-		if ( $this->get_setting( 'expires' ) ) {
-			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
-		}
+        //make sure original prefix is set for any future restores but ONLY if its not already set.
+        //get post meta to make sure original hasn't already been set
+        $amazonS3_info = get_post_meta( $post_id, 'amazonS3_info', true );
+        $s3_postmeta_args['original_prefix'] = empty( $amazonS3_info['original_prefix'] ) ? $prefix : $amazonS3_info['original_prefix'];
 
-        $files_to_remove = array();
-        if (file_exists($file_path)) {
-            $files_to_remove[] = $file_path;
+        $prefix = $restoring ? $amazonS3_info['original_prefix'] : $prefix;
+        $s3_postmeta_args['key'] = $restoring ? $amazonS3_info['original_prefix'] . $file_name : $s3_postmeta_args['key'];
+
+        //only need to upload anything if NOT restoring.
+        if ( ! $restoring ) {
+	        $s3client = $this->get_s3client();
+
+	        $args = array(
+				'Bucket'     => $bucket,
+				'Key'        => $prefix . $file_name,
+				'SourceFile' => $file_path,
+				'ACL'        => $acl
+	        );
+
+	        // If far future expiration checked (10 years)
+			if ( $this->get_setting( 'expires' ) ) {
+				$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
+			}
+
             try {
                 $s3client->putObject( $args );
             }
@@ -173,10 +204,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
         delete_post_meta( $post_id, 'amazonS3_info' );
 
-        add_post_meta( $post_id, 'amazonS3_info', array(
-	        'bucket' => $bucket,
-	        'key'    => $prefix . $file_name
-        ) );
+        add_post_meta( $post_id, 'amazonS3_info', $s3_postmeta_args );
 
 		$additional_images = array();
 
@@ -187,7 +215,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				'SourceFile' => $path
         	);
         	$files_to_remove[] = $path;
-        } 
+        }
         elseif ( !empty( $data['sizes'] ) ) {
         	foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
@@ -206,7 +234,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	        foreach ( $additional_images as $image ) {
 	        	$hidpi_path = $this->get_hidpi_file_path( $image['SourceFile'] );
-	        	if ( file_exists( $hidpi_path ) ) {
+	        	if ( $restoring || file_exists( $hidpi_path ) ) {
 	        		$hidpi_images[] = array(
 						'Key'        => $this->get_hidpi_file_path( $image['Key'] ),
 						'SourceFile' => $hidpi_path
@@ -216,21 +244,23 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	        }
 
 			$additional_images = array_merge( $additional_images, $hidpi_images );
+	}
+        //again only do if not restoring
+        if ( ! $restoring ) {
+	        foreach ( $additional_images as $image ) {
+				try {
+					$args = array_merge( $args, $image );
+					$s3client->putObject( $args );
+				}
+				catch ( Exception $e ) {
+					error_log( 'Error uploading ' . $args['SourceFile'] . ' to S3: ' . $e->getMessage() );
+				}
 		}
-
-        foreach ( $additional_images as $image ) {
-			try {
-				$args = array_merge( $args, $image );
-				$s3client->putObject( $args );
-			}
-			catch ( Exception $e ) {
-				error_log( 'Error uploading ' . $args['SourceFile'] . ' to S3: ' . $e->getMessage() );
-			}
-        }
 
         if ( $this->get_setting( 'remove-local-file' ) ) {
         	$this->remove_local_files( $files_to_remove );
         }
+	}
 
         return $data;
     }
@@ -261,11 +291,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$object_version = date( $date_format, $time ) . '/';
 		$object_version = apply_filters( 'as3cf_get_object_version_string', $object_version );
-		
+
 		return $object_version;
     }
 
-    // Media files attached to a post use the post's date 
+    // Media files attached to a post use the post's date
     // to determine the folder path they are placed in
     function get_attachment_folder_time( $post_id ) {
 		$time = current_time( 'timestamp' );
@@ -294,7 +324,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( false === $new_url ) {
 			return $url;
 		}
-		
+
 		$new_url = apply_filters( 'wps3_get_attachment_url', $new_url, $post_id, $this ); // Old naming convention, will be deprecated soon
 		$new_url = apply_filters( 'as3cf_wp_get_attachment_url', $new_url, $post_id );
 
@@ -344,7 +374,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			$domain_bucket = $s3object['bucket'] . '.s3.amazonaws.com';
 		}
-        
+
         if($size) {
             $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
             if(isset($meta['sizes'][$size]['file'])) {
@@ -394,7 +424,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		echo json_encode( $out );
-		exit;		
+		exit;
 	}
 
 	function create_bucket( $bucket_name ) {
@@ -440,7 +470,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$src = plugins_url( 'assets/js/script' . $suffix . '.js', $this->plugin_file_path );
 		wp_enqueue_script( 'as3cf-script', $src, array( 'jquery' ), $this->get_installed_version(), true );
-		
+
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
 			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
@@ -478,7 +508,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
-		
+
 		$aws_client = $this->aws->get_client();
 
 		if ( is_wp_error( $aws_client ) ) {
@@ -487,7 +517,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			$this->render_view( 'settings' );
 		}
-		
+
 		$this->aws->render_view( 'footer' );
 	}
 
@@ -497,7 +527,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	// Without the multisite subdirectory
-	function get_base_upload_path() {	
+	function get_base_upload_path() {
 		if ( defined( 'UPLOADS' ) && ! ( is_multisite() && get_site_option( 'ms_files_rewriting' ) ) ) {
 			return ABSPATH . UPLOADS;
 		}
