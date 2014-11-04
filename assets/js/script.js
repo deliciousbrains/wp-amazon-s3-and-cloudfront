@@ -17,10 +17,11 @@
 				$createBucketForm.on('submit', function(e){
 					e.preventDefault();
 					$createBucketButton.text($createBucketButton.attr('data-working'));
+					var bucketName = $createBucketForm.find('input[name="bucket_name"]').val();
 
 					var data = {
 						action: 		'as3cf-create-bucket',
-						bucket_name: 	$createBucketForm.find('input[name="bucket_name"]').val(),
+						bucket_name: 	bucketName,
 						_nonce:			as3cf_i18n.create_bucket_nonce
 					};
 
@@ -37,11 +38,21 @@
 							$createBucketButton.text(origButtonText);
 							if (typeof data['success'] !== 'undefined') {
 								$('.as3cf-settings').addClass('as3cf-has-bucket');
+								$('.as3cf-active-bucket').text(bucketName);
 							} else {
 								alert(as3cf_i18n.create_bucket_error + data['error']);
 							}
 						}
 					});
+				});
+			}
+
+			var $changeBucket = $container.find('.as3cf-change-bucket');
+			if($changeBucket.length){
+				$changeBucket.on('click', function(e){
+					e.preventDefault();
+					$('.as3cf-settings').removeClass('as3cf-has-bucket');
+					loadBuckets();
 				});
 			}
 
@@ -84,10 +95,11 @@
 			$bucketList.on('click', 'a', function(e){
 				e.preventDefault();
 				$bucketList.addClass('saving');
+				var bucketName = $(this).attr('data-bucket');
 
 				var data = {
 					action: 'as3cf-save-bucket',
-					bucket_name: $(this).attr('data-bucket'),
+					bucket_name: bucketName,
 					_nonce: as3cf_i18n.save_bucket_nonce
 				};
 
@@ -104,6 +116,7 @@
 						$bucketList.removeClass('saving');
 						if (typeof data['success'] !== 'undefined') {
 							$('.as3cf-settings').addClass('as3cf-has-bucket');
+							$('.as3cf-active-bucket').text(bucketName);
 						} else {
 							alert(as3cf_i18n.save_bucket_error + data['error']);
 						}
