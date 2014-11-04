@@ -87,7 +87,7 @@ class AS3CF_Upgrade {
 	 * Generic method to trigger a job to be restarted
 	 */
 	function restart_job() {
-		if ( isset( $_GET['page'] ) && $this->as3cf->get_plugin_slug() && isset( $_GET['job'] ) ) {
+		if ( isset( $_GET['page'] ) && $_GET['page'] == $this->as3cf->get_plugin_slug() && isset( $_GET['job'] ) ) {
 			// reset specific job indicator
 			$this->as3cf->set_setting( $_GET['job'], 0 );
 			// add the job to the array of restart jobs to get passed the version check for upgrade
