@@ -62,12 +62,17 @@
 			padding-left: 0;
 			padding-right: 0;
 		}
-
-		tr:first-child {
-			h3 {
-				margin-top: 0;
-			}
+		h3 {
+			font-weight: normal;
+			text-transform: uppercase;
+			margin: 0;
 		}
+		.as3cf-border-bottom td { border-bottom: 1px solid #ddd; }
+	}
+
+	.as3cf-active-bucket {
+		font-weight: bold;
+		margin-right: 10px;
 	}
 
 	.tooltip {
