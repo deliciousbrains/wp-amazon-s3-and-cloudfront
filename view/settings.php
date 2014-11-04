@@ -49,7 +49,37 @@
 			<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
 
 			<table class="form-table">
-				<tr valign="top">
+				<tr class="as3cf-border-bottom">
+					<td><h3><?php _e( 'Bucket', 'as3cf' ); ?></h3></td>
+					<td>
+						<span class="as3cf-active-bucket"><?php echo $this->get_setting( 'bucket' ); ?></span>
+						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2"><h3><?php _e( 'Enable/Disable the Plugin', 'as3cf' ); ?></h3></td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="copy-to-s3" value="1" id="copy-to-s3" <?php echo $this->get_setting( 'copy-to-s3' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Copy Files to S3', 'as3cf' ) ?></h4>
+						<p><?php _e( 'When a file is uploaded to the Media Library, copy it to S3.', 'as3cf' ) ?><br>
+						<?php _e( 'Existing files are <em>not</em> copied to S3.', 'as3cf' ) ?></p>
+					</td>
+				</tr>
+				<tr class="as3cf-border-bottom">
+					<td>
+						<input type="checkbox" name="serve-from-s3" value="1" id="serve-from-s3" <?php echo $this->get_setting( 'serve-from-s3' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Rewrite File URLs', 'as3cf' ) ?></h4>
+						<p><?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs<br>so that they are served from S3/CloudFront instead of your server.', 'as3cf' ) ?></p>
+					</td>
+				</tr>
+
+				<?php /*<tr valign="top">
 					<td>
 						<h3><?php _e( 'S3 Settings', 'as3cf' ); ?></h3>
 
@@ -126,7 +156,7 @@
 					<td>
 						<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'amazon-web-services' ); ?></button>
 					</td>
-				</tr>
+				</tr>*/ ?>
 			</table>
 
 		</form>
