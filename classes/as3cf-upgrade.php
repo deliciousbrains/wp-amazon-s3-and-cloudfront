@@ -217,13 +217,10 @@ class AS3CF_Upgrade {
 
 		// check if the cron should even be running
 		if ( ! $this->check_setting_version( $meta_key, 1 ) ) {
-			// remove schedule
 			$this->clear_scheduled_event( $job );
-
 			return;
 		}
 
-		// clear from restart queue if present
 		$this->remove_job_from_restart_queue( $meta_key );
 
 		global $wpdb;
@@ -276,11 +273,8 @@ class AS3CF_Upgrade {
 		}
 
 		if ( 0 == $all_count ) {
-			// update post_meta_version
 			$this->as3cf->set_setting( $meta_key, 1 ); // 1 = upgrade finished
-			// remove temporary settings
 			$this->abort_upgrade_job( $job );
-
 			return;
 		}
 
@@ -301,7 +295,6 @@ class AS3CF_Upgrade {
 				// retrieve region and update the attachment metadata
 				$region = $this->as3cf->get_s3object_region( $s3object, $attachment->ID );
 				if ( is_wp_error( $region ) ) {
-					// log the error
 					$errors ++;
 					if ( $errors >= $this->error_threshold ) {
 						// abort upgrade process
@@ -317,7 +310,6 @@ class AS3CF_Upgrade {
 			}
 		}
 
-		// save upgrade related data
 		$job_meta['processed_blog_ids'] = $processed_blog_ids;
 		$job_meta['errors']             = $errors;
 		$this->as3cf->set_setting( $job, $job_meta );
@@ -330,11 +322,8 @@ class AS3CF_Upgrade {
 	 * @param       $job
 	 */
 	function abort_upgrade_job( $job ) {
-		// remove the related setting for the job
 		$this->as3cf->remove_setting( $job );
-		// save settings
 		$this->as3cf->save_settings();
-		// remove schedule
 		$this->clear_scheduled_event( $job );
 	}
 
