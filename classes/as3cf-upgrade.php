@@ -25,7 +25,7 @@ class AS3CF_Upgrade {
 
 	private $as3cf;
 	private $cron_hook = 'as3cf_schedule_cron_job';
-	private $ten_minutes;
+	private $cron_interval_in_minutes;
 	private $error_threshold;
 
 	/**
@@ -36,7 +36,7 @@ class AS3CF_Upgrade {
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
-		$this->ten_minutes     = $this->sanitize_integer( 'as3cf_upgrade_ten_minutes', 10 ); // filtered for testing
+		$this->cron_interval_in_minutes = $this->sanitize_integer( 'as3cf_upgrade_cron_interval', 10 );
 		$this->error_threshold = $this->sanitize_integer( 'as3cf_upgrade_error_threshold', 20 );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
@@ -135,9 +135,9 @@ class AS3CF_Upgrade {
 	 */
 	function cron_schedules( $schedules ) {
 		// Adds every 10 minutes to the existing schedules.
-		$schedules['as3cf_minutes_10'] = array(
-			'interval' => $this->ten_minutes * 60,
-			'display'  => __( 'Every ' . $this->ten_minutes . ' Minutes', 'as3cf' )
+		$schedules['as3cf_upgrade_interval'] = array(
+			'interval' => $this->cron_interval_in_minutes * 60,
+			'display'  => __( 'Every ' . $this->cron_interval_in_minutes . ' Minutes', 'as3cf' )
 		);
 
 		return $schedules;
@@ -205,7 +205,7 @@ class AS3CF_Upgrade {
 			return;
 		}
 		// spawn the cron job to batch update s3 meta with bucket region
-		$this->schedule_event( 'cron_update_meta_with_region', 'as3cf_minutes_10' );
+		$this->schedule_event( 'cron_update_meta_with_region', 'as3cf_upgrade_interval' );
 	}
 
 	/**
@@ -285,7 +285,7 @@ class AS3CF_Upgrade {
 		}
 
 		// only process the loop for a certain amount of time
-		$minutes = ( $this->ten_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
+		$minutes = ( $this->cron_interval_in_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
 		$finish  = time() + $minutes;
 
 		// loop through and update s3 meta with region
