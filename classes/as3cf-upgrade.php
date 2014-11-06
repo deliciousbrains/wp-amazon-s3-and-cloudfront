@@ -32,6 +32,7 @@ class AS3CF_Upgrade {
 
 	const STATUS_RUNNING = 1;
 	const STATUS_ERROR = 2;
+	const STATUS_PAUSED = 3;
 
 	/**
 	 * Start it up
@@ -48,7 +49,7 @@ class AS3CF_Upgrade {
 		add_action( self::CRON_HOOK, array( $this, 'cron_update_meta_with_region' ) );
 
 		add_action( 'as3cf_pre_settings_render', array( $this, 'maybe_display_notices' ) );
-		add_action( 'admin_init', array( $this, 'maybe_restart_upgrade' ) );
+		add_action( 'admin_init', array( $this, 'maybe_handle_action' ) );
 
 		$this->maybe_init_upgrade();
 	}
@@ -74,35 +75,67 @@ class AS3CF_Upgrade {
 		// Initialize the upgrade
 		$this->save_session( array( 'status' => self::STATUS_RUNNING ) );
 
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( current_time( 'timestamp' ), self::CRON_SCHEDULE_KEY, self::CRON_HOOK );
-		}
+		$this->schedule_event();
 	}
 
 	/**
 	 * Adds notices about issues with upgrades allowing user to restart them
 	 */
 	function maybe_display_notices() {
+		$restart_url = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' );
+
 		switch ( $this->get_upgrade_status() ) {
+			case self::STATUS_RUNNING :
+				$msg = __( '<strong>Running Meta Data Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the meta data with the bucket region it is served from. This will allow us to serve your files from the proper S3 region domain name (e.g. s3-us-west-2.amazonaws.com). This process will be done quietly in the background.', 'as3cf' );
+				$msg .= ' <strong><a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' ) . '">' . __( 'Pause Update', 'as3cf' ) . '</a></strong>';
+				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				break;
+			case self::STATUS_PAUSED :
+				$msg = __( '<strong>Meta Data Update Paused</strong> &mdash; Updating Media Library meta data has been paused.', 'as3cf' );
+				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Restart Update', 'as3cf' ) . '</a></strong>';
+				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				break;
 			case self::STATUS_ERROR :
-				$msg = __( 'In our attempt to update the meta data for all your Media Library items that have been uploaded to S3, we ran into a snag.', 'as3cf' );
-				$msg .= ' <a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' ) . '">' . __( 'Try run it again', 'as3cf' ) . '</a>';
+				$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
+				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
 				$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
 				break;
 		}
 	}
 
-	/**
-	 * Generic method to trigger a job to be restarted
-	 */
-	function maybe_restart_upgrade() {
-		if ( ! isset( $_GET['page'] ) || $_GET['page'] != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) || 'restart_update_meta_with_region' != $_GET['action'] ) {
+	function maybe_handle_action() {
+		if ( ! isset( $_GET['page'] ) || $_GET['page'] != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) ) {
 			return;
 		}
 
-		// Turn it back on
+		$method_name = 'action_' . $_GET['action'];
+		if ( method_exists( $this, $method_name ) ) {
+			call_user_func( array( $this, $method_name ) );
+		}
+	}
+
+	/**
+	 * Restart upgrade
+	 */
+	function action_restart_update_meta_with_region() {
+		$this->change_status_request( self::STATUS_RUNNING );
+		$this->schedule_event();
+	}
+
+	/**
+	 * Pause upgrade
+	 */
+	function action_pause_update_meta_with_region() {
+		$this->clear_scheduled_event();
+		$this->change_status_request( self::STATUS_PAUSED );
+	}
+
+	/**
+	 * Helper for the above action requests
+	 */
+	function change_status_request( $status ) {
 		$session = $this->get_session();
-		$session['status'] = self::STATUS_RUNNING;
+		$session['status'] = $status;
 		$this->save_session( $session );
 
 		wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
@@ -123,6 +156,15 @@ class AS3CF_Upgrade {
 		);
 
 		return $schedules;
+	}
+
+	/**
+	 * Wrapper for scheduling the cron job
+	 */
+	function schedule_event() {
+		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_schedule_event( current_time( 'timestamp' ), self::CRON_SCHEDULE_KEY, self::CRON_HOOK );
+		}
 	}
 
 	/**
