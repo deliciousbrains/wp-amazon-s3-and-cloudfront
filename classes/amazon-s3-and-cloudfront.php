@@ -4,6 +4,7 @@ use Aws\S3\S3Client;
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
+	const DEFAULT_ACL = 'public-read';
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -171,7 +172,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $file_path = get_attached_file( $post_id, true );
 	    $file_name = basename( $file_path );
 
-        $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
+	    $default_acl = self::DEFAULT_ACL;
+        $acl = apply_filters( 'wps3_upload_acl', $default_acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         $s3client = $this->get_s3client();
