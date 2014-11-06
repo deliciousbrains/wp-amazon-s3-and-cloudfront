@@ -9,5 +9,6 @@
  */
 function as3cf_get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
 	global $as3cf;
-	return $as3cf->get_secure_attachment_url( $post_id, $expires, $size );
+
+	return $as3cf->get_secure_attachment_url( $post_id, $expires, $size, true );
 }
