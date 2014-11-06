@@ -477,9 +477,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Generate a link to download a file from Amazon S3 using query string
 	 * authentication. This link is only valid for a limited amount of time.
 	 *
-	 * @param mixed $post_id Post ID of the attachment or null to use the loop
-	 * @param int $expires Seconds for the link to live
-	 * @param mixed $size Size of the image to get
+	 * @param      $post_id Post ID of the attachment
+	 * @param int  $expires Seconds for the link to live
+	 * @param null $size Size of the image to get
+	 * @param bool $check_serve Force check of serve from S3 setting
+	 *
+	 * @return mixed|void|WP_Error
 	 */
 	function get_secure_attachment_url( $post_id, $expires = null, $size = null, $check_serve = false ) {
 		if ( is_null( $expires ) ) {
