@@ -96,14 +96,16 @@ class AS3CF_Upgrade {
 	 * Generic method to trigger a job to be restarted
 	 */
 	function maybe_restart_upgrade() {
-		if ( isset( $_GET['page'] ) && $_GET['page'] == $this->as3cf->get_plugin_slug() && isset( $_GET['action'] ) && 'restart_update_meta_with_region' == $_GET['action'] ) {
-			// Turn it back on
-			$session = $this->get_session();
-			$session['status'] = self::STATUS_RUNNING;
-			$this->save_session( $session );
-
-			wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
+		if ( ! isset( $_GET['page'] ) || $_GET['page'] != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) || 'restart_update_meta_with_region' != $_GET['action'] ) {
+			return;
 		}
+
+		// Turn it back on
+		$session = $this->get_session();
+		$session['status'] = self::STATUS_RUNNING;
+		$this->save_session( $session );
+
+		wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
 	}
 
 	/**
