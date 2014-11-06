@@ -6,6 +6,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	const DEFAULT_ACL = 'public-read';
 	const PRIVATE_ACL = 'private';
+	const DEFAULT_EXPIRES = 900;
+
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -479,8 +481,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param int $expires Seconds for the link to live
 	 * @param mixed $size Size of the image to get
 	 */
-	function get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
-		return $this->get_attachment_url( $post_id, $expires, $size = null );
+	function get_secure_attachment_url( $post_id, $expires = null, $size = null, $check_serve = false ) {
+		if ( is_null( $expires ) ) {
+			$expires = self::DEFAULT_EXPIRES;
+		}
+		return $this->get_attachment_url( $post_id, $expires, $size, $check_serve );
 	}
 
 	/**
