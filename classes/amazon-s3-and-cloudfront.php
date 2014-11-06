@@ -422,6 +422,47 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $new_url;
 	}
 
+	/**
+	 * Overrides the url for resized images which have a private ACL on S3
+	 * because private thumbnails will break in media modal / upload page
+	 *
+	 * @param $downsize
+	 * @param $attachment_id
+	 * @param $size
+	 *
+	 * @return array
+	 */
+	function image_downsize( $downsize, $attachment_id, $size ) {
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
+			return $downsize;
+		}
+
+		if ( ! isset( $s3object['acl'] ) ) {
+			return $downsize;
+		}
+
+		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
+
+		if ( ! isset( $meta['sizes'][ $size ] ) ) {
+			return $downsize;
+		}
+
+		$size_meta = $meta['sizes'][ $size ];
+
+		list( $width, $height ) = image_constrain_size_for_editor( $size_meta['width'], $size_meta['height'], $size, 'edit' );
+
+		$url = $this->get_attachment_url( $attachment_id, self::DEFAULT_EXPIRES, $size, $meta );
+
+		$downsize = array(
+			$url,
+			$width,
+			$height,
+			true // $is_intermediate
+		);
+
+		return $downsize;
+	}
+
 	function get_attachment_s3_info( $post_id ) {
 		return get_post_meta( $post_id, 'amazonS3_info', true );
 	}
@@ -499,7 +540,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
         
         if($size) {
-            $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
+	        if ( is_null( $meta ) ) {
+		        $meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
+	        }
             if(isset($meta['sizes'][$size]['file'])) {
                 $s3object['key'] = dirname($s3object['key']) . '/' . $meta['sizes'][$size]['file'];
             }
