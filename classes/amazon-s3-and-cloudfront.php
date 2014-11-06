@@ -174,6 +174,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	    $file_name = basename( $file_path );
 
 	    $default_acl = self::DEFAULT_ACL;
+
+	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		    // use existing non default ACL if attachment already exists
+		    if ( isset( $old_s3object['acl'] ) ) {
+			    $default_acl = $old_s3object['acl'];
+		    }
+	    };
+
         $acl = apply_filters( 'wps3_upload_acl', $default_acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
