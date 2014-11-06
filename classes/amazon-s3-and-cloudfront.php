@@ -5,6 +5,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
 	const DEFAULT_ACL = 'public-read';
+	const PRIVATE_ACL = 'private';
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -448,6 +449,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 		else {
 			$region = '';
+		}
+
+		// force use of secured url when ACL has been set to private
+		if ( is_null( $expires ) && isset( $s3object['acl'] ) && self::PRIVATE_ACL == $s3object['acl'] ) {
+			$expires = self::DEFAULT_EXPIRES;
 		}
 
 		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
