@@ -185,6 +185,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    'key'    => $prefix . $file_name
 	    );
 
+	    // store acl if not default
+	    if ( $acl != self::DEFAULT_ACL ) {
+		    $s3object['acl'] = $acl;
+	    }
+
 	    $s3object['region'] = $this->set_s3client_region( $s3object );
 
 	    $args = array(
