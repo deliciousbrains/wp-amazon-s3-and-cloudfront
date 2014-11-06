@@ -135,20 +135,6 @@ class AS3CF_Upgrade {
 		}
 	}
 
-	/** COMMENTING THIS OUT INSTEAD OF REMOVING SO THE DIFF IS CLEARER
-	 * Wrapper for the cron job to update the region of the bucket in s3 metadata
-	 *
-	 * 'post_meta_version' 0 = not completed, 1 = completed, 2 = failed with errors
-	 *
-	function update_meta_with_region() {
-		// only run update of region if post_meta_version is 0
-		if ( $this->check_setting_version( 'post_meta_version', 0, 0, '!=' ) ) {
-			return;
-		}
-		// spawn the cron job to batch update s3 meta with bucket region
-		$this->schedule_event( 'cron_update_meta_with_region', 'as3cf_upgrade_interval' );
-	}*/
-
 	/**
 	 * Cron jon to update the region of the bucket in s3 metadata
 	 */
@@ -257,17 +243,6 @@ class AS3CF_Upgrade {
 
 		$this->save_session( $session );
 	}
-
-	/** COMMENTING THIS OUT INSTEAD OF REMOVING SO THE DIFF IS CLEARER
-	 * Abort a scheduled job and remove temporary job related setting
-	 *
-	 * @param       $job
-	 *
-	function abort_upgrade_job( $job ) {
-		$this->as3cf->remove_setting( $job );
-		$this->as3cf->save_settings();
-		$this->clear_scheduled_event( $job );
-	}*/
 
 	/*
 	 * Get the current status of the upgrade
