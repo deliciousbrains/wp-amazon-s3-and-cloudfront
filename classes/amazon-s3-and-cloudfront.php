@@ -28,8 +28,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
-		add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 3 );
-
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
@@ -283,6 +281,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         foreach ( $additional_images as $image ) {
 			try {
 				$args = array_merge( $args, $image );
+				$args['ACL'] = self::DEFAULT_ACL;
 				$s3client->putObject( $args );
 			}
 			catch ( Exception $e ) {
@@ -423,47 +422,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$new_url = apply_filters( 'as3cf_wp_get_attachment_url', $new_url, $post_id );
 
 		return $new_url;
-	}
-
-	/**
-	 * Overrides the url for resized images which have a private ACL on S3
-	 * because private thumbnails will break in media modal / upload page
-	 *
-	 * @param $downsize
-	 * @param $attachment_id
-	 * @param $size
-	 *
-	 * @return array
-	 */
-	function image_downsize( $downsize, $attachment_id, $size ) {
-		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
-			return $downsize;
-		}
-
-		if ( ! isset( $s3object['acl'] ) ) {
-			return $downsize;
-		}
-
-		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
-
-		if ( ! isset( $meta['sizes'][ $size ] ) ) {
-			return $downsize;
-		}
-
-		$size_meta = $meta['sizes'][ $size ];
-
-		list( $width, $height ) = image_constrain_size_for_editor( $size_meta['width'], $size_meta['height'], $size, 'edit' );
-
-		$url = $this->get_attachment_url( $attachment_id, self::DEFAULT_EXPIRES, $size, $meta );
-
-		$downsize = array(
-			$url,
-			$width,
-			$height,
-			true // $is_intermediate
-		);
-
-		return $downsize;
 	}
 
 	function get_attachment_s3_info( $post_id ) {
