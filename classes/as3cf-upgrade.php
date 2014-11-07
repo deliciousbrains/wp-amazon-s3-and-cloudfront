@@ -24,9 +24,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Upgrade {
 
 	private $as3cf;
-	private $cron_hook = 'as3cf_schedule_cron_job';
 	private $cron_interval_in_minutes;
 	private $error_threshold;
+
+	const CRON_HOOK = 'as3cf_cron_update_meta_with_region';
+	const CRON_SCHEDULE_KEY = 'as3cf_update_meta_with_region_interval';
+
+	const STATUS_RUNNING = 1;
+	const STATUS_ERROR = 2;
+	const STATUS_PAUSED = 3;
 
 	/**
 	 * Start it up
@@ -36,94 +42,103 @@ class AS3CF_Upgrade {
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
-		$this->cron_interval_in_minutes = $this->sanitize_integer( 'as3cf_upgrade_cron_interval', 10 );
-		$this->error_threshold = $this->sanitize_integer( 'as3cf_upgrade_error_threshold', 20 );
+		$this->cron_interval_in_minutes = apply_filters( 'as3cf_update_meta_with_region_interval', 10 );
+		$this->error_threshold = apply_filters( 'as3cf_update_meta_with_region_error_threshold', 20 );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
-		add_action( $this->cron_hook, array( $this, 'process_cron_job' ) );
+		add_action( self::CRON_HOOK, array( $this, 'cron_update_meta_with_region' ) );
 
-		add_action( 'as3cf_pre_settings_render', array( $this, 'upgrade_notices' ) );
-		add_action( 'admin_init', array( $this, 'restart_job' ) );
+		add_action( 'as3cf_pre_settings_render', array( $this, 'maybe_display_notices' ) );
+		add_action( 'admin_init', array( $this, 'maybe_handle_action' ) );
 
-		$this->plugin_upgrades();
+		$this->maybe_init_upgrade();
 	}
 
 	/**
-	 * Process any migrations or data changes needed after a plugin update
+	 * Maybe initialize the upgrade
 	 */
-	function plugin_upgrades() {
+	function maybe_init_upgrade() {
 		if ( ! is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
 			return;
 		}
 
-		// check if there are any jobs queued to be restarted
-		$restart = $this->as3cf->get_setting( 'restart_jobs' );
-
-		$current_version = $this->as3cf->get_setting( 'version' );
-		if ( ! $restart && version_compare( $this->as3cf->get_plugin_version(), $current_version, '==' ) ) {
+		// Have we completed the upgrade yet?
+		if ( $this->as3cf->get_setting( 'post_meta_version', 0 ) > 0 ) {
 			return;
 		}
 
-		// 0.6.2 - update s3 meta with bucket region where missing
-		$this->update_meta_with_region();
+		// If the upgrade status is already set, then we've already initialized the upgrade
+		if ( $this->get_upgrade_status() ) {
+			return;
+		}
 
-		$this->as3cf->set_setting( 'version', $this->as3cf->get_plugin_version() );
-		$this->as3cf->save_settings();
+		// Initialize the upgrade
+		$this->save_session( array( 'status' => self::STATUS_RUNNING ) );
+
+		$this->schedule_event();
 	}
 
 	/**
 	 * Adds notices about issues with upgrades allowing user to restart them
 	 */
-	function upgrade_notices() {
-		if ( 2 == $this->as3cf->get_setting( 'post_meta_version' ) ) {
-			$msg = __( 'There were a number of errors in our upgrade routine to retrieve the bucket region for uploaded images.', 'as3cf' );
-			$msg .= ' <a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&job=post_meta_version' ) . '">' . __( 'Run again', 'as3cf' ) . '</a>';
+	function maybe_display_notices() {
+		$restart_url = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' );
 
-			$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
+		switch ( $this->get_upgrade_status() ) {
+			case self::STATUS_RUNNING :
+				$msg = __( '<strong>Running Meta Data Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the meta data with the bucket region it is served from. This will allow us to serve your files from the proper S3 region domain name (e.g. s3-us-west-2.amazonaws.com). This process will be done quietly in the background.', 'as3cf' );
+				$msg .= ' <strong><a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' ) . '">' . __( 'Pause Update', 'as3cf' ) . '</a></strong>';
+				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				break;
+			case self::STATUS_PAUSED :
+				$msg = __( '<strong>Meta Data Update Paused</strong> &mdash; Updating Media Library meta data has been paused.', 'as3cf' );
+				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Restart Update', 'as3cf' ) . '</a></strong>';
+				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				break;
+			case self::STATUS_ERROR :
+				$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
+				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
+				$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
+				break;
+		}
+	}
+
+	function maybe_handle_action() {
+		if ( ! isset( $_GET['page'] ) || $_GET['page'] != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) ) {
+			return;
+		}
+
+		$method_name = 'action_' . $_GET['action'];
+		if ( method_exists( $this, $method_name ) ) {
+			call_user_func( array( $this, $method_name ) );
 		}
 	}
 
 	/**
-	 * Generic method to trigger a job to be restarted
+	 * Restart upgrade
 	 */
-	function restart_job() {
-		if ( isset( $_GET['page'] ) && $_GET['page'] == $this->as3cf->get_plugin_slug() && isset( $_GET['job'] ) ) {
-			// reset specific job indicator
-			$this->as3cf->set_setting( $_GET['job'], 0 );
-			// add the job to the array of restart jobs to get passed the version check for upgrade
-			$this->add_job_to_restart_queue( $_GET['job'] );
-			$this->as3cf->save_settings();
-
-			wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
-		}
+	function action_restart_update_meta_with_region() {
+		$this->change_status_request( self::STATUS_RUNNING );
+		$this->schedule_event();
 	}
 
 	/**
-	 * Add a job to the saved queue of jobs to be restarted
-	 *
-	 * @param $job
+	 * Pause upgrade
 	 */
-	function add_job_to_restart_queue( $job ) {
-		$jobs         = $this->as3cf->get_setting( 'restart_jobs', array() );
-		$jobs[ $job ] = 1;
-		$this->as3cf->set_setting( 'restart_jobs', $jobs );
+	function action_pause_update_meta_with_region() {
+		$this->clear_scheduled_event();
+		$this->change_status_request( self::STATUS_PAUSED );
 	}
 
 	/**
-	 * Removes a job from the saved queue of jobs to be restarted
-	 *
-	 * @param $job
+	 * Helper for the above action requests
 	 */
-	function remove_job_from_restart_queue( $job ) {
-		$jobs = $this->as3cf->get_setting( 'restart_jobs', array() );
-		if ( isset( $jobs[ $job ] ) ) {
-			unset( $jobs[ $job ] );
-			if ( count( $jobs ) > 0 ) {
-				$this->as3cf->set_setting( 'restart_jobs', $jobs );
-			} else {
-				$this->as3cf->remove_setting( 'restart_jobs' );
-			}
-		}
+	function change_status_request( $status ) {
+		$session = $this->get_session();
+		$session['status'] = $status;
+		$this->save_session( $session );
+
+		wp_redirect( self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() ) );
 	}
 
 	/**
@@ -135,7 +150,7 @@ class AS3CF_Upgrade {
 	 */
 	function cron_schedules( $schedules ) {
 		// Adds every 10 minutes to the existing schedules.
-		$schedules['as3cf_upgrade_interval'] = array(
+		$schedules[ self::CRON_SCHEDULE_KEY ] = array(
 			'interval' => $this->cron_interval_in_minutes * 60,
 			'display'  => __( 'Every ' . $this->cron_interval_in_minutes . ' Minutes', 'as3cf' )
 		);
@@ -144,102 +159,52 @@ class AS3CF_Upgrade {
 	}
 
 	/**
-	 * Helper to compare the version stored in a setting
-	 *
-	 * @param $setting         - name of the setting key
-	 * @param $compare_version - version to compare against
-	 * @param $operator
-	 *
-	 * @return bool
+	 * Wrapper for scheduling the cron job
 	 */
-	function check_setting_version( $setting, $compare_version, $default_value = '', $operator = '<' ) {
-		$setting_version = $this->as3cf->get_setting( $setting, $default_value );
-
-		return version_compare( $setting_version, $compare_version, $operator );
-	}
-
-	/**
-	 * Wrapper for scheduling a cron for a specific job
-	 *
-	 * @param        $job      - callback
-	 * @param string $schedule - schedule interval
-	 */
-	function schedule_event( $job, $schedule = 'hourly' ) {
-		if ( ! wp_next_scheduled( $this->cron_hook ) ) {
-			wp_schedule_event( current_time( 'timestamp' ), $schedule, $this->cron_hook, array( 'job' => $job ) );
+	function schedule_event() {
+		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_schedule_event( current_time( 'timestamp' ), self::CRON_SCHEDULE_KEY, self::CRON_HOOK );
 		}
 	}
 
 	/**
 	 * Wrapper for clearing scheduled events for a specific cron job
-	 *
-	 * @param $job - callback
 	 */
-	function clear_scheduled_event( $job ) {
-		$timestamp = wp_next_scheduled( $this->cron_hook, array( 'job' => $job ) );
+	function clear_scheduled_event() {
+		$timestamp = wp_next_scheduled( self::CRON_HOOK );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, $this->cron_hook, array( 'job' => $job ) );
+			wp_unschedule_event( $timestamp, self::CRON_HOOK );
 		}
-	}
-
-	/**
-	 * Main cron job to run various jobs, hooked into the cron action
-	 *
-	 * @param       $job  - method callback
-	 * @param array $args - additional args passed to the callback
-	 */
-	function process_cron_job( $job, $args = array() ) {
-		if ( method_exists( 'AS3CF_Upgrade', $job ) ) {
-			call_user_func( array( $this, $job ), $args );
-		}
-	}
-
-	/**
-	 * Wrapper for the cron job to update the region of the bucket in s3 metadata
-	 *
-	 * 'post_meta_version' 0 = not completed, 1 = completed, 2 = failed with errors
-	 */
-	function update_meta_with_region() {
-		// only run update of region if post_meta_version is 0
-		if ( $this->check_setting_version( 'post_meta_version', 0, 0, '!=' ) ) {
-			return;
-		}
-		// spawn the cron job to batch update s3 meta with bucket region
-		$this->schedule_event( 'cron_update_meta_with_region', 'as3cf_upgrade_interval' );
 	}
 
 	/**
 	 * Cron jon to update the region of the bucket in s3 metadata
 	 */
 	function cron_update_meta_with_region() {
-		$job      = __FUNCTION__;
-		$meta_key = 'post_meta_version';
-
-		// check if the cron should even be running
-		if ( ! $this->check_setting_version( $meta_key, 1 ) ) {
-			$this->clear_scheduled_event( $job );
+		// Check if the cron should even be running
+		if ( $this->as3cf->get_setting( 'post_meta_version', 0 ) > 0 || $this->get_upgrade_status() != self::STATUS_RUNNING ) {
+			$this->clear_scheduled_event();
 			return;
 		}
-
-		$this->remove_job_from_restart_queue( $meta_key );
 
 		global $wpdb;
 		$prefix = $wpdb->prefix;
 
 		// set the batch size limit for the query
-		$limit     = $this->sanitize_integer( 'as3cf_update_meta_with_region_batch_size', 500 );
+		$limit     = apply_filters( 'as3cf_update_meta_with_region_batch_size', 500 );
 		$all_limit = $limit;
 
-		// query all attachments with amazons3_info without region key in meta
 		$table_prefixes = array();
-		$job_meta       = $this->as3cf->get_setting( $job, array() );
+		$session 		= $this->get_session();
+
 		// find the blog IDs that have been processed so we can skip them
-		$processed_blog_ids = isset( $job_meta['processed_blog_ids'] ) ? $job_meta['processed_blog_ids'] : array();
-		$errors             = isset( $job_meta['errors'] ) ? $job_meta['errors'] : 0;
+		$processed_blog_ids = isset( $session['processed_blog_ids'] ) ? $session['processed_blog_ids'] : array();
+		$error_count		= isset( $session['error_count'] ) ? $session['error_count'] : 0;
 
 		if ( ! in_array( 1, $processed_blog_ids ) ) {
 			$table_prefixes[1] = $prefix;
 		}
+
 		if ( is_multisite() ) {
 			$blog_ids = $this->as3cf->get_blog_ids();
 			foreach ( $blog_ids as $blog_id ) {
@@ -273,13 +238,19 @@ class AS3CF_Upgrade {
 		}
 
 		if ( 0 == $all_count ) {
-			$this->as3cf->set_setting( $meta_key, 1 ); // 1 = upgrade finished
-			$this->abort_upgrade_job( $job );
+			$this->as3cf->set_setting( 'post_meta_version', 1 );
+			$this->as3cf->remove_setting( 'update_meta_with_region_session' );
+			$this->as3cf->save_settings();
+			$this->clear_scheduled_event();
 			return;
 		}
 
 		// only process the loop for a certain amount of time
-		$minutes = ( $this->cron_interval_in_minutes * 60 ) * 0.8; // smaller time limit so won't run into another instance of cron
+		$minutes = $this->cron_interval_in_minutes * 60;
+
+		// smaller time limit so won't run into another instance of cron
+		$minutes = $minutes * 0.8;
+
 		$finish  = time() + $minutes;
 
 		// loop through and update s3 meta with region
@@ -295,12 +266,11 @@ class AS3CF_Upgrade {
 				// retrieve region and update the attachment metadata
 				$region = $this->as3cf->get_s3object_region( $s3object, $attachment->ID );
 				if ( is_wp_error( $region ) ) {
-					$errors ++;
-					if ( $errors >= $this->error_threshold ) {
-						// abort upgrade process
-						$this->as3cf->set_setting( $meta_key, 2 ); // 2 = aborted with errors
-						$this->abort_upgrade_job( $job );
-
+					$error_count++;
+					if ( $error_count >= $this->error_threshold ) {
+						$session['status'] = self::STATUS_ERROR;
+						$this->save_session( $session );
+						$this->clear_scheduled_event();
 						return;
 					}
 				}
@@ -310,21 +280,43 @@ class AS3CF_Upgrade {
 			}
 		}
 
-		$job_meta['processed_blog_ids'] = $processed_blog_ids;
-		$job_meta['errors']             = $errors;
-		$this->as3cf->set_setting( $job, $job_meta );
-		$this->as3cf->save_settings();
+		$session['processed_blog_ids'] = $processed_blog_ids;
+		$session['error_count']        = $error_count;
+
+		$this->save_session( $session );
 	}
 
-	/**
-	 * Abort a scheduled job and remove temporary job related setting
-	 *
-	 * @param       $job
+	/*
+	 * Get the current status of the upgrade
+	 * See STATUS_* constants in the class declaration above.
 	 */
-	function abort_upgrade_job( $job ) {
-		$this->as3cf->remove_setting( $job );
+	function get_upgrade_status() {
+		$session = $this->get_session();
+
+		if ( ! isset( $session['status'] ) ) {
+			return '';
+		}
+
+		return $session['status'];
+	}
+
+	/*
+	 * Retrieve session data from plugin settings
+	 *
+	 * @return array
+	 */
+	function get_session() {
+		return $this->as3cf->get_setting( 'update_meta_with_region_session', array() );
+	}
+
+	/*
+	 * Store data to be used between requests in plugin settings
+	 *
+	 * @param $session array of session data to store
+	 */
+	function save_session( $session ) {
+		$this->as3cf->set_setting( 'update_meta_with_region_session', $session );
 		$this->as3cf->save_settings();
-		$this->clear_scheduled_event( $job );
 	}
 
 	/**
@@ -347,19 +339,5 @@ class AS3CF_Upgrade {
 		);
 
 		return $wpdb->get_results( $sql, OBJECT );
-	}
-
-	/**
-	 * Sanitize an integer passed through a filter
-	 *
-	 * @param $filter - filter tag
-	 * @param $default
-	 *
-	 * @return float
-	 */
-	function sanitize_integer( $filter, $default ) {
-		$number = apply_filters( $filter, $default );
-
-		return is_numeric( $number ) ? round( $number ) : $default;
 	}
 }

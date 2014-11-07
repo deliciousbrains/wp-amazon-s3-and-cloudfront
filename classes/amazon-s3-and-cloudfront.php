@@ -702,17 +702,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
-		
+
 		$aws_client = $this->aws->get_client();
 
 		if ( is_wp_error( $aws_client ) ) {
-			$this->render_view( 'error', array( 'error' => $aws_client ) );
+			$this->render_view( 'error-fatal', array( 'message' => $aws_client->get_error_message() ) );
 		}
 		else {
 			do_action( 'as3cf_pre_settings_render' );
 			$this->render_view( 'settings' );
 		}
-		
+
 		$this->aws->render_view( 'footer' );
 	}
 
