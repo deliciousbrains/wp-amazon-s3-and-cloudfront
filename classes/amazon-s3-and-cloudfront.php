@@ -17,6 +17,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$this->aws = $aws;
 
+		// fire up the plugin upgrade checker
+		new AS3CF_Upgrade( $this );
+
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
 
 		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
@@ -51,7 +54,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$value = AS3CF_BUCKET;
 		}
 		else {
-			$value = parent::get_setting( $key );
+			$value = parent::get_setting( $key, $default );
 		}
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
@@ -633,8 +636,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
-			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
-
+			try {
+				$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
+			}
+			catch ( Exception $e ) {
+				return new WP_Error( 'exception', $e->getMessage() );
+			}
 			$s3object['region'] = $region['Location'];
 
 			if ( ! is_null( $post_id ) ) {
@@ -658,6 +665,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function set_s3client_region( $s3object, $post_id = null  ) {
 		$region = $this->get_s3object_region( $s3object, $post_id );
+
+		if ( is_wp_error( $region ) ) {
+			return '';
+		}
 
 		if ( $region ) {
 			$this->get_s3client()->setRegion( $region );
@@ -758,10 +769,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$this->set_settings( array() );
-
 		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+
 		foreach ( $post_vars as $var ) {
+			$this->remove_setting( $var );
+
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
 			}
@@ -777,16 +789,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
-		
+
 		$aws_client = $this->aws->get_client();
 
 		if ( is_wp_error( $aws_client ) ) {
-			$this->render_view( 'error', array( 'error' => $aws_client ) );
+			$this->render_view( 'error-fatal', array( 'message' => $aws_client->get_error_message() ) );
 		}
 		else {
+			do_action( 'as3cf_pre_settings_render' );
 			$this->render_view( 'settings' );
 		}
-		
+
 		$this->aws->render_view( 'footer' );
 	}
 
@@ -796,7 +809,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	// Without the multisite subdirectory
-	function get_base_upload_path() {	
+	function get_base_upload_path() {
 		if ( defined( 'UPLOADS' ) && ! ( is_multisite() && get_site_option( 'ms_files_rewriting' ) ) ) {
 			return ABSPATH . UPLOADS;
 		}
@@ -813,4 +826,29 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 	}
 
+	/**
+	 * Get all the blog IDs for the multisite network used for table prefixes
+	 *
+	 * @return array
+	 */
+	function get_blog_ids() {
+		$args = array(
+			'limit'    => false,
+			'spam'     => 0,
+			'deleted'  => 0,
+			'archived' => 0
+		);
+		$blogs = wp_get_sites( $args );
+
+		$blog_ids = array();
+		foreach ( $blogs as $blog ) {
+			if ( 1 == $blog['blog_id'] ) {
+				// ignore the first blog which doesn't have the ID in the table prefix
+				continue;
+			}
+			$blog_ids[] = $blog['blog_id'];
+		}
+
+		return $blog_ids;
+	}
 }
