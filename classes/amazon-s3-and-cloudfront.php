@@ -24,10 +24,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
-		if ( $this->get_setting( 'serve-from-s3' ) ) {
-			add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
-			add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 3 );
-		}
+		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
+		add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 3 );
 
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
@@ -480,15 +478,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param      $post_id Post ID of the attachment
 	 * @param int  $expires Seconds for the link to live
 	 * @param null $size Size of the image to get
-	 * @param bool $check_serve Force check of serve from S3 setting
 	 *
 	 * @return mixed|void|WP_Error
 	 */
-	function get_secure_attachment_url( $post_id, $expires = null, $size = null, $check_serve = false ) {
+	function get_secure_attachment_url( $post_id, $expires = null, $size = null ) {
 		if ( is_null( $expires ) ) {
 			$expires = self::DEFAULT_EXPIRES;
 		}
-		return $this->get_attachment_url( $post_id, $expires, $size, $check_serve );
+		return $this->get_attachment_url( $post_id, $expires, $size );
 	}
 
 	/**
@@ -498,12 +495,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param null $expires Seconds for the link to live
 	 * @param null $size Size of the image to get
 	 * @param null $meta Pre retrieved _wp_attachment_metadata for the attachment
-	 * @param bool $check_serve Force check of serve from S3 setting
 	 *
 	 * @return bool|mixed|void|WP_Error
 	 */
-	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null, $check_serve = false ) {
-		if ( $check_serve && ! $this->get_setting( 'serve-from-s3' ) ) {
+	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
 			return false;
 		}
 
