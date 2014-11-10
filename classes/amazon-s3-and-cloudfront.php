@@ -157,19 +157,23 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    return $data;
 	    }
 
-	    if ( isset( $data['file'] ) ) {
-		    $time = untrailingslashit( dirname( $data['file'] ) );
+	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		    $prefix = trailingslashit( dirname( $old_s3object['key'] ) );
 	    } else {
-		    $time = $this->get_attachment_folder_time( $post_id );
-		    $time = date( 'Y/m', $time );
+		    if ( isset( $data['file'] ) ) {
+			    $time = untrailingslashit( dirname( $data['file'] ) );
+		    } else {
+			    $time = $this->get_attachment_folder_time( $post_id );
+			    $time = date( 'Y/m', $time );
+		    }
+
+		    $prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		    $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+
+		    if ( $this->get_setting( 'object-versioning' ) ) {
+			    $prefix .= $this->get_object_version_string( $post_id );
+		    }
 	    }
-
-		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
-        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
-
-        if ( $this->get_setting( 'object-versioning' ) ) {
-        	$prefix .= $this->get_object_version_string( $post_id );
-        }
 
         $file_path = get_attached_file( $post_id, true );
 	    $file_name = basename( $file_path );
