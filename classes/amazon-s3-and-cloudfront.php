@@ -161,9 +161,24 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    return $data;
 	    }
 
+	    $acl = self::DEFAULT_ACL;
+
+	    // check the attachment already exists in S3, eg. edit or restore image
 	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		    // use existing non default ACL if attachment already exists
+		    if ( isset( $old_s3object['acl'] ) ) {
+			    $acl = $old_s3object['acl'];
+		    }
+		    // use existing prefix
 		    $prefix = trailingslashit( dirname( $old_s3object['key'] ) );
+		    // use existing bucket
+		    $bucket = $old_s3object['bucket'];
+		    // get existing region
+		    if ( isset( $old_s3object['region'] ) ) {
+			    $region = $old_s3object['region'];
+		    };
 	    } else {
+		    // derive prefix from various settings
 		    if ( isset( $data['file'] ) ) {
 			    $time = untrailingslashit( dirname( $data['file'] ) );
 		    } else {
@@ -177,28 +192,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    if ( $this->get_setting( 'object-versioning' ) ) {
 			    $prefix .= $this->get_object_version_string( $post_id );
 		    }
+			// use bucket from settings
+		    $bucket = $this->get_setting( 'bucket' );
 	    }
 
         $file_path = get_attached_file( $post_id, true );
 	    $file_name = basename( $file_path );
 
-	    $default_acl = self::DEFAULT_ACL;
-
-	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
-		    // use existing non default ACL if attachment already exists
-		    if ( isset( $old_s3object['acl'] ) ) {
-			    $default_acl = $old_s3object['acl'];
-		    }
-	    };
-
-        $acl = apply_filters( 'wps3_upload_acl', $default_acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
+        $acl = apply_filters( 'wps3_upload_acl', $acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         $s3client = $this->get_s3client();
 
-	    $bucket = $this->get_setting( 'bucket' );
-
-	    $s3object = array(
+		$s3object = array(
 		    'bucket' => $bucket,
 		    'key'    => $prefix . $file_name
 	    );
@@ -208,6 +214,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    $s3object['acl'] = $acl;
 	    }
 
+	    // use existing region
+	    if ( isset( $region ) ){
+		    $s3object['region'] = $region;
+	    }
+
+		// retrieve region when necessary and set the region of the s3client
 	    $s3object['region'] = $this->set_s3client_region( $s3object );
 
 	    $args = array(
