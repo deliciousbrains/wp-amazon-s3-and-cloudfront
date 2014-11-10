@@ -4,6 +4,10 @@ use Aws\S3\S3Client;
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
+	const DEFAULT_ACL = 'public-read';
+	const PRIVATE_ACL = 'private';
+	const DEFAULT_EXPIRES = 900;
+
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -23,8 +27,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
@@ -178,7 +182,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $file_path = get_attached_file( $post_id, true );
 	    $file_name = basename( $file_path );
 
-        $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
+	    $default_acl = self::DEFAULT_ACL;
+
+	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		    // use existing non default ACL if attachment already exists
+		    if ( isset( $old_s3object['acl'] ) ) {
+			    $default_acl = $old_s3object['acl'];
+		    }
+	    };
+
+        $acl = apply_filters( 'wps3_upload_acl', $default_acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         $s3client = $this->get_s3client();
@@ -189,6 +202,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    'bucket' => $bucket,
 		    'key'    => $prefix . $file_name
 	    );
+
+	    // store acl if not default
+	    if ( $acl != self::DEFAULT_ACL ) {
+		    $s3object['acl'] = $acl;
+	    }
 
 	    $s3object['region'] = $this->set_s3client_region( $s3object );
 
@@ -267,6 +285,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         foreach ( $additional_images as $image ) {
 			try {
 				$args = array_merge( $args, $image );
+				$args['ACL'] = self::DEFAULT_ACL;
 				$s3client->putObject( $args );
 			}
 			catch ( Exception $e ) {
@@ -421,16 +440,35 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Generate a link to download a file from Amazon S3 using query string
 	 * authentication. This link is only valid for a limited amount of time.
 	 *
-	 * @param mixed $post_id Post ID of the attachment or null to use the loop
-	 * @param int $expires Seconds for the link to live
-	 * @param mixed $size Size of the image to get
+	 * @param      $post_id Post ID of the attachment
+	 * @param int  $expires Seconds for the link to live
+	 * @param null $size Size of the image to get
+	 *
+	 * @return mixed|void|WP_Error
 	 */
-	function get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
-		return $this->get_attachment_url( $post_id, $expires, $size = null );
+	function get_secure_attachment_url( $post_id, $expires = null, $size = null ) {
+		if ( is_null( $expires ) ) {
+			$expires = self::DEFAULT_EXPIRES;
+		}
+		return $this->get_attachment_url( $post_id, $expires, $size );
 	}
 
-	function get_attachment_url( $post_id, $expires = null, $size = null ) {
-		if ( !$this->get_setting( 'serve-from-s3' ) || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+	/**
+	 * Get the url of the file from Amazon S3
+	 *
+	 * @param      $post_id Post ID of the attachment
+	 * @param null $expires Seconds for the link to live
+	 * @param null $size Size of the image to get
+	 * @param null $meta Pre retrieved _wp_attachment_metadata for the attachment
+	 *
+	 * @return bool|mixed|void|WP_Error
+	 */
+	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
+			return false;
+		}
+
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
 
@@ -450,6 +488,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$region = '';
 		}
 
+		// force use of secured url when ACL has been set to private
+		if ( is_null( $expires ) && isset( $s3object['acl'] ) && self::PRIVATE_ACL == $s3object['acl'] ) {
+			$expires = self::DEFAULT_EXPIRES;
+		}
+
 		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
 
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
@@ -466,7 +509,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
         
         if($size) {
-            $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
+	        if ( is_null( $meta ) ) {
+		        $meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
+	        }
             if(isset($meta['sizes'][$size]['file'])) {
                 $s3object['key'] = dirname($s3object['key']) . '/' . $meta['sizes'][$size]['file'];
             }
