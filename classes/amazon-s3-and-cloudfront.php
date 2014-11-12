@@ -482,8 +482,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return false;
 		}
 
-		if ( is_null( $s3object ) && ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
-			return false;
+		// check that the file has been uploaded to S3 unless we already have the S3 meta
+		if ( is_null( $s3object ) ) {
+			if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+				return false;
+			}
 		}
 
 		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
