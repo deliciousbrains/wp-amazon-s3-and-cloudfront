@@ -1,18 +1,14 @@
 <?php
 /**
- * Alias of as3cf_get_secure_attachment_url for backward compatibility
- * Will be depreated in a later version
+ * API function to generate a link to download a file from Amazon S3 using 
+ * query string authentication, expiring after a set amount of time.
  *
- * @since 2.0
- * @access public
  * @param mixed $post_id Post ID of the attachment or null to use the loop
- * @param int $expires Secondes for the link to live
- * @return array
+ * @param int $expires Seconds for the link to live
+ * @param mixed $size Size of the image to get
  */
-function wps3_get_secure_attachment_url( $post_id, $expires = 900, $deprecated = '' ) {
-	return as3cf_get_secure_attachment_url( $post_id, $expires = 900 );
-}
+function as3cf_get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
+	global $as3cf;
 
-function as3cf_get_secure_attachment_url( $post_id, $expires = 900, $operation = 'GET' ) {
-
+	return $as3cf->get_secure_attachment_url( $post_id, $expires, $size );
 }

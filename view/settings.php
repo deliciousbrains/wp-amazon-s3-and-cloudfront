@@ -23,6 +23,40 @@ if ( isset( $_GET['updated'] ) ) {
 	</div>
 	<?php
 }
+
+$can_write = true;
+if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
+	$can_write = $this->check_write_permission( $buckets[0]['Name'] );
+	// catch any file system issues
+	if ( is_wp_error( $can_write ) ) {
+		$this->render_view( 'error', array( 'error' => $can_write ) );
+		return;
+	}
+}
+// display a error message if the user does not have write permission to S3
+if ( ! $can_write ) : ?>
+	<div class="error">
+		<p>
+			<strong>
+				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
+			</strong>&mdash;
+			<?php printf( __( 'You need to go to  <a href="%s">Identity and Access Management</a> in your AWS console and manage the policy for the user you\'re using for this plugin. Your policy should look something like the following:', 'as3cf' ), 'https://console.aws.amazon.com/iam/home' ); ?>
+		</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": "*"
+    }
+  ]
+}</code></pre>
+	</div>
+<?php
+	// don't show the rest of the settings if cannot write
+	return;
+endif;
 ?>
 
 <form method="post">
@@ -111,5 +145,7 @@ if ( isset( $_GET['updated'] ) ) {
 </table>
 
 </form>
+
+<?php $this->render_view( 'sidebar' ); ?>
 
 </div>
