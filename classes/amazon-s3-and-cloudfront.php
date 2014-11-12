@@ -570,11 +570,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param $data
 	 * @param $post_id
 	 *
-	 * @return bool
+	 * @return mixed Attachment meta data
 	 */
 	function maybe_encoded_file_of_resized_images( $data, $post_id ) {
 		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
-			return false;
+			return $data;
 		}
 
 		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
