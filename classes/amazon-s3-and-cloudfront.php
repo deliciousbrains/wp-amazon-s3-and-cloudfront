@@ -472,21 +472,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param      $post_id Post ID of the attachment
 	 * @param null $expires Seconds for the link to live
 	 * @param null $size Size of the image to get
-	 * @param null $s3object optionally use already retrieved s3 meta
 	 * @param null $meta Pre retrieved _wp_attachment_metadata for the attachment
 	 *
 	 * @return mixed|void
 	 */
-	function get_attachment_url( $post_id, $expires = null, $size = null, $s3object = null, $meta = null ) {
+	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null ) {
 		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
 			return false;
 		}
 
-		// check that the file has been uploaded to S3 unless we already have the S3 meta
-		if ( is_null( $s3object ) ) {
-			if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
-				return false;
-			}
+		// check that the file has been uploaded to S3
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+			return false;
 		}
 
 		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
