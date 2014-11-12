@@ -296,9 +296,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
 		}
 
+	    // if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
+	    // then we need to remove the edited image versions
         if ( isset( $_POST['do'] ) && 'restore' == $_POST['do'] && defined( 'IMAGE_EDIT_OVERWRITE') && IMAGE_EDIT_OVERWRITE ) {
-		    // if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
-		    // then we need to remove the edited image versions
 		    $objects_to_remove = array();
 		    $this->prepare_intermediate_images_to_remove( $post_id, $objects_to_remove, $prefix );
 		    $this->delete_s3_objects( $bucket, $objects_to_remove, true );
