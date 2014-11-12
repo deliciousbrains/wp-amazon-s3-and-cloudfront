@@ -299,9 +299,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	    // if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
 	    // then we need to remove the edited image versions
         if ( isset( $_POST['do'] ) && 'restore' == $_POST['do'] && defined( 'IMAGE_EDIT_OVERWRITE') && IMAGE_EDIT_OVERWRITE ) {
-		    $objects_to_remove = array();
-		    $this->prepare_intermediate_images_to_remove( $post_id, $objects_to_remove, $prefix );
-		    $this->delete_s3_objects( $bucket, $objects_to_remove, true );
+	        $objects_to_remove = array();
+	        // edited main file
+	        $meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
+	        $objects_to_remove[] = array(
+		        'Key' => path_join( $prefix, basename( $meta['file'] ) )
+	        );
+	        // edited resized image files
+	        $this->prepare_intermediate_images_to_remove( $post_id, $objects_to_remove, $prefix );
+	        $this->delete_s3_objects( $bucket, $objects_to_remove, true );
 	    }
 
 	    $files_to_remove = array();
