@@ -28,9 +28,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
-		add_filter( 'image_downsize', array( $this, 'maybe_encoded_resized_image_urls' ), 10, 3 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
 
@@ -544,58 +544,78 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		// Encode file names according to RFC 3986 when generating urls
-		// As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
-		$file_path = dirname( $s3object['key'] );
-		$file_name = rawurlencode( basename( $s3object['key'] ) );
+		// encode file
+		$file = $this->encode_filename_in_path( $s3object['key'] );
 
-		$url = $scheme . '://' . $domain_bucket . '/' . $file_path . '/' . $file_name;
-        if( isset( $secure_url ) ) {
-        	$url .= substr( $secure_url, strpos( $secure_url, '?' ) );
-        }
+		$url = $scheme . '://' . $domain_bucket . '/' . $file;
+		if ( isset( $secure_url ) ) {
+			$url .= substr( $secure_url, strpos( $secure_url, '?' ) );
+		}
 
 	    return apply_filters( 'as3cf_get_attachment_url', $url, $s3object, $post_id, $expires );
 	}
 
 	/**
-	 * Overrides the url for resized images when the file name needs to be encoded
-	 * according to RFC 3986
+	 * Override the attachment metadata
 	 *
-	 * @param $downsize
-	 * @param $attachment_id
-	 * @param $size
+	 * @param $data
+	 * @param $post_id
 	 *
-	 * @return array
+	 * @return mixed
 	 */
-	function maybe_encoded_resized_image_urls( $downsize, $attachment_id, $size ) {
-		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
-			return $downsize;
+	function wp_get_attachment_metadata( $data, $post_id ) {
+		return $this->maybe_encoded_file_of_resized_images( $data, $post_id );
+	}
+
+	/**
+	 * Encodes the file names for resized image files for an attachment where necessary
+	 *
+	 * @param $data
+	 * @param $post_id
+	 *
+	 * @return bool
+	 */
+	function maybe_encoded_file_of_resized_images( $data, $post_id ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
+			return false;
 		}
 
-		// we only need to encode the resized file if url encoding is needed
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+			return $data;
+		}
+
+		// we only need to encode the file name if url encoding is needed
 		$filename = basename( $s3object['key'] );
 		if ( $filename == rawurlencode( $filename ) ) {
-			return $downsize;
+			return $data;
 		}
 
-		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
-		if ( ! isset( $meta['sizes'][ $size ] ) ) {
-			return $downsize;
+		// we only need to encode resized image files
+		if ( ! isset( $data['sizes'] ) ) {
+			return $data;
 		}
 
-		$size_meta = $meta['sizes'][ $size ];
-		list( $width, $height ) = image_constrain_size_for_editor( $size_meta['width'], $size_meta['height'], $size, 'edit' );
+		foreach ( $data['sizes'] as $key => $size ) {
+			$data['sizes'][ $key ]['file'] = $this->encode_filename_in_path( $data['sizes'][ $key ]['file'] );
+		}
 
-		$url = $this->get_attachment_url( $attachment_id, null, $size, $s3object, $meta );
+		return $data;
+	}
 
-		$downsize = array(
-			$url,
-			$width,
-			$height,
-			true // $is_intermediate
-		);
+	/**
+	 * Encode file names according to RFC 3986 when generating urls
+	 * As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
+	 *
+	 * @param $file
+	 *
+	 * @return string Encoded filename with path prefix untouched
+	 */
+	function encode_filename_in_path( $file ) {
+		$file_path = dirname( $file );
+		$file_path = ( '.' != $file_path ) ? trailingslashit( $file_path ) : '';
+		$file_name = rawurlencode( basename( $file ) );
 
-		return $downsize;
+		return $file_path . $file_name;
 	}
 
 	function verify_ajax_request() {
