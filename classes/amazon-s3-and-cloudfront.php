@@ -28,6 +28,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
+		add_filter( 'image_downsize', array( $this, 'maybe_encoded_resized_image_urls' ), 10, 3 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
@@ -471,16 +472,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param      $post_id Post ID of the attachment
 	 * @param null $expires Seconds for the link to live
 	 * @param null $size Size of the image to get
+	 * @param null $s3object optionally use already retrieved s3 meta
 	 * @param null $meta Pre retrieved _wp_attachment_metadata for the attachment
 	 *
-	 * @return bool|mixed|void|WP_Error
+	 * @return mixed|void
 	 */
-	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null ) {
+	function get_attachment_url( $post_id, $expires = null, $size = null, $s3object = null, $meta = null ) {
 		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
 			return false;
 		}
 
-		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		if ( is_null( $s3object ) && ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
 
@@ -550,6 +552,47 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         }
 
 	    return apply_filters( 'as3cf_get_attachment_url', $url, $s3object, $post_id, $expires );
+	}
+
+	/**
+	 * Overrides the url for resized images when the file name needs to be encoded
+	 * according to RFC 3986
+	 *
+	 * @param $downsize
+	 * @param $attachment_id
+	 * @param $size
+	 *
+	 * @return array
+	 */
+	function maybe_encoded_resized_image_urls( $downsize, $attachment_id, $size ) {
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
+			return $downsize;
+		}
+
+		// we only need to encode the resized file if url encoding is needed
+		$filename = basename( $s3object['key'] );
+		if ( $filename == rawurlencode( $filename ) ) {
+			return $downsize;
+		}
+
+		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
+		if ( ! isset( $meta['sizes'][ $size ] ) ) {
+			return $downsize;
+		}
+
+		$size_meta = $meta['sizes'][ $size ];
+		list( $width, $height ) = image_constrain_size_for_editor( $size_meta['width'], $size_meta['height'], $size, 'edit' );
+
+		$url = $this->get_attachment_url( $attachment_id, null, $size, $s3object, $meta );
+
+		$downsize = array(
+			$url,
+			$width,
+			$height,
+			true // $is_intermediate
+		);
+
+		return $downsize;
 	}
 
 	function verify_ajax_request() {
