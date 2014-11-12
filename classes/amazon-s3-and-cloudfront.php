@@ -541,10 +541,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		// Encode file names when generating urls as per AWS
-		// to catch characters not sanitized by the upload process
+		// Encode file names according to RFC 3986 when generating urls
+		// As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
 		$file_path = dirname( $s3object['key'] );
-		$file_name = urlencode( basename( $s3object['key'] ) );
+		$file_name = rawurlencode( basename( $s3object['key'] ) );
 
 		$url = $scheme . '://' . $domain_bucket . '/' . $file_path . '/' . $file_name;
         if( isset( $secure_url ) ) {
