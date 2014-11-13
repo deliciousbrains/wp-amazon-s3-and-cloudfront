@@ -181,7 +181,9 @@
 					</td>
 				</tr>*/ ?>
 			</table>
-
+			<p>
+				<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'amazon-web-services' ); ?></button>
+			</p>
 		</form>
 	</div>
 
