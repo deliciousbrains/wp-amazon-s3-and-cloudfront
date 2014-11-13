@@ -123,6 +123,69 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<p><?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs<br>so that they are served from S3/CloudFront instead of your server.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
+				<tr>
+					<td colspan="2"><h3><?php _e( 'Configure File URLs', 'as3cf' ); ?></h3></td>
+				</tr>
+				<tr>
+					<td colspan="2"></td>
+				</tr>
+				<tr class="as3cf-border-bottom">
+					<td>
+						<h4><?php _e( 'Domain:', 'as3cf' ) ?></h4>
+					</td>
+					<td>
+
+
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2"><h3><?php _e( 'Advanced Options', 'as3cf' ); ?></h3></td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="remove-local-file" value="1" id="remove-local-file" <?php echo $this->get_setting( 'remove-local-file' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Remove Files From Server', 'as3cf' ) ?></h4>
+						<p><?php _e( 'Once a file has been copied to S3, remove it from the local server.', 'as3cf' ) ?></p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="object-versioning" value="1" id="object-versioning" <?php echo $this->get_setting( 'object-versioning' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Object Versioning', 'as3cf' ) ?></h4>
+						<p><?php _e( 'Append a timestamp to the S3 file path. Recommended when using CloudFront so you don\'t have to worry about cache invalidation.' ); ?>
+							<br>
+							<a href="http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ReplacingObjects.html">
+								<?php _e( 'More info', 'as3cf' ) ?>
+							</a>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="expires" value="1" id="expires" <?php echo $this->get_setting( 'expires' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Far Future Expiration Header', 'as3cf' ) ?></h4>
+						<p><?php _e('Implements a "Never Expire" caching policy for browsers by setting an Expires header for 10 years in the future. Should be used in conjunction with object versioning above.'); ?>
+							<a href="http://developer.yahoo.com/performance/rules.html#expires">
+								<?php _e( 'More info', 'as3cf' ) ?>
+							</a>
+						</p>
+					</td>
+				</tr>
+				<tr class="as3cf-border-bottom">
+					<td>
+						<input type="checkbox" name="hidpi-images" value="1" id="hidpi-images" <?php echo $this->get_setting( 'hidpi-images' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Copy HiDPI (@2x) Images', 'as3cf' ) ?></h4>
+						<p> <?php printf( __( 'When uploading a file to S3, checks if there\'s a file of the same name with an @2x suffix and copies it to S3 as well. Works with the <a href="%s">WP Retina 2x</a> plugin.', 'as3cf' ), 'https://wordpress.org/plugins/wp-retina-2x/' ); ?></p>
+					</td>
+				</tr>
 
 				<?php /*<tr valign="top">
 					<td>
