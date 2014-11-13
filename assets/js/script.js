@@ -4,15 +4,18 @@
 
 		$('.as3cf-settings').each(function() {
 			var $container = $(this);
-			
+			var $bucketList = $('.as3cf-bucket-list');
 			var $createBucketForm = $container.find('.as3cf-create-bucket-form');
+
 			if($createBucketForm.length){
 				var $createBucketButton = $createBucketForm.find('button'),
 					origButtonText = $createBucketButton.text();
 
 				$createBucketForm.on('submit', function(e){
 					e.preventDefault();
+					$bucketList.addClass('saving');
 					$createBucketButton.text($createBucketButton.attr('data-working'));
+					$createBucketButton.prop('disabled', true);
 					var bucketName = $createBucketForm.find('input[name="bucket_name"]').val();
 
 					var data = {
@@ -32,9 +35,15 @@
 						},
 						success: function(data, textStatus, jqXHR) {
 							$createBucketButton.text(origButtonText);
+							$createBucketButton.prop('disabled', false);
 							if (typeof data['success'] !== 'undefined') {
+								$( '.updated' ).show();
 								$('.as3cf-settings').addClass('as3cf-has-bucket');
 								$('.as3cf-active-bucket').text(bucketName);
+								$createBucketForm.find('input[name="bucket_name"]').val('');
+								$('.as3cf-bucket-list a' ).removeClass('selected');
+								loadBuckets();
+								$bucketList.removeClass('saving');
 							} else {
 								alert(as3cf_i18n.create_bucket_error + data['error']);
 							}
@@ -49,6 +58,12 @@
 					e.preventDefault();
 					$( '.updated' ).hide();
 					$('.as3cf-settings').removeClass('as3cf-has-bucket');
+					if ( $('.as3cf-active-bucket' ).html ) {
+						$('.as3cf-cancel-bucket-select-wrap' ).show();
+					}
+					if ( $( '.as3cf-bucket-list a.selected' ).length ) {
+						$( '.as3cf-bucket-list' ).scrollTop( $( '.as3cf-bucket-list a.selected' ).position().top - 50 );
+					}
 				});
 			}
 
@@ -60,10 +75,17 @@
 				});
 			}
 
+			var $cancelChangeBucket = $container.find('.as3cf-cancel-bucket-select');
+			if($cancelChangeBucket.length){
+				$cancelChangeBucket.on('click', function(e){
+					e.preventDefault();
+					$('.as3cf-settings').addClass('as3cf-has-bucket');
+				});
+			}
+
 		});
 
 		var $bucketList = $('.as3cf-bucket-list');
-
 		function loadBuckets() {
 			$bucketList.html('<li class="loading">'+ $bucketList.attr('data-working') +'</li>');
 

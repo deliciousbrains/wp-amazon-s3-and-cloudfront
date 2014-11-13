@@ -1,6 +1,6 @@
 <?php
 $selected_bucket = $this->get_setting( 'bucket' ); ?>
-<div class="aws-content as3cf-settings<?php echo $selected_bucket ? ' as3cf-has-bucket' : ''; ?>">
+<div class="aws-content as3cf-settings<?php echo ( $selected_bucket ) ? ' as3cf-has-bucket' : ''; ?>">
 
 	<?php
 	$buckets = $this->get_buckets();
@@ -59,21 +59,27 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 
 	<div class="as3cf-bucket-select">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
-		<a href="#" class="as3cf-refresh-buckets"><?php _e( 'Refresh buckets', 'as3cf' ); ?></a>
-		<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>">
-			<?php foreach( $buckets as $bucket ) : ?>
-				<li>
-					<a href="#" data-bucket="<?php echo $bucket['Name']; ?>" class="<?php echo ( $selected_bucket == $bucket['Name'] ) ? 'selected' : ''; ?>">
-						<span class="bucket">
-							<span class="dashicons dashicons-portfolio"></span>
-							<?php echo $bucket['Name']; ?>
-						</span>
-						<span class="spinner"></span>
-					</a>
-				</li>
-			<?php endforeach; ?>
-		</ul>
-
+		<div class="as3cf-bucket-actions">
+			<span class="as3cf-cancel-bucket-select-wrap">
+				<a href="#" class="as3cf-cancel-bucket-select"><?php _e( 'Cancel', 'as3cf' ); ?></a>
+			</span>
+			<a href="#" class="as3cf-refresh-buckets"><?php _e( 'Refresh', 'as3cf' ); ?></a>
+		</div>
+		<div class="as3cf-bucket-list-wrapper">
+			<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>">
+				<?php foreach ( $buckets as $bucket ) : ?>
+					<li>
+						<a href="#" data-bucket="<?php echo $bucket['Name']; ?>" class="<?php echo ( $selected_bucket == $bucket['Name'] ) ? 'selected' : ''; ?>">
+							<span class="bucket">
+								<span class="dashicons dashicons-portfolio"></span>
+								<?php echo $bucket['Name']; ?>
+							</span>
+							<span class="spinner"></span>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
 		<h3><?php _e( 'Or create a new bucket:', 'as3cf' ); ?></h3>
 		<form method="post" class="as3cf-create-bucket-form">
 			<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
@@ -91,7 +97,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				<tr class="as3cf-border-bottom">
 					<td><h3><?php _e( 'Bucket', 'as3cf' ); ?></h3></td>
 					<td>
-						<span class="as3cf-active-bucket"><?php echo $this->get_setting( 'bucket' ); ?></span>
+						<span class="as3cf-active-bucket"><?php echo $selected_bucket; ?></span>
 						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
 					</td>
 				</tr>
