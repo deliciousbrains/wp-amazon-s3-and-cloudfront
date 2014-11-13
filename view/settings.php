@@ -12,7 +12,25 @@
 	}
 	?>
 
-	<div class="error as3cf-can-write-error">
+	<div class="updated <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
+		<p>
+			<?php _e( 'Settings saved.', 'as3cf' ); ?>
+		</p>
+	</div>
+
+	<?php
+	$can_write = true;
+	if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
+		$can_write = $this->check_write_permission( $buckets[0]['Name'] );
+		// catch any file system issues
+		if ( is_wp_error( $can_write ) ) {
+			$this->render_view( 'error', array( 'error' => $can_write ) );
+			return;
+		}
+	}
+	// display a error message if the user does not have write permission to S3
+	if ( ! $can_write ) : ?>
+	<div class="error">
 		<p>
 			<strong>
 				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
