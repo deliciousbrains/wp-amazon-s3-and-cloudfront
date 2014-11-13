@@ -4,6 +4,10 @@ use Aws\S3\S3Client;
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	private $aws, $s3client;
 
+	const DEFAULT_ACL = 'public-read';
+	const PRIVATE_ACL = 'private';
+	const DEFAULT_EXPIRES = 900;
+
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
 	function __construct( $plugin_file_path, $aws ) {
@@ -12,6 +16,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		parent::__construct( $plugin_file_path );
 
 		$this->aws = $aws;
+
+		// fire up the plugin upgrade checker
+		new AS3CF_Upgrade( $this );
 
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
 
@@ -22,8 +29,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
@@ -47,7 +54,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$value = AS3CF_BUCKET;
 		}
 		else {
-			$value = parent::get_setting( $key );
+			$value = parent::get_setting( $key, $default );
 		}
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
@@ -156,35 +163,65 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		    return $data;
 	    }
 
-	    if ( isset( $data['file'] ) ) {
-		    $time = untrailingslashit( dirname( $data['file'] ) );
+	    $acl = self::DEFAULT_ACL;
+
+	    // check the attachment already exists in S3, eg. edit or restore image
+	    if ( ( $old_s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		    // use existing non default ACL if attachment already exists
+		    if ( isset( $old_s3object['acl'] ) ) {
+			    $acl = $old_s3object['acl'];
+		    }
+		    // use existing prefix
+		    $prefix = trailingslashit( dirname( $old_s3object['key'] ) );
+		    // use existing bucket
+		    $bucket = $old_s3object['bucket'];
+		    // get existing region
+		    if ( isset( $old_s3object['region'] ) ) {
+			    $region = $old_s3object['region'];
+		    };
 	    } else {
-		    $time = $this->get_attachment_folder_time( $post_id );
-		    $time = date( 'Y/m', $time );
+		    // derive prefix from various settings
+		    if ( isset( $data['file'] ) ) {
+			    $time = untrailingslashit( dirname( $data['file'] ) );
+		    } else {
+			    $time = $this->get_attachment_folder_time( $post_id );
+			    $time = date( 'Y/m', $time );
+		    }
+
+		    $prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		    $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+
+		    if ( $this->get_setting( 'object-versioning' ) ) {
+			    $prefix .= $this->get_object_version_string( $post_id );
+		    }
+			// use bucket from settings
+		    $bucket = $this->get_setting( 'bucket' );
 	    }
-
-		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
-        $prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
-
-        if ( $this->get_setting( 'object-versioning' ) ) {
-        	$prefix .= $this->get_object_version_string( $post_id );
-        }
 
         $file_path = get_attached_file( $post_id, true );
 	    $file_name = basename( $file_path );
 
-        $acl = apply_filters( 'wps3_upload_acl', 'public-read', $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
+        $acl = apply_filters( 'wps3_upload_acl', $acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
         $acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
         $s3client = $this->get_s3client();
 
-	    $bucket = $this->get_setting( 'bucket' );
-
-	    $s3object = array(
+		$s3object = array(
 		    'bucket' => $bucket,
 		    'key'    => $prefix . $file_name
 	    );
 
+	    // store acl if not default
+	    if ( $acl != self::DEFAULT_ACL ) {
+		    $s3object['acl'] = $acl;
+	    }
+
+	    // use existing region
+	    if ( isset( $region ) ){
+		    $s3object['region'] = $region;
+	    }
+
+		// retrieve region when necessary and set the region of the s3client
 	    $s3object['region'] = $this->set_s3client_region( $s3object );
 
 	    $args = array(
@@ -262,6 +299,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         foreach ( $additional_images as $image ) {
 			try {
 				$args = array_merge( $args, $image );
+				$args['ACL'] = self::DEFAULT_ACL;
 				$s3client->putObject( $args );
 			}
 			catch ( Exception $e ) {
@@ -416,16 +454,35 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Generate a link to download a file from Amazon S3 using query string
 	 * authentication. This link is only valid for a limited amount of time.
 	 *
-	 * @param mixed $post_id Post ID of the attachment or null to use the loop
-	 * @param int $expires Seconds for the link to live
-	 * @param mixed $size Size of the image to get
+	 * @param      $post_id Post ID of the attachment
+	 * @param int  $expires Seconds for the link to live
+	 * @param null $size Size of the image to get
+	 *
+	 * @return mixed|void|WP_Error
 	 */
-	function get_secure_attachment_url( $post_id, $expires = 900, $size = null ) {
-		return $this->get_attachment_url( $post_id, $expires, $size = null );
+	function get_secure_attachment_url( $post_id, $expires = null, $size = null ) {
+		if ( is_null( $expires ) ) {
+			$expires = self::DEFAULT_EXPIRES;
+		}
+		return $this->get_attachment_url( $post_id, $expires, $size );
 	}
 
-	function get_attachment_url( $post_id, $expires = null, $size = null ) {
-		if ( !$this->get_setting( 'serve-from-s3' ) || !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+	/**
+	 * Get the url of the file from Amazon S3
+	 *
+	 * @param      $post_id Post ID of the attachment
+	 * @param null $expires Seconds for the link to live
+	 * @param null $size Size of the image to get
+	 * @param null $meta Pre retrieved _wp_attachment_metadata for the attachment
+	 *
+	 * @return bool|mixed|void|WP_Error
+	 */
+	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
+			return false;
+		}
+
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
 
@@ -445,6 +502,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$region = '';
 		}
 
+		// force use of secured url when ACL has been set to private
+		if ( is_null( $expires ) && isset( $s3object['acl'] ) && self::PRIVATE_ACL == $s3object['acl'] ) {
+			$expires = self::DEFAULT_EXPIRES;
+		}
+
 		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
 
 		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
@@ -461,7 +523,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
         if($size) {
-            $meta = get_post_meta($post_id, '_wp_attachment_metadata', TRUE);
+	        if ( is_null( $meta ) ) {
+		        $meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
+	        }
             if(isset($meta['sizes'][$size]['file'])) {
                 $s3object['key'] = dirname($s3object['key']) . '/' . $meta['sizes'][$size]['file'];
             }
@@ -573,8 +637,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
-			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
-
+			try {
+				$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
+			}
+			catch ( Exception $e ) {
+				return new WP_Error( 'exception', $e->getMessage() );
+			}
 			$s3object['region'] = $region['Location'];
 
 			if ( ! is_null( $post_id ) ) {
@@ -598,6 +666,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function set_s3client_region( $s3object, $post_id = null  ) {
 		$region = $this->get_s3object_region( $s3object, $post_id );
+
+		if ( is_wp_error( $region ) ) {
+			return '';
+		}
 
 		if ( $region ) {
 			$this->get_s3client()->setRegion( $region );
@@ -733,10 +805,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$this->set_settings( array() );
-
 		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+
 		foreach ( $post_vars as $var ) {
+			$this->remove_setting( $var );
+
 			if ( !isset( $_POST[$var] ) ) {
 				continue;
 			}
@@ -756,9 +829,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$aws_client = $this->aws->get_client();
 
 		if ( is_wp_error( $aws_client ) ) {
-			$this->render_view( 'error', array( 'error' => $aws_client ) );
+			$this->render_view( 'error-fatal', array( 'message' => $aws_client->get_error_message() ) );
 		}
 		else {
+			do_action( 'as3cf_pre_settings_render' );
 			$this->render_view( 'settings' );
 		}
 
@@ -788,4 +862,29 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 	}
 
+	/**
+	 * Get all the blog IDs for the multisite network used for table prefixes
+	 *
+	 * @return array
+	 */
+	function get_blog_ids() {
+		$args = array(
+			'limit'    => false,
+			'spam'     => 0,
+			'deleted'  => 0,
+			'archived' => 0
+		);
+		$blogs = wp_get_sites( $args );
+
+		$blog_ids = array();
+		foreach ( $blogs as $blog ) {
+			if ( 1 == $blog['blog_id'] ) {
+				// ignore the first blog which doesn't have the ID in the table prefix
+				continue;
+			}
+			$blog_ids[] = $blog['blog_id'];
+		}
+
+		return $blog_ids;
+	}
 }
