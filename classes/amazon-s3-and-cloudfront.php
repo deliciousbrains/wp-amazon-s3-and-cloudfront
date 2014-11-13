@@ -688,7 +688,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
 		} else {
-			$out = array( 'success' => '1', 'buckets' => $result, 'can_write' => true );
+			$out = array(
+				'success' => '1',
+				'buckets' => $result,
+				'can_write' => true,
+				'selected' => $this->get_setting( 'bucket' )
+			);
 
 			$can_write = true;
 			if ( is_array( $result ) ) {
