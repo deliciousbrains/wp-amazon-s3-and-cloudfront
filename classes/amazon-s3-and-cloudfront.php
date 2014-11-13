@@ -606,7 +606,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function save_bucket( $bucket_name ) {
 		if( $bucket_name ) {
-			$this->set_settings( array() );
+			$this->get_settings();
 			$this->set_setting( 'bucket', $bucket_name );
 			$this->save_settings();
 		}
@@ -805,7 +805,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+		$post_vars = array( 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
