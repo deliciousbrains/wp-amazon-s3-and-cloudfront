@@ -1,16 +1,19 @@
-<div class="aws-content as3cf-settings<?php echo $this->get_setting( 'bucket' ) ? ' as3cf-has-bucket' : ''; ?>">
+<?php
+$selected_bucket = $this->get_setting( 'bucket' ); ?>
+<div class="aws-content as3cf-settings<?php echo $selected_bucket ? ' as3cf-has-bucket' : ''; ?>">
 
 	<?php
-	if ( isset( $_GET['updated'] ) ) {
+	$buckets = $this->get_buckets();
+	if ( is_wp_error( $buckets ) ) :
 		?>
-		<div class="updated">
+		<div class="error">
 			<p>
-				<?php _e( 'Settings saved.', 'as3cf' ); ?>
+				<?php _e( 'Error retrieving a list of your S3 buckets from AWS:', 'as3cf' ); ?>
+				<?php echo $buckets->get_error_message(); ?>
 			</p>
 		</div>
-		<?php
-	}
-	?>
+	<?php
+	endif; ?>
 
 	<div class="updated <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
 		<p>
@@ -56,7 +59,20 @@
 
 	<div class="as3cf-bucket-select">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
-		<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>"></ul>
+		<a href="#" class="as3cf-refresh-buckets"><?php _e( 'Refresh buckets', 'as3cf' ); ?></a>
+		<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>">
+			<?php foreach( $buckets as $bucket ) : ?>
+				<li>
+					<a href="#" data-bucket="<?php echo $bucket['Name']; ?>" class="<?php echo ( $selected_bucket == $bucket['Name'] ) ? 'selected' : ''; ?>">
+						<span class="bucket">
+							<span class="dashicons dashicons-portfolio"></span>
+							<?php echo $bucket['Name']; ?>
+						</span>
+						<span class="spinner"></span>
+					</a>
+				</li>
+			<?php endforeach; ?>
+		</ul>
 
 		<h3><?php _e( 'Or create a new bucket:', 'as3cf' ); ?></h3>
 		<form method="post" class="as3cf-create-bucket-form">
