@@ -48,6 +48,11 @@
   ]
 }</code></pre>
 	</div>
+		<?php
+		// don't show the rest of the settings if cannot write
+		return;
+	endif;
+	?>
 
 	<div class="as3cf-bucket-select">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
