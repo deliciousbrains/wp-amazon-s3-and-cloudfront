@@ -24,10 +24,23 @@
 	width: 550px;
 	min-height: 800px;
 
+	.update {
+	  display: none;
+	  &.show {
+		display: block;
+	  }
+	}
+
 	.as3cf-main-settings { display: none; }
 	&.as3cf-has-bucket {
 		.as3cf-bucket-select { display: none; }
 		.as3cf-main-settings { display: block; }
+	}
+
+    .as3cf-refresh-buckets {
+		position: absolute;
+		right: 0;
+		top: 2px;
 	}
 
 	.as3cf-bucket-list {
@@ -40,12 +53,23 @@
 		li {
 			font-size: 14px;
 			margin: 5px 0;
+		  	padding: 10px 0;
 		}
 		a {
 			color: #444;
 			text-decoration: none;
-			&:hover { color: #0074A2; }
-			.dashicons { margin-right: 5px; }
+			&:hover, &.selected { color: #0074A2; }
+		  	&.selected {
+			  font-weight: bold;
+			}
+		  	.bucket {
+			  float:left;
+			  clear:both;
+			  .dashicons {
+				margin-right: 5px;
+			  }
+			}
+		  	.spinner { float:left; background-size: 15px 15px }
 		}
 		&.saving { opacity: 0.5; }
 	}
