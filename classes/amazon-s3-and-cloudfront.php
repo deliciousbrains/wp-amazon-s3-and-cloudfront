@@ -135,14 +135,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             return;
         }
 
-        $backup_sizes = get_post_meta( $post_id, '_wp_attachment_backup_sizes', true );
-
-        $intermediate_sizes = array();
-        foreach ( get_intermediate_image_sizes() as $size ) {
-            if ( $intermediate = image_get_intermediate_size( $post_id, $size ) )
-                $intermediate_sizes[] = $intermediate;
-        }
-
         if ( !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
             return;
         }
@@ -154,20 +146,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         $amazon_path = dirname( $s3object['key'] );
         $objects = array();
 
-        // remove intermediate and backup images if there are any
-        foreach ( $intermediate_sizes as $intermediate ) {
-            $objects[] = array(
-            	'Key' => path_join( $amazon_path, $intermediate['file'] )
-            );
-        }
-
-        if ( is_array( $backup_sizes ) ) {
-            foreach ( $backup_sizes as $size ) {
-	            $objects[] = array(
-	            	'Key' => path_join( $amazon_path, $size['file'] )
-	            );
-            }
-        }
+        // remove intermediate images
+	    $this->prepare_intermediate_images_to_remove( $post_id, $objects, $amazon_path );
+		// remove backup images
+	    $this->prepare_backup_size_images_to_remove( $post_id, $objects, $amazon_path );
 
         // Try removing any @2x images but ignore any errors
         if ( $objects ) {
@@ -178,29 +160,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
         		);
         	}
 
-			try {
-		        $this->get_s3client()->deleteObjects( array( 
-		        	'Bucket' => $bucket,
-		        	'Objects' => $hidpi_images
-		        ) );
-			}
-			catch ( Exception $e ) {}
+	        $this->delete_s3_objects( $bucket, $hidpi_images );
         }
 
+	    // add main file to be deleted
         $objects[] = array(
         	'Key' => $s3object['key']
         );
 
-		try {
-	        $this->get_s3client()->deleteObjects( array( 
-	        	'Bucket' => $bucket,
-	        	'Objects' => $objects
-	        ) );
-		}
-		catch ( Exception $e ) {
-			error_log( 'Error removing files from S3: ' . $e->getMessage() );
-			return;
-		}
+	    $this->delete_s3_objects( $bucket, $objects, true, true );
 
         delete_post_meta( $post_id, 'amazonS3_info' );
     }
