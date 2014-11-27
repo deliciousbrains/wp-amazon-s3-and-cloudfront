@@ -68,6 +68,68 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return apply_filters( 'as3cf_allowed_mime_types', get_allowed_mime_types() );
 	}
 
+	/**
+	 * Find backup images and add to array for removal
+	 *
+	 * @param $post_id
+	 * @param $objects
+	 * @param $path
+	 */
+	function prepare_backup_size_images_to_remove( $post_id, &$objects, $path ) {
+		$backup_sizes = get_post_meta( $post_id, '_wp_attachment_backup_sizes', true );
+
+		if ( is_array( $backup_sizes ) ) {
+			foreach ( $backup_sizes as $size ) {
+				$objects[] = array(
+					'Key' => path_join( $path, $size['file'] )
+				);
+			}
+		}
+	}
+
+	/**
+	 * Find intermediate size images and add to array for removal
+	 *
+	 * @param $post_id
+	 * @param $objects
+	 * @param $path
+	 */
+	function prepare_intermediate_images_to_remove( $post_id, &$objects, $path  ) {
+		$intermediate_images = get_intermediate_image_sizes();
+
+		foreach (  $intermediate_images as $size ) {
+			if ( $intermediate = image_get_intermediate_size( $post_id, $size ) ) {
+				$objects[] = array(
+					'Key' => path_join( $path, $intermediate['file'] )
+				);
+			}
+		}
+	}
+
+	/**
+	 * Delete bulk objects from an S3 bucket
+	 *
+	 * @param      $bucket
+	 * @param      $objects
+	 * @param bool $log_error
+	 * @param bool $return_on_error
+	 */
+	function delete_s3_objects( $bucket, $objects, $log_error = false, $return_on_error = false ) {
+		try {
+			$this->get_s3client()->deleteObjects( array(
+				'Bucket'  => $bucket,
+				'Objects' => $objects
+			) );
+		} catch ( Exception $e ) {
+			if ( $log_error ) {
+				error_log( 'Error removing files from S3: ' . $e->getMessage() );
+			}
+			if ( $return_on_error ) {
+				return;
+			}
+		}
+	}
+
     function delete_attachment( $post_id ) {
         if ( !$this->is_plugin_setup() ) {
             return;
@@ -235,7 +297,21 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
 		}
 
-        $files_to_remove = array();
+	    // if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
+	    // then we need to remove the edited image versions
+        if ( isset( $_POST['do'] ) && 'restore' == $_POST['do'] && defined( 'IMAGE_EDIT_OVERWRITE') && IMAGE_EDIT_OVERWRITE ) {
+	        $objects_to_remove = array();
+	        // edited main file
+	        $meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
+	        $objects_to_remove[] = array(
+		        'Key' => path_join( $prefix, basename( $meta['file'] ) )
+	        );
+	        // edited resized image files
+	        $this->prepare_intermediate_images_to_remove( $post_id, $objects_to_remove, $prefix );
+	        $this->delete_s3_objects( $bucket, $objects_to_remove, true );
+	    }
+
+	    $files_to_remove = array();
         if (file_exists($file_path)) {
             $files_to_remove[] = $file_path;
             try {
