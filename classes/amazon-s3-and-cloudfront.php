@@ -30,6 +30,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 	}
 
@@ -480,6 +481,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return false;
 		}
 
+		// check that the file has been uploaded to S3
 		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return false;
 		}
@@ -529,20 +531,88 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
             }
         }
 
-		$url = $scheme . '://' . $domain_bucket . '/' . $s3object['key'];
-
 		if ( !is_null( $expires ) ) {
 			try {
 				$expires = time() + $expires;
 			    $secure_url = $this->get_s3client()->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires );
-			    $url .= substr( $secure_url, strpos( $secure_url, '?' ) );
 			}
 			catch ( Exception $e ) {
 				return new WP_Error( 'exception', $e->getMessage() );
 			}
 		}
 
+		// encode file
+		$file = $this->encode_filename_in_path( $s3object['key'] );
+
+		$url = $scheme . '://' . $domain_bucket . '/' . $file;
+		if ( isset( $secure_url ) ) {
+			$url .= substr( $secure_url, strpos( $secure_url, '?' ) );
+		}
+
 	    return apply_filters( 'as3cf_get_attachment_url', $url, $s3object, $post_id, $expires );
+	}
+
+	/**
+	 * Override the attachment metadata
+	 *
+	 * @param $data
+	 * @param $post_id
+	 *
+	 * @return mixed
+	 */
+	function wp_get_attachment_metadata( $data, $post_id ) {
+		return $this->maybe_encoded_file_of_resized_images( $data, $post_id );
+	}
+
+	/**
+	 * Encodes the file names for resized image files for an attachment where necessary
+	 *
+	 * @param $data
+	 * @param $post_id
+	 *
+	 * @return mixed Attachment meta data
+	 */
+	function maybe_encoded_file_of_resized_images( $data, $post_id ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
+			return $data;
+		}
+
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+			return $data;
+		}
+
+		// we only need to encode the file name if url encoding is needed
+		$filename = basename( $s3object['key'] );
+		if ( $filename == rawurlencode( $filename ) ) {
+			return $data;
+		}
+
+		// we only need to encode resized image files
+		if ( ! isset( $data['sizes'] ) ) {
+			return $data;
+		}
+
+		foreach ( $data['sizes'] as $key => $size ) {
+			$data['sizes'][ $key ]['file'] = $this->encode_filename_in_path( $data['sizes'][ $key ]['file'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Encode file names according to RFC 3986 when generating urls
+	 * As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
+	 *
+	 * @param $file
+	 *
+	 * @return string Encoded filename with path prefix untouched
+	 */
+	function encode_filename_in_path( $file ) {
+		$file_path = dirname( $file );
+		$file_path = ( '.' != $file_path ) ? trailingslashit( $file_path ) : '';
+		$file_name = rawurlencode( basename( $file ) );
+
+		return $file_path . $file_name;
 	}
 
 	function verify_ajax_request() {
