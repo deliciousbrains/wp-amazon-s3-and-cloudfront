@@ -45,11 +45,11 @@ if ( ! $can_write ) : ?>
 <pre><code>{
   "Version": "2012-10-17",
   "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "s3:*",
-      "Resource": "*"
-    }
+	{
+	  "Effect": "Allow",
+	  "Action": "s3:*",
+	  "Resource": "*"
+	}
   ]
 }</code></pre>
 	</div>
@@ -71,7 +71,7 @@ endif;
 		<select name="bucket" class="bucket">
 		<option value="">-- <?php _e( 'Select an S3 Bucket', 'as3cf' ); ?> --</option>
 		<?php if ( is_array( $buckets ) ) foreach ( $buckets as $bucket ): ?>
-		    <option value="<?php echo esc_attr( $bucket['Name'] ); ?>" <?php echo $bucket['Name'] == $this->get_setting( 'bucket' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $bucket['Name'] ); ?></option>
+			<option value="<?php echo esc_attr( $bucket['Name'] ); ?>" <?php echo $bucket['Name'] == $this->get_setting( 'bucket' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $bucket['Name'] ); ?></option>
 		<?php endforeach;?>
 		<option value="new"><?php _e( 'Create a new bucket...', 'as3cf' ); ?></option>
 		</select><br />

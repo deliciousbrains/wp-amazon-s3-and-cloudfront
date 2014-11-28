@@ -331,9 +331,9 @@ class AS3CF_Upgrade {
 		global $wpdb;
 		$sql = $wpdb->prepare(
 			"SELECT `post_id` as `ID`, `meta_value` AS 's3object'
-    			FROM `{$prefix}postmeta`
-   				WHERE `meta_key` = 'amazonS3_info'
-    			AND `meta_value` NOT LIKE '%%\"region\"%%'
+				FROM `{$prefix}postmeta`
+				WHERE `meta_key` = 'amazonS3_info'
+				AND `meta_value` NOT LIKE '%%\"region\"%%'
 				LIMIT %d",
 			$limit
 		);
