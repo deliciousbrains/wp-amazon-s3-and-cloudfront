@@ -98,7 +98,7 @@ class AS3CF_Upgrade {
 		case self::STATUS_ERROR :
 			$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
 			$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
-			$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
+			$this->as3cf->render_view( 'error', array( 'message' => $msg ) );
 			break;
 		}
 	}
