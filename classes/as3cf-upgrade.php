@@ -96,7 +96,7 @@ class AS3CF_Upgrade {
 			$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
 			break;
 		case self::STATUS_ERROR :
-			$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
+			$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3. Please check your error log for details.', 'as3cf' );
 			$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
 			$this->as3cf->render_view( 'error', array( 'message' => $msg ) );
 			break;
@@ -258,23 +258,34 @@ class AS3CF_Upgrade {
 			if ( 1 != $blog_id && is_multisite() ) {
 				switch_to_blog( $blog_id );
 			}
+
 			foreach ( $attachments as $attachment ) {
+				if ( $error_count >= $this->error_threshold ) {
+					$session['status'] = self::STATUS_ERROR;
+					$this->save_session( $session );
+					$this->clear_scheduled_event();
+					return;
+				}
+
 				if ( time() >= $finish ) {
 					break;
 				}
+                
 				$s3object = unserialize( $attachment->s3object );
+				if ( false === $s3object ) {
+					error_log( 'Failed to unserialize S3 meta for attachment ' . $attachment->ID . ': ' . $attachment->s3object );
+					$error_count++;
+					continue;
+				}
+
 				// retrieve region and update the attachment metadata
 				$region = $this->as3cf->get_s3object_region( $s3object, $attachment->ID );
 				if ( is_wp_error( $region ) ) {
+					error_log( 'Error updating region: ' . $region->get_error_message() );
 					$error_count++;
-					if ( $error_count >= $this->error_threshold ) {
-						$session['status'] = self::STATUS_ERROR;
-						$this->save_session( $session );
-						$this->clear_scheduled_event();
-						return;
-					}
 				}
 			}
+
 			if ( 1 != $blog_id && is_multisite() ) {
 				restore_current_blog();
 			}
