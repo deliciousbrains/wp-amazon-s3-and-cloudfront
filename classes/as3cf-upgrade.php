@@ -37,7 +37,7 @@ class AS3CF_Upgrade {
 	/**
 	 * Start it up
 	 *
-	 * @param $as3cf - the instance of the as3cf class
+	 * @param unknown $as3cf - the instance of the as3cf class
 	 */
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
@@ -85,21 +85,21 @@ class AS3CF_Upgrade {
 		$restart_url = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' );
 
 		switch ( $this->get_upgrade_status() ) {
-			case self::STATUS_RUNNING :
-				$msg = __( '<strong>Running Meta Data Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the meta data with the bucket region it is served from. This will allow us to serve your files from the proper S3 region domain name (e.g. s3-us-west-2.amazonaws.com). This process will be done quietly in the background.', 'as3cf' );
-				$msg .= ' <strong><a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' ) . '">' . __( 'Pause Update', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
-				break;
-			case self::STATUS_PAUSED :
-				$msg = __( '<strong>Meta Data Update Paused</strong> &mdash; Updating Media Library meta data has been paused.', 'as3cf' );
-				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Restart Update', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
-				break;
-			case self::STATUS_ERROR :
-				$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
-				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
-				break;
+		case self::STATUS_RUNNING :
+			$msg = __( '<strong>Running Meta Data Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the meta data with the bucket region it is served from. This will allow us to serve your files from the proper S3 region domain name (e.g. s3-us-west-2.amazonaws.com). This process will be done quietly in the background.', 'as3cf' );
+			$msg .= ' <strong><a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' ) . '">' . __( 'Pause Update', 'as3cf' ) . '</a></strong>';
+			$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+			break;
+		case self::STATUS_PAUSED :
+			$msg = __( '<strong>Meta Data Update Paused</strong> &mdash; Updating Media Library meta data has been paused.', 'as3cf' );
+			$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Restart Update', 'as3cf' ) . '</a></strong>';
+			$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+			break;
+		case self::STATUS_ERROR :
+			$msg = __( '<strong>Error Updating Meta Data</strong> &mdash; We ran into some errors attempting to update the meta data for all your Media Library items that have been uploaded to S3.', 'as3cf' );
+			$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
+			$this->as3cf->render_view( 'error', array( 'error_message' => $msg ) );
+			break;
 		}
 	}
 
@@ -144,7 +144,7 @@ class AS3CF_Upgrade {
 	/**
 	 * Add custom cron interval schedules
 	 *
-	 * @param array $schedules
+	 * @param array   $schedules
 	 *
 	 * @return array
 	 */
@@ -195,11 +195,11 @@ class AS3CF_Upgrade {
 		$all_limit = $limit;
 
 		$table_prefixes = array();
-		$session 		= $this->get_session();
+		$session   = $this->get_session();
 
 		// find the blog IDs that have been processed so we can skip them
 		$processed_blog_ids = isset( $session['processed_blog_ids'] ) ? $session['processed_blog_ids'] : array();
-		$error_count		= isset( $session['error_count'] ) ? $session['error_count'] : 0;
+		$error_count  = isset( $session['error_count'] ) ? $session['error_count'] : 0;
 
 		if ( ! in_array( 1, $processed_blog_ids ) ) {
 			$table_prefixes[1] = $prefix;
@@ -322,8 +322,8 @@ class AS3CF_Upgrade {
 	/**
 	 * Get all attachments that don't have region in their S3 meta
 	 *
-	 * @param $prefix
-	 * @param $limit
+	 * @param unknown $prefix
+	 * @param unknown $limit
 	 *
 	 * @return mixed
 	 */
