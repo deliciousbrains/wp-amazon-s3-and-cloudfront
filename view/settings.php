@@ -43,11 +43,11 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 		<pre><code>{
   "Version": "2012-10-17",
   "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "s3:*",
-      "Resource": "*"
-    }
+	{
+	  "Effect": "Allow",
+	  "Action": "s3:*",
+	  "Resource": "*"
+	}
   ]
 }</code></pre>
 	</div>

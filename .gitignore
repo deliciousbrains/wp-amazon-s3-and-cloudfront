@@ -1,3 +1,4 @@
 mirror
 .sass-cache
 assets/node_modules
+/vendor

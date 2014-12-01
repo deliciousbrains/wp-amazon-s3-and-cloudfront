@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.5
 Tested up to: 3.9
-Stable tag: 0.6.2
+Stable tag: 0.7
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -30,8 +30,8 @@ We’re working on a pro version that will include the following features:
 
 [Request features, report bugs, and submit pull requests on Github](https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront/issues)
 
-*This plugin has been completely rewritten, but was originally a fork of 
-[Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/) 
+*This plugin has been completely rewritten, but was originally a fork of
+[Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/)
 which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3.*
 
 == Installation ==
@@ -58,8 +58,28 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
-= 0.6.2 - 2013-09-26 =
-* WP.org download of Amazon Web Services plugin is working again
+= 0.7 - 2014-11-28 =
+* New: Proper S3 region subdomain in URLs for buckets not in the US Standard region (e.g. https://s3-us-west-2.amazonaws.com/...)
+* New: Update all existing attachment meta with bucket region (automatically runs in the background)
+* New: Get secure URL for different image sizes (iamzozo)
+* New: S3 bucket can be set with constant in wp-config.php (dberube)
+* New: Filter for allowing/disallowing file types: `as3cf_allowed_mime_types`
+* New: Filter to cancel upload to S3 for any reason: `as3cf_pre_update_attachment_metadata`
+* New: Sidebar with email opt-in
+* Improvement: Show warning when S3 policy is read-only
+* Improvement: Tooltip added to clarify option
+* Improvement: Move object versioning option to make it clear it does not require CloudFront
+* Improvement: By default only allow file types in `get_allowed_mime_types()` to be uploaded to S3
+* Improvement: Compatibility with WPML Media plugin
+* Bug Fix: Edited images not removed on S3 when restoring image and IMAGE_EDIT_OVERWRITE true
+* Bug Fix: File names with certain characters broken not working
+* Bug Fix: Edited image uploaded to incorrect month folder
+* Bug Fix: When creating a new bucket the bucket select box appears empty on success
+* Bug Fix: SSL not working in regions other than US Standard
+* Bug Fix: 'Error uploading' and 'Error removing local file' messages when editing an image
+* Bug Fix: Upload and delete failing when bucket is non-US-region and bucket name contains dot
+* Bug Fix: S3 file overwritten when file with same name uploaded and local file removed (dataferret)
+* Bug Fix: Manually resized images not uploaded (gmauricio)
 
 = 0.6.1 - 2013-09-21 =
 * WP.org download of Amazon Web Services plugin is giving a 404 Not Found, so directing people to download from Github instead
