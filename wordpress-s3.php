@@ -26,33 +26,18 @@ Network: True
 
 $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '0.7';
 
-function as3cf_check_required_plugin() {
-	if ( class_exists( 'Amazon_Web_Services' ) || !is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+$aws_plugin_version_required = '0.2';
+
+require dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
+global $as3cf_compat_check;
+$as3cf_compat_check = new AS3CF_Compatibility_Check( __FILE__, $aws_plugin_version_required );
+
+function as3cf_init( $aws ) {
+	global $as3cf_compat_check;
+	if ( ! $as3cf_compat_check->is_compatible() ) {
 		return;
 	}
 
-	require_once ABSPATH . '/wp-admin/includes/plugin.php';
-	deactivate_plugins( __FILE__ );
-
-	$msg = sprintf( __( 'Amazon S3 and CloudFront has been deactivated as it requires the <a href="%s">Amazon&nbsp;Web&nbsp;Services</a> plugin.', 'as3cf' ), 'http://wordpress.org/extend/plugins/amazon-web-services/' ) . '<br /><br />';
-
-	if ( file_exists( WP_PLUGIN_DIR . '/amazon-web-services/amazon-web-services.php' ) ) {
-		$activate_url = wp_nonce_url( 'plugins.php?action=activate&amp;plugin=amazon-web-services/amazon-web-services.php', 'activate-plugin_amazon-web-services/amazon-web-services.php' );
-		$msg .= sprintf( __( 'It appears to already be installed. <a href="%s">Click here to activate it.</a>', 'as3cf' ), $activate_url );
-	}
-	else {
-		$install_url = wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&plugin=amazon-web-services' ), 'install-plugin_amazon-web-services' );
-		$msg .= sprintf( __( '<a href="%s">Click here to install it automatically.</a> Then activate it. ', 'as3cf' ), $install_url );
-	}
-
-	$msg .= '<br /><br />' . __( 'Once it has been activated, you can activate Amazon&nbsp;S3&nbsp;and&nbsp;CloudFront.', 'as3cf' );
-
-	wp_die( $msg );
-}
-
-add_action( 'plugins_loaded', 'as3cf_check_required_plugin' );
-
-function as3cf_init( $aws ) {
 	global $as3cf;
 	$abspath = dirname( __FILE__ );
 	require_once $abspath . '/include/functions.php';
