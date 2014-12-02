@@ -46,9 +46,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// Default object prefix
 		if ( 'object-prefix' == $key && !isset( $settings['object-prefix'] ) ) {
-			$uploads = wp_upload_dir();
-			$parts = parse_url( $uploads['baseurl'] );
-			return substr( $parts['path'], 1 ) . '/';
+			return $this->get_default_object_prefix();
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
@@ -59,6 +57,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
+	}
+
+	/**
+	 * Return the default object prefix
+	 *
+	 * @return string
+	 */
+	function get_default_object_prefix() {
+		$uploads = wp_upload_dir();
+		$parts = parse_url( $uploads['baseurl'] );
+
+		return substr( $parts['path'], 1 ) . '/';
 	}
 
 	/**
