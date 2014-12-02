@@ -58,7 +58,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// Domain setting since 0.7
-		if ( 'domain' == $key && !isset( $settings['domain'] ) ) {
+		if ( 'domain' == $key && ! isset( $settings['domain'] ) ) {
 			if ( $this->get_setting( 'cloudfront' ) ) {
 				$domain = 'cloudfront';
 			} elseif ( $this->get_setting( 'virtual-host' ) ) {
@@ -1056,7 +1056,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
