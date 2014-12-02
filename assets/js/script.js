@@ -166,6 +166,11 @@
 			});
 		});
 
+		$('.as3cf-settings').on('click', 'input[type="checkbox"]', function(e){
+			var checkbox = $(this ).attr('id');
+			$('.as3cf-setting.' + checkbox ).toggleClass('hide');
+		});
+
 	});
 
 })(jQuery);

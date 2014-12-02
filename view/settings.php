@@ -129,13 +129,47 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				<tr>
 					<td colspan="2"></td>
 				</tr>
-				<tr class="as3cf-border-bottom">
+				<tr>
 					<td>
 						<h4><?php _e( 'Domain:', 'as3cf' ) ?></h4>
 					</td>
+					<td></td>
+				</tr>
+				<tr>
 					<td>
-
-
+						<input type="checkbox" name="enable-object-prefix" value="1" id="enable-object-prefix" <?php echo $this->get_setting( 'enable-object-prefix' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Custom Path', 'as3cf' ) ?></h4>
+						<p>
+							<?php _e( 'By default the path is the same as your local WordPress files:' ); ?>
+							<code><?php echo $this->get_default_object_prefix(); ?></code>. <?php _e( 'You can remove this completely if you want.', 'as3cf' ); ?>
+						</p>
+						<p class="as3cf-setting enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; ?>">
+							<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" />
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo $this->get_setting( 'force-ssl' ) ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Force SSL', 'as3cf' ) ?></h4>
+						<p>
+							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to be always be served over SSL.' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr class="as3cf-border-bottom">
+					<td>
+						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo get_site_option('uploads_use_yearmonth_folders') ? 'checked="checked" ' : ''; ?> />
+					</td>
+					<td>
+						<h4><?php _e( 'Remove Year/Month', 'as3cf' ) ?></h4>
+						<p>
+							<?php printf( __( 'To remove Year/Month from the URL, go to <a href="%s">Settings > Media</a> and uncheck "Organize my uploads into month- and year-based folders".', 'as3cf' ), network_admin_url( 'options-media.php' ) ); ?>
+						</p>
 					</td>
 				</tr>
 				<tr>
@@ -191,20 +225,11 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<h3><?php _e( 'S3 Settings', 'as3cf' ); ?></h3>
 
-						<select name="bucket" class="bucket">
-						<option value="">-- <?php _e( 'Select an S3 Bucket', 'as3cf' ); ?> --</option>
-						<?php if ( is_array( $buckets ) ) foreach ( $buckets as $bucket ): ?>
-						    <option value="<?php echo esc_attr( $bucket['Name'] ); ?>" <?php echo $bucket['Name'] == $this->get_setting( 'bucket' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( $bucket['Name'] ); ?></option>
-						<?php endforeach;?>
-						<option value="new"><?php _e( 'Create a new bucket...', 'as3cf' ); ?></option>
-						</select><br />
 
 						<input type="checkbox" name="virtual-host" value="1" id="virtual-host" <?php echo $this->get_setting( 'virtual-host' ) ? 'checked="checked" ' : '';?> />
 						<label for="virtual-host"> <?php _e( 'Bucket is setup for virtual hosting', 'as3cf' ); ?></label> (<a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html"><?php _e( 'more info', 'as3cf' ); ?></a>)
 						<br />
 
-						<input type="checkbox" name="expires" value="1" id="expires" <?php echo $this->get_setting( 'expires' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="expires"> <?php printf( __( 'Set a <a href="%s" target="_blank">far future HTTP expiration header</a> for uploaded files <em>(recommended)</em>', 'as3cf' ), 'http://developer.yahoo.com/performance/rules.html#expires' ); ?></label>
 					</td>
 				</tr>
 
@@ -227,44 +252,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 				</tr>
 
-				<tr valign="top">
-					<td>
-						<h3><?php _e( 'Plugin Settings', 'as3cf' ); ?></h3>
-
-						<input type="checkbox" name="copy-to-s3" value="1" id="copy-to-s3" <?php echo $this->get_setting( 'copy-to-s3' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="copy-to-s3"> <?php _e( 'Copy files to S3 as they are uploaded to the Media Library', 'as3cf' ); ?></label>
-						<br />
-
-						<input type="checkbox" name="serve-from-s3" value="1" id="serve-from-s3" <?php echo $this->get_setting( 'serve-from-s3' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="serve-from-s3"> <?php _e( 'Point file URLs to S3/CloudFront for files that have been copied to S3', 'as3cf' ); ?>
-							<span class="tooltip" data-tooltip="<?php _e( 'When this is option unchecked, your Media Library images and other files will be served from your server instead of S3/CloudFront. If any images were removed from your server, they will be broken.', 'as3cf' ); ?>">
-								<span class="dashicons dashicons-editor-help"></span>
-							</span>
-						</label>
-						<br />
-
-						<input type="checkbox" name="remove-local-file" value="1" id="remove-local-file" <?php echo $this->get_setting( 'remove-local-file' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="remove-local-file"> <?php _e( 'Remove uploaded file from local filesystem once it has been copied to S3', 'as3cf' ); ?></label>
-						<br />
-
-						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo $this->get_setting( 'force-ssl' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="force-ssl"> <?php _e( 'Always serve files over https (SSL)', 'as3cf' ); ?></label>
-						<br />
-
-						<input type="checkbox" name="object-versioning" value="1" id="object-versioning" <?php echo $this->get_setting( 'object-versioning' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="object-versioning"> <?php printf( __( 'Implement <a href="%s">object versioning</a> by appending a timestamp to the S3 file path', 'as3cf' ), 'http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ReplacingObjects.html' ); ?></label>
-						<br />
-
-						<input type="checkbox" name="hidpi-images" value="1" id="hidpi-images" <?php echo $this->get_setting( 'hidpi-images' ) ? 'checked="checked" ' : ''; ?> />
-						<label for="hidpi-images"> <?php _e( 'Copy any HiDPI (@2x) images to S3 (works with WP Retina 2x plugin)', 'as3cf' ); ?></label>
-
-					</td>
-				</tr>
-				<tr valign="top">
-					<td>
-						<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'amazon-web-services' ); ?></button>
-					</td>
-				</tr>*/ ?>
+				*/ ?>
 			</table>
 			<p>
 				<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'amazon-web-services' ); ?></button>

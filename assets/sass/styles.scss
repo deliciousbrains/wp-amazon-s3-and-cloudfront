@@ -43,6 +43,12 @@
 	}
   }
 
+  .as3cf-setting {
+	&.hide{
+	  display: none;
+	}
+  }
+
   .as3cf-bucket-actions {
 	position: absolute;
 	right: 0;
