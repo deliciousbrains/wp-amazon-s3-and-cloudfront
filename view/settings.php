@@ -129,10 +129,11 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				<tr>
 					<td colspan="2">
 						<div class="as3cf-url-preview-wrap">
+							<span>Preview</span>
 							<div class="as3cf-url-preview">
 								<?php echo str_replace( '-', '&#8209;', $this->get_url_preview( 'photo.jpg') ); ?>
 							</div>
-							<span>Preview</span></div>
+						</div>
 					</td>
 				</tr>
 				<tr class="configure-url">
