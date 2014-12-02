@@ -166,10 +166,21 @@
 			});
 		});
 
-		$('.as3cf-settings').on('click', 'input[type="checkbox"]', function(e){
-			var checkbox = $(this ).attr('id');
-			$('.as3cf-setting.' + checkbox ).toggleClass('hide');
+		$('.as3cf-settings').on('click', '.sub-toggle', function(e){
+			var setting = $(this ).attr('id');
+			$('.as3cf-setting.' + setting ).toggleClass('hide');
 		});
+
+		$('.configure-url').on('click', 'input[type="radio"], input[type="checkbox"]', function(e){
+			generate_url_preview();
+		});
+
+		$('.configure-url').on('change', 'input[type="text"]', function(e){
+			generate_url_preview();
+		});
+
+		function generate_url_preview() {
+		}
 
 	});
 

@@ -43,6 +43,40 @@
 	}
   }
 
+  .as3cf-url-preview-wrap {
+	background: #ffffff;
+	text-align: center;
+	padding: 20px 10px;
+	max-width: 530px;
+  	width: 100%;
+	.as3cf-url-preview {
+	  font-weight: bold;
+	  margin-bottom: 5px;
+	  text-align: left;
+	  word-wrap: break-word;
+	}
+	span {
+	  color: #6b6b6b;
+	}
+  }
+
+  .as3cf-domain {
+	label {
+	  display: block;
+	  margin-bottom: 10px;
+	}
+
+	p {
+	  padding-left: 25px;
+	  color: #6b6b6b;
+	  margin: 0;
+	  font-size: 12px;
+	  &.as3cf-setting {
+		margin-top: 5px;
+	  }
+	}
+  }
+
   .as3cf-setting {
 	&.hide{
 	  display: none;
@@ -118,6 +152,9 @@
 	td {
 	  padding-left: 0;
 	  padding-right: 0;
+	  &:first-child {
+		vertical-align: top;
+	  }
 	}
 	h3 {
 	  font-weight: normal;

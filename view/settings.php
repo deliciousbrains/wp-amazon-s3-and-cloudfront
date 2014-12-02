@@ -127,17 +127,52 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td colspan="2"><h3><?php _e( 'Configure File URLs', 'as3cf' ); ?></h3></td>
 				</tr>
 				<tr>
-					<td colspan="2"></td>
+					<td colspan="2">
+						<div class="as3cf-url-preview-wrap">
+							<div class="as3cf-url-preview">
+								<?php echo str_replace( '-', '&#8209;', $this->get_url_preview( 'photo.jpg') ); ?>
+							</div>
+							<span>Preview</span></div>
+					</td>
 				</tr>
-				<tr>
+				<tr class="configure-url">
 					<td>
 						<h4><?php _e( 'Domain:', 'as3cf' ) ?></h4>
 					</td>
-					<td></td>
-				</tr>
-				<tr>
 					<td>
-						<input type="checkbox" name="enable-object-prefix" value="1" id="enable-object-prefix" <?php echo $this->get_setting( 'enable-object-prefix' ) ? 'checked="checked" ' : ''; ?> />
+						<?php
+						$domain = $this->get_setting( 'domain' );
+						?>
+						<div class="as3cf-domain">
+							<label>
+								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?>>
+								Bucket name as subdomain
+								<p>http://bucket-name.s3.amazon.com/&hellip;</p>
+							</label>
+							<label>
+								<input type="radio" name="domain[]" value="path" <?php checked( $domain, 'path' ); ?>>
+								Bucket name in path
+								<p>http://s3.amazon.com/bucket-name/&hellip;</p>
+							</label>
+							<label>
+								<input type="radio" name="domain[]" value="virtual-host" <?php checked( $domain, 'virtual-host' ); ?>>
+								Bucket name as domain
+								<p>http://bucket-name/&hellip;</p>
+							</label>
+							<label>
+								<input id="cloudfront" class="sub-toggle" type="radio" name="domain[]" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
+								CloudFront or custom domain
+								<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; ?>">
+
+								<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="50" />
+								</p>
+							</label>
+						</div>
+					</td>
+				</tr>
+				<tr class="configure-url">
+					<td>
+						<input type="checkbox" name="enable-object-prefix" class="sub-toggle" value="1" id="enable-object-prefix" <?php echo $this->get_setting( 'enable-object-prefix' ) ? 'checked="checked" ' : ''; ?> />
 					</td>
 					<td>
 						<h4><?php _e( 'Custom Path', 'as3cf' ) ?></h4>
@@ -150,7 +185,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr>
+				<tr class="configure-url">
 					<td>
 						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo $this->get_setting( 'force-ssl' ) ? 'checked="checked" ' : ''; ?> />
 					</td>
@@ -161,7 +196,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr class="as3cf-border-bottom">
+				<tr class="configure-url as3cf-border-bottom">
 					<td>
 						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo get_site_option('uploads_use_yearmonth_folders') ? 'checked="checked" ' : ''; ?> />
 					</td>
