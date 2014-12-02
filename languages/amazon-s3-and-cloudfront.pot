@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Amazon S3 and CloudFront\n"
-"POT-Creation-Date: 2014-12-01 13:08-0000\n"
-"PO-Revision-Date: 2014-12-01 13:10-0000\n"
+"POT-Creation-Date: 2014-12-02 16:41-0000\n"
+"PO-Revision-Date: 2014-12-02 16:44-0000\n"
 "Last-Translator: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language-Team: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language: en\n"
@@ -63,6 +63,63 @@ msgstr ""
 
 #: classes/amazon-s3-and-cloudfront.php:859
 msgid "Cheatin' eh?"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:25
+msgid ""
+"You can deactivate the Amazon S3 and CloudFront plugin to get rid of this "
+"notice."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:28
+#, php-format
+msgid ""
+"Amazon S3 and CloudFront has been disabled as it requires the <a style="
+"\"text-decoration:none;\" href=\"%s\">Amazon&nbsp;Web&nbsp;Services</a> "
+"plugin."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:31
+msgid "It appears to be installed already."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:33
+msgctxt "Activate plugin"
+msgid "Activate it now"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:37
+#, php-format
+msgid "<a href=\"%s\">Install it</a> and activate."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:48
+#, php-format
+msgid ""
+"Amazon S3 and CloudFront has been disabled as it requires version %s or "
+"later of the <a style=\"text-decoration:none;\" href=\"%s\">Amazon&nbsp;"
+"Web&nbsp;Services</a> plugin."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:51
+#, php-format
+msgid "You currently have version %s installed."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:55
+msgid "Update to the latest version"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:66
+#, php-format
+msgid ""
+"Amazon S3 and CloudFront has been disabled because it will not work with the "
+"version of the Amazon&nbsp;Web&nbsp;Services plugin installed. Amazon&nbsp;"
+"S3&nbsp;and&nbsp;CloudFront %s or later is required."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:70
+msgid "Update Amazon S3 and CloudFront to the latest version"
 msgstr ""
 
 #: classes/as3cf-upgrade.php:89
@@ -255,30 +312,4 @@ msgstr ""
 msgid ""
 "We promise we will not use your email for anything else and you can "
 "unsubscribe with 1-click anytime."
-msgstr ""
-
-#: wordpress-s3.php:39
-#, php-format
-msgid ""
-"Amazon S3 and CloudFront has been deactivated as it requires the <a href=\"%s"
-"\">Amazon&nbsp;Web&nbsp;Services</a> plugin."
-msgstr ""
-
-#: wordpress-s3.php:43
-#, php-format
-msgid ""
-"It appears to already be installed. <a href=\"%s\">Click here to activate it."
-"</a>"
-msgstr ""
-
-#: wordpress-s3.php:47
-#, php-format
-msgid ""
-"<a href=\"%s\">Click here to install it automatically.</a> Then activate it. "
-msgstr ""
-
-#: wordpress-s3.php:50
-msgid ""
-"Once it has been activated, you can activate Amazon&nbsp;S3&nbsp;and&nbsp;"
-"CloudFront."
 msgstr ""
