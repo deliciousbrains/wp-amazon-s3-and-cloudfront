@@ -34,7 +34,7 @@ class AS3CF_Compatibility_Check {
 			}
 			else {
 				$install_url = wp_nonce_url( network_admin_url( 'update.php?action=install-plugin&plugin=amazon-web-services' ), 'install-plugin_amazon-web-services' );
-				$msg .= sprintf( __( '<a href="%s">Install it</a> and activate.', 'as3cf' ), $install_url );
+				$msg .= ' ' . sprintf( __( '<a href="%s">Install it</a> and activate.', 'as3cf' ), $install_url );
 			}
 
 			$msg .= $hide_notice_msg;
