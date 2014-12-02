@@ -171,6 +171,19 @@
 			$('.as3cf-setting.' + setting ).toggleClass('hide');
 		});
 
+		$( '.as3cf-settings' ).on( 'change', '#force-ssl', function( e ) {
+			$( '.subdomain-wrap' ).toggleClass( 'disabled' );
+			if ( $( this ).is( ":checked" ) ) {
+				var domain = $( 'input:radio[name="domain[]"]:checked' ).val();
+				if ( 'subdomain' == domain ) {
+					$( 'input[name="domain[]"][value="path"]' ).attr( "checked", true );
+				}
+				$( '.subdomain-wrap input' ).attr( 'disabled', true );
+			} else {
+				$( '.subdomain-wrap input' ).removeAttr( 'disabled' );
+			}
+		} );
+
 		$('.configure-url').on('click', 'input[type="radio"], input[type="checkbox"]', function(e){
 			generate_url_preview();
 		});

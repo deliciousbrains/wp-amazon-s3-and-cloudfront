@@ -154,7 +154,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						}
 						?>
 						<div class="as3cf-domain">
-							<label class="<?php echo $subdomain_class; ?>">
+							<label class="subdomain-wrap <?php echo $subdomain_class; ?>">
 								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
 								Bucket name as subdomain
 								<p>http://bucket-name.s3.amazon.com/&hellip;</p>
