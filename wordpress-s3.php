@@ -26,6 +26,10 @@ Network: True
 
 $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '0.7';
 
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['supported_addon_versions'] = array(
+	'amazon-s3-and-cloudfront-edd' => '1.0',
+);
+
 $aws_plugin_version_required = '0.2';
 
 require dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';

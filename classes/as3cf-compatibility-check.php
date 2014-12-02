@@ -59,7 +59,7 @@ class AS3CF_Compatibility_Check {
 			return $msg;
 		}
 
-		$as3cf_plugin_version_required = $GLOBALS['aws_meta']['supported_addon_versions']['amazon-s3-and-cloudfront'];
+		$as3cf_plugin_version_required = $GLOBALS['aws_meta']['amazon-web-services']['supported_addon_versions']['amazon-s3-and-cloudfront'];
 		$as3cf_plugin_version = $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'];
 
 		if ( ! version_compare( $as3cf_plugin_version, $as3cf_plugin_version_required, '>=' ) ) {
