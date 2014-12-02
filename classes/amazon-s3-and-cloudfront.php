@@ -1065,7 +1065,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				continue;
 			}
 
-			$this->set_setting( $var, $_POST[$var] );
+			$value = ( 'domain' == $var) ? $_POST[$var][0] : $_POST[$var];
+
+			$this->set_setting( $var, $value );
 		}
 
 		$this->save_settings();
