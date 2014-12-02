@@ -142,10 +142,19 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<?php
 						$domain = $this->get_setting( 'domain' );
+						$subdomain_disabled = '';
+						$subdomain_class = '';
+						if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+							if ( 'subdomain' == $domain ) {
+								$domain = 'path';
+							}
+							$subdomain_disabled = 'disabled="disabled"';
+							$subdomain_class = 'disabled';
+						}
 						?>
 						<div class="as3cf-domain">
-							<label>
-								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?>>
+							<label class="<?php echo $subdomain_class; ?>">
+								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
 								Bucket name as subdomain
 								<p>http://bucket-name.s3.amazon.com/&hellip;</p>
 							</label>
@@ -192,13 +201,13 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<h4><?php _e( 'Force SSL', 'as3cf' ) ?></h4>
 						<p>
-							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to be always be served over SSL.' ); ?>
+							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to be always be served over SSL. You cannot use the "Bucket as a subdomain" domain option with this setting.' ); ?>
 						</p>
 					</td>
 				</tr>
 				<tr class="configure-url as3cf-border-bottom">
 					<td>
-						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo get_site_option('uploads_use_yearmonth_folders') ? 'checked="checked" ' : ''; ?> />
+						<input type="checkbox" name="use-yearmonth-folders" value="1" id="use-yearmonth-folders" <?php echo get_site_option('uploads_use_yearmonth_folders') ? 'checked="checked" ' : ''; ?> />
 					</td>
 					<td>
 						<h4><?php _e( 'Remove Year/Month', 'as3cf' ) ?></h4>
@@ -256,38 +265,6 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 				</tr>
 
-				<?php /*<tr valign="top">
-					<td>
-						<h3><?php _e( 'S3 Settings', 'as3cf' ); ?></h3>
-
-
-						<input type="checkbox" name="virtual-host" value="1" id="virtual-host" <?php echo $this->get_setting( 'virtual-host' ) ? 'checked="checked" ' : '';?> />
-						<label for="virtual-host"> <?php _e( 'Bucket is setup for virtual hosting', 'as3cf' ); ?></label> (<a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html"><?php _e( 'more info', 'as3cf' ); ?></a>)
-						<br />
-
-					</td>
-				</tr>
-
-				<tr valign="top">
-					<td>
-						<label><?php _e( 'Object Path:', 'as3cf' ); ?></label>&nbsp;&nbsp;
-						<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" />
-						<label><?php echo trailingslashit( $this->get_dynamic_prefix() ); ?></label>
-					</td>
-				</tr>
-
-				<tr valign="top">
-					<td>
-						<h3><?php _e( 'CloudFront Settings', 'as3cf' ); ?></h3>
-
-						<label><?php _e( 'Domain Name', 'as3cf' ); ?></label><br />
-						<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="50" />
-						<p class="description"><?php _e( 'Leave blank if you aren&#8217;t using CloudFront.', 'as3cf' ); ?></p>
-
-					</td>
-				</tr>
-
-				*/ ?>
 			</table>
 			<p>
 				<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'amazon-web-services' ); ?></button>

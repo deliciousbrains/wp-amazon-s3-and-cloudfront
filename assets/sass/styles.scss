@@ -64,6 +64,10 @@
 	label {
 	  display: block;
 	  margin-bottom: 10px;
+	  &.disabled, &.disabled p {
+		color: #bbbbbb;
+
+	  }
 	}
 
 	p {
