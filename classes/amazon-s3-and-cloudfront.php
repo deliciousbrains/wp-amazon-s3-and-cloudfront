@@ -904,6 +904,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function save_bucket( $bucket_name ) {
 		if( $bucket_name ) {
 			$this->get_settings();
+			// first time bucket select - enable main options by default
+			if ( ! $this->get_setting( 'bucket' ) ) {
+				$this->set_setting( 'copy-to-s3', "1" );
+				$this->set_setting( 'serve-from-s3', "1" );
+			}
 			$this->set_setting( 'bucket', $bucket_name );
 			$region = $this->get_bucket_region( $bucket_name );
 			$this->set_setting( 'region', $region );

@@ -159,12 +159,7 @@
 					$(bucket).find('.spinner').hide();
 					$bucketList.removeClass('saving');
 					if (typeof data['success'] !== 'undefined') {
-						$('.as3cf-settings').addClass('as3cf-has-bucket');
-						$('.as3cf-active-bucket').text(bucketName);
-						$('#as3cf-bucket').val(bucketName);
-						$('#as3cf-region').val(data['region']);
-						$( '.updated' ).show();
-						generate_url_preview();
+						bucket_select( bucketName, data['region'] );
 					} else {
 						alert(as3cf_i18n.save_bucket_error + data['error']);
 					}
@@ -172,32 +167,50 @@
 			});
 		});
 
+		function bucket_select( bucket, region ) {
+			if ( '' == $( '.as3cf-active-bucket' ).text() ) {
+				// first time bucket select - enable main options by default
+				set_checkbox( 'copy-to-s3-wrap' );
+				set_checkbox( 'serve-from-s3-wrap' );
+			}
+			$( '.as3cf-active-bucket' ).text( bucket );
+			$( '#as3cf-bucket' ).val( bucket );
+			$( '#as3cf-region' ).val( region );
+			$( '.updated' ).show();
+			$( '.as3cf-settings' ).addClass( 'as3cf-has-bucket' );
+			generate_url_preview();
+		}
+
 		$('.as3cf-switch').on('click', 'span', function(e){
 			if ( ! $( this ).hasClass( 'checked' ) && ! $(this).parent().hasClass('disabled') ) {
 				var parent_id = $(this).parent().attr('id');
-				$('#' + parent_id + ' span' ).toggleClass('checked');
-				var switch_on = $('#' + parent_id + ' span.on' ).hasClass('checked');
-				var checkbox_name = $('#' + parent_id).data('checkbox');
-				var $checkbox = $('input#' + checkbox_name );
-				$checkbox.attr( "checked", switch_on );
-				$checkbox.trigger("change");
+				set_checkbox( parent_id );
 			}
 		});
 
+		function set_checkbox( checkbox_wrap ) {
+			$('#' + checkbox_wrap + ' span' ).toggleClass('checked');
+			var switch_on = $('#' + checkbox_wrap + ' span.on' ).hasClass('checked');
+			var checkbox_name = $('#' + checkbox_wrap).data('checkbox');
+			var $checkbox = $('input#' + checkbox_name);
+			$checkbox.attr( "checked", switch_on );
+			$checkbox.trigger("change");
+		}
+
 		if ( $( '#copy-to-s3' ).is( ":checked" ) ) {
-			$('tr.advanced-options').slideDown();
+			$('tr.advanced-options').show();
 		}
 
 		$('.as3cf-settings').on('change', '#copy-to-s3', function(e){
-			$('tr.advanced-options').slideToggle();
+			$('tr.advanced-options').toggle();
 		});
 
 		if ( $( '#serve-from-s3' ).is( ":checked" ) ) {
-			$('tr.configure-url').slideDown();
+			$('tr.configure-url').show();
 		}
 
 		$('.as3cf-settings').on('change', '#serve-from-s3', function(e){
-			$('tr.configure-url').slideToggle();
+			$('tr.configure-url').toggle();
 		});
 
 		$('.as3cf-settings').on('change', '.sub-toggle', function(e){
