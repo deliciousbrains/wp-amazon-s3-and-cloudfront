@@ -57,6 +57,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $this->get_default_object_prefix();
 		}
 
+		// Default use year and month for multisite
+		if ( is_multisite() && 'use-yearmonth-folders' == $key && ! isset( $settings['use-yearmonth-folders'] ) ) {
+			return get_option( 'uploads_use_yearmonth_folders' );
+		}
+
 		// Default enable object prefix - enabled if the object prefix is different to default
 		if ( 'enable-object-prefix' == $key && !isset( $settings['enable-object-prefix'] ) ) {
 			$enable = 0;
@@ -458,11 +463,27 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $pathinfo['dirname'] . '/' . $pathinfo['filename'] . $hidpi_suffix . '.' . $pathinfo['extension'];
 	}
 
-	function get_object_version_string( $post_id ) {
-		if ( get_option( 'uploads_use_yearmonth_folders' ) ) {
-			$date_format = 'dHis';
+	/**
+	 * Determine if we are using year/month folders in URL
+	 *
+	 * @return mixed|string|void
+	 */
+	function use_year_month_folders() {
+		if ( is_multisite() ) {
+			// multisite use the setting in the plugins UI (default based on site 1's option)
+			$use_folders = $this->get_setting( 'use-yearmonth-folders' );
+		} else {
+			// single site use option
+			$use_folders = get_option( 'uploads_use_yearmonth_folders' );
 		}
-		else {
+
+		return $use_folders;
+	}
+
+	function get_object_version_string( $post_id ) {
+		if ( $this->use_year_month_folders() ) {
+			$date_format = 'dHis';
+		} else {
 			$date_format = 'YmdHis';
 		}
 
@@ -1137,7 +1158,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
@@ -1175,7 +1196,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function get_dynamic_prefix( $time = null ) {
 		$uploads = wp_upload_dir( $time );
-		return str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		$prefix = '';
+		if ( $this->use_year_month_folders() ) {
+			$prefix = str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		}
+
+		return $prefix;
 	}
 
 	// Without the multisite subdirectory
