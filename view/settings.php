@@ -212,7 +212,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders', 'value' => $this->use_year_month_folders(), 'disabled' => ! is_multisite() ) ); ?>
 					</td>
 					<td>
-						<h4><?php _e( 'Use Year/Month', 'as3cf' ) ?></h4>
+						<h4><?php _e( 'Add Year/Month', 'as3cf' ) ?></h4>
 						<p>
 							<?php if ( is_multisite() ) {
 								 _e( 'Enable the Year/Month in the URL.' );
