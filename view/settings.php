@@ -209,17 +209,12 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url as3cf-border-bottom">
 					<td>
-						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders', 'value' => $this->use_year_month_folders(), 'disabled' => ! is_multisite() ) ); ?>
+						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Add Year/Month', 'as3cf' ) ?></h4>
 						<p>
-							<?php if ( is_multisite() ) {
-								 _e( 'Enable the Year/Month in the URL.' );
-							} else {
-								printf( __( 'To remove Year/Month from the URL, go to <a href="%s">Settings > Media</a> and uncheck "Organize my uploads into month- and year-based folders".', 'as3cf' ), admin_url( 'options-media.php' ) );
-							}
-							?>
+							<?php _e( 'Add the Year/Month in the URL.' ); ?>
 						</p>
 					</td>
 				</tr>
