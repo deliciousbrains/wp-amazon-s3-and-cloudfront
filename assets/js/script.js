@@ -184,6 +184,22 @@
 			}
 		});
 
+		if ( $( '#copy-to-s3' ).is( ":checked" ) ) {
+			$('tr.advanced-options').slideDown();
+		}
+
+		$('.as3cf-settings').on('change', '#copy-to-s3', function(e){
+			$('tr.advanced-options').slideToggle();
+		});
+
+		if ( $( '#serve-from-s3' ).is( ":checked" ) ) {
+			$('tr.configure-url').slideDown();
+		}
+
+		$('.as3cf-settings').on('change', '#serve-from-s3', function(e){
+			$('tr.configure-url').slideToggle();
+		});
+
 		$('.as3cf-settings').on('change', '.sub-toggle', function(e){
 			var setting = $(this ).attr('id');
 			$('.as3cf-setting.' + setting ).toggleClass('hide');
@@ -210,10 +226,6 @@
 				$( '.subdomain-wrap input' ).removeAttr( 'disabled' );
 			}
 		} );
-
-//		$('.configure-url').on('change', 'input[type="radio"], input[type="checkbox"]', function(e){
-//			generate_url_preview();
-//		});
 
 		$('.configure-url').on('change', 'input', function(e){
 			generate_url_preview();

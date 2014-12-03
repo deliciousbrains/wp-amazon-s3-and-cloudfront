@@ -125,10 +125,10 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<p><?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs<br>so that they are served from S3/CloudFront instead of your server.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
-				<tr>
+				<tr class="configure-url">
 					<td colspan="2"><h3><?php _e( 'Configure File URLs', 'as3cf' ); ?></h3></td>
 				</tr>
-				<tr>
+				<tr class="configure-url">
 					<td colspan="2">
 						<div class="as3cf-url-preview-wrap">
 							<span>Preview</span>
@@ -218,10 +218,10 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr>
+				<tr class="advanced-options">
 					<td colspan="2"><h3><?php _e( 'Advanced Options', 'as3cf' ); ?></h3></td>
 				</tr>
-				<tr>
+				<tr class="advanced-options">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'remove-local-file' ) ); ?>
 					</td>
@@ -230,7 +230,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<p><?php _e( 'Once a file has been copied to S3, remove it from the local server.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
-				<tr>
+				<tr class="advanced-options">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'object-versioning' ) ); ?>
 					</td>
@@ -244,7 +244,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr>
+				<tr class="advanced-options">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'expires' ) ); ?>
 					</td>
@@ -257,7 +257,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr class="as3cf-border-bottom">
+				<tr class="advanced-options as3cf-border-bottom">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'hidpi-images' ) ); ?>
 					</td>

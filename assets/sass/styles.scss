@@ -42,6 +42,10 @@
 	  display: block;
 	}
   }
+  
+  tr.configure-url, tr.advanced-options {
+	display: none;
+  }
 
   .as3cf-url-preview-wrap {
 	background: #ffffff;
