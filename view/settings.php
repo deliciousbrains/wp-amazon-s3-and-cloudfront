@@ -209,7 +209,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url as3cf-border-bottom">
 					<td>
-						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders', 'value' => get_option('uploads_use_yearmonth_folders'), 'disabled' => ! is_multisite() ) ); ?>
+						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders', 'value' => $this->use_year_month_folders(), 'disabled' => ! is_multisite() ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Use Year/Month', 'as3cf' ) ?></h4>
