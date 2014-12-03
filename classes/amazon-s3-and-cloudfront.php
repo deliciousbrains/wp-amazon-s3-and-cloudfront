@@ -49,6 +49,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $this->get_default_object_prefix();
 		}
 
+		// Default enable object prefix - enabled if the object prefix is different to default
+		if ( 'enable-object-prefix' == $key && !isset( $settings['enable-object-prefix'] ) ) {
+			$enable = 0;
+			if ( $this->get_default_object_prefix() != $this->get_setting( 'object-prefix' ) ) {
+				$enable = 1;
+			}
+
+			return $enable;
+		}
+
 		// Region of bucket
 		if ( 'region' == $key && !isset( $settings['region-prefix'] ) ) {
 			$bucket = $this->get_setting( 'bucket' );
@@ -577,6 +587,21 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * Get the custom object prefix if enabled
+	 *
+	 * @return mixed|string|void
+	 */
+	function get_object_prefix() {
+		if ( $this->get_setting( 'enable-object-prefix' ) ) {
+			$prefix = $this->get_setting( 'object-prefix' );
+		} else {
+			$prefix = $this->get_default_object_prefix();
+		}
+
+		return $prefix;
+	}
+
+	/**
 	 * Get the file prefix
 	 *
 	 * @param null $time
@@ -585,7 +610,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_file_prefix( $time = null, $post_id = null ) {
-		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		$prefix = ltrim( trailingslashit( $this->get_object_prefix() ), '/' );
 		$prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
 
 		if ( $this->get_setting( 'object-versioning' ) ) {
