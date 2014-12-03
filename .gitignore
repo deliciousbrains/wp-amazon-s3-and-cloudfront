@@ -2,3 +2,4 @@ mirror
 .sass-cache
 assets/node_modules
 /vendor
+/languages/amazon-s3-and-cloudfront-en.mo
