@@ -166,9 +166,30 @@
 			});
 		});
 
-		$('.as3cf-settings').on('click', '.sub-toggle', function(e){
+		$('.as3cf-switch').on('click', 'span', function(e){
+			if ( ! $( this ).hasClass( 'checked' ) && ! $(this).parent().hasClass('disabled') ) {
+				var parent_id = $(this).parent().attr('id');
+				$('#' + parent_id + ' span' ).toggleClass('checked');
+				var switch_on = $('#' + parent_id + ' span.on' ).hasClass('checked');
+				var checkbox_name = $('#' + parent_id).data('checkbox');
+				var $checkbox = $('input#' + checkbox_name );
+				$checkbox.attr( "checked", switch_on );
+				$checkbox.trigger("change");
+			}
+		});
+
+		$('.as3cf-settings').on('change', '.sub-toggle', function(e){
 			var setting = $(this ).attr('id');
 			$('.as3cf-setting.' + setting ).toggleClass('hide');
+		});
+
+		$('.as3cf-domain').on('change', 'input[type="radio"]', function(e){
+			var domain = $( 'input:radio[name="domain[]"]:checked' ).val();
+			if ( 'cloudfront' == domain && $('.as3cf-setting.cloudfront' ).hasClass('hide') ) {
+				$('.as3cf-setting.cloudfront' ).removeClass('hide');
+			} else {
+				$('.as3cf-setting.cloudfront' ).addClass('hide');
+			}
 		});
 
 		$( '.as3cf-settings' ).on( 'change', '#force-ssl', function( e ) {

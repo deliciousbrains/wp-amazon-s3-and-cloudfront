@@ -106,7 +106,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox" name="copy-to-s3" value="1" id="copy-to-s3" <?php echo $this->get_setting( 'copy-to-s3' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'copy-to-s3' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Copy Files to S3', 'as3cf' ) ?></h4>
@@ -116,7 +116,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="as3cf-border-bottom">
 					<td>
-						<input type="checkbox" name="serve-from-s3" value="1" id="serve-from-s3" <?php echo $this->get_setting( 'serve-from-s3' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'serve-from-s3' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Rewrite File URLs', 'as3cf' ) ?></h4>
@@ -170,11 +170,10 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 								<p>http://bucket-name/&hellip;</p>
 							</label>
 							<label>
-								<input id="cloudfront" class="sub-toggle" type="radio" name="domain[]" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
+								<input id="cloudfront" type="radio" name="domain[]" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
 								CloudFront or custom domain
 								<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; ?>">
-
-								<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="50" />
+									<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="40" />
 								</p>
 							</label>
 						</div>
@@ -182,7 +181,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url">
 					<td>
-						<input type="checkbox" name="enable-object-prefix" class="sub-toggle" value="1" id="enable-object-prefix" <?php echo $this->get_setting( 'enable-object-prefix' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'enable-object-prefix', 'class' => 'sub-toggle' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Custom Path', 'as3cf' ) ?></h4>
@@ -197,7 +196,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url">
 					<td>
-						<input type="checkbox" name="force-ssl" value="1" id="force-ssl" <?php echo $this->get_setting( 'force-ssl' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'force-ssl' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Force SSL', 'as3cf' ) ?></h4>
@@ -208,7 +207,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url as3cf-border-bottom">
 					<td>
-						<input type="checkbox" name="use-yearmonth-folders" value="1" id="use-yearmonth-folders" <?php echo get_site_option('uploads_use_yearmonth_folders') ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders', 'value' => get_site_option('uploads_use_yearmonth_folders'), 'disabled' => true ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Remove Year/Month', 'as3cf' ) ?></h4>
@@ -222,7 +221,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox" name="remove-local-file" value="1" id="remove-local-file" <?php echo $this->get_setting( 'remove-local-file' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'remove-local-file' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Remove Files From Server', 'as3cf' ) ?></h4>
@@ -231,7 +230,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox" name="object-versioning" value="1" id="object-versioning" <?php echo $this->get_setting( 'object-versioning' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'object-versioning' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Object Versioning', 'as3cf' ) ?></h4>
@@ -245,7 +244,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox" name="expires" value="1" id="expires" <?php echo $this->get_setting( 'expires' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'expires' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Far Future Expiration Header', 'as3cf' ) ?></h4>
@@ -258,7 +257,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="as3cf-border-bottom">
 					<td>
-						<input type="checkbox" name="hidpi-images" value="1" id="hidpi-images" <?php echo $this->get_setting( 'hidpi-images' ) ? 'checked="checked" ' : ''; ?> />
+						<?php $this->render_view( 'checkbox', array( 'key' => 'hidpi-images' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Copy HiDPI (@2x) Images', 'as3cf' ) ?></h4>
