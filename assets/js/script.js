@@ -40,10 +40,13 @@
 								$( '.updated' ).show();
 								$('.as3cf-settings').addClass('as3cf-has-bucket');
 								$('.as3cf-active-bucket').text(bucketName);
+								$('#as3cf-bucket').val(bucketName);
+								$('#as3cf-region').val(data['region']);
 								$createBucketForm.find('input[name="bucket_name"]').val('');
 								$('.as3cf-bucket-list a' ).removeClass('selected');
 								loadBuckets();
 								$bucketList.removeClass('saving');
+								generate_url_preview();
 							} else {
 								alert(as3cf_i18n.create_bucket_error + data['error']);
 							}
@@ -158,7 +161,10 @@
 					if (typeof data['success'] !== 'undefined') {
 						$('.as3cf-settings').addClass('as3cf-has-bucket');
 						$('.as3cf-active-bucket').text(bucketName);
+						$('#as3cf-bucket').val(bucketName);
+						$('#as3cf-region').val(data['region']);
 						$( '.updated' ).show();
+						generate_url_preview();
 					} else {
 						alert(as3cf_i18n.save_bucket_error + data['error']);
 					}
@@ -205,15 +211,49 @@
 			}
 		} );
 
-		$('.configure-url').on('click', 'input[type="radio"], input[type="checkbox"]', function(e){
-			generate_url_preview();
-		});
+//		$('.configure-url').on('change', 'input[type="radio"], input[type="checkbox"]', function(e){
+//			generate_url_preview();
+//		});
 
-		$('.configure-url').on('change', 'input[type="text"]', function(e){
+		$('.configure-url').on('change', 'input', function(e){
 			generate_url_preview();
 		});
 
 		function generate_url_preview() {
+			$('.as3cf-url-preview' ).html( 'Generating...' );
+
+			var data = {
+				_nonce: as3cf_i18n.get_url_preview_nonce
+			};
+
+			$.each( $(".as3cf-main-settings form").serializeArray(), function(i,o){
+				var n = o.name,
+					v = o.value;
+				n = n.replace('[]', '');
+				data[n] = data[n] === undefined ? v
+					: $.isArray( data[n] ) ? data[n].concat( v )
+					: [ data[n], v ];
+			});
+
+			// overwrite the save action stored in the form
+			data['action'] = 'as3cf-get-url-preview';
+
+			$.ajax({
+				url:		ajaxurl,
+				type: 		'POST',
+				dataType: 	'JSON',
+				data: 		data,
+				error: function(jqXHR, textStatus, errorThrown) {
+					alert(as3cf_i18n.get_url_preview_error + errorThrown);
+				},
+				success: function(data, textStatus, jqXHR) {
+					if (typeof data['success'] !== 'undefined') {
+						$('.as3cf-url-preview' ).html( data['url'] );
+					} else {
+						alert(as3cf_i18n.get_url_preview_error + data['error']);
+					}
+				}
+			});
 		}
 
 	});

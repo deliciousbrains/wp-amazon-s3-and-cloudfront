@@ -28,6 +28,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
 		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
+		add_action( 'wp_ajax_as3cf-get-url-preview', array( $this, 'ajax_get_url_preview' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
@@ -37,6 +38,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function get_setting( $key, $default = '' ) {
+		// use settings from $_POST when generating URL preview via AJAX
+		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
+			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0 ;
+
+			return $value;
+		}
+
 		$settings = $this->get_settings();
 
 		// If legacy setting set, migrate settings
@@ -60,7 +68,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// Region of bucket
-		if ( 'region' == $key && !isset( $settings['region-prefix'] ) ) {
+		if ( 'region' == $key && !isset( $settings['region'] ) ) {
 			$bucket = $this->get_setting( 'bucket' );
 			$region = $this->get_bucket_region( $bucket );
 
@@ -83,11 +91,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
-			$value = AS3CF_BUCKET;
+			return AS3CF_BUCKET;
 		}
-		else {
-			$value = parent::get_setting( $key, $default );
-		}
+
+
+		$value = parent::get_setting( $key, $default );
+
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
 	}
@@ -120,7 +129,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return string
 	 */
-	function get_url_preview( $suffix = '' ) {
+	function get_url_preview( $suffix = 'photo.jpg' ) {
 		$scheme = $this->get_s3_url_scheme();
 		$bucket = $this->get_setting( 'bucket' );
 		$path   = $this->get_file_prefix();
@@ -129,7 +138,25 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$url = $scheme . '://' . $domain . '/' . $path . $suffix;
 
+		// replace hyphens with non breaking hyphens for formatting
+		$url = str_replace( '-', '&#8209;', $url );
+
 		return $url;
+	}
+
+	/**
+	 * AJAX handler for get_url_preview()
+	 */
+	function ajax_get_url_preview() {
+		$this->verify_ajax_request();
+
+		$url = $this->get_url_preview();
+
+		echo json_encode( array(
+			'success' => '1',
+			'url'     => $url
+		) );
+		exit;
 	}
 
 	/**
@@ -816,8 +843,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
 		} else {
-			$this->save_bucket( $_POST['bucket_name'] );
-			$out = array( 'success' => '1', '_nonce' => wp_create_nonce( 'as3cf-create-bucket' ) );
+			$region = $this->save_bucket( $_POST['bucket_name'] );
+
+			if ( $region !== false ) {
+				$out = array(
+					'success' => '1',
+					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
+					'region'  => $region
+				);
+			} else {
+				$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
+			}
 		}
 
 		echo json_encode( $out );
@@ -843,9 +879,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			exit;
 		}
 
-		$this->save_bucket( $_POST['bucket_name'] );
+		$region = $this->save_bucket( $_POST['bucket_name'] );
 
-		$out = array( 'success' => '1' );
+		if ( $region !== false ) {
+			$out = array(
+				'success' => '1',
+				'region' => $region
+			);
+		} else {
+			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
+		}
 
 		echo json_encode( $out );
 		exit;
@@ -855,6 +898,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Save bucket and bucket's region
 	 *
 	 * @param $bucket_name
+	 *
+	 * @return bool|WP_Error Region on success
 	 */
 	function save_bucket( $bucket_name ) {
 		if( $bucket_name ) {
@@ -863,7 +908,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$region = $this->get_bucket_region( $bucket_name );
 			$this->set_setting( 'region', $region );
 			$this->save_settings();
+
+			return $region;
 		}
+
+		return false;
 	}
 
 	function admin_menu( $aws ) {
@@ -1065,8 +1114,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
 			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
 			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
-			'save_bucket_error'		=> __( 'Error saving bucket: ', 'as3cf' ),
-			'save_bucket_nonce'		=> wp_create_nonce( 'as3cf-save-bucket' )
+			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
+			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
+			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
+			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' )
 		) );
 
 		$this->handle_post_request();

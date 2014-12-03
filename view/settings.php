@@ -99,6 +99,8 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<span class="as3cf-active-bucket"><?php echo $selected_bucket; ?></span>
 						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
+						<input id="as3cf-bucket" type="hidden" name="bucket" value="<?php echo $selected_bucket; ?>">
+						<input id="as3cf-region" type="hidden" name="region" value="<?php echo $this->get_setting('region'); ?>">
 					</td>
 				</tr>
 				<tr>
@@ -131,7 +133,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<div class="as3cf-url-preview-wrap">
 							<span>Preview</span>
 							<div class="as3cf-url-preview">
-								<?php echo str_replace( '-', '&#8209;', $this->get_url_preview( 'photo.jpg') ); ?>
+								<?php echo $this->get_url_preview(); ?>
 							</div>
 						</div>
 					</td>
