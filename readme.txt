@@ -58,7 +58,7 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
-= 0.7 - 2014-11-28 =
+= 0.7 - 2014-12-04 =
 * New: Proper S3 region subdomain in URLs for buckets not in the US Standard region (e.g. https://s3-us-west-2.amazonaws.com/...)
 * New: Update all existing attachment meta with bucket region (automatically runs in the background)
 * New: Get secure URL for different image sizes (iamzozo)
