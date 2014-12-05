@@ -26,7 +26,7 @@ if ( isset( $_GET['updated'] ) ) {
 
 $can_write = true;
 if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
-	$can_write = $this->check_write_permission( $buckets[0]['Name'] );
+	$can_write = $this->check_write_permission();
 	// catch any file system issues
 	if ( is_wp_error( $can_write ) ) {
 		$this->render_view( 'error', array( 'error' => $can_write ) );
@@ -54,8 +54,6 @@ if ( ! $can_write ) : ?>
 }</code></pre>
 	</div>
 <?php
-	// don't show the rest of the settings if cannot write
-	return;
 endif;
 ?>
 

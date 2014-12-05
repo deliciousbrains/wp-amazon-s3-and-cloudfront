@@ -781,11 +781,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Checks the user has write permission for S3
 	 *
-	 * @param string  $bucket
-	 *
 	 * @return bool
 	 */
-	function check_write_permission( $bucket ) {
+	function check_write_permission( ) {
+		if ( ! ( $bucket = $this->get_setting('bucket') ) ) {
+			// if no bucket set then no need check
+			return true;
+		}
 		// fire up the filesystem API
 		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
@@ -803,20 +805,28 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf' ) );
 		}
 
+		$path = $this->get_setting( 'object-prefix' );
+		$key = $path . $file_name;
+
 		$args = array(
 			'Bucket'     => $bucket,
-			'Key'        => $file_name,
+			'Key'        => $key,
 			'SourceFile' => $file,
 			'ACL'        => 'public-read'
 		);
 
 		try {
+			// need to set region for buckets in non default region
+			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
+			if ( $region['Location'] ) {
+				$this->get_s3client()->setRegion( $region['Location'] );
+			}
 			// attempt to create the test file
 			$this->get_s3client()->putObject( $args );
 			// delete it straight away if created
 			$this->get_s3client()->deleteObject( array(
 					'Bucket' => $bucket,
-					'Key'    => $file_name
+					'Key'    => $key
 				) );
 			$can_write = true;
 		} catch ( Exception $e ) {
