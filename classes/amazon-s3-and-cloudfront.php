@@ -33,6 +33,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
+		add_filter( 'as3cf_get_attached_file_copy_back_to_local', array( $this, 'regenerate_thumbnails_get_attached_file' ) );
 
 		load_plugin_textdomain( 'as3cf', false, dirname( plugin_basename( $plugin_file_path ) ) . '/languages/' );
 	}
@@ -708,6 +709,27 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		return $file;
 	}
+
+	/**
+	 * Allow the Regenerate Thumbnails plugin to copy the S3 file back to the local
+	 * server when the file is missing on the server via get_attached_file
+	 *
+	 * @param $copy_back_to_local
+	 *
+	 * @return bool
+	 */
+	function regenerate_thumbnails_get_attached_file( $copy_back_to_local ) {
+		if ( ! defined('DOING_AJAX') || ! DOING_AJAX ) {
+			return $copy_back_to_local;
+		}
+
+		if ( isset( $_POST['action'] ) && 'regeneratethumbnail' == $_POST['action'] ) {
+			return true;
+		}
+
+		return $copy_back_to_local;
+	}
+
 	function verify_ajax_request() {
 		if ( !is_admin() || !wp_verify_nonce( $_POST['_nonce'], $_POST['action'] ) ) {
 			wp_die( __( 'Cheatin&#8217; eh?', 'as3cf' ) );
