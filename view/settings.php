@@ -27,7 +27,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 		$can_write = $this->check_write_permission();
 		// catch any file system issues
 		if ( is_wp_error( $can_write ) ) {
-			$this->render_view( 'error', array( 'error' => $can_write ) );
+			$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
 			return;
 		}
 	}
