@@ -82,25 +82,29 @@ class AS3CF_Upgrade {
 	 * Adds notices about issues with upgrades allowing user to restart them
 	 */
 	function maybe_display_notices() {
-		$restart_url = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' );
+		$action_url = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=restart_update_meta_with_region' );
+		$msg_type   = 'notice';
 
 		switch ( $this->get_upgrade_status() ) {
 			case self::STATUS_RUNNING :
-				$msg = sprintf( __( '<strong>Running Metadata Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper S3 region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>. This will be done quietly in the background, processing a small batch of Media Library items every %d minutes. There should be no noticeable impact on your server&#8217;s performance.', 'as3cf' ), $this->cron_interval_in_minutes );
-				$msg .= ' <strong><a href="' . self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' ) . '">' . __( 'Pause Update', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				$msg         = sprintf( __( '<strong>Running Metadata Update</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper S3 region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>. This will be done quietly in the background, processing a small batch of Media Library items every %d minutes. There should be no noticeable impact on your server&#8217;s performance.', 'as3cf' ), $this->cron_interval_in_minutes );
+				$action_text = __( 'Pause Update', 'as3cf' );
+				$action_url  = self_admin_url( 'admin.php?page=' . $this->as3cf->get_plugin_slug() . '&action=pause_update_meta_with_region' );
 				break;
 			case self::STATUS_PAUSED :
-				$msg = __( '<strong>Metadata Update Paused</strong> &mdash; Updating Media Library metadata has been paused.', 'as3cf' );
-				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Restart Update', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'notice', array( 'message' => $msg ) );
+				$msg         = __( '<strong>Metadata Update Paused</strong> &mdash; Updating Media Library metadata has been paused.', 'as3cf' );
+				$action_text = __( 'Restart Update', 'as3cf' );
 				break;
 			case self::STATUS_ERROR :
-				$msg = __( '<strong>Error Updating Metadata</strong> &mdash; We ran into some errors attempting to update the metadata for all your Media Library items that have been uploaded to S3. Please check your error log for details.', 'as3cf' );
-				$msg .= ' <strong><a href="' . $restart_url . '">' . __( 'Try Run It Again', 'as3cf' ) . '</a></strong>';
-				$this->as3cf->render_view( 'error', array( 'message' => $msg ) );
+				$msg         = __( '<strong>Error Updating Metadata</strong> &mdash; We ran into some errors attempting to update the metadata for all your Media Library items that have been uploaded to S3. Please check your error log for details.', 'as3cf' );
+				$action_text = __( 'Try Run It Again', 'as3cf' );
+				$msg_type    = 'error';
 				break;
 		}
+
+		$msg .= ' <strong><a href="' . $action_url . '">' . $action_text . '</a></strong>';
+
+		$this->as3cf->render_view( $msg_type, array( 'message' => $msg ) );
 	}
 
 	function maybe_handle_action() {
