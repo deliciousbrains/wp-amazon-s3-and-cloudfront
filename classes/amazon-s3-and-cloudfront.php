@@ -1095,8 +1095,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		try {
 			// need to set region for buckets in non default region
-			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
-			if ( $region['Location'] ) {
+			$region = $this->get_setting( 'region' );
+			if ( $region ) {
 				$this->get_s3client()->setRegion( $region['Location'] );
 			}
 			// attempt to create the test file
