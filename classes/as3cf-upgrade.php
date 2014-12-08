@@ -100,6 +100,8 @@ class AS3CF_Upgrade {
 				$action_text = __( 'Try Run It Again', 'as3cf' );
 				$msg_type    = 'error';
 				break;
+			default :
+				return;
 		}
 
 		$msg .= ' <strong><a href="' . $action_url . '">' . $action_text . '</a></strong>';
