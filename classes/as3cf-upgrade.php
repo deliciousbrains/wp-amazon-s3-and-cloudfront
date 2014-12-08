@@ -158,7 +158,7 @@ class AS3CF_Upgrade {
 		// Adds every 10 minutes to the existing schedules.
 		$schedules[ self::CRON_SCHEDULE_KEY ] = array(
 			'interval' => $this->cron_interval_in_minutes * 60,
-			'display'  => __( 'Every ' . $this->cron_interval_in_minutes . ' Minutes', 'as3cf' )
+			'display'  => sprintf( __( 'Every %d Minutes', 'as3cf' ), $this->cron_interval_in_minutes ),
 		);
 
 		return $schedules;
