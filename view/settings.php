@@ -24,7 +24,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 	<?php
 	$can_write = true;
 	if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
-		$can_write = $this->check_write_permission( $buckets[0]['Name'] );
+		$can_write = $this->check_write_permission();
 		// catch any file system issues
 		if ( is_wp_error( $can_write ) ) {
 			$this->render_view( 'error', array( 'error' => $can_write ) );
@@ -51,11 +51,9 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
   ]
 }</code></pre>
 	</div>
-		<?php
-		// don't show the rest of the settings if cannot write
-		return;
-	endif;
-	?>
+<?php
+endif;
+?>
 
 	<div class="as3cf-bucket-select">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
