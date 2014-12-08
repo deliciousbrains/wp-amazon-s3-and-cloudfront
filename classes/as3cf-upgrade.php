@@ -270,7 +270,7 @@ class AS3CF_Upgrade {
 				if ( time() >= $finish ) {
 					break;
 				}
-                
+
 				$s3object = unserialize( $attachment->s3object );
 				if ( false === $s3object ) {
 					error_log( 'Failed to unserialize S3 meta for attachment ' . $attachment->ID . ': ' . $attachment->s3object );
