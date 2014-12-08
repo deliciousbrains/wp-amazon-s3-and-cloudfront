@@ -14,7 +14,7 @@ if ( is_wp_error( $buckets ) ) :
 	<?php
 endif;
 
-if ( isset( $_GET['updated'] ) ) {
+if ( isset( $_GET['updated'] ) ) { // input var okay
 	?>
 	<div class="updated">
 		<p>

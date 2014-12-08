@@ -110,11 +110,11 @@ class AS3CF_Upgrade {
 	}
 
 	function maybe_handle_action() {
-		if ( ! isset( $_GET['page'] ) || $_GET['page'] != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) ) {
+		if ( ! isset( $_GET['page'] ) || sanitize_key( $_GET['page'] ) != $this->as3cf->get_plugin_slug() || ! isset( $_GET['action'] ) ) { // input var okay
 			return;
 		}
 
-		$method_name = 'action_' . $_GET['action'];
+		$method_name = 'action_' . sanitize_key( $_GET['action'] ); // input var okay
 		if ( method_exists( $this, $method_name ) ) {
 			call_user_func( array( $this, $method_name ) );
 		}
