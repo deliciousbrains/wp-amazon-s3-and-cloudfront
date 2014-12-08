@@ -1,3 +1,3 @@
 <div class="error">
-	<p><?php echo $message; ?></p>
+	<p><?php echo esc_html( $message ); ?></p>
 </div>
