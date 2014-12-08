@@ -857,6 +857,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
 					'region'  => $region
 				);
+				$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
+				if ( is_wp_error( $can_write ) ) {
+					$can_write = false;
+				}
+				$out['can_write'] = $can_write;
 			} else {
 				$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 			}
@@ -890,8 +895,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( $region !== false ) {
 			$out = array(
 				'success' => '1',
-				'region' => $region
+				'region'  => $region
 			);
+
+			$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
+			if ( is_wp_error( $can_write ) ) {
+				$can_write = false;
+			}
+			$out['can_write'] = $can_write;
+
 		} else {
 			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 		}
@@ -1022,18 +1034,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$out = array(
 				'success' => '1',
 				'buckets' => $result,
-				'can_write' => true,
 				'selected' => $this->get_setting( 'bucket' )
 			);
-
-			$can_write = true;
-			if ( is_array( $result ) ) {
-				$can_write = $this->check_write_permission( $result[0]['Name'] );
-				// catch any file system issues
-				if ( is_wp_error( $can_write ) ) {
-					$out['can_write'] = false;
-				}
-			}
 		}
 
 		echo json_encode( $out );
@@ -1059,12 +1061,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Checks the user has write permission for S3
 	 *
-	 * @return bool
+	 * @param null $bucket
+	 * @param null $region
+	 *
+	 * @return bool|WP_Error
 	 */
-	function check_write_permission( ) {
-		if ( ! ( $bucket = $this->get_setting('bucket') ) ) {
-			// if no bucket set then no need check
-			return true;
+	function check_write_permission( $bucket = null, $region = null) {
+		if ( is_null( $bucket ) ) {
+			if ( ! ( $bucket = $this->get_setting( 'bucket' ) ) ) {
+				// if no bucket set then no need check
+				return true;
+			}
 		}
 		// fire up the filesystem API
 		$filesystem = WP_Filesystem();
@@ -1095,9 +1102,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		try {
 			// need to set region for buckets in non default region
-			$region = $this->get_setting( 'region' );
+			if ( is_null( $region ) ) {
+				$region = $this->get_setting( 'region' );
+			}
 			if ( $region ) {
-				$this->get_s3client()->setRegion( $region['Location'] );
+				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
 			$this->get_s3client()->putObject( $args );

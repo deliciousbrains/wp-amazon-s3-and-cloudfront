@@ -37,16 +37,13 @@
 							$createBucketButton.text(origButtonText);
 							$createBucketButton.prop('disabled', false);
 							if (typeof data['success'] !== 'undefined') {
-								$( '.updated' ).show();
-								$('.as3cf-settings').addClass('as3cf-has-bucket');
-								$('.as3cf-active-bucket').text(bucketName);
-								$('#as3cf-bucket').val(bucketName);
-								$('#as3cf-region').val(data['region']);
+								bucket_select( bucketName, data['region'], data['can_write'] );
+								// tidy up create bucket form
 								$createBucketForm.find('input[name="bucket_name"]').val('');
 								$('.as3cf-bucket-list a' ).removeClass('selected');
 								loadBuckets();
 								$bucketList.removeClass('saving');
-								generate_url_preview();
+
 							} else {
 								alert(as3cf_i18n.create_bucket_error + data['error']);
 							}
@@ -60,6 +57,7 @@
 				$changeBucket.on('click', function(e){
 					e.preventDefault();
 					$( '.updated' ).hide();
+					$('.as3cf-can-write-error').hide();
 					$('.as3cf-settings').removeClass('as3cf-has-bucket');
 					if ( $('.as3cf-active-bucket' ).html ) {
 						$('.as3cf-cancel-bucket-select-wrap' ).show();
@@ -109,10 +107,6 @@
 				success: function(data, textStatus, jqXHR) {
 					$bucketList.html('');
 					if (typeof data['success'] !== 'undefined') {
-						if(data['can_write'] === false){
-							$('.as3cf-can-write-error').show();
-						}
-
 						$(data['buckets']).each(function(idx, bucket){
 							var bucket_class = ( bucket.Name == data['selected'] ) ? 'selected' : '';
 							$bucketList.append('<li><a class="' + bucket_class + '" href="#" data-bucket="'+ bucket.Name +'"><span class="bucket"><span class="dashicons dashicons-portfolio"></span> '+ bucket.Name +'</span><span class="spinner"></span></span></a></li>');
@@ -159,7 +153,7 @@
 					$(bucket).find('.spinner').hide();
 					$bucketList.removeClass('saving');
 					if (typeof data['success'] !== 'undefined') {
-						bucket_select( bucketName, data['region'] );
+						bucket_select( bucketName, data['region'], data['can_write'] );
 					} else {
 						alert(as3cf_i18n.save_bucket_error + data['error']);
 					}
@@ -167,7 +161,7 @@
 			});
 		});
 
-		function bucket_select( bucket, region ) {
+		function bucket_select( bucket, region, can_write ) {
 			if ( '' == $( '.as3cf-active-bucket' ).text() ) {
 				// first time bucket select - enable main options by default
 				set_checkbox( 'copy-to-s3-wrap' );
@@ -177,6 +171,10 @@
 			$( '#as3cf-bucket' ).val( bucket );
 			$( '#as3cf-region' ).val( region );
 			$( '.updated' ).show();
+			// check permission on bucket
+			if( can_write === false){
+				$('.as3cf-can-write-error').show();
+			}
 			$( '.as3cf-settings' ).addClass( 'as3cf-has-bucket' );
 			generate_url_preview();
 		}

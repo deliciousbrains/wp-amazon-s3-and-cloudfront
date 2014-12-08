@@ -32,8 +32,8 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 		}
 	}
 	// display a error message if the user does not have write permission to S3
-	if ( ! $can_write ) : ?>
-	<div class="error">
+	?>
+	<div class="error as3cf-can-write-error" style="<?php echo ( $can_write ) ? 'display: none;' : ''; ?>">
 		<p>
 			<strong>
 				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
@@ -51,9 +51,6 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
   ]
 }</code></pre>
 	</div>
-<?php
-endif;
-?>
 
 	<div class="as3cf-bucket-select">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
