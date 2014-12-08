@@ -38,7 +38,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 			<strong>
 				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
 			</strong>&mdash;
-			<?php printf( __( 'You need to go to  <a href="%s">Identity and Access Management</a> in your AWS console and manage the policy for the user you\'re using for this plugin. Your policy should look something like the following:', 'as3cf' ), 'https://console.aws.amazon.com/iam/home' ); ?>
+			<?php printf( __( 'You need to go to <a href="%s">Identity and Access Management</a> in your AWS console and manage the policy for the user you\'re using for this plugin. Your policy should look something like the following:', 'as3cf' ), 'https://console.aws.amazon.com/iam/home' ); ?>
 		</p>
 		<pre><code>{
   "Version": "2012-10-17",
@@ -107,8 +107,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Copy Files to S3', 'as3cf' ) ?></h4>
-						<p><?php _e( 'When a file is uploaded to the Media Library, copy it to S3.', 'as3cf' ) ?><br>
-						<?php _e( 'Existing files are <em>not</em> copied to S3.', 'as3cf' ) ?></p>
+						<p><?php _e( 'When a file is uploaded to the Media Library, copy it to S3. Existing files are <em>not</em> copied to S3.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
 				<tr class="as3cf-border-bottom">
@@ -117,7 +116,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Rewrite File URLs', 'as3cf' ) ?></h4>
-						<p><?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs<br>so that they are served from S3/CloudFront instead of your server.', 'as3cf' ) ?></p>
+						<p><?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs so that they are served from S3/CloudFront instead of your server.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
 				<tr class="configure-url">
@@ -232,11 +231,12 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<h4><?php _e( 'Object Versioning', 'as3cf' ) ?></h4>
 						<p><?php _e( 'Append a timestamp to the S3 file path. Recommended when using CloudFront so you don\'t have to worry about cache invalidation.' ); ?>
-							<br>
+						</p>
+						<p></p>
 							<a href="http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ReplacingObjects.html">
 								<?php _e( 'More info', 'as3cf' ) ?>
 							</a>
-						</p>
+
 					</td>
 				</tr>
 				<tr class="advanced-options">
