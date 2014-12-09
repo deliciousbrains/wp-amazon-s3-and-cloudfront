@@ -37,7 +37,7 @@ class AS3CF_Upgrade {
 	/**
 	 * Start it up
 	 *
-	 * @param unknown $as3cf - the instance of the as3cf class
+	 * @param Amazon_S3_And_CloudFront $as3cf - the instance of the as3cf class
 	 */
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
