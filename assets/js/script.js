@@ -180,7 +180,7 @@
 		}
 
 		$('.as3cf-switch').on('click', 'span', function(e){
-			if ( ! $( this ).hasClass( 'checked' ) && ! $(this).parent().hasClass('disabled') ) {
+			if ( ! $(this).parent().hasClass('disabled') ) {
 				var parent_id = $(this).parent().attr('id');
 				set_checkbox( parent_id );
 			}
