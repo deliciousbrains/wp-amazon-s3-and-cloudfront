@@ -199,7 +199,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<h4><?php _e( 'Force SSL', 'as3cf' ) ?></h4>
 						<p>
-							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to be always be served over SSL. You cannot use the "Bucket as a subdomain" domain option with this setting.' ); ?>
+							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to always be served over SSL. You cannot use the "Bucket as a subdomain" domain option with this setting.' ); ?>
 						</p>
 					</td>
 				</tr>
