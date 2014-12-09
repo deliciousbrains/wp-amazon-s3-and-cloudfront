@@ -693,13 +693,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $url;
 		}
 
-		$temp_file = download_url( $url  );
 		// fire up the filesystem API
 		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
 		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
 			error_log( __( 'There was an error attempting to access the file system', 'as3cf' ) );
+
+			return $url;
 		}
+
+		// download the file from S3
+		$temp_file = download_url( $url  );
+		// copy the temp file to the attachments location
 		if ( ! $wp_filesystem->copy( $temp_file, $file ) ) {
 			// fallback to url
 			$file = $url;
