@@ -232,13 +232,12 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Object Versioning', 'as3cf' ) ?></h4>
-						<p><?php _e( 'Append a timestamp to the S3 file path. Recommended when using CloudFront so you don\'t have to worry about cache invalidation.' ); ?>
-						</p>
-						<p></p>
+						<p>
+							<?php _e( 'Append a timestamp to the S3 file path. Recommended when using CloudFront so you don\'t have to worry about cache invalidation.' ); ?>
 							<a href="http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ReplacingObjects.html">
-								<?php _e( 'More info', 'as3cf' ) ?>
+								<?php _e( 'More info', 'as3cf' ) ?> &raquo;
 							</a>
-
+						</p>
 					</td>
 				</tr>
 				<tr class="advanced-options">
@@ -249,7 +248,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<h4><?php _e( 'Far Future Expiration Header', 'as3cf' ) ?></h4>
 						<p><?php _e('Implements a "Never Expire" caching policy for browsers by setting an Expires header for 10 years in the future. Should be used in conjunction with object versioning above.'); ?>
 							<a href="http://developer.yahoo.com/performance/rules.html#expires">
-								<?php _e( 'More info', 'as3cf' ) ?>
+								<?php _e( 'More info', 'as3cf' ) ?> &raquo;
 							</a>
 						</p>
 					</td>
