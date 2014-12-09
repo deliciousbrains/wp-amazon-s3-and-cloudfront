@@ -33,6 +33,9 @@
 
   .as3cf-main-settings {
 	display: none;
+	p {
+	  font-size: 13px;
+	}
   }
   &.as3cf-has-bucket {
 	.as3cf-bucket-select {
