@@ -66,14 +66,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return get_option( 'uploads_use_yearmonth_folders' );
 		}
 
-		// Default enable object prefix - enabled if the object prefix is different to default
-		if ( 'enable-object-prefix' == $key && !isset( $settings['enable-object-prefix'] ) ) {
-			$enable = 0;
-			if ( $this->get_default_object_prefix() != $this->get_setting( 'object-prefix' ) ) {
-				$enable = 1;
+		// Default enable object prefix - enabled unless path is empty
+		if ( 'enable-object-prefix' == $key ) {
+			if ( isset( $settings['object-prefix'] ) && '' == trim( $settings['object-prefix'] ) ) {
+				return 0;
+			} else {
+				return 1;
 			}
-
-			return $enable;
 		}
 
 		// Region of bucket
@@ -628,9 +627,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function get_object_prefix() {
 		if ( $this->get_setting( 'enable-object-prefix' ) ) {
-			$prefix = $this->get_setting( 'object-prefix' );
+			$prefix = trim( $this->get_setting( 'object-prefix' ) );
 		} else {
-			$prefix = $this->get_default_object_prefix();
+			$prefix = '';
 		}
 
 		return $prefix;
@@ -1238,7 +1237,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
