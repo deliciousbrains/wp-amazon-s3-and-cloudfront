@@ -13,6 +13,7 @@
 
 				$createBucketForm.on('submit', function(e){
 					e.preventDefault();
+					$( '.as3cf-bucket-error' ).hide();
 					$bucketList.addClass('saving');
 					$createBucketButton.text($createBucketButton.attr('data-working'));
 					$createBucketButton.prop('disabled', true);
@@ -31,7 +32,7 @@
 						data: 		data,
 						error: function(jqXHR, textStatus, errorThrown) {
 							$createBucketButton.text(origButtonText);
-							alert(as3cf_i18n.create_bucket_error + errorThrown);
+							show_bucket_error( as3cf_i18n.create_bucket_error, errorThrown );
 						},
 						success: function(data, textStatus, jqXHR) {
 							$createBucketButton.text(origButtonText);
@@ -43,9 +44,8 @@
 								$('.as3cf-bucket-list a' ).removeClass('selected');
 								loadBuckets();
 								$bucketList.removeClass('saving');
-
 							} else {
-								alert(as3cf_i18n.create_bucket_error + data['error']);
+								show_bucket_error( as3cf_i18n.create_bucket_error, data['error'] );
 							}
 						}
 					});
@@ -59,6 +59,7 @@
 					$( '.updated' ).hide();
 					$('.as3cf-can-write-error').hide();
 					$('.as3cf-settings').removeClass('as3cf-has-bucket');
+					loadBuckets();
 					if ( $('.as3cf-active-bucket' ).html ) {
 						$('.as3cf-cancel-bucket-select-wrap' ).show();
 					}
@@ -80,6 +81,7 @@
 			if($cancelChangeBucket.length){
 				$cancelChangeBucket.on('click', function(e){
 					e.preventDefault();
+					$( '.as3cf-bucket-error' ).hide();
 					$('.as3cf-settings').addClass('as3cf-has-bucket');
 				});
 			}
@@ -88,6 +90,7 @@
 
 		var $bucketList = $('.as3cf-bucket-list');
 		function loadBuckets() {
+			$( '.as3cf-bucket-error' ).hide();
 			$bucketList.html('<li class="loading">'+ $bucketList.attr('data-working') +'</li>');
 
 			var data = {
@@ -102,7 +105,7 @@
 				data: 		data,
 				error: function(jqXHR, textStatus, errorThrown) {
 					$bucketList.html('');
-					alert(as3cf_i18n.get_buckets_error + errorThrown);
+					show_bucket_error( as3cf_i18n.get_buckets_error, errorThrown );
 				},
 				success: function(data, textStatus, jqXHR) {
 					$bucketList.html('');
@@ -112,7 +115,7 @@
 							$bucketList.append('<li><a class="' + bucket_class + '" href="#" data-bucket="'+ bucket.Name +'"><span class="bucket"><span class="dashicons dashicons-portfolio"></span> '+ bucket.Name +'</span><span class="spinner"></span></span></a></li>');
 						});
 					} else {
-						alert(as3cf_i18n.get_buckets_error + data['error']);
+						show_bucket_error( as3cf_i18n.get_buckets_error, data[ 'error' ] );
 					}
 				}
 			});
@@ -147,7 +150,7 @@
 				data: 		data,
 				error: function(jqXHR, textStatus, errorThrown) {
 					$bucketList.removeClass('saving');
-					alert(as3cf_i18n.save_bucket_error + errorThrown);
+					show_bucket_error( as3cf_i18n.save_bucket_error, errorThrown );
 				},
 				success: function(data, textStatus, jqXHR) {
 					$(bucket).find('.spinner').hide();
@@ -155,11 +158,17 @@
 					if (typeof data['success'] !== 'undefined') {
 						bucket_select( bucketName, data['region'], data['can_write'] );
 					} else {
-						alert(as3cf_i18n.save_bucket_error + data['error']);
+						show_bucket_error( as3cf_i18n.save_bucket_error, data['error'] );
 					}
 				}
 			});
 		});
+
+		function show_bucket_error( title, error ) {
+			$( '.as3cf-bucket-error span.title' ).html( title );
+			$( '.as3cf-bucket-error span.message' ).html( error );
+			$( '.as3cf-bucket-error' ).show();
+		}
 
 		function bucket_select( bucket, region, can_write ) {
 			if ( '' == $( '.as3cf-active-bucket' ).text() ) {
@@ -193,6 +202,10 @@
 			var $checkbox = $('input#' + checkbox_name);
 			$checkbox.attr( "checked", switch_on );
 			$checkbox.trigger("change");
+		}
+
+		if ( ! $( '.as3cf-settings' ).hasClass( 'as3cf-has-bucket' ) ) {
+			loadBuckets();
 		}
 
 		if ( $( '#copy-to-s3' ).is( ":checked" ) ) {

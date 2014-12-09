@@ -2,18 +2,12 @@
 $selected_bucket = $this->get_setting( 'bucket' ); ?>
 <div class="aws-content as3cf-settings<?php echo ( $selected_bucket ) ? ' as3cf-has-bucket' : ''; ?>">
 
-	<?php
-	$buckets = $this->get_buckets();
-	if ( is_wp_error( $buckets ) ) :
-		?>
-		<div class="error">
-			<p>
-				<?php _e( 'Error retrieving a list of your S3 buckets from AWS:', 'as3cf' ); ?>
-				<?php echo $buckets->get_error_message(); ?>
-			</p>
-		</div>
-	<?php
-	endif; ?>
+	<div class="error as3cf-bucket-error" style="display: none;">
+		<p>
+			<span class="title"></span>
+			<span class="message"></span>
+		</p>
+	</div>
 
 	<div class="updated <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
 		<p>
@@ -22,14 +16,12 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 	</div>
 
 	<?php
-	$can_write = true;
-	if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
-		$can_write = $this->check_write_permission();
-		// catch any file system issues
-		if ( is_wp_error( $can_write ) ) {
-			$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
-			return;
-		}
+	$can_write = $this->check_write_permission();
+	// catch any file system issues
+	if ( is_wp_error( $can_write ) ) {
+		$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
+
+		return;
 	}
 	// display a error message if the user does not have write permission to S3
 	?>
@@ -62,17 +54,6 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 		</div>
 		<div class="as3cf-bucket-list-wrapper">
 			<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>">
-				<?php foreach ( $buckets as $bucket ) : ?>
-					<li>
-						<a href="#" data-bucket="<?php echo $bucket['Name']; ?>" class="<?php echo ( $selected_bucket == $bucket['Name'] ) ? 'selected' : ''; ?>">
-							<span class="bucket">
-								<span class="dashicons dashicons-portfolio"></span>
-								<?php echo $bucket['Name']; ?>
-							</span>
-							<span class="spinner"></span>
-						</a>
-					</li>
-				<?php endforeach; ?>
 			</ul>
 		</div>
 		<h3><?php _e( 'Or create a new bucket:', 'as3cf' ); ?></h3>
