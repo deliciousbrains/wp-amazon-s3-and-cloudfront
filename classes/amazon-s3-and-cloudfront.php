@@ -792,7 +792,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
 		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
-			return new WP_Error( 'exception', __( 'There was an error attempting to access the file system', 'as3cf' ) );
+			return new WP_Error( 'exception', __( 'There was an error attempting to access the local file system whilst checking the bucket permissions', 'as3cf' ) );
 		}
 
 		$uploads       = wp_upload_dir();
