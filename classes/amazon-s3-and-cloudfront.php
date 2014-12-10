@@ -732,7 +732,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			catch ( Exception $e ) {
 				return new WP_Error( 'exception', $e->getMessage() );
 			}
-			$s3object['region'] = $region['Location'];
+			$s3object['region'] = $this->translate_region( $region['Location'] );
 
 			if ( ! is_null( $post_id ) ) {
 				// retrospectively update s3 metadata with region
@@ -741,6 +741,23 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $s3object['region'];
+	}
+
+	/**
+	 * Translate older bucket locations to newer S3 region names
+	 *
+	 * @param $region
+	 *
+	 * @return string
+	 */
+	function translate_region( $region ) {
+		switch ( $region ) {
+			case 'EU' :
+				$region = 'eu-west-1';
+				break;
+		}
+
+		return $region;
 	}
 
 	/**
@@ -819,7 +836,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			// need to set region for buckets in non default region
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
 			if ( $region['Location'] ) {
-				$this->get_s3client()->setRegion( $region['Location'] );
+				$region = $this->translate_region( $region['Location'] );
+				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
 			$this->get_s3client()->putObject( $args );
