@@ -29,8 +29,7 @@ if ( ! is_wp_error( $buckets ) && is_array( $buckets ) ) {
 	$can_write = $this->check_write_permission();
 	// catch any file system issues
 	if ( is_wp_error( $can_write ) ) {
-		$this->render_view( 'error', array( 'error' => $can_write ) );
-		return;
+		$this->render_view( 'error', array( 'message' => $can_write ) );
 	}
 }
 // display a error message if the user does not have write permission to S3
