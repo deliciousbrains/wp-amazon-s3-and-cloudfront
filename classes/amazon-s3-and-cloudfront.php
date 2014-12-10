@@ -542,7 +542,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		// We don't use $this->get_s3object_region() here because we don't want
 		// to make an AWS API call and slow down page loading
 		if ( isset( $s3object['region'] ) ) {
-			$region = $s3object['region'];
+			$region = $this->translate_region( $s3object['region'] );
 		}
 		else {
 			$region = '';
@@ -732,7 +732,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			catch ( Exception $e ) {
 				return new WP_Error( 'exception', $e->getMessage() );
 			}
-			$s3object['region'] = $this->translate_region( $region['Location'] );
+			$s3object['region'] = $region['Location'];
 
 			if ( ! is_null( $post_id ) ) {
 				// retrospectively update s3 metadata with region
@@ -778,6 +778,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( $region ) {
+			$region = $this->translate_region( $region );
 			$this->get_s3client()->setRegion( $region );
 		}
 
