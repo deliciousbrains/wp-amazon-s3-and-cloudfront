@@ -752,8 +752,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function translate_region( $region ) {
+		$region = strtolower( $region );
+
 		switch ( $region ) {
-			case 'EU' :
+			case 'eu' :
 				$region = 'eu-west-1';
 				break;
 		}
