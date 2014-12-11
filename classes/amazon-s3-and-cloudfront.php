@@ -542,7 +542,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		// We don't use $this->get_s3object_region() here because we don't want
 		// to make an AWS API call and slow down page loading
 		if ( isset( $s3object['region'] ) ) {
-			$region = $s3object['region'];
+			$region = $this->translate_region( $s3object['region'] );
 		}
 		else {
 			$region = '';
@@ -744,6 +744,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * Translate older bucket locations to newer S3 region names
+	 * http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	 *
+	 * @param $region
+	 *
+	 * @return string
+	 */
+	function translate_region( $region ) {
+		$region = strtolower( $region );
+
+		switch ( $region ) {
+			case 'eu' :
+				$region = 'eu-west-1';
+				break;
+		}
+
+		return $region;
+	}
+
+	/**
 	 * Set the region of the AWS client based on the bucket.
 	 *
 	 * This is needed for non US standard buckets to add and delete files.
@@ -761,6 +781,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( $region ) {
+			$region = $this->translate_region( $region );
 			$this->get_s3client()->setRegion( $region );
 		}
 
@@ -819,7 +840,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			// need to set region for buckets in non default region
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
 			if ( $region['Location'] ) {
-				$this->get_s3client()->setRegion( $region['Location'] );
+				$region = $this->translate_region( $region['Location'] );
+				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
 			$this->get_s3client()->putObject( $args );
