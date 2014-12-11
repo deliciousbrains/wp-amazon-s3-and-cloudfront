@@ -20,8 +20,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 	// catch any file system issues
 	if ( is_wp_error( $can_write ) ) {
 		$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
-
-		return;
+		$can_write = true;
 	}
 	// display a error message if the user does not have write permission to S3
 	?>
