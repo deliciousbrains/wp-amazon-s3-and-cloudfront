@@ -17,6 +17,8 @@ msgstr ""
 "_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: vendor\n"
+"X-Poedit-SearchPathExcluded-1: assets\n"
 
 #: classes/amazon-s3-and-cloudfront.php:25
 msgid "Amazon S3 and CloudFront"
