@@ -32,6 +32,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 100, 2 );
 		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
+		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
+		add_filter( 'as3cf_get_attached_file_copy_back_to_local', array( $this, 'regenerate_thumbnails_get_attached_file' ) );
 
 		load_plugin_textdomain( 'as3cf', false, dirname( plugin_basename( $plugin_file_path ) ) . '/languages/' );
 	}
@@ -542,7 +544,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		// We don't use $this->get_s3object_region() here because we don't want
 		// to make an AWS API call and slow down page loading
 		if ( isset( $s3object['region'] ) ) {
-			$region = $s3object['region'];
+			$region = $this->translate_region( $s3object['region'] );
 		}
 		else {
 			$region = '';
@@ -661,6 +663,78 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $file_path . $file_name;
 	}
 
+	/**
+	 * Return the S3 URL when the local file is missing
+	 * unless we know the calling process is and we are happy
+	 * to copy the file back to the server to be used
+	 *
+	 * @param $file
+	 * @param $attachment_id
+	 *
+	 * @return bool|mixed|void|WP_Error
+	 */
+	function get_attached_file( $file, $attachment_id ) {
+		if ( file_exists( $file ) || ! $this->get_setting( 'serve-from-s3' ) ) {
+			return $file;
+		}
+
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
+			return $file;
+		}
+
+		$url = $this->get_attachment_url( $attachment_id );
+
+		// the default behaviour is to return the S3 URL, however we can override this
+		// and copy back the file to the local server for certain processes
+		// where we know it will get removed again via wp_update_attachment_metadata
+		$copy_back_to_local = apply_filters( 'as3cf_get_attached_file_copy_back_to_local', false, $file, $attachment_id );
+		if ( false === $copy_back_to_local ) {
+			// return S3 URL as a fallback
+			return $url;
+		}
+
+		// fire up the filesystem API
+		$filesystem = WP_Filesystem();
+		global $wp_filesystem;
+		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
+			error_log( __( 'There was an error attempting to access the file system', 'as3cf' ) );
+
+			return $url;
+		}
+
+		// download the file from S3
+		$temp_file = download_url( $url  );
+		// copy the temp file to the attachments location
+		if ( ! $wp_filesystem->copy( $temp_file, $file ) ) {
+			// fallback to url
+			$file = $url;
+		}
+		// clear up temp file
+		unlink( $temp_file );
+
+		return $file;
+	}
+
+	/**
+	 * Allow the Regenerate Thumbnails plugin to copy the S3 file back to the local
+	 * server when the file is missing on the server via get_attached_file
+	 *
+	 * @param $copy_back_to_local
+	 *
+	 * @return bool
+	 */
+	function regenerate_thumbnails_get_attached_file( $copy_back_to_local ) {
+		if ( ! defined('DOING_AJAX') || ! DOING_AJAX ) {
+			return $copy_back_to_local;
+		}
+
+		if ( isset( $_POST['action'] ) && 'regeneratethumbnail' == $_POST['action'] ) {
+			return true;
+		}
+
+		return $copy_back_to_local;
+	}
+
 	function verify_ajax_request() {
 		if ( !is_admin() || !wp_verify_nonce( $_POST['_nonce'], $_POST['action'] ) ) {
 			wp_die( __( 'Cheatin&#8217; eh?', 'as3cf' ) );
@@ -744,6 +818,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * Translate older bucket locations to newer S3 region names
+	 * http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	 *
+	 * @param $region
+	 *
+	 * @return string
+	 */
+	function translate_region( $region ) {
+		$region = strtolower( $region );
+
+		switch ( $region ) {
+			case 'eu' :
+				$region = 'eu-west-1';
+				break;
+		}
+
+		return $region;
+	}
+
+	/**
 	 * Set the region of the AWS client based on the bucket.
 	 *
 	 * This is needed for non US standard buckets to add and delete files.
@@ -761,6 +855,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( $region ) {
+			$region = $this->translate_region( $region );
 			$this->get_s3client()->setRegion( $region );
 		}
 
@@ -792,7 +887,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$filesystem = WP_Filesystem();
 		global $wp_filesystem;
 		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
-			return new WP_Error( 'exception', __( 'There was an error attempting to access the file system', 'as3cf' ) );
+			return new WP_Error( 'exception', __( 'There was an error attempting to access the local file system whilst checking the bucket permissions', 'as3cf' ) );
 		}
 
 		$uploads       = wp_upload_dir();
@@ -819,7 +914,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			// need to set region for buckets in non default region
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
 			if ( $region['Location'] ) {
-				$this->get_s3client()->setRegion( $region['Location'] );
+				$region = $this->translate_region( $region['Location'] );
+				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
 			$this->get_s3client()->putObject( $args );
