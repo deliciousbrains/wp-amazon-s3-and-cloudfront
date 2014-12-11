@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Amazon S3 and CloudFront\n"
-"POT-Creation-Date: 2014-12-02 16:41-0000\n"
-"PO-Revision-Date: 2014-12-02 16:44-0000\n"
+"POT-Creation-Date: 2014-12-11 15:33-0000\n"
+"PO-Revision-Date: 2014-12-11 15:33-0000\n"
 "Last-Translator: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language-Team: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.6.10\n"
+"X-Generator: Poedit 1.7\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
@@ -17,6 +17,8 @@ msgstr ""
 "_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: vendor\n"
+"X-Poedit-SearchPathExcluded-1: assets\n"
 
 #: classes/amazon-s3-and-cloudfront.php:25
 msgid "Amazon S3 and CloudFront"
@@ -38,30 +40,32 @@ msgstr ""
 msgid "No bucket name provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:793
-msgid "There was an error attempting to access the file system"
+#: classes/amazon-s3-and-cloudfront.php:816
+msgid ""
+"There was an error attempting to access the local file system whilst "
+"checking the bucket permissions"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:799
+#: classes/amazon-s3-and-cloudfront.php:822
 msgid ""
 "This is a test file to check if the user has write permission to S3. Delete "
 "me if found."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:803
+#: classes/amazon-s3-and-cloudfront.php:826
 msgid ""
 "It looks like we cannot create a file locally to test the S3 permissions"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:845
+#: classes/amazon-s3-and-cloudfront.php:877
 msgid "Bucket Name:"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:846
+#: classes/amazon-s3-and-cloudfront.php:878
 msgid "Error creating bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:859
+#: classes/amazon-s3-and-cloudfront.php:891
 msgid "Cheatin' eh?"
 msgstr ""
 
@@ -172,11 +176,11 @@ msgstr ""
 msgid "Settings saved."
 msgstr ""
 
-#: view/settings.php:41
+#: view/settings.php:40
 msgid "S3 Policy is Read-Only"
 msgstr ""
 
-#: view/settings.php:43
+#: view/settings.php:42
 #, php-format
 msgid ""
 "You need to go to  <a href=\"%s\">Identity and Access Management</a> in your "
@@ -184,89 +188,89 @@ msgid ""
 "Your policy should look something like the following:"
 msgstr ""
 
-#: view/settings.php:69
+#: view/settings.php:66
 msgid "S3 Settings"
 msgstr ""
 
-#: view/settings.php:72
+#: view/settings.php:69
 msgid "Select an S3 Bucket"
 msgstr ""
 
-#: view/settings.php:76
+#: view/settings.php:73
 msgid "Create a new bucket..."
 msgstr ""
 
-#: view/settings.php:80
+#: view/settings.php:77
 msgid "Bucket is setup for virtual hosting"
 msgstr ""
 
-#: view/settings.php:80
+#: view/settings.php:77
 msgid "more info"
 msgstr ""
 
-#: view/settings.php:84
+#: view/settings.php:81
 #, php-format
 msgid ""
 "Set a <a href=\"%s\" target=\"_blank\">far future HTTP expiration header</a> "
 "for uploaded files <em>(recommended)</em>"
 msgstr ""
 
-#: view/settings.php:90
+#: view/settings.php:87
 msgid "Object Path:"
 msgstr ""
 
-#: view/settings.php:98
+#: view/settings.php:95
 msgid "CloudFront Settings"
 msgstr ""
 
-#: view/settings.php:100
+#: view/settings.php:97
 msgid "Domain Name"
 msgstr ""
 
-#: view/settings.php:102
+#: view/settings.php:99
 msgid "Leave blank if you aren&#8217;t using CloudFront."
 msgstr ""
 
-#: view/settings.php:109
+#: view/settings.php:106
 msgid "Plugin Settings"
 msgstr ""
 
-#: view/settings.php:112
+#: view/settings.php:109
 msgid "Copy files to S3 as they are uploaded to the Media Library"
 msgstr ""
 
-#: view/settings.php:116
+#: view/settings.php:113
 msgid "Point file URLs to S3/CloudFront for files that have been copied to S3"
 msgstr ""
 
-#: view/settings.php:117
+#: view/settings.php:114
 msgid ""
 "When this is option unchecked, your Media Library images and other files "
 "will be served from your server instead of S3/CloudFront. If any images were "
 "removed from your server, they will be broken."
 msgstr ""
 
-#: view/settings.php:124
+#: view/settings.php:121
 msgid ""
 "Remove uploaded file from local filesystem once it has been copied to S3"
 msgstr ""
 
-#: view/settings.php:128
+#: view/settings.php:125
 msgid "Always serve files over https (SSL)"
 msgstr ""
 
-#: view/settings.php:132
+#: view/settings.php:129
 #, php-format
 msgid ""
 "Implement <a href=\"%s\">object versioning</a> by appending a timestamp to "
 "the S3 file path"
 msgstr ""
 
-#: view/settings.php:136
+#: view/settings.php:133
 msgid "Copy any HiDPI (@2x) images to S3 (works with WP Retina 2x plugin)"
 msgstr ""
 
-#: view/settings.php:142
+#: view/settings.php:139
 msgid "Save Changes"
 msgstr ""
 
