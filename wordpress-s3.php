@@ -4,7 +4,7 @@ Plugin Name: Amazon S3 and CloudFront
 Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
 Description: Automatically copies media uploads to Amazon S3 for storage and delivery. Optionally configure Amazon CloudFront for even faster delivery.
 Author: Brad Touesnard
-Version: 0.7.1
+Version: 0.7.2
 Author URI: http://bradt.ca
 Network: True
 Text Domain: as3cf
