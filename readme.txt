@@ -58,6 +58,10 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
+= 0.7.2 - 2014-12-11 =
+* Bug: Some buckets in the EU region causing permission and HTTP errors
+* Bug: Undefined variable: message in view/error.php also causing white screens
+
 = 0.7.1 - 2014-12-05 =
 * Bug: Read-only error on settings page sometimes false positive
 
