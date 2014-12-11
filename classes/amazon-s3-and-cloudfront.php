@@ -75,12 +75,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		// Region of bucket
+		// Region of bucket if not already retrieved
 		if ( 'region' == $key && !isset( $settings['region'] ) ) {
 			$bucket = $this->get_setting( 'bucket' );
 			$region = $this->get_bucket_region( $bucket );
 
 			return $region;
+		}
+
+		// Region of bucket translation
+		if ( 'region' == $key && isset( $settings['region'] ) ) {
+
+			return $this->translate_region( $settings['region'] );
 		}
 
 		// Domain setting since 0.7
@@ -1204,7 +1210,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$region = $this->get_setting( 'region' );
 			}
 			if ( $region ) {
-				$region = $this->translate_region( $region['Location'] );
 				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
