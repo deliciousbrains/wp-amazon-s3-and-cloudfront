@@ -1041,7 +1041,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return new WP_Error( 'exception', $e->getMessage() );
 		}
 
-		return $region['Location'];
+		$region = $this->translate_region( $region['Location'] );
+
+		return $region;
 	}
 
 	/**
