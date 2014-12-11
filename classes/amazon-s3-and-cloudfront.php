@@ -745,6 +745,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	/**
 	 * Translate older bucket locations to newer S3 region names
+	 * http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 	 *
 	 * @param $region
 	 *
