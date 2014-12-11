@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.5
 Tested up to: 4.0.1
-Stable tag: 0.7.1
+Stable tag: 0.7.2
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -57,6 +57,10 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= 0.7.2 - 2014-12-11 =
+* Bug: Some buckets in the EU region causing permission and HTTP errors
+* Bug: Undefined variable: message in view/error.php also causing white screens
 
 = 0.7.1 - 2014-12-05 =
 * Bug: Read-only error on settings page sometimes false positive
