@@ -26,7 +26,7 @@ Domain Path: /languages/
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '0.7.1';
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '0.7.2';
 
 $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['supported_addon_versions'] = array(
 	'amazon-s3-and-cloudfront-edd' => '1.0',
