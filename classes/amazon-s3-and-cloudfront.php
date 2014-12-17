@@ -68,6 +68,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// Default enable object prefix - enabled unless path is empty
 		if ( 'enable-object-prefix' == $key ) {
+			if ( isset( $settings['enable-object-prefix'] ) && '0' == $settings['enable-object-prefix'] ) {
+				return 0;
+			}
+
 			if ( isset( $settings['object-prefix'] ) && '' == trim( $settings['object-prefix'] ) ) {
 				return 0;
 			} else {
