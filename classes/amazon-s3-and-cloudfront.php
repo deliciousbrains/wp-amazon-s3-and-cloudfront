@@ -25,7 +25,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
 		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
 
+		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
+		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
+		add_action( 'wp_ajax_as3cf-get-url-preview', array( $this, 'ajax_get_url_preview' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
@@ -39,6 +42,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function get_setting( $key, $default = '' ) {
+		// use settings from $_POST when generating URL preview via AJAX
+		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
+			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0 ;
+
+			return $value;
+		}
+
 		$settings = $this->get_settings();
 
 		// If legacy setting set, migrate settings
@@ -48,19 +58,77 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// Default object prefix
 		if ( 'object-prefix' == $key && !isset( $settings['object-prefix'] ) ) {
-			$uploads = wp_upload_dir();
-			$parts = parse_url( $uploads['baseurl'] );
-			return substr( $parts['path'], 1 ) . '/';
+			return $this->get_default_object_prefix();
+		}
+
+		// Default use year and month folders
+		if ( 'use-yearmonth-folders' == $key && ! isset( $settings['use-yearmonth-folders'] ) ) {
+			return get_option( 'uploads_use_yearmonth_folders' );
+		}
+
+		// Default enable object prefix - enabled unless path is empty
+		if ( 'enable-object-prefix' == $key ) {
+			if ( isset( $settings['enable-object-prefix'] ) && '0' == $settings['enable-object-prefix'] ) {
+				return 0;
+			}
+
+			if ( isset( $settings['object-prefix'] ) && '' == trim( $settings['object-prefix'] ) ) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+
+		// Region of bucket if not already retrieved
+		if ( 'region' == $key && !isset( $settings['region'] ) ) {
+			$bucket = $this->get_setting( 'bucket' );
+			$region = $this->get_bucket_region( $bucket );
+
+			return $region;
+		}
+
+		// Region of bucket translation
+		if ( 'region' == $key && isset( $settings['region'] ) ) {
+
+			return $this->translate_region( $settings['region'] );
+		}
+
+		// Domain setting since 0.7
+		if ( 'domain' == $key && ! isset( $settings['domain'] ) ) {
+			if ( $this->get_setting( 'cloudfront' ) ) {
+				$domain = 'cloudfront';
+			} elseif ( $this->get_setting( 'virtual-host' ) ) {
+				$domain = 'virtual-host';
+			} elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+				$domain = 'path';
+			} else {
+				$domain = 'subdomain';
+			}
+
+			return $domain;
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
-			$value = AS3CF_BUCKET;
-		}
-		else {
-			$value = parent::get_setting( $key, $default );
+			return AS3CF_BUCKET;
 		}
 
+
+		$value = parent::get_setting( $key, $default );
+
+
 		return apply_filters( 'as3cf_setting_' . $key, $value );
+	}
+
+	/**
+	 * Return the default object prefix
+	 *
+	 * @return string
+	 */
+	function get_default_object_prefix() {
+		$uploads = wp_upload_dir();
+		$parts = parse_url( $uploads['baseurl'] );
+
+		return substr( $parts['path'], 1 ) . '/';
 	}
 
 	/**
@@ -70,6 +138,43 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function get_allowed_mime_types() {
 		return apply_filters( 'as3cf_allowed_mime_types', get_allowed_mime_types() );
+	}
+
+	/**
+	 * Generate a preview of the URL of files uploaded to S3
+	 *
+	 * @param string $suffix
+	 *
+	 * @return string
+	 */
+	function get_url_preview( $suffix = 'photo.jpg' ) {
+		$scheme = $this->get_s3_url_scheme();
+		$bucket = $this->get_setting( 'bucket' );
+		$path   = $this->get_file_prefix();
+		$region = $this->get_setting( 'region' );
+		$domain = $this->get_s3_url_domain( $bucket, $region );
+
+		$url = $scheme . '://' . $domain . '/' . $path . $suffix;
+
+		// replace hyphens with non breaking hyphens for formatting
+		$url = str_replace( '-', '&#8209;', $url );
+
+		return $url;
+	}
+
+	/**
+	 * AJAX handler for get_url_preview()
+	 */
+	function ajax_get_url_preview() {
+		$this->verify_ajax_request();
+
+		$url = $this->get_url_preview();
+
+		echo json_encode( array(
+			'success' => '1',
+			'url'     => $url
+		) );
+		exit;
 	}
 
 	/**
@@ -221,12 +326,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$time = date( 'Y/m', $time );
 			}
 
-			$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
-			$prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+			$prefix = $this->get_file_prefix( $time, $post_id );
 
-			if ( $this->get_setting( 'object-versioning' ) ) {
-				$prefix .= $this->get_object_version_string( $post_id );
-			}
 			// use bucket from settings
 			$bucket = $this->get_setting( 'bucket' );
 		}
@@ -303,16 +404,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		if ( isset( $data['thumb'] ) && $data['thumb'] ) {
 			$path = str_replace( $file_name, $data['thumb'], $file_path );
-			if ( file_exists( $path ) ) {
-				$additional_images[] = array(
-					'Key'        => $prefix . $data['thumb'],
-					'SourceFile' => $path
-				);
-				$files_to_remove[]   = $path;
-			}
-		}
-		elseif ( !empty( $data['sizes'] ) ) {
-			foreach ( $data['sizes'] as $size ) {
+	        if ( file_exists( $path ) ) {
+		        $additional_images[] = array(
+			        'Key'        => $prefix . $data['thumb'],
+			        'SourceFile' => $path
+		        );
+		        $files_to_remove[]   = $path;
+	        }
+        }
+        elseif ( !empty( $data['sizes'] ) ) {
+        	foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
 				if ( file_exists( $path ) ) {
 					$additional_images[] = array(
@@ -376,10 +477,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function get_object_version_string( $post_id ) {
-		if ( get_option( 'uploads_use_yearmonth_folders' ) ) {
+		if ( $this->get_setting( 'use-yearmonth-folders' ) ) {
 			$date_format = 'dHis';
-		}
-		else {
+		} else {
 			$date_format = 'YmdHis';
 		}
 
@@ -515,6 +615,99 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * Return the scheme to be used in URLs
+	 *
+	 * @return string
+	 */
+	function get_s3_url_scheme() {
+		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+			$scheme = 'https';
+		}
+		else {
+			$scheme = 'http';
+		}
+
+		return $scheme;
+	}
+
+	/**
+	 * Get the custom object prefix if enabled
+	 *
+	 * @return mixed|string|void
+	 */
+	function get_object_prefix() {
+		if ( $this->get_setting( 'enable-object-prefix' ) ) {
+			$prefix = trim( $this->get_setting( 'object-prefix' ) );
+		} else {
+			$prefix = '';
+		}
+
+		return $prefix;
+	}
+
+	/**
+	 * Get the file prefix
+	 *
+	 * @param null $time
+	 * @param null $post_id
+	 *
+	 * @return string
+	 */
+	function get_file_prefix( $time = null, $post_id = null ) {
+		$prefix = ltrim( trailingslashit( $this->get_object_prefix() ), '/' );
+		$prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
+
+		if ( $this->get_setting( 'object-versioning' ) ) {
+			$prefix .= $this->get_object_version_string( $post_id );
+		}
+
+		return $prefix;
+	}
+
+	/**
+	 * Get the region specific prefix for S3 URL
+	 *
+	 * @param $region
+	 *
+	 * @return string
+	 */
+	function get_s3_url_prefix( $region = '' ) {
+		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
+
+		return $prefix;
+	}
+
+	/**
+	 * Get the S3 url for the files
+	 *
+	 * @param        $bucket
+	 * @param string $region
+	 * @param null   $expires
+	 *
+	 * @return mixed|string|void
+	 */
+	function get_s3_url_domain( $bucket, $region = '', $expires = null ) {
+		$domain = $this->get_setting( 'domain' );
+
+		$prefix = $this->get_s3_url_prefix( $region );
+
+		if ( 'cloudfront' == $domain && is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
+			$s3_domain = $this->get_setting( 'cloudfront' );
+		}
+		elseif ( 'virtual-host' == $domain ) {
+			$s3_domain = $bucket;
+		}
+		elseif ( 'path' == $domain || ( is_ssl() || $this->get_setting( 'force-ssl' ) ) ) {
+			$s3_domain = $prefix . '.amazonaws.com/' . $bucket;
+		}
+		else {
+			$s3_domain = $bucket . '.' . $prefix . '.amazonaws.com';
+		}
+
+		return $s3_domain;
+	}
+
+	/**
 	 * Get the url of the file from Amazon S3
 	 *
 	 * @param unknown $post_id Post ID of the attachment
@@ -534,12 +727,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return false;
 		}
 
-		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
-			$scheme = 'https';
-		}
-		else {
-			$scheme = 'http';
-		}
+		$scheme = $this->get_s3_url_scheme();
 
 		// We don't use $this->get_s3object_region() here because we don't want
 		// to make an AWS API call and slow down page loading
@@ -555,20 +743,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$expires = self::DEFAULT_EXPIRES;
 		}
 
-		$prefix = ( '' == $region ) ? 's3' : 's3-' . $region;
-
-		if ( is_null( $expires ) && $this->get_setting( 'cloudfront' ) ) {
-			$domain_bucket = $this->get_setting( 'cloudfront' );
-		}
-		elseif ( $this->get_setting( 'virtual-host' ) ) {
-			$domain_bucket = $s3object['bucket'];
-		}
-		elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
-			$domain_bucket = $prefix . '.amazonaws.com/' . $s3object['bucket'];
-		}
-		else {
-			$domain_bucket = $s3object['bucket'] . '.' . $prefix . '.amazonaws.com';
-		}
+		$domain_bucket = $this->get_s3_url_domain( $s3object['bucket'], $region, $expires );
 
 		if ( $size ) {
 			if ( is_null( $meta ) ) {
@@ -651,7 +826,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Encode file names according to RFC 3986 when generating urls
 	 * As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
 	 *
-	 * @param unknown $file
+	 * @param string $file
 	 *
 	 * @return string Encoded filename with path prefix untouched
 	 */
@@ -749,15 +924,31 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->verify_ajax_request();
 
 		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
-			wp_die( __( 'No bucket name provided.', 'as3cf' ) );
+			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
+			exit;
 		}
 
 		$result = $this->create_bucket( $_POST['bucket_name'] );
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
-		}
-		else {
-			$out = array( 'success' => '1', '_nonce' => wp_create_nonce( 'as3cf-create-bucket' ) );
+		} else {
+			$region = $this->save_bucket( $_POST['bucket_name'] );
+
+			if ( $region !== false ) {
+				$out = array(
+					'success' => '1',
+					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
+					'region'  => $region
+				);
+				$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
+				if ( is_wp_error( $can_write ) ) {
+					echo json_encode( array( 'error' => $can_write->get_error_message() ) );
+					exit;
+				}
+				$out['can_write'] = $can_write;
+			} else {
+				$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
+			}
 		}
 
 		echo json_encode( $out );
@@ -775,6 +966,63 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return true;
 	}
 
+	function ajax_save_bucket() {
+		$this->verify_ajax_request();
+
+		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
+			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
+			exit;
+		}
+
+		$region = $this->save_bucket( $_POST['bucket_name'] );
+
+		if ( $region !== false ) {
+			$out = array(
+				'success' => '1',
+				'region'  => $region
+			);
+
+			$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
+			if ( is_wp_error( $can_write ) ) {
+				echo json_encode( array( 'error' => $can_write->get_error_message() ) );
+				exit;
+			}
+			$out['can_write'] = $can_write;
+
+		} else {
+			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
+		}
+
+		echo json_encode( $out );
+		exit;
+	}
+
+	/**
+	 * Save bucket and bucket's region
+	 *
+	 * @param $bucket_name
+	 *
+	 * @return bool|WP_Error Region on success
+	 */
+	function save_bucket( $bucket_name ) {
+		if( $bucket_name ) {
+			$this->get_settings();
+			// first time bucket select - enable main options by default
+			if ( ! $this->get_setting( 'bucket' ) ) {
+				$this->set_setting( 'copy-to-s3', "1" );
+				$this->set_setting( 'serve-from-s3', "1" );
+			}
+			$this->set_setting( 'bucket', $bucket_name );
+			$region = $this->get_bucket_region( $bucket_name );
+			$this->set_setting( 'region', $region );
+			$this->save_settings();
+
+			return $region;
+		}
+
+		return false;
+	}
+
 	function admin_menu( $aws ) {
 		$hook_suffix = $aws->add_page( $this->plugin_title, $this->plugin_menu_title, 'manage_options', $this->plugin_slug, array( $this, 'render_page' ) );
 		add_action( 'load-' . $hook_suffix , array( $this, 'plugin_load' ) );
@@ -789,7 +1037,27 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
-	 * Get the region of the bucket.
+	 * Get the region of a bucket
+	 *
+	 * @param $bucket
+	 *
+	 * @return WP_Error
+	 */
+	function get_bucket_region( $bucket ) {
+		try {
+			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'exception', $e->getMessage() );
+		}
+
+		$region = $this->translate_region( $region['Location'] );
+
+		return $region;
+	}
+
+	/**
+	 * Get the region of the bucket stored in the S3 metadata.
 	 *
 	 *
 	 * @param unknown $s3object
@@ -800,13 +1068,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
-			try {
-				$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $s3object['bucket'] ) );
+			$region = $this->get_bucket_region( $s3object['bucket'] );
+			if ( is_wp_error( $region ) ) {
+				return $region;
 			}
-			catch ( Exception $e ) {
-				return new WP_Error( 'exception', $e->getMessage() );
-			}
-			$s3object['region'] = $region['Location'];
+
+			$s3object['region'] = $region;
 
 			if ( ! is_null( $post_id ) ) {
 				// retrospectively update s3 metadata with region
@@ -862,6 +1129,32 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $region;
 	}
 
+	/**
+	 * AJAX handler for get_buckets()
+	 */
+	function ajax_get_buckets() {
+		$this->verify_ajax_request();
+
+		$result = $this->get_buckets();
+		if ( is_wp_error( $result ) ) {
+			$out = array( 'error' => $result->get_error_message() );
+		} else {
+			$out = array(
+				'success' => '1',
+				'buckets' => $result,
+				'selected' => $this->get_setting( 'bucket' )
+			);
+		}
+
+		echo json_encode( $out );
+		exit;
+	}
+
+	/**
+	 * Get a list of buckets from S3
+	 *
+	 * @return array - list of buckets
+	 */
 	function get_buckets() {
 		try {
 			$result = $this->get_s3client()->listBuckets();
@@ -876,12 +1169,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Checks the user has write permission for S3
 	 *
-	 * @return bool
+	 * @param null $bucket
+	 * @param null $region
+	 *
+	 * @return bool|WP_Error
 	 */
-	function check_write_permission( ) {
-		if ( ! ( $bucket = $this->get_setting('bucket') ) ) {
-			// if no bucket set then no need check
-			return true;
+	function check_write_permission( $bucket = null, $region = null) {
+		if ( is_null( $bucket ) ) {
+			if ( ! ( $bucket = $this->get_setting( 'bucket' ) ) ) {
+				// if no bucket set then no need check
+				return true;
+			}
 		}
 		// fire up the filesystem API
 		$filesystem = WP_Filesystem();
@@ -912,9 +1210,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		try {
 			// need to set region for buckets in non default region
-			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
-			if ( $region['Location'] ) {
-				$region = $this->translate_region( $region['Location'] );
+			if ( is_null( $region ) ) {
+				$region = $this->get_setting( 'region' );
+			}
+			if ( $region ) {
 				$this->get_s3client()->setRegion( $region );
 			}
 			// attempt to create the test file
@@ -948,10 +1247,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		wp_enqueue_script( 'as3cf-script', $src, array( 'jquery' ), $version, true );
 
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
-				'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
-				'create_bucket_error' => __( 'Error creating bucket: ', 'as3cf' ),
-				'create_bucket_nonce' => wp_create_nonce( 'as3cf-create-bucket' )
-			) );
+			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
+			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
+			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
+			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
+			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
+			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
+			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
+			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
+			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' )
+		) );
 
 		$this->handle_post_request();
 	}
@@ -965,7 +1270,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'bucket', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
@@ -974,7 +1279,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				continue;
 			}
 
-			$this->set_setting( $var, $_POST[$var] );
+			$value = ( 'domain' == $var) ? $_POST[$var][0] : $_POST[$var];
+
+			$this->set_setting( $var, $value );
 		}
 
 		$this->save_settings();
@@ -1001,7 +1308,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function get_dynamic_prefix( $time = null ) {
 		$uploads = wp_upload_dir( $time );
-		return str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		$prefix = '';
+		if ( $this->get_setting( 'use-yearmonth-folders' ) ) {
+			$prefix = str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		}
+
+		return $prefix;
 	}
 
 	// Without the multisite subdirectory
