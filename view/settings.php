@@ -129,7 +129,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 							$subdomain_class = 'disabled';
 						}
 						?>
-						<div class="as3cf-domain">
+						<div class="as3cf-domain as3cf-radio-group">
 							<label class="subdomain-wrap <?php echo $subdomain_class; ?>">
 								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
 								Bucket name as subdomain
@@ -174,17 +174,6 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="configure-url">
 					<td>
-						<?php $this->render_view( 'checkbox', array( 'key' => 'force-ssl' ) ); ?>
-					</td>
-					<td>
-						<h4><?php _e( 'Force SSL', 'as3cf' ) ?></h4>
-						<p>
-							<?php _e( 'By default a file is served over SSL (https://) when the page it\'s on is SSL. Turning this on will force files to always be served over SSL. You cannot use the "Bucket as a subdomain" domain option with this setting.' ); ?>
-						</p>
-					</td>
-				</tr>
-				<tr class="configure-url as3cf-border-bottom">
-					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders' ) ); ?>
 					</td>
 					<td>
@@ -192,6 +181,36 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<p>
 							<?php _e( 'Add the Year/Month in the URL.' ); ?>
 						</p>
+					</td>
+				</tr>
+				<tr class="configure-url as3cf-border-bottom">
+					<td>
+						<h4><?php _e( 'SSL', 'as3cf' ) ?></h4>
+					</td>
+					<td>
+						<?php
+						$ssl = $this->get_setting( 'ssl' ); ?>
+						<div class="as3cf-ssl as3cf-radio-group">
+							<label>
+								<input type="radio" name="ssl[]" value="request" <?php checked( $ssl, 'request' ); ?>>
+								<input type="hidden" id="is_ssl" value="<?php echo esc_attr( is_ssl() ); ?>">
+								Same as request
+								<p>When the request is https://, use https:// for the file URL as well.</p>
+							</label>
+							<label>
+								<input type="radio" name="ssl[]" value="https" <?php checked( $ssl, 'https' ); ?>>
+								Always SSL
+								<p>Forces https:// to be used.</p>
+							</label>
+							<label>
+								<input type="radio" name="ssl[]" value="http" <?php checked( $ssl, 'http' ); ?>>
+								Always non-SSL
+								<p>Forces http:// to be used.</p>
+							</label>
+							<p class="info">
+								<?php _e( 'You cannot use the "Bucket as a subdomain" domain option when using SSL.' ); ?>
+							</p>
+						</div>
 					</td>
 				</tr>
 				<tr class="advanced-options">

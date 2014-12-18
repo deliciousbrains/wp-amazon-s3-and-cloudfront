@@ -238,16 +238,19 @@
 			}
 		});
 
-		$( '.as3cf-settings' ).on( 'change', '#force-ssl', function( e ) {
-			$( '.subdomain-wrap' ).toggleClass( 'disabled' );
-			if ( $( this ).is( ":checked" ) ) {
+		$( '.as3cf-ssl' ).on( 'change', 'input[type="radio"]', function( e ) {
+			var ssl = $( 'input:radio[name="ssl[]"]:checked' ).val();
+			var is_ssl = $( '#is_ssl' ).val();
+			if ( 'https' == ssl || ( 'request' == ssl && is_ssl	) ) {
 				var domain = $( 'input:radio[name="domain[]"]:checked' ).val();
 				if ( 'subdomain' == domain ) {
 					$( 'input[name="domain[]"][value="path"]' ).attr( "checked", true );
 				}
 				$( '.subdomain-wrap input' ).attr( 'disabled', true );
+				$( '.subdomain-wrap' ).addClass( 'disabled' );
 			} else {
 				$( '.subdomain-wrap input' ).removeAttr( 'disabled' );
+				$( '.subdomain-wrap' ).removeClass( 'disabled' );
 			}
 		} );
 
