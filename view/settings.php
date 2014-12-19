@@ -121,7 +121,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						$domain = $this->get_setting( 'domain' );
 						$subdomain_disabled = '';
 						$subdomain_class = '';
-						if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+						if ( 'https' == $this->get_setting( 'ssl' ) ) {
 							if ( 'subdomain' == $domain ) {
 								$domain = 'path';
 							}
@@ -193,7 +193,6 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<div class="as3cf-ssl as3cf-radio-group">
 							<label>
 								<input type="radio" name="ssl[]" value="request" <?php checked( $ssl, 'request' ); ?>>
-								<input type="hidden" id="is_ssl" value="<?php echo esc_attr( is_ssl() ); ?>">
 								<?php _e( 'Same as request', 'as3cf' ); ?>
 								<p><?php _e( 'When the request is https://, use https:// for the file URL as well.', 'as3cf' ); ?></p>
 							</label>
