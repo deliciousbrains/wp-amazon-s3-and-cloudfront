@@ -1305,19 +1305,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
 
-			if ( !isset( $_POST[$var] ) ) {
+			if ( ! isset( $_POST[ $var ] ) ) {
 				continue;
 			}
 
-			// get the first array item for radio button groups
-			$radio_groups = array( 'domain', 'ssl' );
-			if ( in_array( $var, $radio_groups ) ) {
-				$value = $_POST[ $var ][0];
-			} else {
-				$value = $_POST[ $var ];
-			}
-
-			$this->set_setting( $var, $value );
+			$this->set_setting( $var, $_POST[ $var ] );
 		}
 
 		$this->save_settings();

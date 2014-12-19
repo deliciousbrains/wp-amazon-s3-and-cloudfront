@@ -131,22 +131,22 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						?>
 						<div class="as3cf-domain as3cf-radio-group">
 							<label class="subdomain-wrap <?php echo $subdomain_class; ?>">
-								<input type="radio" name="domain[]" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
+								<input type="radio" name="domain" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
 								Bucket name as subdomain
 								<p>http://bucket-name.s3.amazon.com/&hellip;</p>
 							</label>
 							<label>
-								<input type="radio" name="domain[]" value="path" <?php checked( $domain, 'path' ); ?>>
+								<input type="radio" name="domain" value="path" <?php checked( $domain, 'path' ); ?>>
 								Bucket name in path
 								<p>http://s3.amazon.com/bucket-name/&hellip;</p>
 							</label>
 							<label>
-								<input type="radio" name="domain[]" value="virtual-host" <?php checked( $domain, 'virtual-host' ); ?>>
+								<input type="radio" name="domain" value="virtual-host" <?php checked( $domain, 'virtual-host' ); ?>>
 								Bucket name as domain
 								<p>http://bucket-name/&hellip;</p>
 							</label>
 							<label>
-								<input id="cloudfront" type="radio" name="domain[]" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
+								<input id="cloudfront" type="radio" name="domain" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
 								CloudFront or custom domain
 								<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; ?>">
 									<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="40" />
@@ -192,18 +192,18 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						$ssl = $this->get_setting( 'ssl' ); ?>
 						<div class="as3cf-ssl as3cf-radio-group">
 							<label>
-								<input type="radio" name="ssl[]" value="request" <?php checked( $ssl, 'request' ); ?>>
+								<input type="radio" name="ssl" value="request" <?php checked( $ssl, 'request' ); ?>>
 								<?php _e( 'Same as request', 'as3cf' ); ?>
 								<p><?php _e( 'When the request is https://, use https:// for the file URL as well.', 'as3cf' ); ?></p>
 							</label>
 							<label>
-								<input type="radio" name="ssl[]" value="https" <?php checked( $ssl, 'https' ); ?>>
+								<input type="radio" name="ssl" value="https" <?php checked( $ssl, 'https' ); ?>>
 								<?php _e( 'Always SSL', 'as3cf' ); ?>
 								<p><?php _e( 'Forces https:// to be used.', 'as3cf' ); ?></p>
 								<p><?php _e( 'You cannot use the "Bucket as a subdomain" domain option when using SSL.', 'as3cf' ); ?></p>
 							</label>
 							<label>
-								<input type="radio" name="ssl[]" value="http" <?php checked( $ssl, 'http' ); ?>>
+								<input type="radio" name="ssl" value="http" <?php checked( $ssl, 'http' ); ?>>
 								<?php _e( 'Always non-SSL', 'as3cf' ); ?>
 								<p><?php _e( 'Forces http:// to be used.', 'as3cf' ); ?></p>
 							</label>
