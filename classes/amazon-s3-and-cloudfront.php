@@ -1256,7 +1256,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
 			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
 			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' ),
-			'save_alert'            => __( 'The changes you made will be lost if you navigate away from this page', 'as3cf' ),
+			'save_alert'            => __( 'The changes you made will be lost if you navigate away from this page.', 'as3cf' ),
 		) );
 
 		$this->handle_post_request();
