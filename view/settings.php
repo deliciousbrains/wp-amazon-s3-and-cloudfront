@@ -194,22 +194,20 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 							<label>
 								<input type="radio" name="ssl[]" value="request" <?php checked( $ssl, 'request' ); ?>>
 								<input type="hidden" id="is_ssl" value="<?php echo esc_attr( is_ssl() ); ?>">
-								Same as request
-								<p>When the request is https://, use https:// for the file URL as well.</p>
+								<?php _e( 'Same as request', 'as3cf' ); ?>
+								<p><?php _e( 'When the request is https://, use https:// for the file URL as well.', 'as3cf' ); ?></p>
 							</label>
 							<label>
 								<input type="radio" name="ssl[]" value="https" <?php checked( $ssl, 'https' ); ?>>
-								Always SSL
-								<p>Forces https:// to be used.</p>
+								<?php _e( 'Always SSL', 'as3cf' ); ?>
+								<p><?php _e( 'Forces https:// to be used.', 'as3cf' ); ?></p>
+								<p><?php _e( 'You cannot use the "Bucket as a subdomain" domain option when using SSL.', 'as3cf' ); ?></p>
 							</label>
 							<label>
 								<input type="radio" name="ssl[]" value="http" <?php checked( $ssl, 'http' ); ?>>
-								Always non-SSL
-								<p>Forces http:// to be used.</p>
+								<?php _e( 'Always non-SSL', 'as3cf' ); ?>
+								<p><?php _e( 'Forces http:// to be used.', 'as3cf' ); ?></p>
 							</label>
-							<p class="info">
-								<?php _e( 'You cannot use the "Bucket as a subdomain" domain option when using SSL.' ); ?>
-							</p>
 						</div>
 					</td>
 				</tr>
