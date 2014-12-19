@@ -657,7 +657,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$use_ssl = true;
 		}
 
-		return $use_ssl;
+		return apply_filters( 'as3cf_use_ssl', $use_ssl );
 	}
 
 	/**
