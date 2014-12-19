@@ -112,10 +112,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( 'ssl' == $key && ! isset( $settings['ssl'] ) ) {
 			if ( $this->get_setting( 'force-ssl', false ) ) {
 				$ssl = 'https';
-			} else if ( is_ssl() ) {
-				$ssl = 'request';
 			} else {
-				$ssl = 'http';
+				$ssl = 'request';
 			}
 
 			return $ssl;
