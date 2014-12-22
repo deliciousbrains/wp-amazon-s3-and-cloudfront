@@ -48,9 +48,15 @@
 	  display: block;
 	}
   }
-  
+
   tr.configure-url, tr.advanced-options {
 	display: none;
+  }
+
+  .object-prefix-desc {
+  	em {
+  		white-space: nowrap;
+  	}
   }
 
   .as3cf-url-preview-wrap {
