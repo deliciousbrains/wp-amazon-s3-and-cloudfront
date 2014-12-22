@@ -93,19 +93,30 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $this->translate_region( $settings['region'] );
 		}
 
-		// Domain setting since 0.7
+		// Domain setting since 0.8
 		if ( 'domain' == $key && ! isset( $settings['domain'] ) ) {
 			if ( $this->get_setting( 'cloudfront' ) ) {
 				$domain = 'cloudfront';
 			} elseif ( $this->get_setting( 'virtual-host' ) ) {
 				$domain = 'virtual-host';
-			} elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+			} elseif ( $this->use_ssl() ) {
 				$domain = 'path';
 			} else {
 				$domain = 'subdomain';
 			}
 
 			return $domain;
+		}
+
+		// SSL radio buttons since 0.8
+		if ( 'ssl' == $key && ! isset( $settings['ssl'] ) ) {
+			if ( $this->get_setting( 'force-ssl', false ) ) {
+				$ssl = 'https';
+			} else {
+				$ssl = 'request';
+			}
+
+			return $ssl;
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
@@ -620,7 +631,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_s3_url_scheme() {
-		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+		if ( $this->use_ssl() ) {
 			$scheme = 'https';
 		}
 		else {
@@ -628,6 +639,25 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $scheme;
+	}
+
+	/**
+	 * Determine when to use https in URLS
+	 *
+	 * @return bool
+	 */
+	function use_ssl( ) {
+		$use_ssl = false;
+
+		$ssl = $this->get_setting( 'ssl' );
+
+		if ( 'request' == $ssl && is_ssl() ) {
+			$use_ssl = true;
+		} else if ( 'https' == $ssl ) {
+			$use_ssl = true;
+		}
+
+		return apply_filters( 'as3cf_use_ssl', $use_ssl );
 	}
 
 	/**
@@ -697,7 +727,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		elseif ( 'virtual-host' == $domain ) {
 			$s3_domain = $bucket;
 		}
-		elseif ( 'path' == $domain || ( is_ssl() || $this->get_setting( 'force-ssl' ) ) ) {
+		elseif ( 'path' == $domain || $this->use_ssl() ) {
 			$s3_domain = $prefix . '.amazonaws.com/' . $bucket;
 		}
 		else {
@@ -1255,18 +1285,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
 
-			if ( !isset( $_POST[$var] ) ) {
+			if ( ! isset( $_POST[ $var ] ) ) {
 				continue;
 			}
 
-			$value = ( 'domain' == $var) ? $_POST[$var][0] : $_POST[$var];
-
-			$this->set_setting( $var, $value );
+			$this->set_setting( $var, $_POST[ $var ] );
 		}
 
 		$this->save_settings();
