@@ -161,11 +161,9 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Path', 'as3cf' ) ?></h4>
-						<p>
+						<p class="object-prefix-desc">
 							<?php _e( 'By default the path is the same as your local WordPress files:' ); ?>
-						</p>
-						<p>
-							<code><?php echo $this->get_default_object_prefix(); ?></code>
+							<em><?php echo $this->get_default_object_prefix(); ?></em>
 						</p>
 						<p class="as3cf-setting enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; ?>">
 							<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" />
