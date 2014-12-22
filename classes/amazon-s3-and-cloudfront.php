@@ -1211,31 +1211,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				return true;
 			}
 		}
-		// fire up the filesystem API
-		$filesystem = WP_Filesystem();
-		global $wp_filesystem;
-		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
-			return new WP_Error( 'exception', __( 'There was an error attempting to access the local file system whilst checking the bucket permissions', 'as3cf' ) );
-		}
 
-		$uploads       = wp_upload_dir();
 		$file_name     = 'as3cf-permission-check.txt';
-		$file          = trailingslashit( $uploads['basedir'] ) . $file_name;
 		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
-		// create a temp file to upload
-		$temp_file = $wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
-		if ( false === $temp_file ) {
-			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf' ) );
-		}
 
 		$path = $this->get_setting( 'object-prefix' );
 		$key = $path . $file_name;
 
 		$args = array(
-			'Bucket'     => $bucket,
-			'Key'        => $key,
-			'SourceFile' => $file,
-			'ACL'        => 'public-read'
+			'Bucket' => $bucket,
+			'Key'    => $key,
+			'Body'   => $file_contents,
+			'ACL'    => 'public-read',
 		);
 
 		try {
@@ -1259,9 +1246,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$can_write = false;
 		}
 
-		// delete temp file
-		$wp_filesystem->delete( $file );
-
 		return $can_write;
 	}
 
@@ -1278,14 +1262,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
-			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
-			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
-			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
-			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
+			'create_bucket_error'   => __( 'Error creating bucket: ', 'as3cf' ),
+			'create_bucket_nonce'   => wp_create_nonce( 'as3cf-create-bucket' ),
+			'get_buckets_error'     => __( 'Error fetching buckets: ', 'as3cf' ),
+			'get_buckets_nonce'     => wp_create_nonce( 'as3cf-get-buckets' ),
 			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
 			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
 			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
-			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' )
+			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' ),
+			'save_alert'            => __( 'The changes you made will be lost if you navigate away from this page', 'as3cf' ),
 		) );
 
 		$this->handle_post_request();
