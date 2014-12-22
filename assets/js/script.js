@@ -1,4 +1,5 @@
 (function($) {
+	var saved_settings;
 
 	$(document).ready(function() {
 
@@ -291,6 +292,22 @@
 				}
 			});
 		}
+
+		// save the original state of the form for comparison later
+		saved_settings = $( '.as3cf-main-settings form' ).serialize();
+
+		// let the save settings submit happen as normal
+		$( document ).on( 'submit', '.as3cf-main-settings form', function( event ) {
+			// disable unload warning
+			$( window ).off( 'beforeunload.as3cf-settings' );
+		} );
+
+		// prompt user with dialog if leaving the settings page with unsaved changes
+		$( window ).on( 'beforeunload.as3cf-settings', function() {
+			if ( $( '.as3cf-main-settings form' ).serialize() != saved_settings ) {
+				return as3cf_i18n.save_alert;
+			}
+		} );
 
 	});
 

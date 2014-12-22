@@ -1232,14 +1232,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
-			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
-			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
-			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
-			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
+			'create_bucket_error'   => __( 'Error creating bucket: ', 'as3cf' ),
+			'create_bucket_nonce'   => wp_create_nonce( 'as3cf-create-bucket' ),
+			'get_buckets_error'     => __( 'Error fetching buckets: ', 'as3cf' ),
+			'get_buckets_nonce'     => wp_create_nonce( 'as3cf-get-buckets' ),
 			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
 			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
 			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
-			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' )
+			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' ),
+			'save_alert'            => __( 'The changes you made will be lost if you navigate away from this page', 'as3cf' ),
 		) );
 
 		$this->handle_post_request();
