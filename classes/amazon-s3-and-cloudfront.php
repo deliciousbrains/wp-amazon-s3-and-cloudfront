@@ -1093,7 +1093,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param unknown $s3object
 	 * @param unknown $post_id  - if supplied will update the s3 meta if no region found
 	 *
-	 * @return string - region name
+	 * @return string|WP_Error - region name
 	 */
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
