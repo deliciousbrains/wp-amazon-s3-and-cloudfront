@@ -51,8 +51,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function get_setting( $key, $default = '' ) {
 		// use settings from $_POST when generating URL preview via AJAX
-		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
-			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0;
+		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == sanitize_key( $_POST['action'] ) ) { // input var okay
+			$value = isset( $_POST[ $key ] ) ?  sanitize_key( $_POST[ $key ] ) : 0; // input var okay
 
 			return $value;
 		}
@@ -787,8 +787,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			if ( is_null( $meta ) ) {
 				$meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
 			}
-			if ( isset( $meta['sizes'][$size]['file'] ) ) {
-				$s3object['key'] = dirname( $s3object['key'] ) . '/' . $meta['sizes'][$size]['file'];
+			if ( isset( $meta['sizes'][ $size ]['file'] ) ) {
+				$s3object['key'] = dirname( $s3object['key'] ) . '/' . $meta['sizes'][ $size ]['file'];
 			}
 		}
 
@@ -828,8 +828,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Encodes the file names for resized image files for an attachment where necessary
 	 *
-	 * @param unknown $data
-	 * @param unknown $post_id
+	 * @param array $data
+	 * @param int   $post_id
 	 *
 	 * @return mixed Attachment meta data
 	 */
@@ -941,7 +941,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $copy_back_to_local;
 		}
 
-		if ( isset( $_POST['action'] ) && 'regeneratethumbnail' == $_POST['action'] ) {
+		if ( isset( $_POST['action'] ) && 'regeneratethumbnail' == sanitize_key( $_POST['action'] ) ) { // input var okay
 			return true;
 		}
 
@@ -959,12 +959,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function ajax_check_bucket() {
-		if ( ! isset( $_POST['bucket_name'] ) || ! $_POST['bucket_name'] ) {
+		if ( ! isset( $_POST['bucket_name'] ) || ! ( $bucket = sanitize_text_field( $_POST['bucket_name'] ) ) ) { // input var okay
 			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
 			exit;
 		}
 
-		return $_POST['bucket_name'];
+		return $bucket;
 	}
 
 	function ajax_create_bucket() {
@@ -1276,11 +1276,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function handle_post_request() {
-		if ( empty( $_POST['action'] ) || 'save' != $_POST['action'] ) {
+		if ( empty( $_POST['action'] ) || 'save' != sanitize_key( $_POST['action'] ) ) { // input var okay
 			return;
 		}
 
-		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'as3cf-save-settings' ) ) {
+		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'as3cf-save-settings' ) ) { // input var okay
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
@@ -1289,11 +1289,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
 
-			if ( ! isset( $_POST[ $var ] ) ) {
+			if ( ! isset( $_POST[ $var ] ) ) { // input var okay
 				continue;
 			}
 
-			$this->set_setting( $var, $_POST[ $var ] );
+			$value = sanitize_text_field( $_POST[ $var ] ); // input var okay
+
+			$this->set_setting( $var, $value );
 		}
 
 		$this->save_settings();

@@ -18,12 +18,12 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 	<?php
 	$can_write = $this->check_write_permission();
 	// catch any file system issues
-	if ( is_wp_error( $can_write ) ) {
-		$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
-		$can_write = true;
-	}
-	// display a error message if the user does not have write permission to S3
-	?>
+if ( is_wp_error( $can_write ) ) {
+	$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
+	$can_write = true;
+}
+// display a error message if the user does not have write permission to S3
+?>
 	<div class="error as3cf-can-write-error" style="<?php echo ( $can_write ) ? 'display: none;' : ''; ?>">
 		<p>
 			<strong>
@@ -75,7 +75,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<span class="as3cf-active-bucket"><?php echo $selected_bucket; ?></span>
 						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
 						<input id="as3cf-bucket" type="hidden" name="bucket" value="<?php echo $selected_bucket; ?>">
-						<input id="as3cf-region" type="hidden" name="region" value="<?php echo $this->get_setting('region'); ?>">
+						<input id="as3cf-region" type="hidden" name="region" value="<?php echo $this->get_setting( 'region' ); ?>">
 					</td>
 				</tr>
 				<tr>
@@ -118,16 +118,18 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<?php
-						$domain = $this->get_setting( 'domain' );
+						$domain             = $this->get_setting( 'domain' );
 						$subdomain_disabled = '';
-						$subdomain_class = '';
+						$subdomain_class    = '';
 						if ( 'https' == $this->get_setting( 'ssl' ) ) {
 							if ( 'subdomain' == $domain ) {
 								$domain = 'path';
 							}
 							$subdomain_disabled = 'disabled="disabled"';
-							$subdomain_class = 'disabled';
+							$subdomain_class    = 'disabled';
 						}
+						$subdomain_disabled = 'disabled="disabled"';
+						$subdomain_class    = 'disabled';
 						?>
 						<div class="as3cf-domain as3cf-radio-group">
 							<label class="subdomain-wrap <?php echo $subdomain_class; ?>">
