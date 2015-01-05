@@ -1183,7 +1183,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get a list of buckets from S3
 	 *
-	 * @return array - list of buckets
+	 * @return array|WP_Error - list of buckets
 	 */
 	function get_buckets() {
 		try {
