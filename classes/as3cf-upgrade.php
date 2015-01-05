@@ -138,6 +138,8 @@ class AS3CF_Upgrade {
 
 	/**
 	 * Helper for the above action requests
+	 *
+	 * @param integer $status
 	 */
 	function change_status_request( $status ) {
 		$session = $this->get_session();

@@ -41,6 +41,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		load_plugin_textdomain( 'as3cf', false, dirname( plugin_basename( $plugin_file_path ) ) . '/languages/' );
 	}
 
+	/**
+	 * Accessor for a plugin setting with conditions to defaults and upgrades
+	 *
+	 * @param        $key
+	 * @param string $default
+	 *
+	 * @return int|mixed|string|void
+	 */
 	function get_setting( $key, $default = '' ) {
 		// use settings from $_POST when generating URL preview via AJAX
 		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
@@ -183,7 +191,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		echo json_encode( array(
 			'success' => '1',
-			'url'     => $url
+			'url'     => $url,
 		) );
 		exit;
 	}
@@ -191,9 +199,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Find backup images and add to array for removal
 	 *
-	 * @param unknown $post_id
-	 * @param unknown $objects
-	 * @param unknown $path
+	 * @param integer $post_id
+	 * @param array $objects
+	 * @param string $path
 	 */
 	function prepare_backup_size_images_to_remove( $post_id, &$objects, $path ) {
 		$backup_sizes = get_post_meta( $post_id, '_wp_attachment_backup_sizes', true );
@@ -614,7 +622,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param unknown $post_id Post ID of the attachment
 	 * @param int     $expires Seconds for the link to live
-	 * @param null    $size    Size of the image to get
+	 * @param string    $size    Size of the image to get
 	 *
 	 * @return mixed|void|WP_Error
 	 */
@@ -663,7 +671,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get the custom object prefix if enabled
 	 *
-	 * @return mixed|string|void
+	 * @return string
 	 */
 	function get_object_prefix() {
 		if ( $this->get_setting( 'enable-object-prefix' ) ) {
@@ -712,7 +720,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param        $bucket
 	 * @param string $region
-	 * @param null   $expires
+	 * @param integer   $expires
 	 *
 	 * @return mixed|string|void
 	 */
@@ -740,10 +748,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get the url of the file from Amazon S3
 	 *
-	 * @param unknown $post_id Post ID of the attachment
-	 * @param null    $expires Seconds for the link to live
-	 * @param null    $size    Size of the image to get
-	 * @param null    $meta    Pre retrieved _wp_attachment_metadata for the attachment
+	 * @param integer $post_id Post ID of the attachment
+	 * @param integer $expires Seconds for the link to live
+	 * @param string  $size    Size of the image to get
+	 * @param array   $meta    Pre retrieved _wp_attachment_metadata for the attachment
 	 *
 	 * @return bool|mixed|void|WP_Error
 	 */
@@ -1199,8 +1207,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Checks the user has write permission for S3
 	 *
-	 * @param null $bucket
-	 * @param null $region
+	 * @param string $bucket
+	 * @param string $region
 	 *
 	 * @return bool|WP_Error
 	 */
@@ -1319,6 +1327,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->aws->render_view( 'footer' );
 	}
 
+	/**
+	 * Get the prefix path for the files
+	 *
+	 * @param string $time
+	 *
+	 * @return string
+	 */
 	function get_dynamic_prefix( $time = null ) {
 		$uploads = wp_upload_dir( $time );
 		$prefix = '';
