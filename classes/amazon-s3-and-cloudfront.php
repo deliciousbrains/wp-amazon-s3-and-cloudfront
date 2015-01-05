@@ -982,12 +982,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
 					'region'  => $region
 				);
-				$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
-				if ( is_wp_error( $can_write ) ) {
-					echo json_encode( array( 'error' => $can_write->get_error_message() ) );
-					exit;
-				}
-				$out['can_write'] = $can_write;
+				$out['can_write'] = $this->check_write_permission( $_POST['bucket_name'], $region );
 			} else {
 				$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 			}
@@ -1020,14 +1015,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				'success' => '1',
 				'region'  => $region
 			);
-
-			$can_write = $this->check_write_permission( $_POST['bucket_name'], $region );
-			if ( is_wp_error( $can_write ) ) {
-				echo json_encode( array( 'error' => $can_write->get_error_message() ) );
-				exit;
-			}
-			$out['can_write'] = $can_write;
-
+			$out['can_write'] = $this->check_write_permission( $_POST['bucket_name'], $region );
 		} else {
 			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 		}
@@ -1211,7 +1199,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param string $bucket
 	 * @param string $region
 	 *
-	 * @return bool|WP_Error
+	 * @return bool
 	 */
 	function check_write_permission( $bucket = null, $region = null) {
 		if ( is_null( $bucket ) ) {
