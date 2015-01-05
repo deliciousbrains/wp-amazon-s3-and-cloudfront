@@ -133,8 +133,6 @@ if ( is_wp_error( $can_write ) ) {
 							$subdomain_disabled = 'disabled="disabled"';
 							$subdomain_class    = 'disabled';
 						}
-						$subdomain_disabled = 'disabled="disabled"';
-						$subdomain_class    = 'disabled';
 						?>
 						<div class="as3cf-domain as3cf-radio-group">
 							<label class="subdomain-wrap <?php echo $subdomain_class; // xss ok?>">
