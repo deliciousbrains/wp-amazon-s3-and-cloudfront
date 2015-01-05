@@ -62,12 +62,13 @@
   .as3cf-url-preview-wrap {
 	background: #ffffff;
 	text-align: center;
-	padding: 20px 10px;
+	padding: 20px 10px 10px;
 	max-width: 630px;
   	width: 100%;
 	.as3cf-url-preview {
 	  margin-top: 5px;
-	  word-wrap: break-word;
+	  overflow-x: scroll;
+	  padding-bottom: 20px;
 	}
 	span {
 	  color: #6b6b6b;
