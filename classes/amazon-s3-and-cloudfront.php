@@ -44,7 +44,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Accessor for a plugin setting with conditions to defaults and upgrades
 	 *
-	 * @param        $key
+	 * @param string $key
 	 * @param string $default
 	 *
 	 * @return int|mixed|string|void
@@ -1031,7 +1031,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param $bucket_name
 	 *
-	 * @return bool|WP_Error Region on success
+	 * @return string|bool|WP_Error Region on success
 	 */
 	function save_bucket( $bucket_name ) {
 		if ( $bucket_name ) {
