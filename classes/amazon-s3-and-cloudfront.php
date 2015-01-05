@@ -52,7 +52,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_setting( $key, $default = '' ) {
 		// use settings from $_POST when generating URL preview via AJAX
 		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
-			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0 ;
+			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0;
 
 			return $value;
 		}
@@ -65,7 +65,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// Default object prefix
-		if ( 'object-prefix' == $key && !isset( $settings['object-prefix'] ) ) {
+		if ( 'object-prefix' == $key && ! isset( $settings['object-prefix'] ) ) {
 			return $this->get_default_object_prefix();
 		}
 
@@ -88,7 +88,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// Region of bucket if not already retrieved
-		if ( 'region' == $key && !isset( $settings['region'] ) ) {
+		if ( 'region' == $key && ! isset( $settings['region'] ) ) {
 			$bucket = $this->get_setting( 'bucket' );
 			$region = $this->get_bucket_region( $bucket );
 
@@ -199,8 +199,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Find backup images and add to array for removal
 	 *
-	 * @param integer $post_id
-	 * @param array $objects
+	 * @param int    $post_id
+	 * @param array  $objects
 	 * @param string $path
 	 */
 	function prepare_backup_size_images_to_remove( $post_id, &$objects, $path ) {
@@ -218,9 +218,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Find intermediate size images and add to array for removal
 	 *
-	 * @param unknown $post_id
-	 * @param unknown $objects
-	 * @param unknown $path
+	 * @param int   $post_id
+	 * @param array $objects
+	 * @param string $path
 	 */
 	function prepare_intermediate_images_to_remove( $post_id, &$objects, $path  ) {
 		$intermediate_images = get_intermediate_image_sizes();
@@ -237,8 +237,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Delete bulk objects from an S3 bucket
 	 *
-	 * @param unknown $bucket
-	 * @param unknown $objects
+	 * @param string  $bucket
+	 * @param array   $objects
 	 * @param bool    $log_error
 	 * @param bool    $return_on_error
 	 */
@@ -246,7 +246,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		try {
 			$this->get_s3client()->deleteObjects( array(
 					'Bucket'  => $bucket,
-					'Objects' => $objects
+					'Objects' => $objects,
 				) );
 		} catch ( Exception $e ) {
 			if ( $log_error ) {
@@ -259,11 +259,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function delete_attachment( $post_id ) {
-		if ( !$this->is_plugin_setup() ) {
+		if ( ! $this->is_plugin_setup() ) {
 			return;
 		}
 
-		if ( !( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
 			return;
 		}
 
@@ -272,7 +272,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$this->set_s3client_region( $s3object );
 
 		$amazon_path = dirname( $s3object['key'] );
-		$objects = array();
+		$objects     = array();
 
 		// remove intermediate images
 		$this->prepare_intermediate_images_to_remove( $post_id, $objects, $amazon_path );
@@ -293,7 +293,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// add main file to be deleted
 		$objects[] = array(
-			'Key' => $s3object['key']
+			'Key' => $s3object['key'],
 		);
 
 		$this->delete_s3_objects( $bucket, $objects, true, true );
@@ -302,7 +302,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function wp_update_attachment_metadata( $data, $post_id ) {
-		if ( !$this->get_setting( 'copy-to-s3' ) || !$this->is_plugin_setup() ) {
+		if ( ! $this->get_setting( 'copy-to-s3' ) || ! $this->is_plugin_setup() ) {
 			return $data;
 		}
 
@@ -361,7 +361,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		$s3object = array(
 			'bucket' => $bucket,
-			'key'    => $prefix . $file_name
+			'key'    => $prefix . $file_name,
 		);
 
 		// store acl if not default
@@ -381,12 +381,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'Bucket'     => $bucket,
 			'Key'        => $prefix . $file_name,
 			'SourceFile' => $file_path,
-			'ACL'        => $acl
+			'ACL'        => $acl,
 		);
 
 		// If far future expiration checked (10 years)
 		if ( $this->get_setting( 'expires' ) ) {
-			$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
+			$args['Expires'] = date( 'D, d M Y H:i:s O', time() + 315360000 );
 		}
 
 		// if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
@@ -423,21 +423,20 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		if ( isset( $data['thumb'] ) && $data['thumb'] ) {
 			$path = str_replace( $file_name, $data['thumb'], $file_path );
-	        if ( file_exists( $path ) ) {
-		        $additional_images[] = array(
-			        'Key'        => $prefix . $data['thumb'],
-			        'SourceFile' => $path
-		        );
-		        $files_to_remove[]   = $path;
-	        }
-        }
-        elseif ( !empty( $data['sizes'] ) ) {
-        	foreach ( $data['sizes'] as $size ) {
+			if ( file_exists( $path ) ) {
+				$additional_images[] = array(
+					'Key'        => $prefix . $data['thumb'],
+					'SourceFile' => $path,
+				);
+				$files_to_remove[]   = $path;
+			}
+		} else if ( ! empty( $data['sizes'] ) ) {
+			foreach ( $data['sizes'] as $size ) {
 				$path = str_replace( $file_name, $size['file'], $file_path );
 				if ( file_exists( $path ) ) {
 					$additional_images[] = array(
 						'Key'        => $prefix . $size['file'],
-						'SourceFile' => $path
+						'SourceFile' => $path,
 					);
 					$files_to_remove[]   = $path;
 				}
@@ -454,7 +453,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				if ( file_exists( $hidpi_path ) ) {
 					$hidpi_images[] = array(
 						'Key'        => $this->get_hidpi_file_path( $image['Key'] ),
-						'SourceFile' => $hidpi_path
+						'SourceFile' => $hidpi_path,
 					);
 					$files_to_remove[] = $hidpi_path;
 				}
@@ -483,7 +482,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function remove_local_files( $file_paths ) {
 		foreach ( $file_paths as $path ) {
-			if ( !@unlink( $path ) ) {
+			if ( ! @unlink( $path ) ) {
 				error_log( 'Error removing local file ' . $path );
 			}
 		}
@@ -491,7 +490,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function get_hidpi_file_path( $orig_path ) {
 		$hidpi_suffix = apply_filters( 'as3cf_hidpi_suffix', '@2x' );
-		$pathinfo = pathinfo( $orig_path );
+		$pathinfo     = pathinfo( $orig_path );
+
 		return $pathinfo['dirname'] . '/' . $pathinfo['filename'] . $hidpi_suffix . '.' . $pathinfo['extension'];
 	}
 
@@ -515,15 +515,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_attachment_folder_time( $post_id ) {
 		$time = current_time( 'timestamp' );
 
-		if ( !( $attach = get_post( $post_id ) ) ) {
+		if ( ! ( $attach = get_post( $post_id ) ) ) {
 			return $time;
 		}
 
-		if ( !$attach->post_parent ) {
+		if ( ! $attach->post_parent ) {
 			return $time;
 		}
 
-		if ( !( $post = get_post( $attach->post_parent ) ) ) {
+		if ( ! ( $post = get_post( $attach->post_parent ) ) ) {
 			return $time;
 		}
 
@@ -613,14 +613,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function is_plugin_setup() {
-		return (bool) $this->get_setting( 'bucket' ) && !is_wp_error( $this->aws->get_client() );
+		return (bool) $this->get_setting( 'bucket' ) && ! is_wp_error( $this->aws->get_client() );
 	}
 
 	/**
 	 * Generate a link to download a file from Amazon S3 using query string
 	 * authentication. This link is only valid for a limited amount of time.
 	 *
-	 * @param unknown $post_id Post ID of the attachment
+	 * @param int $post_id Post ID of the attachment
 	 * @param int     $expires Seconds for the link to live
 	 * @param string    $size    Size of the image to get
 	 *
@@ -720,7 +720,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param        $bucket
 	 * @param string $region
-	 * @param integer   $expires
+	 * @param int    $expires
 	 *
 	 * @return mixed|string|void
 	 */
@@ -748,8 +748,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get the url of the file from Amazon S3
 	 *
-	 * @param integer $post_id Post ID of the attachment
-	 * @param integer $expires Seconds for the link to live
+	 * @param int     $post_id Post ID of the attachment
+	 * @param int     $expires Seconds for the link to live
 	 * @param string  $size    Size of the image to get
 	 * @param array   $meta    Pre retrieved _wp_attachment_metadata for the attachment
 	 *
@@ -792,7 +792,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		if ( !is_null( $expires ) ) {
+		if ( ! is_null( $expires ) ) {
 			try {
 				$expires = time() + $expires;
 				$secure_url = $this->get_s3client()->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires );
@@ -923,7 +923,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$file = $url;
 		}
 		// clear up temp file
-		unlink( $temp_file );
+		@unlink( $temp_file );
 
 		return $file;
 	}
@@ -937,7 +937,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return bool
 	 */
 	function regenerate_thumbnails_get_attached_file( $copy_back_to_local ) {
-		if ( ! defined('DOING_AJAX') || ! DOING_AJAX ) {
+		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
 			return $copy_back_to_local;
 		}
 
@@ -949,11 +949,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function verify_ajax_request() {
-		if ( !is_admin() || !wp_verify_nonce( $_POST['_nonce'], $_POST['action'] ) ) {
+		if ( ! is_admin() || ! wp_verify_nonce( $_POST['_nonce'], $_POST['action'] ) ) {
 			wp_die( __( 'Cheatin&#8217; eh?', 'as3cf' ) );
 		}
 
-		if ( !current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.', 'as3cf' ) );
 		}
 	}
@@ -963,18 +963,20 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
 			exit;
 		}
+
+		return $_POST['bucket_name'];
 	}
 
 	function ajax_create_bucket() {
 		$this->verify_ajax_request();
 
-		$this->ajax_check_bucket();
+		$bucket = $this->ajax_check_bucket();
 
-		$result = $this->create_bucket( $_POST['bucket_name'] );
+		$result = $this->create_bucket( $bucket );
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
 		} else {
-			$region = $this->save_bucket( $_POST['bucket_name'] );
+			$region = $this->save_bucket( $bucket );
 
 			if ( $region !== false ) {
 				$out = array(
@@ -982,7 +984,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
 					'region'  => $region
 				);
-				$out['can_write'] = $this->check_write_permission( $_POST['bucket_name'], $region );
+				$out['can_write'] = $this->check_write_permission( $bucket, $region );
 			} else {
 				$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 			}
@@ -1006,16 +1008,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function ajax_save_bucket() {
 		$this->verify_ajax_request();
 
-		$this->ajax_check_bucket();
+		$bucket = $this->ajax_check_bucket();
 
-		$region = $this->save_bucket( $_POST['bucket_name'] );
+		$region = $this->save_bucket( $bucket );
 
 		if ( $region !== false ) {
 			$out = array(
 				'success' => '1',
-				'region'  => $region
+				'region'  => $region,
 			);
-			$out['can_write'] = $this->check_write_permission( $_POST['bucket_name'], $region );
+			$out['can_write'] = $this->check_write_permission( $bucket, $region );
 		} else {
 			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
 		}
@@ -1032,12 +1034,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return bool|WP_Error Region on success
 	 */
 	function save_bucket( $bucket_name ) {
-		if( $bucket_name ) {
+		if ( $bucket_name ) {
 			$this->get_settings();
 			// first time bucket select - enable main options by default
 			if ( ! $this->get_setting( 'bucket' ) ) {
-				$this->set_setting( 'copy-to-s3', "1" );
-				$this->set_setting( 'serve-from-s3', "1" );
+				$this->set_setting( 'copy-to-s3', '1' );
+				$this->set_setting( 'serve-from-s3', '1' );
 			}
 			$this->set_setting( 'bucket', $bucket_name );
 			$region = $this->get_bucket_region( $bucket_name );
@@ -1087,8 +1089,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * Get the region of the bucket stored in the S3 metadata.
 	 *
 	 *
-	 * @param unknown $s3object
-	 * @param unknown $post_id  - if supplied will update the s3 meta if no region found
+	 * @param array $s3object
+	 * @param int   $post_id  - if supplied will update the s3 meta if no region found
 	 *
 	 * @return string|WP_Error - region name
 	 */
@@ -1136,8 +1138,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * This is needed for non US standard buckets to add and delete files.
 	 *
-	 * @param unknown $s3object
-	 * @param unknown $post_id
+	 * @param array $s3object
+	 * @param int   $post_id
 	 *
 	 * @return string - region name
 	 */
@@ -1201,7 +1203,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return bool
 	 */
-	function check_write_permission( $bucket = null, $region = null) {
+	function check_write_permission( $bucket = null, $region = null ) {
 		if ( is_null( $bucket ) ) {
 			if ( ! ( $bucket = $this->get_setting( 'bucket' ) ) ) {
 				// if no bucket set then no need check
@@ -1213,7 +1215,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
 
 		$path = $this->get_setting( 'object-prefix' );
-		$key = $path . $file_name;
+		$key  = $path . $file_name;
 
 		$args = array(
 			'Bucket' => $bucket,
@@ -1234,9 +1236,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$this->get_s3client()->putObject( $args );
 			// delete it straight away if created
 			$this->get_s3client()->deleteObject( array(
-					'Bucket' => $bucket,
-					'Key'    => $key
-				) );
+				'Bucket' => $bucket,
+				'Key'    => $key,
+			) );
 			$can_write = true;
 		} catch ( Exception $e ) {
 			// write permission not found
@@ -1333,7 +1335,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $prefix;
 	}
 
-	// Without the multisite subdirectory
+	/**
+	 * Get the base upload path
+	 * without the multisite subdirectory
+	 *
+	 * @return string
+	 */
 	function get_base_upload_path() {
 		if ( defined( 'UPLOADS' ) && ! ( is_multisite() && get_site_option( 'ms_files_rewriting' ) ) ) {
 			return ABSPATH . UPLOADS;
