@@ -958,13 +958,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 	}
 
-	function ajax_create_bucket() {
-		$this->verify_ajax_request();
-
-		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
+	function ajax_check_bucket() {
+		if ( ! isset( $_POST['bucket_name'] ) || ! $_POST['bucket_name'] ) {
 			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
 			exit;
 		}
+	}
+
+	function ajax_create_bucket() {
+		$this->verify_ajax_request();
+
+		$this->ajax_check_bucket();
 
 		$result = $this->create_bucket( $_POST['bucket_name'] );
 		if ( is_wp_error( $result ) ) {
@@ -1007,10 +1011,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function ajax_save_bucket() {
 		$this->verify_ajax_request();
 
-		if ( !isset( $_POST['bucket_name'] ) || !$_POST['bucket_name'] ) {
-			echo json_encode( array( 'error' => __( 'No bucket name provided.', 'as3cf' ) ) );
-			exit;
-		}
+		$this->ajax_check_bucket();
 
 		$region = $this->save_bucket( $_POST['bucket_name'] );
 
