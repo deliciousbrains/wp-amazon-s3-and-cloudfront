@@ -48,9 +48,15 @@
 	  display: block;
 	}
   }
-  
+
   tr.configure-url, tr.advanced-options {
 	display: none;
+  }
+
+  .object-prefix-desc {
+  	em {
+  		white-space: nowrap;
+  	}
   }
 
   .as3cf-url-preview-wrap {
@@ -68,13 +74,20 @@
 	}
   }
 
-  .as3cf-domain {
+  .as3cf-ssl {
+	p.info {
+	  margin-top: 10px;
+	  padding: 0;
+	}
+  }
+
+  .as3cf-radio-group {
 	label {
 	  display: block;
 	  margin-bottom: 10px;
 	  &.disabled, &.disabled p {
 		color: #bbbbbb;
-
+		cursor: default;
 	  }
 	}
 

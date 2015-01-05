@@ -93,19 +93,30 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $this->translate_region( $settings['region'] );
 		}
 
-		// Domain setting since 0.7
+		// Domain setting since 0.8
 		if ( 'domain' == $key && ! isset( $settings['domain'] ) ) {
 			if ( $this->get_setting( 'cloudfront' ) ) {
 				$domain = 'cloudfront';
 			} elseif ( $this->get_setting( 'virtual-host' ) ) {
 				$domain = 'virtual-host';
-			} elseif ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+			} elseif ( $this->use_ssl() ) {
 				$domain = 'path';
 			} else {
 				$domain = 'subdomain';
 			}
 
 			return $domain;
+		}
+
+		// SSL radio buttons since 0.8
+		if ( 'ssl' == $key && ! isset( $settings['ssl'] ) ) {
+			if ( $this->get_setting( 'force-ssl', false ) ) {
+				$ssl = 'https';
+			} else {
+				$ssl = 'request';
+			}
+
+			return $ssl;
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
@@ -620,7 +631,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_s3_url_scheme() {
-		if ( is_ssl() || $this->get_setting( 'force-ssl' ) ) {
+		if ( $this->use_ssl() ) {
 			$scheme = 'https';
 		}
 		else {
@@ -628,6 +639,25 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $scheme;
+	}
+
+	/**
+	 * Determine when to use https in URLS
+	 *
+	 * @return bool
+	 */
+	function use_ssl( ) {
+		$use_ssl = false;
+
+		$ssl = $this->get_setting( 'ssl' );
+
+		if ( 'request' == $ssl && is_ssl() ) {
+			$use_ssl = true;
+		} else if ( 'https' == $ssl ) {
+			$use_ssl = true;
+		}
+
+		return apply_filters( 'as3cf_use_ssl', $use_ssl );
 	}
 
 	/**
@@ -697,7 +727,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		elseif ( 'virtual-host' == $domain ) {
 			$s3_domain = $bucket;
 		}
-		elseif ( 'path' == $domain || ( is_ssl() || $this->get_setting( 'force-ssl' ) ) ) {
+		elseif ( 'path' == $domain || $this->use_ssl() ) {
 			$s3_domain = $prefix . '.amazonaws.com/' . $bucket;
 		}
 		else {
@@ -1181,31 +1211,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				return true;
 			}
 		}
-		// fire up the filesystem API
-		$filesystem = WP_Filesystem();
-		global $wp_filesystem;
-		if ( false === $filesystem || is_null( $wp_filesystem ) ) {
-			return new WP_Error( 'exception', __( 'There was an error attempting to access the local file system whilst checking the bucket permissions', 'as3cf' ) );
-		}
 
-		$uploads       = wp_upload_dir();
 		$file_name     = 'as3cf-permission-check.txt';
-		$file          = trailingslashit( $uploads['basedir'] ) . $file_name;
 		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
-		// create a temp file to upload
-		$temp_file = $wp_filesystem->put_contents( $file, $file_contents, FS_CHMOD_FILE );
-		if ( false === $temp_file ) {
-			return new WP_Error( 'exception', __( 'It looks like we cannot create a file locally to test the S3 permissions', 'as3cf' ) );
-		}
 
 		$path = $this->get_setting( 'object-prefix' );
 		$key = $path . $file_name;
 
 		$args = array(
-			'Bucket'     => $bucket,
-			'Key'        => $key,
-			'SourceFile' => $file,
-			'ACL'        => 'public-read'
+			'Bucket' => $bucket,
+			'Key'    => $key,
+			'Body'   => $file_contents,
+			'ACL'    => 'public-read',
 		);
 
 		try {
@@ -1229,9 +1246,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$can_write = false;
 		}
 
-		// delete temp file
-		$wp_filesystem->delete( $file );
-
 		return $can_write;
 	}
 
@@ -1248,14 +1262,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		wp_localize_script( 'as3cf-script', 'as3cf_i18n', array(
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
-			'create_bucket_error'	=> __( 'Error creating bucket: ', 'as3cf' ),
-			'create_bucket_nonce'	=> wp_create_nonce( 'as3cf-create-bucket' ),
-			'get_buckets_error'		=> __( 'Error fetching buckets: ', 'as3cf' ),
-			'get_buckets_nonce'		=> wp_create_nonce( 'as3cf-get-buckets' ),
+			'create_bucket_error'   => __( 'Error creating bucket: ', 'as3cf' ),
+			'create_bucket_nonce'   => wp_create_nonce( 'as3cf-create-bucket' ),
+			'get_buckets_error'     => __( 'Error fetching buckets: ', 'as3cf' ),
+			'get_buckets_nonce'     => wp_create_nonce( 'as3cf-get-buckets' ),
 			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
 			'save_bucket_nonce'     => wp_create_nonce( 'as3cf-save-bucket' ),
 			'get_url_preview_nonce' => wp_create_nonce( 'as3cf-get-url-preview' ),
-			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' )
+			'get_url_preview_error' => __( 'Error getting URL preview: ', 'as3cf' ),
+			'save_alert'            => __( 'The changes you made will be lost if you navigate away from this page', 'as3cf' ),
 		) );
 
 		$this->handle_post_request();
@@ -1270,18 +1285,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'force-ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
+		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
 
-			if ( !isset( $_POST[$var] ) ) {
+			if ( ! isset( $_POST[ $var ] ) ) {
 				continue;
 			}
 
-			$value = ( 'domain' == $var) ? $_POST[$var][0] : $_POST[$var];
-
-			$this->set_setting( $var, $value );
+			$this->set_setting( $var, $_POST[ $var ] );
 		}
 
 		$this->save_settings();

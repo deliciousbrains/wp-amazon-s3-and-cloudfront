@@ -1,4 +1,5 @@
 (function($) {
+	var saved_settings;
 
 	$(document).ready(function() {
 
@@ -230,7 +231,7 @@
 		});
 
 		$('.as3cf-domain').on('change', 'input[type="radio"]', function(e){
-			var domain = $( 'input:radio[name="domain[]"]:checked' ).val();
+			var domain = $( 'input:radio[name="domain"]:checked' ).val();
 			if ( 'cloudfront' == domain && $('.as3cf-setting.cloudfront' ).hasClass('hide') ) {
 				$('.as3cf-setting.cloudfront' ).removeClass('hide');
 			} else {
@@ -238,16 +239,18 @@
 			}
 		});
 
-		$( '.as3cf-settings' ).on( 'change', '#force-ssl', function( e ) {
-			$( '.subdomain-wrap' ).toggleClass( 'disabled' );
-			if ( $( this ).is( ":checked" ) ) {
-				var domain = $( 'input:radio[name="domain[]"]:checked' ).val();
+		$( '.as3cf-ssl' ).on( 'change', 'input[type="radio"]', function( e ) {
+			var ssl = $( 'input:radio[name="ssl"]:checked' ).val();
+			if ( 'https' == ssl ) {
+				var domain = $( 'input:radio[name="domain"]:checked' ).val();
 				if ( 'subdomain' == domain ) {
-					$( 'input[name="domain[]"][value="path"]' ).attr( "checked", true );
+					$( 'input[name="domain"][value="path"]' ).attr( "checked", true );
 				}
 				$( '.subdomain-wrap input' ).attr( 'disabled', true );
+				$( '.subdomain-wrap' ).addClass( 'disabled' );
 			} else {
 				$( '.subdomain-wrap input' ).removeAttr( 'disabled' );
+				$( '.subdomain-wrap' ).removeClass( 'disabled' );
 			}
 		} );
 
@@ -291,6 +294,22 @@
 				}
 			});
 		}
+
+		// save the original state of the form for comparison later
+		saved_settings = $( '.as3cf-main-settings form' ).serialize();
+
+		// let the save settings submit happen as normal
+		$( document ).on( 'submit', '.as3cf-main-settings form', function( event ) {
+			// disable unload warning
+			$( window ).off( 'beforeunload.as3cf-settings' );
+		} );
+
+		// prompt user with dialog if leaving the settings page with unsaved changes
+		$( window ).on( 'beforeunload.as3cf-settings', function() {
+			if ( $( '.as3cf-main-settings form' ).serialize() != saved_settings ) {
+				return as3cf_i18n.save_alert;
+			}
+		} );
 
 	});
 
