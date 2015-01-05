@@ -949,7 +949,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	function verify_ajax_request() {
-		if ( ! is_admin() || ! wp_verify_nonce( $_POST['_nonce'], $_POST['action'] ) ) {
+		if ( ! is_admin() || ! wp_verify_nonce( sanitize_key( $_POST['_nonce'] ), sanitize_key( $_POST['action'] ) ) ) {
 			wp_die( __( 'Cheatin&#8217; eh?', 'as3cf' ) );
 		}
 
@@ -982,7 +982,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$out = array(
 					'success' => '1',
 					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
-					'region'  => $region
+					'region'  => $region,
 				);
 				$out['can_write'] = $this->check_write_permission( $bucket, $region );
 			} else {
