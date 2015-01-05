@@ -48,8 +48,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			if ( isset( $_POST[ $key ] ) ) {
 				$value = $_POST[ $key ];
 				if ( is_array( $value ) ) {
-					// get last value for checkbox options
-					$value = end( $value );
+					// checkbox is checked
+					$value = 1;
 				}
 			}
 
