@@ -44,7 +44,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_setting( $key, $default = '' ) {
 		// use settings from $_POST when generating URL preview via AJAX
 		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == $_POST['action'] ) {
-			$value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : 0 ;
+			$value = 0;
+			if ( isset( $_POST[ $key ] ) ) {
+				$value = $_POST[ $key ];
+				if ( is_array( $value ) ) {
+					// get last value for checkbox options
+					$value = end( $value );
+				}
+			}
 
 			return $value;
 		}
