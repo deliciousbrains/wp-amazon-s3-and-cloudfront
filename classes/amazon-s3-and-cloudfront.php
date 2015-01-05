@@ -1280,7 +1280,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return;
 		}
 
-		if ( empty( $_POST['_wpnonce'] ) || !wp_verify_nonce( $_POST['_wpnonce'], 'as3cf-save-settings' ) ) {
+		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'as3cf-save-settings' ) ) {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
@@ -1368,7 +1368,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'limit'    => false,
 			'spam'     => 0,
 			'deleted'  => 0,
-			'archived' => 0
+			'archived' => 0,
 		);
 		$blogs = wp_get_sites( $args );
 
