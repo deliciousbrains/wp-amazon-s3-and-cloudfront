@@ -1071,7 +1071,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @param $bucket
 	 *
-	 * @return WP_Error
+	 * @return string|WP_Error
 	 */
 	function get_bucket_region( $bucket ) {
 		try {
