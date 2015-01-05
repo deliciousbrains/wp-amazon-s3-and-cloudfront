@@ -1,6 +1,5 @@
 .aws-main {
   .error {
-	max-width: 835px;
 	pre {
 	  background: #eaeaea;
 	  background: rgba(0, 0, 0, 0.07);
@@ -14,8 +13,8 @@
 	}
   }
 
-  .as3cf-notice {
-	max-width: 835px;
+  .as3cf-notice, .error {
+	max-width: 935px;
   }
 
   .updated {
