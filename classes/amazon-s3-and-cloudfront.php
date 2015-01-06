@@ -1326,9 +1326,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$prefix = str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
 		}
 
-		// support legacy MS installs to new /sites/<blog_id>/ format
+		// support legacy MS installs (<3.5 since upgraded) for subsites
 		if ( is_multisite() && 1 != ( $blog_id = get_current_blog_id() ) && strpos( $prefix, 'sites/' ) === false ) {
-			$prefix = '/sites/' . $blog_id . '/' . ltrim( $prefix, '/' );;
+			$legacy_ms_prefix = '/blogs.dir/' . $blog_id . '/files/';
+			$legacy_ms_prefix = apply_filters( 'as3cf_legacy_ms_subsite_prefix', $legacy_ms_prefix, $blog_id );
+
+			$prefix = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );;
 		}
 
 		return $prefix;
