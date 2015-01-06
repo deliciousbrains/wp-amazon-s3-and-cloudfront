@@ -254,7 +254,7 @@
 			}
 		} );
 
-		$('.configure-url').on('change', 'input', function(e){
+		$('.url-preview').on('change', 'input', function(e){
 			generate_url_preview();
 		});
 
