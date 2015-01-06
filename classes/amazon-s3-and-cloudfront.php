@@ -1328,10 +1328,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// support legacy MS installs (<3.5 since upgraded) for subsites
 		if ( is_multisite() && 1 != ( $blog_id = get_current_blog_id() ) && strpos( $prefix, 'sites/' ) === false ) {
-			$legacy_ms_prefix = '/blogs.dir/' . $blog_id . '/files/';
-			$legacy_ms_prefix = apply_filters( 'as3cf_legacy_ms_subsite_prefix', $legacy_ms_prefix, $blog_id );
-
-			$prefix = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );
+			$details          = get_blog_details( $blog_id );
+			$sitename         = basename( $details->siteurl );
+			$legacy_ms_prefix = $sitename . '/files/';
+			$legacy_ms_prefix = apply_filters( 'as3cf_legacy_ms_subsite_prefix', $legacy_ms_prefix, $details );
+			$prefix           = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );
 		}
 
 		return $prefix;
