@@ -1331,7 +1331,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$legacy_ms_prefix = '/blogs.dir/' . $blog_id . '/files/';
 			$legacy_ms_prefix = apply_filters( 'as3cf_legacy_ms_subsite_prefix', $legacy_ms_prefix, $blog_id );
 
-			$prefix = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );;
+			$prefix = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );
 		}
 
 		return $prefix;
