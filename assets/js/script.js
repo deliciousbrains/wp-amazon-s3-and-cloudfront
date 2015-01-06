@@ -205,7 +205,7 @@
 			$checkbox.trigger("change");
 		}
 
-		if ( ! $( '.as3cf-settings' ).hasClass( 'as3cf-has-bucket' ) ) {
+		if ( $( '.as3cf-settings' ).length && ! $( '.as3cf-settings' ).hasClass( 'as3cf-has-bucket' ) ) {
 			loadBuckets();
 		}
 
