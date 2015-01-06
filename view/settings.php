@@ -112,7 +112,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</div>
 					</td>
 				</tr>
-				<tr class="configure-url">
+				<tr class="configure-url url-preview">
 					<td>
 						<h4><?php _e( 'Domain:', 'as3cf' ) ?></h4>
 					</td>
@@ -155,7 +155,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</div>
 					</td>
 				</tr>
-				<tr class="configure-url">
+				<tr class="configure-url url-preview">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'enable-object-prefix', 'class' => 'sub-toggle' ) ); ?>
 					</td>
@@ -170,7 +170,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr class="configure-url">
+				<tr class="configure-url url-preview">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'use-yearmonth-folders' ) ); ?>
 					</td>
@@ -181,7 +181,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr class="configure-url as3cf-border-bottom">
+				<tr class="configure-url as3cf-border-bottom url-preview">
 					<td>
 						<h4><?php _e( 'SSL', 'as3cf' ) ?></h4>
 					</td>
@@ -220,7 +220,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<p><?php _e( 'Once a file has been copied to S3, remove it from the local server.', 'as3cf' ) ?></p>
 					</td>
 				</tr>
-				<tr class="advanced-options">
+				<tr class="advanced-options url-preview">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'object-versioning' ) ); ?>
 					</td>
