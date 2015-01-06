@@ -9,7 +9,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 		</p>
 	</div>
 
-	<div class="updated <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
+	<div class="updated as3cf-notice <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
 		<p>
 			<?php _e( 'Settings saved.', 'as3cf' ); ?>
 		</p>
