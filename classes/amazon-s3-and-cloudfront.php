@@ -52,7 +52,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	function get_setting( $key, $default = '' ) {
 		// use settings from $_POST when generating URL preview via AJAX
 		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == sanitize_key( $_POST['action'] ) ) { // input var okay
-			$value = isset( $_POST[ $key ] ) ?  sanitize_key( $_POST[ $key ] ) : 0; // input var okay
+			$value = 0;
+			if ( isset( $_POST[ $key ] ) ) { // input var okay
+				$value = sanitize_text_field( $_POST[ $key ] ); // input var okay
+				if ( is_array( $value ) ) {
+					// checkbox is checked
+					$value = 1;
+				}
+			}
 
 			return $value;
 		}
@@ -1332,6 +1339,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$prefix = '';
 		if ( $this->get_setting( 'use-yearmonth-folders' ) ) {
 			$prefix = str_replace( $this->get_base_upload_path(), '', $uploads['path'] );
+		}
+
+		// support legacy MS installs (<3.5 since upgraded) for subsites
+		if ( is_multisite() && 1 != ( $blog_id = get_current_blog_id() ) && strpos( $prefix, 'sites/' ) === false ) {
+			$details          = get_blog_details( $blog_id );
+			$sitename         = basename( $details->siteurl );
+			$legacy_ms_prefix = $sitename . '/files/';
+			$legacy_ms_prefix = apply_filters( 'as3cf_legacy_ms_subsite_prefix', $legacy_ms_prefix, $details );
+			$prefix           = '/' . trailingslashit( ltrim( $legacy_ms_prefix, '/' ) ) . ltrim( $prefix, '/' );
 		}
 
 		return $prefix;
