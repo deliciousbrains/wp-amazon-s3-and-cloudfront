@@ -1,6 +1,6 @@
 <div class="as3cf-sidebar">
 
-	<div class="as3cf-banner"><img src="<?php echo plugins_url( 'assets/img/snail.jpg', $this->plugin_file_path ); ?>" width="292" height="165" alt="" /></div>
+	<div class="as3cf-banner"><img src="<?php echo esc_url( plugins_url( 'assets/img/snail.jpg', $this->plugin_file_path ) ); ?>" width="292" height="165" alt="" /></div>
 
 	<form method="post" action="https://deliciousbrains.createsend.com/t/t/s/dlihik/" target="_blank" class="subscribe block">
 		<h2><?php _e( 'Pro Version?', 'as3cf' ); ?></h2>
@@ -8,18 +8,18 @@
 		<?php $user = wp_get_current_user(); ?>
 
 		<p class="intro">
-			<?php echo wptexturize( __( "We're working on a pro version that will include the following features:", 'as3cf' ) ); ?>
+			<?php echo esc_html( wptexturize( __( "We're working on a pro version that will include the following features:", 'as3cf' ) ) ); ?>
 		</p>
 
 		<ul>
-			<li><?php echo wptexturize( __( 'Copy existing Media Library to S3', 'as3cf' ) ); ?></li>
-			<li><?php echo wptexturize( __( 'Serve theme JS & CSS from S3/CloudFront', 'as3cf' ) ); ?></li>
-			<li><?php echo wptexturize( __( 'WooCommerce & <abbr title="Easy Digital Downloads">EDD</abbr> integration', 'as3cf' ) ); ?></li>
-			<li><?php echo wptexturize( __( 'Awesome email support', 'as3cf' ) ); ?></li>
+			<li><?php echo esc_html( wptexturize( __( 'Copy existing Media Library to S3', 'as3cf' ) ) ); ?></li>
+			<li><?php echo esc_html( wptexturize( __( 'Serve theme JS & CSS from S3/CloudFront', 'as3cf' ) ) ); ?></li>
+			<li><?php echo esc_html( wptexturize( __( 'WooCommerce & <abbr title="Easy Digital Downloads">EDD</abbr> integration', 'as3cf' ) ) ); ?></li>
+			<li><?php echo esc_html( wptexturize( __( 'Awesome email support', 'as3cf' ) ) ); ?></li>
 		</ul>
 
 		<div class="field notify-name">
-			<input type="text" name="cm-name" value="<?php echo trim( esc_attr( $user->first_name ) . ' ' . esc_attr( $user->last_name ) ); ?>" placeholder="<?php _e( 'Your Name', 'as3cf' ); ?>"/>
+			<input type="text" name="cm-name" value="<?php echo esc_attr( trim( $user->first_name . ' ' . $user->last_name ) ); ?>" placeholder="<?php _e( 'Your Name', 'as3cf' ); ?>"/>
 		</div>
 
 		<div class="field notify-email">

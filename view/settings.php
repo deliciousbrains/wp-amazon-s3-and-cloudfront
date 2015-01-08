@@ -1,6 +1,6 @@
 <?php
 $selected_bucket = $this->get_setting( 'bucket' ); ?>
-<div class="aws-content as3cf-settings<?php echo ( $selected_bucket ) ? ' as3cf-has-bucket' : ''; ?>">
+<div class="aws-content as3cf-settings<?php echo ( $selected_bucket ) ? ' as3cf-has-bucket' : ''; // xss ok ?>">
 
 	<div class="error as3cf-bucket-error" style="display: none;">
 		<p>
@@ -8,8 +8,13 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 			<span class="message"></span>
 		</p>
 	</div>
-
-	<div class="updated as3cf-notice <?php echo ( isset( $_GET['updated'] ) ) ? 'show' : ''; ?>">
+	<?php
+	$updated_class = '';
+if ( isset( $_GET['updated'] ) ) { // input var okay
+	$updated_class = 'show';
+}
+	?>
+	<div class="updated <?php echo $updated_class; // xss ok ?>">
 		<p>
 			<?php _e( 'Settings saved.', 'as3cf' ); ?>
 		</p>
@@ -18,13 +23,13 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 	<?php
 	$can_write = $this->check_write_permission();
 	// catch any file system issues
-	if ( is_wp_error( $can_write ) ) {
-		$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
-		$can_write = true;
-	}
-	// display a error message if the user does not have write permission to S3
-	?>
-	<div class="error as3cf-can-write-error" style="<?php echo ( $can_write ) ? 'display: none;' : ''; ?>">
+if ( is_wp_error( $can_write ) ) {
+	$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
+	$can_write = true;
+}
+// display a error message if the user does not have write permission to S3
+?>
+	<div class="error as3cf-can-write-error" style="<?php echo ( $can_write ) ? 'display: none;' : ''; // xss ok ?>">
 		<p>
 			<strong>
 				<?php _e( 'S3 Policy is Read-Only', 'as3cf' ); ?>
@@ -72,10 +77,10 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				<tr class="as3cf-border-bottom">
 					<td><h3><?php _e( 'Bucket', 'as3cf' ); ?></h3></td>
 					<td>
-						<span class="as3cf-active-bucket"><?php echo $selected_bucket; ?></span>
+						<span class="as3cf-active-bucket"><?php echo $selected_bucket; // xss ok ?></span>
 						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
-						<input id="as3cf-bucket" type="hidden" name="bucket" value="<?php echo $selected_bucket; ?>">
-						<input id="as3cf-region" type="hidden" name="region" value="<?php echo $this->get_setting('region'); ?>">
+						<input id="as3cf-bucket" type="hidden" name="bucket" value="<?php echo esc_attr( $selected_bucket ); ?>">
+						<input id="as3cf-region" type="hidden" name="region" value="<?php echo esc_attr( $this->get_setting( 'region' ) ); ?>">
 					</td>
 				</tr>
 				<tr>
@@ -107,7 +112,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<div class="as3cf-url-preview-wrap">
 							<span>Preview</span>
 							<div class="as3cf-url-preview">
-								<?php echo $this->get_url_preview(); ?>
+								<?php echo $this->get_url_preview(); // xss ok ?>
 							</div>
 						</div>
 					</td>
@@ -118,20 +123,20 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<?php
-						$domain = $this->get_setting( 'domain' );
+						$domain             = $this->get_setting( 'domain' );
 						$subdomain_disabled = '';
-						$subdomain_class = '';
+						$subdomain_class    = '';
 						if ( 'https' == $this->get_setting( 'ssl' ) ) {
 							if ( 'subdomain' == $domain ) {
 								$domain = 'path';
 							}
 							$subdomain_disabled = 'disabled="disabled"';
-							$subdomain_class = 'disabled';
+							$subdomain_class    = 'disabled';
 						}
 						?>
 						<div class="as3cf-domain as3cf-radio-group">
-							<label class="subdomain-wrap <?php echo $subdomain_class; ?>">
-								<input type="radio" name="domain" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; ?>>
+							<label class="subdomain-wrap <?php echo $subdomain_class; // xss ok?>">
+								<input type="radio" name="domain" value="subdomain" <?php checked( $domain, 'subdomain' ); ?> <?php echo $subdomain_disabled; // xss ok ?>>
 								Bucket name as subdomain
 								<p>http://bucket-name.s3.amazon.com/&hellip;</p>
 							</label>
@@ -148,7 +153,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 							<label>
 								<input id="cloudfront" type="radio" name="domain" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
 								CloudFront or custom domain
-								<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; ?>">
+								<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; // xss ok ?>">
 									<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="40" />
 								</p>
 							</label>
@@ -163,9 +168,9 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 						<h4><?php _e( 'Path', 'as3cf' ) ?></h4>
 						<p class="object-prefix-desc">
 							<?php _e( 'By default the path is the same as your local WordPress files:' ); ?>
-							<em><?php echo $this->get_default_object_prefix(); ?></em>
+							<em><?php echo $this->get_default_object_prefix(); // xss ok ?></em>
 						</p>
-						<p class="as3cf-setting enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; ?>">
+						<p class="as3cf-setting enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; // xss ok ?>">
 							<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" />
 						</p>
 					</td>
@@ -240,7 +245,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Far Future Expiration Header', 'as3cf' ) ?></h4>
-						<p><?php _e('Implements a "Never Expire" caching policy for browsers by setting an Expires header for 10 years in the future. Should be used in conjunction with object versioning above.'); ?>
+						<p><?php _e( 'Implements a "Never Expire" caching policy for browsers by setting an Expires header for 10 years in the future. Should be used in conjunction with object versioning above.' ); ?>
 							<a href="http://developer.yahoo.com/performance/rules.html#expires">
 								<?php _e( 'More info', 'as3cf' ) ?> &raquo;
 							</a>
