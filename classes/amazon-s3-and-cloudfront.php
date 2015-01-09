@@ -54,7 +54,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( isset( $_POST['action'] ) && 'as3cf-get-url-preview' == sanitize_key( $_POST['action'] ) ) { // input var okay
 			$value = 0;
 			if ( isset( $_POST[ $key ] ) ) { // input var okay
-				$value = sanitize_text_field( $_POST[ $key ] ); // input var okay
+				$value = $_POST[ $key ]; // input var okay
 				if ( is_array( $value ) ) {
 					// checkbox is checked
 					$value = 1;
