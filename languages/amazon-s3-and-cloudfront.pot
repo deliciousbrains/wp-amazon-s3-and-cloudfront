@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Amazon S3 and CloudFront\n"
-"POT-Creation-Date: 2015-01-07 10:57-0000\n"
-"PO-Revision-Date: 2015-01-07 10:57-0000\n"
+"POT-Creation-Date: 2015-01-09 16:19-0000\n"
+"PO-Revision-Date: 2015-01-09 16:19-0000\n"
 "Last-Translator: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language-Team: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language: en\n"
@@ -28,59 +28,58 @@ msgstr ""
 msgid "S3 and CloudFront"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:912
+#: classes/amazon-s3-and-cloudfront.php:920
 msgid "There was an error attempting to access the file system"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:952
+#: classes/amazon-s3-and-cloudfront.php:960
 msgid "Cheatin&#8217; eh?"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:956
+#: classes/amazon-s3-and-cloudfront.php:964
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:964
-#: classes/amazon-s3-and-cloudfront.php:1010
+#: classes/amazon-s3-and-cloudfront.php:970
 msgid "No bucket name provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:987
-#: classes/amazon-s3-and-cloudfront.php:1030
+#: classes/amazon-s3-and-cloudfront.php:996
+#: classes/amazon-s3-and-cloudfront.php:1029
 msgid "Failed to retrieve bucket region."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1223
+#: classes/amazon-s3-and-cloudfront.php:1222
 msgid ""
 "This is a test file to check if the user has write permission to S3. Delete "
 "me if found."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1271
+#: classes/amazon-s3-and-cloudfront.php:1270
 msgid "Bucket Name:"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1272
+#: classes/amazon-s3-and-cloudfront.php:1271
 msgid "Error creating bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1274
+#: classes/amazon-s3-and-cloudfront.php:1273
 msgid "Error fetching buckets: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1276
+#: classes/amazon-s3-and-cloudfront.php:1275
 msgid "Error saving bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1279
+#: classes/amazon-s3-and-cloudfront.php:1278
 msgid "Error getting URL preview: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1280
+#: classes/amazon-s3-and-cloudfront.php:1279
 msgid "The changes you made will be lost if you navigate away from this page"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1292
+#: classes/amazon-s3-and-cloudfront.php:1291
 msgid "Cheatin' eh?"
 msgstr ""
 
@@ -141,7 +140,7 @@ msgstr ""
 msgid "Update Amazon S3 and CloudFront to the latest version"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:89
+#: classes/as3cf-upgrade.php:90
 #, php-format
 msgid ""
 "<strong>Running Metadata Update</strong> &mdash; We&#8217;re going through "
@@ -154,17 +153,17 @@ msgid ""
 "performance."
 msgstr ""
 
-#: classes/as3cf-upgrade.php:90
+#: classes/as3cf-upgrade.php:91
 msgid "Pause Update"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:94
+#: classes/as3cf-upgrade.php:95
 msgid ""
 "<strong>Metadata Update Paused</strong> &mdash; Updating Media Library "
 "metadata has been paused."
 msgstr ""
 
-#: classes/as3cf-upgrade.php:95
+#: classes/as3cf-upgrade.php:96
 msgid "Restart Update"
 msgstr ""
 
@@ -179,19 +178,20 @@ msgstr ""
 msgid "Try Run It Again"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:155
-msgid "Every "
+#: classes/as3cf-upgrade.php:163
+#, php-format
+msgid "Every %d Minutes"
 msgstr ""
 
-#: view/settings.php:14
+#: view/settings.php:19
 msgid "Settings saved."
 msgstr ""
 
-#: view/settings.php:30
+#: view/settings.php:35
 msgid "S3 Policy is Read-Only"
 msgstr ""
 
-#: view/settings.php:32
+#: view/settings.php:37
 #, php-format
 msgid ""
 "You need to go to <a href=\"%s\">Identity and Access Management</a> in your "
@@ -199,169 +199,169 @@ msgid ""
 "Your policy should look something like the following:"
 msgstr ""
 
-#: view/settings.php:47
+#: view/settings.php:52
 msgid "Select an existing S3 bucket to use:"
 msgstr ""
 
-#: view/settings.php:50
+#: view/settings.php:55
 msgid "Cancel"
 msgstr ""
 
-#: view/settings.php:52
+#: view/settings.php:57
 msgid "Refresh"
 msgstr ""
 
-#: view/settings.php:55
+#: view/settings.php:60
 msgid "Loading..."
 msgstr ""
 
-#: view/settings.php:58
+#: view/settings.php:63
 msgid "Or create a new bucket:"
 msgstr ""
 
-#: view/settings.php:61
+#: view/settings.php:66
 msgid "Bucket Name"
 msgstr ""
 
-#: view/settings.php:62
+#: view/settings.php:67
 msgid "Creating..."
 msgstr ""
 
-#: view/settings.php:62
+#: view/settings.php:67
 msgid "Create"
 msgstr ""
 
-#: view/settings.php:73
+#: view/settings.php:78
 msgid "Bucket"
 msgstr ""
 
-#: view/settings.php:76
+#: view/settings.php:81
 msgid "Change"
 msgstr ""
 
-#: view/settings.php:82
+#: view/settings.php:87
 msgid "Enable/Disable the Plugin"
 msgstr ""
 
-#: view/settings.php:89
+#: view/settings.php:94
 msgid "Copy Files to S3"
 msgstr ""
 
-#: view/settings.php:90
+#: view/settings.php:95
 msgid ""
 "When a file is uploaded to the Media Library, copy it to S3. Existing files "
 "are <em>not</em> copied to S3."
 msgstr ""
 
-#: view/settings.php:98
+#: view/settings.php:103
 msgid "Rewrite File URLs"
 msgstr ""
 
-#: view/settings.php:99
+#: view/settings.php:104
 msgid ""
 "For Media Library files that have been copied to S3, rewrite the URLs so "
 "that they are served from S3/CloudFront instead of your server."
 msgstr ""
 
-#: view/settings.php:103
+#: view/settings.php:108
 msgid "Configure File URLs"
 msgstr ""
 
-#: view/settings.php:117
+#: view/settings.php:122
 msgid "Domain:"
 msgstr ""
 
-#: view/settings.php:163
+#: view/settings.php:168
 msgid "Path"
 msgstr ""
 
-#: view/settings.php:165
+#: view/settings.php:170
 msgid "By default the path is the same as your local WordPress files:"
 msgstr ""
 
-#: view/settings.php:178
+#: view/settings.php:183
 msgid "Year/Month"
 msgstr ""
 
-#: view/settings.php:180
+#: view/settings.php:185
 msgid "Add the Year/Month in the URL."
 msgstr ""
 
-#: view/settings.php:186
+#: view/settings.php:191
 msgid "SSL"
 msgstr ""
 
-#: view/settings.php:194
+#: view/settings.php:199
 msgid "Same as request"
 msgstr ""
 
-#: view/settings.php:195
+#: view/settings.php:200
 msgid "When the request is https://, use https:// for the file URL as well."
 msgstr ""
 
-#: view/settings.php:199
+#: view/settings.php:204
 msgid "Always SSL"
 msgstr ""
 
-#: view/settings.php:200
+#: view/settings.php:205
 msgid "Forces https:// to be used."
 msgstr ""
 
-#: view/settings.php:201
+#: view/settings.php:206
 msgid ""
 "You cannot use the \"Bucket as a subdomain\" domain option when using SSL."
 msgstr ""
 
-#: view/settings.php:205
+#: view/settings.php:210
 msgid "Always non-SSL"
 msgstr ""
 
-#: view/settings.php:206
+#: view/settings.php:211
 msgid "Forces http:// to be used."
 msgstr ""
 
-#: view/settings.php:212
+#: view/settings.php:217
 msgid "Advanced Options"
 msgstr ""
 
-#: view/settings.php:219
+#: view/settings.php:224
 msgid "Remove Files From Server"
 msgstr ""
 
-#: view/settings.php:220
+#: view/settings.php:225
 msgid "Once a file has been copied to S3, remove it from the local server."
 msgstr ""
 
-#: view/settings.php:228
+#: view/settings.php:233
 msgid "Object Versioning"
 msgstr ""
 
-#: view/settings.php:230
+#: view/settings.php:235
 msgid ""
 "Append a timestamp to the S3 file path. Recommended when using CloudFront so "
 "you don't have to worry about cache invalidation."
 msgstr ""
 
-#: view/settings.php:232 view/settings.php:245
+#: view/settings.php:237 view/settings.php:250
 msgid "More info"
 msgstr ""
 
-#: view/settings.php:242
+#: view/settings.php:247
 msgid "Far Future Expiration Header"
 msgstr ""
 
-#: view/settings.php:243
+#: view/settings.php:248
 msgid ""
 "Implements a \"Never Expire\" caching policy for browsers by setting an "
 "Expires header for 10 years in the future. Should be used in conjunction "
 "with object versioning above."
 msgstr ""
 
-#: view/settings.php:255
+#: view/settings.php:260
 msgid "Copy HiDPI (@2x) Images"
 msgstr ""
 
-#: view/settings.php:256
+#: view/settings.php:261
 #, php-format
 msgid ""
 "When uploading a file to S3, checks if there's a file of the same name with "
@@ -369,7 +369,7 @@ msgid ""
 "Retina 2x</a> plugin."
 msgstr ""
 
-#: view/settings.php:262
+#: view/settings.php:267
 msgid "Save Changes"
 msgstr ""
 
