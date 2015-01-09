@@ -59,13 +59,13 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 == Changelog ==
 
 = 0.8 - 2015-01-10 =
-* New: Settings UI has a new look making things clearer and easier
+* New: Redesigned settings UI
 * Improvement: SSL setting can be fully controlled, HTTPS for urls always, based on request or never
-* Improvement: Support for Regenerate Thumbnails plugin when images are not stored locally after uploading to S3
-* Improvement: Support for `get_attached_file()` when images are not stored locally after uploading to S3 which returns S3 URL by default and can be configured to copy back S3 file to server
+* Improvement: Download files from S3 that are not found on server when running Regenerate Thumbnails plugin
+* Improvement: When calling `get_attached_file()` and file is missing from server, return S3 URL
 * Improvement: Code cleanup to WordPress coding standards
-* Bug: File paths and urls now specific to subsites for Multisite installs that were created before WP 3.5 and since upgraded
-* Bug: Fixed 'attempting to access local file system' error for some installs
+* Bug Fix: Files for all subsites going into the same S3 folder on multisite installs setup prior to WP 3.5
+* Bug Fix: 'attempting to access local file system' error for some installs
 
 = 0.7.2 - 2014-12-11 =
 * Bug: Some buckets in the EU region causing permission and HTTP errors
