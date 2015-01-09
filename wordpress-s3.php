@@ -32,7 +32,7 @@ $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['supported_addon_versions'] = a
 	'amazon-s3-and-cloudfront-edd' => '1.0',
 );
 
-$aws_plugin_version_required = '0.2';
+$aws_plugin_version_required = '0.2.1';
 
 require dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
 global $as3cf_compat_check;
