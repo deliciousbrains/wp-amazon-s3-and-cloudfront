@@ -43,7 +43,8 @@ which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins
 
 == Screenshots ==
 
-1. Settings screen
+1. Choosing/creating a bucket
+2. Settings screen
 
 == Upgrade Notice ==
 
