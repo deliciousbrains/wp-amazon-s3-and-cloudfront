@@ -98,6 +98,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( 'region' == $key && ! isset( $settings['region'] ) ) {
 			$bucket = $this->get_setting( 'bucket' );
 			$region = $this->get_bucket_region( $bucket );
+			if ( is_wp_error( $region ) ) {
+				$region = '';
+			}
 
 			return $region;
 		}
@@ -244,14 +247,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Delete bulk objects from an S3 bucket
 	 *
+	 * @param string  $region
 	 * @param string  $bucket
 	 * @param array   $objects
 	 * @param bool    $log_error
 	 * @param bool    $return_on_error
 	 */
-	function delete_s3_objects( $bucket, $objects, $log_error = false, $return_on_error = false ) {
+	function delete_s3_objects( $region, $bucket, $objects, $log_error = false, $return_on_error = false ) {
 		try {
-			$this->get_s3client()->deleteObjects( array(
+			$this->get_s3client( $region )->deleteObjects( array(
 					'Bucket'  => $bucket,
 					'Objects' => $objects,
 				) );
@@ -275,8 +279,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		$bucket = $s3object['bucket'];
-
-		$this->set_s3client_region( $s3object );
+		$region = $this->get_s3object_region( $s3object );
+		if ( is_wp_error( $region ) ) {
+			error_log( 'Error retrieving region: ' . $region->get_error_message() );
+			$region = '';
+		}
 
 		$amazon_path = dirname( $s3object['key'] );
 		$objects     = array();
@@ -295,7 +302,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				);
 			}
 
-			$this->delete_s3_objects( $bucket, $hidpi_images );
+			$this->delete_s3_objects( $region, $bucket, $hidpi_images );
 		}
 
 		// add main file to be deleted
@@ -303,7 +310,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'Key' => $s3object['key'],
 		);
 
-		$this->delete_s3_objects( $bucket, $objects, true, true );
+		$this->delete_s3_objects( $region, $bucket, $objects, true, true );
 
 		delete_post_meta( $post_id, 'amazonS3_info' );
 	}
@@ -356,6 +363,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 			// use bucket from settings
 			$bucket = $this->get_setting( 'bucket' );
+			$region = $this->get_setting( 'region' );
 		}
 
 		$file_path = get_attached_file( $post_id, true );
@@ -364,11 +372,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$acl = apply_filters( 'wps3_upload_acl', $acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
 		$acl = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
 
-		$s3client = $this->get_s3client();
-
 		$s3object = array(
 			'bucket' => $bucket,
 			'key'    => $prefix . $file_name,
+			'region' => $region,
 		);
 
 		// store acl if not default
@@ -376,13 +383,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$s3object['acl'] = $acl;
 		}
 
-		// use existing region
-		if ( isset( $region ) ) {
-			$s3object['region'] = $region;
-		}
-
-		// retrieve region when necessary and set the region of the s3client
-		$s3object['region'] = $this->set_s3client_region( $s3object );
+		$s3client = $this->get_s3client( $region );
 
 		$args = array(
 			'Bucket'     => $bucket,
@@ -407,7 +408,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			);
 			// edited resized image files
 			$this->prepare_intermediate_images_to_remove( $post_id, $objects_to_remove, $prefix );
-			$this->delete_s3_objects( $bucket, $objects_to_remove, true );
+			$this->delete_s3_objects( $region, $bucket, $objects_to_remove, true );
 		}
 
 		$files_to_remove = array();
@@ -581,11 +582,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$time = current_time( 'timestamp' );
 		$time = date( 'Y/m', $time );
 
-		$prefix = ltrim( trailingslashit( $this->get_setting( 'object-prefix' ) ), '/' );
+		$prefix = ltrim( trailingslashit( $this->get_object_prefix() ), '/' );
 		$prefix .= ltrim( trailingslashit( $this->get_dynamic_prefix( $time ) ), '/' );
-		$s3client = $this->get_s3client();
 
 		$bucket = $this->get_setting( 'bucket' );
+		$region = $this->get_setting( 'region' );
+
+		$s3client = $this->get_s3client( $region );
 
 		$number = '';
 		while ( $s3client->doesObjectExist( $bucket, $prefix . $filename ) !== false ) {
@@ -802,7 +805,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( ! is_null( $expires ) ) {
 			try {
 				$expires = time() + $expires;
-				$secure_url = $this->get_s3client()->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires );
+				$secure_url = $this->get_s3client( $region )->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires );
 			}
 			catch ( Exception $e ) {
 				return new WP_Error( 'exception', $e->getMessage() );
@@ -1050,6 +1053,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 			$this->set_setting( 'bucket', $bucket_name );
 			$region = $this->get_bucket_region( $bucket_name );
+			if ( is_wp_error( $region ) ) {
+				return false;
+			}
 			$this->set_setting( 'region', $region );
 			$this->save_settings();
 
@@ -1064,9 +1070,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_action( 'load-' . $hook_suffix , array( $this, 'plugin_load' ) );
 	}
 
-	function get_s3client() {
+	function get_s3client( $region = false ) {
 		if ( is_null( $this->s3client ) ) {
-			$this->s3client = $this->aws->get_client()->get( 's3' );
+
+			if ( $region ) {
+				$args = array(
+					'region'    => $this->translate_region( $region ),
+					'signature' => 'v4',
+				);
+			} else {
+				$args = array();
+			}
+
+			$this->s3client = $this->aws->get_client()->get( 's3', $args );
 		}
 
 		return $this->s3client;
@@ -1084,6 +1100,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
 		}
 		catch ( Exception $e ) {
+			error_log( sprintf( __( 'There was an error attempting to get the region of the bucket %s: %s', 'as3cf' ), $bucket, $e->getMessage() ) );
+
 			return new WP_Error( 'exception', $e->getMessage() );
 		}
 
@@ -1135,31 +1153,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			case 'eu' :
 				$region = 'eu-west-1';
 				break;
-		}
-
-		return $region;
-	}
-
-	/**
-	 * Set the region of the AWS client based on the bucket.
-	 *
-	 * This is needed for non US standard buckets to add and delete files.
-	 *
-	 * @param array $s3object
-	 * @param int   $post_id
-	 *
-	 * @return string - region name
-	 */
-	function set_s3client_region( $s3object, $post_id = null  ) {
-		$region = $this->get_s3object_region( $s3object, $post_id );
-
-		if ( is_wp_error( $region ) ) {
-			return '';
-		}
-
-		if ( $region ) {
-			$region = $this->translate_region( $region );
-			$this->get_s3client()->setRegion( $region );
 		}
 
 		return $region;
@@ -1221,7 +1214,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$file_name     = 'as3cf-permission-check.txt';
 		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
 
-		$path = $this->get_setting( 'object-prefix' );
+		$path = $this->get_object_prefix();
 		$key  = $path . $file_name;
 
 		$args = array(
@@ -1236,11 +1229,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			if ( is_null( $region ) ) {
 				$region = $this->get_setting( 'region' );
 			}
-			if ( $region ) {
-				$this->get_s3client()->setRegion( $region );
-			}
 			// attempt to create the test file
-			$this->get_s3client()->putObject( $args );
+			$this->get_s3client( $region )->putObject( $args );
 			// delete it straight away if created
 			$this->get_s3client()->deleteObject( array(
 				'Bucket' => $bucket,

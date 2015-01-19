@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Amazon S3 and CloudFront\n"
-"POT-Creation-Date: 2015-01-09 16:19-0000\n"
-"PO-Revision-Date: 2015-01-09 16:19-0000\n"
+"POT-Creation-Date: 2015-01-19 16:02-0000\n"
+"PO-Revision-Date: 2015-01-19 16:02-0000\n"
 "Last-Translator: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language-Team: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language: en\n"
@@ -28,58 +28,63 @@ msgstr ""
 msgid "S3 and CloudFront"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:920
+#: classes/amazon-s3-and-cloudfront.php:923
 msgid "There was an error attempting to access the file system"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:960
+#: classes/amazon-s3-and-cloudfront.php:963
 msgid "Cheatin&#8217; eh?"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:964
+#: classes/amazon-s3-and-cloudfront.php:967
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:970
+#: classes/amazon-s3-and-cloudfront.php:973
 msgid "No bucket name provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:996
-#: classes/amazon-s3-and-cloudfront.php:1029
+#: classes/amazon-s3-and-cloudfront.php:999
+#: classes/amazon-s3-and-cloudfront.php:1032
 msgid "Failed to retrieve bucket region."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1222
+#: classes/amazon-s3-and-cloudfront.php:1103
+#, php-format
+msgid "There was an error attempting to get the region of the bucket %s: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1215
 msgid ""
 "This is a test file to check if the user has write permission to S3. Delete "
 "me if found."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1270
+#: classes/amazon-s3-and-cloudfront.php:1260
 msgid "Bucket Name:"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1271
+#: classes/amazon-s3-and-cloudfront.php:1261
 msgid "Error creating bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1273
+#: classes/amazon-s3-and-cloudfront.php:1263
 msgid "Error fetching buckets: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1275
+#: classes/amazon-s3-and-cloudfront.php:1265
 msgid "Error saving bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1278
+#: classes/amazon-s3-and-cloudfront.php:1268
 msgid "Error getting URL preview: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1279
+#: classes/amazon-s3-and-cloudfront.php:1269
 msgid "The changes you made will be lost if you navigate away from this page"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1291
+#: classes/amazon-s3-and-cloudfront.php:1281
 msgid "Cheatin' eh?"
 msgstr ""
 
@@ -140,7 +145,7 @@ msgstr ""
 msgid "Update Amazon S3 and CloudFront to the latest version"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:90
+#: classes/as3cf-upgrade.php:95
 #, php-format
 msgid ""
 "<strong>Running Metadata Update</strong> &mdash; We&#8217;re going through "
@@ -153,32 +158,32 @@ msgid ""
 "performance."
 msgstr ""
 
-#: classes/as3cf-upgrade.php:91
+#: classes/as3cf-upgrade.php:96
 msgid "Pause Update"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:95
+#: classes/as3cf-upgrade.php:100
 msgid ""
 "<strong>Metadata Update Paused</strong> &mdash; Updating Media Library "
 "metadata has been paused."
 msgstr ""
 
-#: classes/as3cf-upgrade.php:96
+#: classes/as3cf-upgrade.php:101
 msgid "Restart Update"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:99
+#: classes/as3cf-upgrade.php:104
 msgid ""
 "<strong>Error Updating Metadata</strong> &mdash; We ran into some errors "
 "attempting to update the metadata for all your Media Library items that have "
 "been uploaded to S3. Please check your error log for details."
 msgstr ""
 
-#: classes/as3cf-upgrade.php:100
+#: classes/as3cf-upgrade.php:105
 msgid "Try Run It Again"
 msgstr ""
 
-#: classes/as3cf-upgrade.php:163
+#: classes/as3cf-upgrade.php:168
 #, php-format
 msgid "Every %d Minutes"
 msgstr ""

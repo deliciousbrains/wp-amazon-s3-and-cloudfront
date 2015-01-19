@@ -62,6 +62,11 @@ class AS3CF_Upgrade {
 			return;
 		}
 
+		// make sure this only fires inside the network admin for multisites
+		if ( is_multisite() && ! is_network_admin() ) {
+			return;
+		}
+
 		// Have we completed the upgrade yet?
 		if ( $this->as3cf->get_setting( 'post_meta_version', 0 ) > 0 ) {
 			return;

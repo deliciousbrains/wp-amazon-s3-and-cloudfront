@@ -19,7 +19,7 @@
 
   .updated {
 	display: none;
-	&.show {
+	&.as3cf-notice, &.show {
 	  display: block;
 	}
   }
