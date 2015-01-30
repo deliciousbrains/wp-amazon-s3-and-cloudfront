@@ -47,14 +47,27 @@ if ( is_wp_error( $can_write ) ) {
   ]
 }</code></pre>
 	</div>
-
-	<div class="as3cf-bucket-select">
+	<?php $bucket_toggle_class = $this->get_setting( 'manual_bucket' ) ? 'manual' : ''; ?>
+	<div class="as3cf-bucket-select <?php echo $bucket_toggle_class; ?>">
 		<h3><?php _e( 'Select an existing S3 bucket to use:', 'as3cf' ); ?></h3>
 		<div class="as3cf-bucket-actions">
 			<span class="as3cf-cancel-bucket-select-wrap">
 				<a href="#" class="as3cf-cancel-bucket-select"><?php _e( 'Cancel', 'as3cf' ); ?></a>
 			</span>
 			<a href="#" class="as3cf-refresh-buckets"><?php _e( 'Refresh', 'as3cf' ); ?></a>
+		</div>
+		<p>
+			<?php _e( 'You can enter a bucket manually to avoid listing the buckets available. This can be helpful if you have an IAM policy that does not allow bucket listing or you have a large amount of buckets to load.', 'as3cf' ); ?>
+		</p>
+		<p>
+			<a href="#" class="as3cf-manual-bucket-toggle"> <?php _e( 'Enter Bucket', 'as3cf' ); ?></a>
+			<a href="#" class="as3cf-bucket-list-toggle"><?php _e( 'Select Bucket', 'as3cf' ); ?></a>
+		</p>
+		<div class="as3cf-manual-save-bucket-wrapper">
+			<form method="post" class="as3cf-manual-save-bucket-form">
+				<input type="text" class="as3cf-bucket-name" name="bucket_name" placeholder="<?php _e( 'Bucket Name', 'as3cf' ); ?>" value="<?php echo $selected_bucket; ?>">
+				<button type="submit" class="button" data-working="<?php _e( 'Saving...', 'as3cf' ); ?>"><?php _e( 'Save', 'as3cf' ); ?></button>
+			</form>
 		</div>
 		<div class="as3cf-bucket-list-wrapper">
 			<ul class="as3cf-bucket-list" data-working="<?php _e( 'Loading...', 'as3cf' ); ?>">
@@ -63,7 +76,7 @@ if ( is_wp_error( $can_write ) ) {
 		<h3><?php _e( 'Or create a new bucket:', 'as3cf' ); ?></h3>
 		<form method="post" class="as3cf-create-bucket-form">
 			<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
-			<input type="text" name="bucket_name" placeholder="<?php _e( 'Bucket Name', 'as3cf' ); ?>">
+			<input type="text" class="as3cf-bucket-name" name="bucket_name" placeholder="<?php _e( 'Bucket Name', 'as3cf' ); ?>">
 			<button type="submit" class="button" data-working="<?php _e( 'Creating...', 'as3cf' ); ?>"><?php _e( 'Create', 'as3cf' ); ?></button>
 		</form>
 	</div>
@@ -78,9 +91,11 @@ if ( is_wp_error( $can_write ) ) {
 					<td><h3><?php _e( 'Bucket', 'as3cf' ); ?></h3></td>
 					<td>
 						<span class="as3cf-active-bucket"><?php echo $selected_bucket; // xss ok ?></span>
-						<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
-						<input id="as3cf-bucket" type="hidden" name="bucket" value="<?php echo esc_attr( $selected_bucket ); ?>">
-						<input id="as3cf-region" type="hidden" name="region" value="<?php echo esc_attr( $this->get_setting( 'region' ) ); ?>">
+						<?php if ( ! defined( 'AS3CF_BUCKET' ) ) : ?>
+							<a href="#" class="as3cf-change-bucket"><?php _e( 'Change', 'as3cf' ); ?></a>
+						<?php endif; ?>
+						<input id="as3cf-bucket" type="hidden" class="no-compare" name="bucket" value="<?php echo esc_attr( $selected_bucket ); ?>">
+						<input id="as3cf-region" type="hidden" class="no-compare" name="region" value="<?php echo esc_attr( $this->get_setting( 'region' ) ); ?>">
 					</td>
 				</tr>
 				<tr>

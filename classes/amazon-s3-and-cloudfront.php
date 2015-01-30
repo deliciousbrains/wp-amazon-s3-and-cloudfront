@@ -2,7 +2,11 @@
 use Aws\S3\S3Client;
 
 class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
-	private $aws, $s3client;
+	private $aws;
+	private $s3client;
+
+	protected $plugin_title;
+	protected $plugin_menu_title;
 
 	const DEFAULT_ACL = 'public-read';
 	const PRIVATE_ACL = 'private';
@@ -10,24 +14,38 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 
-	function __construct( $plugin_file_path, $aws ) {
-		$this->plugin_slug = 'amazon-s3-and-cloudfront';
+	/**
+	 * @param string              $plugin_file_path
+	 * @param Amazon_Web_Services $aws
+	 * @param string|null         $slug
+	 */
+	function __construct( $plugin_file_path, $aws, $slug = null ) {
+		$this->plugin_slug = ( is_null( $slug ) ) ? 'amazon-s3-and-cloudfront' : $slug;
 
 		parent::__construct( $plugin_file_path );
 
 		$this->aws = $aws;
 
+		$this->init( $plugin_file_path );
+	}
+
+	/**
+	 * Abstract class constructor
+	 *
+	 * @param string $plugin_file_path
+	 */
+	function init( $plugin_file_path ) {
+		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
+		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
+
 		// fire up the plugin upgrade checker
 		new AS3CF_Upgrade( $this );
 
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
-
-		$this->plugin_title = __( 'Amazon S3 and CloudFront', 'as3cf' );
-		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
-
 		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
 		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
+		add_action( 'wp_ajax_as3cf-manual-save-bucket', array( $this, 'ajax_manual_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-get-url-preview', array( $this, 'ajax_get_url_preview' ) );
 
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
@@ -138,12 +156,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( 'bucket' == $key && defined( 'AS3CF_BUCKET' ) ) {
+
 			return AS3CF_BUCKET;
 		}
 
-
 		$value = parent::get_setting( $key, $default );
-
 
 		return apply_filters( 'as3cf_setting_' . $key, $value );
 	}
@@ -326,12 +343,31 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $data;
 		}
 
+		// upload attachment to S3
+		$this->upload_attachment_to_s3( $post_id, $data );
+
+		return $data;
+	}
+
+	/**
+	 * Upload attachment to S3
+	 *
+	 * @param $post_id
+	 * @param $data
+	 *
+	 * @return array|WP_Error $s3object
+	 */
+	function upload_attachment_to_s3( $post_id, $data = null ) {
+		if ( is_null( $data ) ) {
+			$data = wp_get_attachment_metadata( $post_id, true );
+		}
+
 		$type          = get_post_mime_type( $post_id );
 		$allowed_types = $this->get_allowed_mime_types();
 
 		// check mime type of file is in allowed S3 mime types
 		if ( ! in_array( $type, $allowed_types ) ) {
-			return $data;
+			return new WP_Error( 'exception', sprintf( __( 'Mime type %s is not allowed', 'as3cf' ), $type ) );
 		}
 
 		$acl = self::DEFAULT_ACL;
@@ -418,8 +454,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$s3client->putObject( $args );
 			}
 			catch ( Exception $e ) {
-				error_log( 'Error uploading ' . $file_path . ' to S3: ' . $e->getMessage() );
-				return $data;
+				$error_msg = sprintf( __( 'Error uploading %s to S3: %s', 'as3cf' ), $file_path, $e->getMessage() );
+				error_log( $error_msg );
+
+				return new WP_Error( 'exception', $error_msg );
 			}
 		}
 
@@ -485,7 +523,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			$this->remove_local_files( $files_to_remove );
 		}
 
-		return $data;
+		return $s3object;
 	}
 
 	function remove_local_files( $file_paths ) {
@@ -1039,11 +1077,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Save bucket and bucket's region
 	 *
-	 * @param $bucket_name
+	 * @param string $bucket_name
+	 * @param bool $manual if we are entering the bucket via the manual input form
 	 *
 	 * @return string|bool|WP_Error Region on success
 	 */
-	function save_bucket( $bucket_name ) {
+	function save_bucket( $bucket_name, $manual = false ) {
 		if ( $bucket_name ) {
 			$this->get_settings();
 			// first time bucket select - enable main options by default
@@ -1057,6 +1096,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				return false;
 			}
 			$this->set_setting( 'region', $region );
+
+			if ( $manual ) {
+				// record that we have entered the bucket via the manual form
+				$this->set_setting( 'manual_bucket', true );
+			} else {
+				$this->remove_setting( 'manual_bucket' );
+			}
+
 			$this->save_settings();
 
 			return $region;
@@ -1065,13 +1112,42 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return false;
 	}
 
+	function ajax_manual_save_bucket() {
+		$this->verify_ajax_request();
+
+		$bucket = $this->ajax_check_bucket();
+
+		$region = $this->save_bucket( $bucket, true );
+
+		if ( $region !== false ) {
+			$out = array(
+				'success' => '1',
+				'region'  => $region,
+			);
+			$out['can_write'] = $this->check_write_permission( $bucket, $region );
+		} else {
+			$out = array( 'error' => __( 'Failed to retrieve bucket region.', 'as3cf' ) );
+		}
+
+		echo json_encode( $out );
+		exit;
+	}
+
 	function admin_menu( $aws ) {
 		$hook_suffix = $aws->add_page( $this->plugin_title, $this->plugin_menu_title, 'manage_options', $this->plugin_slug, array( $this, 'render_page' ) );
 		add_action( 'load-' . $hook_suffix , array( $this, 'plugin_load' ) );
 	}
 
-	function get_s3client( $region = false ) {
-		if ( is_null( $this->s3client ) ) {
+	/**
+	 * Get the S3 client
+	 *
+	 * @param bool|string $region specify region to client for signature
+	 * @param bool        $force  force return of new S3 client when swapping regions
+	 *
+	 * @return mixed
+	 */
+	function get_s3client( $region = false, $force = false ) {
+		if ( is_null( $this->s3client ) || $force ) {
 
 			if ( $region ) {
 				$args = array(
@@ -1230,7 +1306,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$region = $this->get_setting( 'region' );
 			}
 			// attempt to create the test file
-			$this->get_s3client( $region )->putObject( $args );
+			$this->get_s3client( $region, true )->putObject( $args );
 			// delete it straight away if created
 			$this->get_s3client()->deleteObject( array(
 				'Bucket' => $bucket,
@@ -1260,6 +1336,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'create_bucket_prompt'  => __( 'Bucket Name:', 'as3cf' ),
 			'create_bucket_error'   => __( 'Error creating bucket: ', 'as3cf' ),
 			'create_bucket_nonce'   => wp_create_nonce( 'as3cf-create-bucket' ),
+			'manual_bucket_nonce'   => wp_create_nonce( 'as3cf-manual-save-bucket' ),
 			'get_buckets_error'     => __( 'Error fetching buckets: ', 'as3cf' ),
 			'get_buckets_nonce'     => wp_create_nonce( 'as3cf-get-buckets' ),
 			'save_bucket_error'     => __( 'Error saving bucket: ', 'as3cf' ),
@@ -1281,7 +1358,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-web-services' ) );
 		}
 
-		$post_vars = array( 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
+		$post_vars = array( 'bucket', 'region', 'domain', 'virtual-host', 'expires', 'permissions', 'cloudfront', 'object-prefix', 'copy-to-s3', 'serve-from-s3', 'remove-local-file', 'ssl', 'hidpi-images', 'object-versioning', 'use-yearmonth-folders', 'enable-object-prefix' );
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
@@ -1301,6 +1378,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		exit;
 	}
 
+	/**
+	 * Display the main settings page for the plugin
+	 */
 	function render_page() {
 		$this->aws->render_view( 'header', array( 'page_title' => $this->plugin_title ) );
 
@@ -1312,6 +1392,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		else {
 			do_action( 'as3cf_pre_settings_render' );
 			$this->render_view( 'settings' );
+			do_action( 'as3cf_post_settings_render' );
 		}
 
 		$this->aws->render_view( 'footer' );

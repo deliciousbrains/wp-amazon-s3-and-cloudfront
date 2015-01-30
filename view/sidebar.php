@@ -8,14 +8,14 @@
 		<?php $user = wp_get_current_user(); ?>
 
 		<p class="intro">
-			<?php echo esc_html( wptexturize( __( "We're working on a pro version that will include the following features:", 'as3cf' ) ) ); ?>
+			<?php echo wptexturize( __( "We're working on a pro version that will include the following features:", 'as3cf' ) ); // xss ok ?>
 		</p>
 
 		<ul>
-			<li><?php echo esc_html( wptexturize( __( 'Copy existing Media Library to S3', 'as3cf' ) ) ); ?></li>
-			<li><?php echo esc_html( wptexturize( __( 'Serve theme JS & CSS from S3/CloudFront', 'as3cf' ) ) ); ?></li>
-			<li><?php echo esc_html( wptexturize( __( 'WooCommerce & <abbr title="Easy Digital Downloads">EDD</abbr> integration', 'as3cf' ) ) ); ?></li>
-			<li><?php echo esc_html( wptexturize( __( 'Awesome email support', 'as3cf' ) ) ); ?></li>
+			<li><?php echo wptexturize( __( 'Copy existing Media Library to S3', 'as3cf' ) ); // xss ok ?></li>
+			<li><?php echo wptexturize( __( 'Serve theme JS & CSS from S3/CloudFront', 'as3cf' ) ); // xss ok ?></li>
+			<li><?php echo wptexturize( __( 'WooCommerce & <abbr title="Easy Digital Downloads">EDD</abbr> integration', 'as3cf' ) ); // xss ok ?></li>
+			<li><?php echo wptexturize( __( 'Awesome email support', 'as3cf' ) ); // xss ok ?></li>
 		</ul>
 
 		<div class="field notify-name">

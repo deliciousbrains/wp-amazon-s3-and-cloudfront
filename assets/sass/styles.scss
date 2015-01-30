@@ -48,10 +48,6 @@
 	}
   }
 
-  tr.configure-url, tr.advanced-options {
-	display: none;
-  }
-
   .object-prefix-desc {
   	em {
   		white-space: nowrap;
@@ -176,6 +172,40 @@
 	}
   }
 
+  .as3cf-bucket-select {
+	&.manual {
+	  .as3cf-manual-bucket-toggle,
+	  .as3cf-refresh-buckets,
+	  .as3cf-bucket-list-wrapper {
+		display: none;
+	  }
+	  .as3cf-bucket-list-toggle,
+	  .as3cf-manual-save-bucket-wrapper {
+		display: block;
+	  }
+
+	  .as3cf-cancel-bucket-select-wrap {
+		&:after {
+		  content: ""
+		}
+	  }
+	}
+
+	.as3cf-manual-bucket-toggle,
+	.as3cf-bucket-list-wrapper {
+	  display: block;
+	}
+
+	.as3cf-refresh-buckets {
+	  display: inline;
+	}
+
+	.as3cf-bucket-list-toggle,
+	.as3cf-manual-save-bucket-wrapper {
+	  display: none;
+	}
+  }
+
   .as3cf-bucket-list-wrapper {
 	background: #fff;
 	padding: 15px 20px;
@@ -217,10 +247,8 @@
 	}
   }
 
-  .as3cf-create-bucket-form {
-	input[type="text"] {
-	  width: 80%;
-	}
+  input[type="text"].as3cf-bucket-name {
+	width: 80%;
   }
 
   select.bucket {

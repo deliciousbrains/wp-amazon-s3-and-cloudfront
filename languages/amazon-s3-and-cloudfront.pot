@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Amazon S3 and CloudFront\n"
-"POT-Creation-Date: 2015-01-19 16:02-0000\n"
-"PO-Revision-Date: 2015-01-19 16:02-0000\n"
+"POT-Creation-Date: 2015-01-29 12:40-0000\n"
+"PO-Revision-Date: 2015-01-29 12:40-0000\n"
 "Last-Translator: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language-Team: Delicious Brains <nom@deliciousbrains.com>\n"
 "Language: en\n"
@@ -20,71 +20,82 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-0: vendor\n"
 "X-Poedit-SearchPathExcluded-1: assets\n"
 
-#: classes/amazon-s3-and-cloudfront.php:25
+#: classes/amazon-s3-and-cloudfront.php:38
 msgid "Amazon S3 and CloudFront"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:26
+#: classes/amazon-s3-and-cloudfront.php:39
 msgid "S3 and CloudFront"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:923
+#: classes/amazon-s3-and-cloudfront.php:370
+#, php-format
+msgid "Mime type %s is not allowed"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:457
+#, php-format
+msgid "Error uploading %s to S3: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:961
 msgid "There was an error attempting to access the file system"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:963
+#: classes/amazon-s3-and-cloudfront.php:1001
 msgid "Cheatin&#8217; eh?"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:967
+#: classes/amazon-s3-and-cloudfront.php:1005
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:973
+#: classes/amazon-s3-and-cloudfront.php:1011
 msgid "No bucket name provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:999
-#: classes/amazon-s3-and-cloudfront.php:1032
+#: classes/amazon-s3-and-cloudfront.php:1037
+#: classes/amazon-s3-and-cloudfront.php:1070
+#: classes/amazon-s3-and-cloudfront.php:1129
 msgid "Failed to retrieve bucket region."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1103
+#: classes/amazon-s3-and-cloudfront.php:1179
 #, php-format
 msgid "There was an error attempting to get the region of the bucket %s: %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1215
+#: classes/amazon-s3-and-cloudfront.php:1291
 msgid ""
 "This is a test file to check if the user has write permission to S3. Delete "
 "me if found."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1260
+#: classes/amazon-s3-and-cloudfront.php:1336
 msgid "Bucket Name:"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1261
+#: classes/amazon-s3-and-cloudfront.php:1337
 msgid "Error creating bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1263
+#: classes/amazon-s3-and-cloudfront.php:1340
 msgid "Error fetching buckets: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1265
+#: classes/amazon-s3-and-cloudfront.php:1342
 msgid "Error saving bucket: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1268
+#: classes/amazon-s3-and-cloudfront.php:1345
 msgid "Error getting URL preview: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1269
+#: classes/amazon-s3-and-cloudfront.php:1346
 msgid "The changes you made will be lost if you navigate away from this page"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1281
+#: classes/amazon-s3-and-cloudfront.php:1358
 msgid "Cheatin' eh?"
 msgstr ""
 
@@ -217,156 +228,179 @@ msgid "Refresh"
 msgstr ""
 
 #: view/settings.php:60
-msgid "Loading..."
+msgid ""
+"You can enter a bucket manually to avoid listing the buckets available. This "
+"can be helpful if you have an IAM policy that does not allow bucket listing "
+"or you have a large amount of buckets to load."
 msgstr ""
 
 #: view/settings.php:63
-msgid "Or create a new bucket:"
+msgid "Enter Bucket"
 msgstr ""
 
-#: view/settings.php:66
+#: view/settings.php:64
+msgid "Select Bucket"
+msgstr ""
+
+#: view/settings.php:68 view/settings.php:79
 msgid "Bucket Name"
 msgstr ""
 
-#: view/settings.php:67
+#: view/settings.php:69
+msgid "Saving..."
+msgstr ""
+
+#: view/settings.php:69
+msgid "Save"
+msgstr ""
+
+#: view/settings.php:73
+msgid "Loading..."
+msgstr ""
+
+#: view/settings.php:76
+msgid "Or create a new bucket:"
+msgstr ""
+
+#: view/settings.php:80
 msgid "Creating..."
 msgstr ""
 
-#: view/settings.php:67
+#: view/settings.php:80
 msgid "Create"
 msgstr ""
 
-#: view/settings.php:78
+#: view/settings.php:91
 msgid "Bucket"
 msgstr ""
 
-#: view/settings.php:81
+#: view/settings.php:95
 msgid "Change"
 msgstr ""
 
-#: view/settings.php:87
+#: view/settings.php:102
 msgid "Enable/Disable the Plugin"
 msgstr ""
 
-#: view/settings.php:94
+#: view/settings.php:109
 msgid "Copy Files to S3"
 msgstr ""
 
-#: view/settings.php:95
+#: view/settings.php:110
 msgid ""
 "When a file is uploaded to the Media Library, copy it to S3. Existing files "
 "are <em>not</em> copied to S3."
 msgstr ""
 
-#: view/settings.php:103
+#: view/settings.php:118
 msgid "Rewrite File URLs"
 msgstr ""
 
-#: view/settings.php:104
+#: view/settings.php:119
 msgid ""
 "For Media Library files that have been copied to S3, rewrite the URLs so "
 "that they are served from S3/CloudFront instead of your server."
 msgstr ""
 
-#: view/settings.php:108
+#: view/settings.php:123
 msgid "Configure File URLs"
 msgstr ""
 
-#: view/settings.php:122
+#: view/settings.php:137
 msgid "Domain:"
 msgstr ""
 
-#: view/settings.php:168
+#: view/settings.php:183
 msgid "Path"
 msgstr ""
 
-#: view/settings.php:170
+#: view/settings.php:185
 msgid "By default the path is the same as your local WordPress files:"
 msgstr ""
 
-#: view/settings.php:183
+#: view/settings.php:198
 msgid "Year/Month"
 msgstr ""
 
-#: view/settings.php:185
+#: view/settings.php:200
 msgid "Add the Year/Month in the URL."
 msgstr ""
 
-#: view/settings.php:191
+#: view/settings.php:206
 msgid "SSL"
 msgstr ""
 
-#: view/settings.php:199
+#: view/settings.php:214
 msgid "Same as request"
 msgstr ""
 
-#: view/settings.php:200
+#: view/settings.php:215
 msgid "When the request is https://, use https:// for the file URL as well."
 msgstr ""
 
-#: view/settings.php:204
+#: view/settings.php:219
 msgid "Always SSL"
 msgstr ""
 
-#: view/settings.php:205
+#: view/settings.php:220
 msgid "Forces https:// to be used."
 msgstr ""
 
-#: view/settings.php:206
+#: view/settings.php:221
 msgid ""
 "You cannot use the \"Bucket as a subdomain\" domain option when using SSL."
 msgstr ""
 
-#: view/settings.php:210
+#: view/settings.php:225
 msgid "Always non-SSL"
 msgstr ""
 
-#: view/settings.php:211
+#: view/settings.php:226
 msgid "Forces http:// to be used."
 msgstr ""
 
-#: view/settings.php:217
+#: view/settings.php:232
 msgid "Advanced Options"
 msgstr ""
 
-#: view/settings.php:224
+#: view/settings.php:239
 msgid "Remove Files From Server"
 msgstr ""
 
-#: view/settings.php:225
+#: view/settings.php:240
 msgid "Once a file has been copied to S3, remove it from the local server."
 msgstr ""
 
-#: view/settings.php:233
+#: view/settings.php:248
 msgid "Object Versioning"
 msgstr ""
 
-#: view/settings.php:235
+#: view/settings.php:250
 msgid ""
 "Append a timestamp to the S3 file path. Recommended when using CloudFront so "
 "you don't have to worry about cache invalidation."
 msgstr ""
 
-#: view/settings.php:237 view/settings.php:250
+#: view/settings.php:252 view/settings.php:265
 msgid "More info"
 msgstr ""
 
-#: view/settings.php:247
+#: view/settings.php:262
 msgid "Far Future Expiration Header"
 msgstr ""
 
-#: view/settings.php:248
+#: view/settings.php:263
 msgid ""
 "Implements a \"Never Expire\" caching policy for browsers by setting an "
 "Expires header for 10 years in the future. Should be used in conjunction "
 "with object versioning above."
 msgstr ""
 
-#: view/settings.php:260
+#: view/settings.php:275
 msgid "Copy HiDPI (@2x) Images"
 msgstr ""
 
-#: view/settings.php:261
+#: view/settings.php:276
 #, php-format
 msgid ""
 "When uploading a file to S3, checks if there's a file of the same name with "
@@ -374,7 +408,7 @@ msgid ""
 "Retina 2x</a> plugin."
 msgstr ""
 
-#: view/settings.php:267
+#: view/settings.php:282
 msgid "Save Changes"
 msgstr ""
 
