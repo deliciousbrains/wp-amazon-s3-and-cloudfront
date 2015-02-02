@@ -77,6 +77,15 @@ if ( is_wp_error( $can_write ) ) {
 		<form method="post" class="as3cf-create-bucket-form">
 			<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
 			<input type="text" class="as3cf-bucket-name" name="bucket_name" placeholder="<?php _e( 'Bucket Name', 'as3cf' ); ?>">
+			<select class="as3cf-bucket-location" name="bucket_location">
+				<option value="-1"><?php _e( 'Select a Region', 'as3cf' ); ?></option>
+				<?php
+					$regions = $this->select_bucket_location();
+					foreach( $regions as $key => $region ) {
+						echo "<option value='{$key}'>{$region}</option>";
+					}
+				?>
+			</select>
 			<button type="submit" class="button" data-working="<?php _e( 'Creating...', 'as3cf' ); ?>"><?php _e( 'Create', 'as3cf' ); ?></button>
 		</form>
 	</div>
@@ -87,7 +96,7 @@ if ( is_wp_error( $can_write ) ) {
 			<?php wp_nonce_field( 'as3cf-save-settings' ) ?>
 
 			<table class="form-table">
-				<tr class="as3cf-border-bottom">
+				<tr>
 					<td><h3><?php _e( 'Bucket', 'as3cf' ); ?></h3></td>
 					<td>
 						<span class="as3cf-active-bucket"><?php echo $selected_bucket; // xss ok ?></span>
@@ -96,6 +105,18 @@ if ( is_wp_error( $can_write ) ) {
 						<?php endif; ?>
 						<input id="as3cf-bucket" type="hidden" class="no-compare" name="bucket" value="<?php echo esc_attr( $selected_bucket ); ?>">
 						<input id="as3cf-region" type="hidden" class="no-compare" name="region" value="<?php echo esc_attr( $this->get_setting( 'region' ) ); ?>">
+					</td>
+				</tr>
+				<tr class="as3cf-border-bottom" >
+					<td><h3><?php _e( 'Location', 'as3cf' ); ?></h3></td>
+					<td>
+						<?php 
+							$bucket_region = $this->get_setting( 'region' );
+							if ( $bucket_region == '' ) {
+								$bucket_region = 'us-east-1';
+							}
+						?>
+						<span id="as3cf-location"><?php  echo $regions[ $bucket_region ]; ?></span>
 					</td>
 				</tr>
 				<tr>

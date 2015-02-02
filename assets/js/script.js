@@ -20,10 +20,12 @@
 					$createBucketButton.text( $createBucketButton.attr( 'data-working' ) );
 					$createBucketButton.prop( 'disabled', true );
 					var bucketName = $createBucketForm.find( 'input[name="bucket_name"]' ).val();
+					var bucketLocation = $createBucketForm.find( 'select[name="bucket_location"]' ).val();
 
 					var data = {
 						action     : 'as3cf-create-bucket',
 						bucket_name: bucketName,
+						bucket_location: bucketLocation,
 						_nonce     : as3cf_i18n.create_bucket_nonce
 					};
 
@@ -40,9 +42,10 @@
 							$createBucketButton.text( origButtonText );
 							$createBucketButton.prop( 'disabled', false );
 							if ( typeof data[ 'success' ] !== 'undefined' ) {
-								bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ] );
+								bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ], data[ 'location'] );
 								// tidy up create bucket form
 								$createBucketForm.find( 'input[name="bucket_name"]' ).val( '' );
+								$createBucketForm.find( 'select[name="bucket_location"]' ).val( '-1' );
 								if ( $( '.as3cf-bucket-list-wrapper' ).is( ':visible' ) ) {
 									loadBuckets();
 								}
@@ -92,7 +95,7 @@
 							$manualBucketButton.text( origManualButtonText );
 							$manualBucketButton.prop( 'disabled', false );
 							if ( typeof data[ 'success' ] !== 'undefined' ) {
-								bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ] );
+								bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ], data[ 'location' ] );
 								$( '.as3cf-bucket-list a' ).removeClass( 'selected' );
 							} else {
 								show_bucket_error( as3cf_i18n.save_bucket_error, data[ 'error' ] );
@@ -212,8 +215,8 @@
 				success : function( data, textStatus, jqXHR ) {
 					$( bucket ).find( '.spinner' ).hide();
 					$bucketList.removeClass( 'saving' );
-					if ( typeof data[ 'success' ] !== 'undefined' ) {
-						bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ] );
+					if ( typeof data[ 'success' ] !== 'undefined' ) { 
+						bucket_select( bucketName, data[ 'region' ], data[ 'can_write' ], data[ 'location'] );
 					} else {
 						show_bucket_error( as3cf_i18n.save_bucket_error, data[ 'error' ] );
 						$( '.as3cf-bucket-list a' ).removeClass( 'selected' );
@@ -241,7 +244,7 @@
 			$( '.as3cf-bucket-error' ).show();
 		}
 
-		function bucket_select( bucket, region, can_write ) {
+		function bucket_select( bucket, region, can_write, location ) {
 			if ( '' === $( '.as3cf-active-bucket' ).text() ) {
 				// first time bucket select - enable main options by default
 				set_checkbox( 'copy-to-s3-wrap' );
@@ -251,6 +254,7 @@
 			$( 'form.as3cf-manual-save-bucket-form .as3cf-bucket-name' ).val( bucket );
 			$( '#as3cf-bucket' ).val( bucket );
 			$( '#as3cf-region' ).val( region );
+			$( '#as3cf-location' ).text( location );
 			$( '.updated' ).not( '.as3cf-notice' ).show();
 			// check permission on bucket
 			if ( can_write === false ) {
