@@ -1015,22 +1015,34 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $bucket;
 	}
 
+	function ajax_check_bucket_location() {
+		if ( isset ( $_POST['bucket_location'] ) && ( '-1' != $_POST['bucket_location'] ) && ( 'us-east-1' != $_POST['bucket_location'] ) ) {
+			$location_key = $_POST['bucket_location'];
+			return $location_key;
+		}
+	}
+	
 	function ajax_create_bucket() {
 		$this->verify_ajax_request();
 
 		$bucket = $this->ajax_check_bucket();
+		$location_key = $this->ajax_check_bucket_location();
 
-		$result = $this->create_bucket( $bucket );
+		$result = $this->create_bucket( $bucket, $location_key );
 		if ( is_wp_error( $result ) ) {
 			$out = array( 'error' => $result->get_error_message() );
 		} else {
 			$region = $this->save_bucket( $bucket );
-
+			if ( ! $location_key ) {
+				$location_key = 'us-east-1';
+			}
+			$location = $this->select_bucket_location( $location_key );
 			if ( $region !== false ) {
 				$out = array(
-					'success' => '1',
-					'_nonce'  => wp_create_nonce( 'as3cf-create-bucket' ),
-					'region'  => $region,
+					'success' 	=> '1',
+					'_nonce'  	=> wp_create_nonce( 'as3cf-create-bucket' ),
+					'region'  	=> $region,
+					'location'	=> $location,
 				);
 				$out['can_write'] = $this->check_write_permission( $bucket, $region );
 			} else {
@@ -1042,9 +1054,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		exit;
 	}
 
-	function create_bucket( $bucket_name ) {
+	function create_bucket( $bucket_name, $location_key = false ) {
 		try {
-			$this->get_s3client()->createBucket( array( 'Bucket' => $bucket_name ) );
+			if ( $location_key ) {
+				$this->get_s3client()->createBucket( array( 'Bucket' => $bucket_name, 'LocationConstraint' => $location_key ) );
+			} else {
+				$this->get_s3client()->createBucket( array( 'Bucket' => $bucket_name ) );
+			}
 		}
 		catch ( Exception $e ) {
 			return new WP_Error( 'exception', $e->getMessage() );
@@ -1059,11 +1075,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$bucket = $this->ajax_check_bucket();
 
 		$region = $this->save_bucket( $bucket );
-
+		
 		if ( $region !== false ) {
+			if ( $region == '' ) {
+				$location_key = 'us-east-1';
+			} else {
+				$location_key = $region;
+			}
+			$location = $this->select_bucket_location( $location_key );
 			$out = array(
-				'success' => '1',
-				'region'  => $region,
+				'success' 	=> '1',
+				'region'  	=> $region,
+				'location'	=> $location,
 			);
 			$out['can_write'] = $this->check_write_permission( $bucket, $region );
 		} else {
@@ -1118,11 +1141,18 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$bucket = $this->ajax_check_bucket();
 
 		$region = $this->save_bucket( $bucket, true );
-
+		
 		if ( $region !== false ) {
+			if ( $region == '' ) {
+				$location_key = 'us-east-1';
+			} else {
+				$location_key = $region;
+			}
+			$location = $this->select_bucket_location( $location_key );
 			$out = array(
-				'success' => '1',
-				'region'  => $region,
+				'success' 	=> '1',
+				'region'  	=> $region,
+				'location'	=> $location,
 			);
 			$out['can_write'] = $this->check_write_permission( $bucket, $region );
 		} else {
@@ -1234,6 +1264,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		return $region;
 	}
 
+	function select_bucket_location( $location_key = false ) {
+		$locations = array( 'us-east-1' => 'US Standard','us-west-2' => 'Oregon','us-west-1' => 'Northern California','eu-west-1' => 'Ireland','eu-central-1' => 'Frankfurt','ap-southeast-1' => 'Singapore','ap-northeast-1' => 'Tokyo','ap-southeast-2' => 'Sydney','sa-east-1' => 'Sao Paulo' ); 
+		
+		if ( $location_key  ) {
+			return $locations[ $location_key ];
+		}
+		
+		return $locations;
+	}
+	
 	/**
 	 * AJAX handler for get_buckets()
 	 */
