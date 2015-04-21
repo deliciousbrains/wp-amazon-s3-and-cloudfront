@@ -964,14 +964,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		// download the file from S3
-		$temp_file = download_url( $url  );
+		$temp_path = '/tmp/' . $attachment_id;
+		try {
+		  $this->get_s3client( $s3object['region'] )->getObject(
+		    array(
+		      'Bucket' => $s3object['bucket'],
+		      'Key' => $s3object['key'],
+		      'SaveAs' => $temp_path
+		    )
+		  );
+		}
+		catch ( Exception $e ) {
+		  return new WP_Error( 'exception', $e->getMessage() );
+		}
 		// copy the temp file to the attachments location
-		if ( ! $wp_filesystem->copy( $temp_file, $file ) ) {
-			// fallback to url
-			$file = $url;
+		if ( ! $wp_filesystem->copy( $temp_path, $file ) ) {
+		  // fallback to url
+		  $file = $url;
 		}
 		// clear up temp file
-		@unlink( $temp_file );
+		@unlink( $temp_path );
 
 		return $file;
 	}
