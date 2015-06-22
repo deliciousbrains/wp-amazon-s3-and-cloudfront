@@ -130,6 +130,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// Register modal scripts and styles
 		$this->register_modal_assets();
+
+		// Support for Gravity Forms when Gravity Forms is enabled
+		if(class_exists("GFCommon")) {
+		    add_action("gform_after_submission", array($this, 'gravityforms_after_submission'), 10, 2);
+		    add_action("gform_post_multifile_upload", array($this, 'gravityforms_post_multifile_upload'), 10, 5);
+		}
 	}
 
 	/**
@@ -3025,5 +3031,60 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $attachment_counts;
+	}
+
+	/**
+	 * Gravityforms single file upload hook
+	 *
+	 * @param string $entry
+	 * @param string $form
+	 */
+	function gravityforms_after_submission($entry, $form) {
+		$upload_dir = wp_upload_dir();
+		foreach($form['fields'] as $field) {
+			if ($field['type'] == 'fileupload') {
+				$id = (int) $field['id'];
+				$file_to_upload = $entry[$id];
+				if($file_to_upload) {
+					$key = str_replace($upload_dir['baseurl'], '', $entry[$id]);
+
+					// Skip multi-upload fields here.
+					if (substr($key,0,1) == '[') {
+						continue;
+					}
+
+					$file_to_upload = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $file_to_upload);
+
+					$s3client = $this->get_s3client( $this->get_setting( 'region' ) );
+					$key_prefix = ltrim( untrailingslashit( $this->get_object_prefix() ), '/' );
+					$args = array(
+						'Bucket'     => $this->get_setting( 'bucket' ),
+						'Key'        => $key_prefix . $key,
+						'SourceFile' => $file_to_upload,
+						'ACL'        => self::DEFAULT_ACL,
+					);
+
+					// If far future expiration checked (10 years)
+					if ( $this->get_setting( 'expires' ) ) {
+						$args['Expires'] = date( 'D, d M Y H:i:s O', time() + 315360000 );
+					}
+
+					// Upload to S3
+					$putobject_result = $s3client->putObject( $args );
+
+					// Update GF entry with the new S3 URL
+					$entry[$id] = $this->get_s3_url_scheme() . '://' . $this->get_s3_url_domain( $this->get_setting( 'bucket' ), $this->get_setting( 'region' ) ) . '/' . $s3_key;
+					GFAPI::update_entry($entry);
+				}
+			}
+		}
+	}
+	function gravityforms_post_multifile_upload( $form, $field, $uploaded_filename, $tmp_file_name, $file_path ) {
+		trigger_error( "*** in multifile upload",  E_USER_WARNING );
+		trigger_error( "*** PARAM: " . $form,  E_USER_WARNING );
+		trigger_error( "*** PARAM: " . $field,  E_USER_WARNING );
+		trigger_error( "*** PARAM: " . $uploaded_filename,  E_USER_WARNING );
+		trigger_error( "*** PARAM: " . $tmp_file_name,  E_USER_WARNING );
+		trigger_error( "*** PARAM: " . $file_path,  E_USER_WARNING );
 	}
 }
