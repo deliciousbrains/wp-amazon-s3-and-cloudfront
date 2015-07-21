@@ -179,6 +179,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $this->get_default_object_prefix();
 		}
 
+		if ( 'expires-time' == $key && ! isset( $settings['expires-time'] ) ) {
+			return '315360000';
+		}
+
 		// Default use year and month folders
 		if ( 'use-yearmonth-folders' == $key && ! isset( $settings['use-yearmonth-folders'] ) ) {
 			return get_option( 'uploads_use_yearmonth_folders' );
@@ -637,7 +641,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// If far future expiration checked (10 years)
 		if ( $this->get_setting( 'expires' ) ) {
-			$args['Expires'] = date( 'D, d M Y H:i:s O', time() + 315360000 );
+			$args['Expires'] = date( 'D, d M Y H:i:s O', time() + $this->get_setting( 'expires-time' ) );
 		}
 
 		do_action( 'as3cf_upload_attachment_pre_remove', $post_id, $s3object, $prefix, $args );
@@ -1765,6 +1769,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'domain',
 			'virtual-host',
 			'expires',
+			'expires-time',
 			'permissions',
 			'cloudfront',
 			'object-prefix',
@@ -2254,6 +2259,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		echo "\r\n";
 		echo 'Far Future Expiration Header: ';
 		echo $this->on_off( 'expires' );
+		echo "\r\n";
+		echo 'Expires Headers Time: ' . $this->get_setting( 'expires-time' );
 		echo "\r\n";
 		echo 'Copy HiDPI (@2x) Images: ';
 		echo $this->on_off( 'hidpi-images' );

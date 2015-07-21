@@ -156,7 +156,7 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				</tr>
 				<tr class="advanced-options">
 					<td>
-						<?php $this->render_view( 'checkbox', array( 'key' => 'expires' ) ); ?>
+						<?php $this->render_view( 'checkbox', array( 'key' => 'expires', 'class' => 'sub-toggle' ) ); ?>
 					</td>
 					<td>
 						<h4><?php _e( 'Far Future Expiration Header', 'as3cf' ) ?></h4>
@@ -164,6 +164,9 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 							<a href="http://developer.yahoo.com/performance/rules.html#expires">
 								<?php _e( 'More info', 'as3cf' ) ?> &raquo;
 							</a>
+						</p>
+						<p class="as3cf-setting expires <?php echo ( $this->get_setting( 'expires' ) ) ? '' : 'hide'; // xss ok ?>">
+							<input type="text" name="expires-time" value="<?php echo esc_attr( $this->get_setting( 'expires-time' ) ); ?>" size="30">
 						</p>
 					</td>
 				</tr>
