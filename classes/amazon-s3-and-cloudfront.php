@@ -1928,6 +1928,16 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * Guess the site root directory, even when WP is installed in a subdirectory.
+	 *
+	 * @return string
+	 */
+	function get_root_dir() {
+		$len = strlen( ABSPATH ^ WP_CONTENT_DIR ) - strlen( ltrim( ABSPATH ^ WP_CONTENT_DIR, chr(0) ) );
+		return preg_replace( '#/[^/]+$#', '', substr( ABSPATH, 0, $len ) ) . '/';
+	}
+
+	/**
 	 * Get the base upload path
 	 * without the multisite subdirectory
 	 *
@@ -1942,9 +1952,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		if ( empty( $upload_path ) || 'wp-content/uploads' == $upload_path ) {
 			return WP_CONTENT_DIR . '/uploads';
-		} elseif ( 0 !== strpos( $upload_path, ABSPATH ) ) {
+		}
+		
+		$root = $this->get_root_dir();
+
+		if ( 0 !== strpos( $upload_path, $root ) ) {
 			// $dir is absolute, $upload_path is (maybe) relative to ABSPATH
-			return path_join( ABSPATH, $upload_path );
+			return path_join( $root, $upload_path );
 		} else {
 			return $upload_path;
 		}
