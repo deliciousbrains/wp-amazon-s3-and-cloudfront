@@ -8,13 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: amazon-s3-and-cloudfront\n"
 "Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
-"POT-Creation-Date: 2015-07-29 09:52-0300\n"
+"POT-Creation-Date: 2015-07-29 16:53-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: builds/amazon-s3-and-cloudfront/classes/amazon-s3-and-cloudfront.php:84
@@ -518,66 +518,49 @@ msgstr ""
 msgid "Save Changes"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:10
-msgid "Upload existing Media Library to S3"
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:6
+msgid "Pro Version?"
 msgstr ""
 
 #: builds/amazon-s3-and-cloudfront/view/sidebar.php:11
-msgid "Find & replace file URLs in content"
-msgstr ""
-
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:12
-msgid "Manage S3 files in WordPress"
-msgstr ""
-
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:13
-msgid "Assets addon - Serve your CSS & JS from S3/CloudFront"
-msgstr ""
-
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:14
-msgid "WooCommerce addon"
+msgid ""
+"We're working on a pro version that will include the following features:"
 msgstr ""
 
 #: builds/amazon-s3-and-cloudfront/view/sidebar.php:15
-msgid "Easy Digital Downloads addon"
+msgid "Copy existing Media Library to S3"
 msgstr ""
 
 #: builds/amazon-s3-and-cloudfront/view/sidebar.php:16
-msgid "PriorityExpert™ email support"
+msgid "Serve theme JS & CSS from S3/CloudFront"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:19
-msgid "Visit deliciousbrains.com &rarr;"
-msgstr ""
-
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:26
-msgid "Get 20% Off!"
-msgstr ""
-
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:29
-#, php-format
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:17
 msgid ""
-"Submit your name and email and we’ll send you a coupon for 20% off your "
-"upgrade."
+"WooCommerce & <abbr title=\"Easy Digital Downloads\">EDD</abbr> integration"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:33
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:18
+msgid "Awesome email support"
+msgstr ""
+
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:22
 msgid "Your Email"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:37
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:26
 msgid "First Name"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:41
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:30
 msgid "Last Name"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:48
-msgid "Send me the coupon"
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:37
+msgid "Send me news about a pro version"
 msgstr ""
 
-#: builds/amazon-s3-and-cloudfront/view/sidebar.php:52
+#: builds/amazon-s3-and-cloudfront/view/sidebar.php:41
 msgid ""
 "We promise we will not use your email for anything else and you can "
 "unsubscribe with 1-click anytime."
