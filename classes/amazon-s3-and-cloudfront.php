@@ -591,7 +591,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// If far future expiration checked (10 years)
 		if ( $this->get_setting( 'expires' ) ) {
-			$args['Expires'] = date( 'D, d M Y H:i:s O', time() + 315360000 );
+			//$args['Expires'] = date( 'D, d M Y H:i:s O', time()+315360000 );
+			$args['CacheControl'] = 'max-age=1814400';
 		}
 		$args = apply_filters( 'as3cf_object_meta', $args, $post_id );
 
