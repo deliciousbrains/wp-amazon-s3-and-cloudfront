@@ -3073,7 +3073,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 					$putobject_result = $s3client->putObject( $args );
 
 					// Update GF entry with the new S3 URL
-					$entry[$id] = $this->get_s3_url_scheme() . '://' . $this->get_s3_url_domain( $this->get_setting( 'bucket' ), $this->get_setting( 'region' ) ) . '/' . $s3_key;
+					$entry[$id] = $this->get_s3_url_scheme() . '://' . $this->get_s3_url_domain( $this->get_setting( 'bucket' ), $this->get_setting( 'region' ) ) . '/' . ($key_prefix . $key);
 					GFAPI::update_entry($entry);
 				}
 			}
