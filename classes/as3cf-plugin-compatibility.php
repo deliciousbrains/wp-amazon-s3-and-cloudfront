@@ -229,7 +229,16 @@ class AS3CF_Plugin_Compatibility {
 			return $url;
 		}
 
-		if ( isset( $_POST['action'] ) && 'custom-header-crop' === sanitize_key( $_POST['action'] ) ) { // input var okay
+		if (
+			isset( $_POST['action'] )
+		        && (
+		            ( isset( $_POST['context'] )
+		                && 'site-icon' == $_POST['context']
+		                && 'crop-image' == $_POST['action'] )
+					|| 'custom-header-crop' === sanitize_key( $_POST['action'] )
+				)
+			)
+		{
 			if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
 				// Return the file if successfully downloaded from S3
 				return $file;
@@ -254,7 +263,16 @@ class AS3CF_Plugin_Compatibility {
 			return $files;
 		}
 
-		if ( isset( $_POST['action'] ) && 'custom-header-crop' === sanitize_key( $_POST['action'] ) ) { // input var okay
+		if (
+			isset( $_POST['action'] )
+			&& (
+				( isset( $_POST['context'] )
+				  && 'site-icon' == $_POST['context']
+				  && 'crop-image' == $_POST['action'] )
+				|| 'custom-header-crop' === sanitize_key( $_POST['action'] )
+			)
+		)
+		{   //input var okay
 			// remove original main image after edit
 			if ( ( $original_file = $this->get_original_image_file( $_POST['id'], $file_path ) ) ) {
 				$files[] = $original_file;
