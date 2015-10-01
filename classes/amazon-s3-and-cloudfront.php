@@ -81,8 +81,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function init( $plugin_file_path ) {
 		self::$plugin_page       = $this->plugin_slug;
-		$this->plugin_title      = __( 'Offload S3', 'as3cf' );
-		$this->plugin_menu_title = __( 'S3 and CloudFront', 'as3cf' );
+		$this->plugin_title      = __( 'Offload S3', 'amazon-s3-and-cloudfront' );
+		$this->plugin_menu_title = __( 'S3 and CloudFront', 'amazon-s3-and-cloudfront' );
 
 		new AS3CF_Upgrade_Region_Meta( $this );
 		new AS3CF_Upgrade_File_Sizes( $this );
@@ -113,7 +113,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		// include compatibility code for other plugins
 		new AS3CF_Plugin_Compatibility( $this );
 
-		load_plugin_textdomain( 'as3cf', false, dirname( plugin_basename( $plugin_file_path ) ) . '/languages/' );
+		load_plugin_textdomain( 'amazon-s3-and-cloudfront', false, dirname( plugin_basename( $plugin_file_path ) ) . '/languages/' );
 
 		// Register modal scripts and styles
 		$this->register_modal_assets();
@@ -518,7 +518,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// Check file exists locally before attempting upload
 		if ( ! file_exists( $file_path ) ) {
-			return new WP_Error( 'exception', sprintf( __( 'File %s does not exist', 'as3cf' ), $file_path ) );
+			return new WP_Error( 'exception', sprintf( __( 'File %s does not exist', 'amazon-s3-and-cloudfront' ), $file_path ) );
 		}
 
 		$file_name     = basename( $file_path );
@@ -527,7 +527,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		// check mime type of file is in allowed S3 mime types
 		if ( ! in_array( $type, $allowed_types ) ) {
-			return new WP_Error( 'exception', sprintf( __( 'Mime type %s is not allowed', 'as3cf' ), $type ) );
+			return new WP_Error( 'exception', sprintf( __( 'Mime type %s is not allowed', 'amazon-s3-and-cloudfront' ), $type ) );
 		}
 
 		$acl = self::DEFAULT_ACL;
@@ -604,7 +604,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$s3client->putObject( $args );
 			}
 			catch ( Exception $e ) {
-				$error_msg = sprintf( __( 'Error uploading %s to S3: %s', 'as3cf' ), $file_path, $e->getMessage() );
+				$error_msg = sprintf( __( 'Error uploading %s to S3: %s', 'amazon-s3-and-cloudfront' ), $file_path, $e->getMessage() );
 				error_log( $error_msg );
 
 				return new WP_Error( 'exception', $error_msg );
@@ -1244,17 +1244,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 	function verify_ajax_request() {
 		if ( ! is_admin() || ! wp_verify_nonce( sanitize_key( $_POST['_nonce'] ), sanitize_key( $_POST['action'] ) ) ) { // input var okay
-			wp_die( __( 'Cheatin&#8217; eh?', 'as3cf' ) );
+			wp_die( __( 'Cheatin&#8217; eh?', 'amazon-s3-and-cloudfront' ) );
 		}
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.', 'as3cf' ) );
+			wp_die( __( 'You do not have sufficient permissions to access this page.', 'amazon-s3-and-cloudfront' ) );
 		}
 	}
 
 	function ajax_check_bucket() {
 		if ( ! isset( $_POST['bucket_name'] ) || ! ( $bucket = sanitize_text_field( $_POST['bucket_name'] ) ) ) { // input var okay
-			$out = array( 'error' => __( 'No bucket name provided.', 'as3cf' ) );
+			$out = array( 'error' => __( 'No bucket name provided.', 'amazon-s3-and-cloudfront' ) );
 
 			$this->end_ajax( $out );
 		}
@@ -1529,8 +1529,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		try {
 			$region = $this->get_s3client()->getBucketLocation( array( 'Bucket' => $bucket ) );
 		} catch ( Exception $e ) {
-			$error_msg_title = '<strong>' . __( 'Error Getting Bucket Region', 'as3cf' ) . '</strong> &mdash;';
-			$error_msg       = sprintf( __( 'There was an error attempting to get the region of the bucket %s: %s', 'as3cf' ), $bucket, $e->getMessage() );
+			$error_msg_title = '<strong>' . __( 'Error Getting Bucket Region', 'amazon-s3-and-cloudfront' ) . '</strong> &mdash;';
+			$error_msg       = sprintf( __( 'There was an error attempting to get the region of the bucket %s: %s', 'amazon-s3-and-cloudfront' ), $bucket, $e->getMessage() );
 			error_log( $error_msg );
 
 			return new WP_Error( 'exception', $error_msg_title . $error_msg );
@@ -1650,7 +1650,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		$file_name     = 'as3cf-permission-check.txt';
-		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'as3cf' );
+		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'amazon-s3-and-cloudfront' );
 
 		$path = $this->get_object_prefix();
 		$key  = $path . $file_name;
@@ -1682,7 +1682,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		} catch ( Exception $e ) {
 			// if we encounter an error that isn't access denied, throw that error
 			if ( ! $e instanceof Aws\Common\Exception\ServiceResponseException || 'AccessDenied' !== $e->getExceptionCode() ) {
-				$error_msg = sprintf( __( 'There was an error attempting to check the permissions of the bucket %s: %s', 'as3cf' ), $bucket, $e->getMessage() );
+				$error_msg = sprintf( __( 'There was an error attempting to check the permissions of the bucket %s: %s', 'amazon-s3-and-cloudfront' ), $bucket, $e->getMessage() );
 				error_log( $error_msg );
 
 				return new WP_Error( 'exception', $error_msg );
@@ -1740,14 +1740,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			'as3cf',
 			array(
 				'strings' => array(
-					'create_bucket_error'         => __( 'Error creating bucket', 'as3cf' ),
-					'create_bucket_name_short'    => __( 'Bucket name too short.', 'as3cf' ),
-					'create_bucket_name_long'     => __( 'Bucket name too long.', 'as3cf' ),
-					'create_bucket_invalid_chars' => __( 'Invalid character. Bucket names can contain lowercase letters, numbers, periods and hyphens.', 'as3cf' ),
-					'save_bucket_error'           => __( 'Error saving bucket', 'as3cf' ),
-					'get_buckets_error'           => __( 'Error fetching buckets', 'as3cf' ),
-					'get_url_preview_error'       => __( 'Error getting URL preview: ', 'as3cf' ),
-					'save_alert'                  => __( 'The changes you made will be lost if you navigate away from this page', 'as3cf' )
+					'create_bucket_error'         => __( 'Error creating bucket', 'amazon-s3-and-cloudfront' ),
+					'create_bucket_name_short'    => __( 'Bucket name too short.', 'amazon-s3-and-cloudfront' ),
+					'create_bucket_name_long'     => __( 'Bucket name too long.', 'amazon-s3-and-cloudfront' ),
+					'create_bucket_invalid_chars' => __( 'Invalid character. Bucket names can contain lowercase letters, numbers, periods and hyphens.', 'amazon-s3-and-cloudfront' ),
+					'save_bucket_error'           => __( 'Error saving bucket', 'amazon-s3-and-cloudfront' ),
+					'get_buckets_error'           => __( 'Error fetching buckets', 'amazon-s3-and-cloudfront' ),
+					'get_url_preview_error'       => __( 'Error getting URL preview: ', 'amazon-s3-and-cloudfront' ),
+					'save_alert'                  => __( 'The changes you made will be lost if you navigate away from this page', 'amazon-s3-and-cloudfront' )
 				),
 				'nonces'  => array(
 					'create_bucket'   => wp_create_nonce( 'as3cf-create-bucket' ),
@@ -1805,7 +1805,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), $this->get_settings_nonce_key() ) ) { // input var okay
-			die( __( "Cheatin' eh?", 'as3cf' ) );
+			die( __( "Cheatin' eh?", 'amazon-s3-and-cloudfront' ) );
 		}
 
 		do_action( 'as3cf_pre_save_settings' );
@@ -1908,8 +1908,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 */
 	function get_settings_tabs() {
 		$tabs = array(
-			'media'   => _x( 'Media Library', 'Show the media library tab', 'as3cf' ),
-			'support' => _x( 'Support', 'Show the support tab', 'as3cf' )
+			'media'   => _x( 'Media Library', 'Show the media library tab', 'amazon-s3-and-cloudfront' ),
+			'support' => _x( 'Support', 'Show the support tab', 'amazon-s3-and-cloudfront' )
 		);
 
 		return apply_filters( 'as3cf_settings_tabs', $tabs );
@@ -2045,7 +2045,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$filename = basename( $s3object['key'] );
 		$acl      = $this->get_acl_display_name( $s3object['acl'] );
 
-		return sprintf( __( 'The file %s has been given %s permissions on Amazon S3.', 'as3cf' ), "<strong>{$filename}</strong>", "<strong>{$acl}</strong>" );
+		return sprintf( __( 'The file %s has been given %s permissions on Amazon S3.', 'amazon-s3-and-cloudfront' ), "<strong>{$filename}</strong>", "<strong>{$acl}</strong>" );
 	}
 
 	/**
@@ -2546,11 +2546,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_access_denied_notice_message( $single = true ) {
-		$quick_start = sprintf( '<a class="js-link" href="%s">%s</a>', 'https://deliciousbrains.com/wp-offload-s3/doc/quick-start-guide/', __( 'Quick Start Guide', 'as3cf' ) );
+		$quick_start = sprintf( '<a class="js-link" href="%s">%s</a>', 'https://deliciousbrains.com/wp-offload-s3/doc/quick-start-guide/', __( 'Quick Start Guide', 'amazon-s3-and-cloudfront' ) );
 
-		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'as3cf' ), $quick_start );
+		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
 		if ( ! $single ) {
-			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'as3cf' ), $quick_start );
+			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
 
 		}
 

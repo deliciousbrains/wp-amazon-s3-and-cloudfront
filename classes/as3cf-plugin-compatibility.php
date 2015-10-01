@@ -354,7 +354,7 @@ class AS3CF_Plugin_Compatibility {
 				)
 			);
 		} catch ( Exception $e ) {
-			error_log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'as3cf' ), $s3_object['key'], $e->getMessage() ) );
+			error_log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'amazon-s3-and-cloudfront' ), $s3_object['key'], $e->getMessage() ) );
 
 			return false;
 		}

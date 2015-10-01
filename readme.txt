@@ -3,7 +3,7 @@ Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.7
 Tested up to: 4.3
-Stable tag: 0.9.5
+Stable tag: 0.9.6
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -62,6 +62,10 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= 0.9.6 - 2015-10-01 =
+
+* Improvement: Update text domains for translate.wordpress.org integration
 
 = 0.9.5 - 2015-09-01 =
 * Bug fix: Fatal error: Cannot use object of type WP_Error as array
