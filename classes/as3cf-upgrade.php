@@ -285,7 +285,7 @@ abstract class AS3CF_Upgrade {
 				$action_text = __( 'Restart Update', 'amazon-s3-and-cloudfront' );
 				break;
 			case self::STATUS_ERROR:
-				$msg         = sprintf( __( '<strong>Error Updating %s</strong> &mdash; We ran into some errors attempting to update the %s for all your Media Library items that have been uploaded to S3. Please check your error log for details.', 'amazon-s3-and-cloudfront' ), ucfirst( $this->upgrade_type ), $this->upgrade_type );
+				$msg         = sprintf( __( '<strong>Error Updating %s</strong> &mdash; We ran into some errors attempting to update the %s for all your Media Library items that have been uploaded to S3. Please check your error log for details. (#%d)', 'amazon-s3-and-cloudfront' ), ucfirst( $this->upgrade_type ), $this->upgrade_type, $this->upgrade_id );
 				$action_text = __( 'Try Run It Again', 'amazon-s3-and-cloudfront' );
 				$msg_type    = 'error';
 				break;

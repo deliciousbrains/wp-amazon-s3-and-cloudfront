@@ -28,6 +28,14 @@ class AS3CF_Plugin_Compatibility {
 	 */
 	protected $as3cf;
 
+	/**
+	 * @var array
+	 */
+	protected static $stream_wrappers = array();
+
+	/**
+	 * @param Amazon_S3_And_CloudFront $as3cf
+	 */
 	function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
@@ -38,6 +46,9 @@ class AS3CF_Plugin_Compatibility {
 	 * Register the compatibility hooks
 	 */
 	function compatibility_init() {
+		// Turn on stream wrapper S3 file
+		add_filter( 'as3cf_get_attached_file', array( $this, 'get_stream_wrapper_file' ), 20, 4 );
+
 		/*
 		 * Legacy filter
 		 * 'as3cf_get_attached_file_copy_back_to_local'
@@ -51,14 +62,15 @@ class AS3CF_Plugin_Compatibility {
 		add_action( 'as3cf_upload_attachment_pre_remove', array( $this, 'image_editor_remove_files' ), 10, 4 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'image_editor_download_file' ), 10, 4 );
 		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
-		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_header_crop_download_file' ), 10, 4 );
-		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'customizer_header_crop_remove_original_image' ), 10, 3 );
+		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_crop_download_file' ), 10, 4 );
+		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'customizer_crop_remove_original_image' ), 10, 3 );
 
 		/*
 		 * WP_Customize_Control
 		 * /wp-includes/class-wp-customize_control.php
 		 */
 		add_filter( 'attachment_url_to_postid', array( $this, 'customizer_background_image' ), 10, 2 );
+
 		/*
 		 * Regenerate Thumbnails
 		 * https://wordpress.org/plugins/regenerate-thumbnails/
@@ -90,6 +102,79 @@ class AS3CF_Plugin_Compatibility {
 		};
 
 		// Return S3 URL as a fallback
+		return $url;
+	}
+
+	/**
+	 * Is this an AJAX process?
+	 *
+	 * @return bool
+	 */
+	function is_ajax() {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check the current request is a specific one based on action and
+	 * optional context
+	 *
+	 * @param string      $action_key
+	 * @param bool        $ajax
+	 * @param null|string $context_key
+	 *
+	 * @return bool
+	 */
+	function maybe_process_on_action( $action_key, $ajax, $context_key = null ) {
+		if ( $ajax !== $this->is_ajax() ) {
+			return false;
+		}
+
+		$var_type = 'GET';
+
+		if ( isset( $_GET['action'] ) ) {
+			$action = $_GET['action'];
+		} else if ( isset( $_POST['action'] ) ) {
+			$var_type = 'POST';
+			$action   = $_POST['action'];
+		} else {
+			return false;
+		}
+
+		$context_check = true;
+		if ( ! is_null( $context_key ) ) {
+			$global        = constant( 'INPUT_' . $var_type );
+			$context       = filter_input( $global, 'context' );
+			$context_check = ( $context_key === $context );
+		}
+
+		return ( $action_key === sanitize_key( $action ) && $context_check );
+	}
+
+	/**
+	 * Generic method for copying back an S3 file to the server on a specific AJAX action
+	 *
+	 * @param string $action_key Action that must be in process
+	 * @param bool   $ajax       Must the process be an AJAX one?
+	 * @param string $url        S3 URL
+	 * @param string $file       Local file path of image
+	 * @param array  $s3_object  S3 meta data
+	 *
+	 * @return string
+	 */
+	function copy_image_to_server_on_action( $action_key, $ajax, $url, $file, $s3_object ) {
+		if ( false === $this->maybe_process_on_action( $action_key, $ajax ) ) {
+			return $url;
+		}
+
+		if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+			// Return the file if successfully downloaded from S3
+			return $file;
+		};
+
 		return $url;
 	}
 
@@ -145,7 +230,7 @@ class AS3CF_Plugin_Compatibility {
 	 * @return string
 	 */
 	function image_editor_download_file( $url, $file, $attachment_id, $s3_object ) {
-		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+		if ( ! $this->is_ajax() ) {
 			return $url;
 		}
 
@@ -199,7 +284,7 @@ class AS3CF_Plugin_Compatibility {
 	 * @return array
 	 */
 	function image_editor_remove_original_image( $files, $post_id, $file_path ) {
-		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+		if ( ! $this->is_ajax() ) {
 			return $files;
 		}
 
@@ -214,6 +299,23 @@ class AS3CF_Plugin_Compatibility {
 	}
 
 	/**
+	 * Generic check for Customizer crop actions
+	 *
+	 * @return bool
+	 */
+	protected function is_customizer_crop_action() {
+		$header_crop   = $this->maybe_process_on_action( 'custom-header-crop', true );
+		$identity_crop = $this->maybe_process_on_action( 'crop-image', true, 'site-icon' );
+
+		if ( ! $header_crop && ! $identity_crop ) {
+			// Not doing a Customizer action
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Allow the WordPress Customizer to crop images that have been copied to S3
 	 * but removed from the local server, by copying them back temporarily
 	 *
@@ -224,17 +326,15 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @return string
 	 */
-	function customizer_header_crop_download_file( $url, $file, $attachment_id, $s3_object ) {
-		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+	function customizer_crop_download_file( $url, $file, $attachment_id, $s3_object ) {
+		if ( false === $this->is_customizer_crop_action() ) {
 			return $url;
 		}
 
-		if ( isset( $_POST['action'] ) && 'custom-header-crop' === sanitize_key( $_POST['action'] ) ) { // input var okay
-			if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
-				// Return the file if successfully downloaded from S3
-				return $file;
-			};
-		}
+		if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+			// Return the file if successfully downloaded from S3
+			return $file;
+		};
 
 		return $url;
 	}
@@ -249,16 +349,14 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @return array
 	 */
-	function customizer_header_crop_remove_original_image( $files, $post_id, $file_path ) {
-		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+	function customizer_crop_remove_original_image( $files, $post_id, $file_path ) {
+		if ( false === $this->is_customizer_crop_action() ) {
 			return $files;
 		}
 
-		if ( isset( $_POST['action'] ) && 'custom-header-crop' === sanitize_key( $_POST['action'] ) ) { // input var okay
-			// remove original main image after edit
-			if ( ( $original_file = $this->get_original_image_file( $_POST['id'], $file_path ) ) ) {
-				$files[] = $original_file;
-			}
+		// remove original main image after edit
+		if ( ( $original_file = $this->get_original_image_file( $_POST['id'], $file_path ) ) ) {
+			$files[] = $original_file;
 		}
 
 		return $files;
@@ -321,18 +419,7 @@ class AS3CF_Plugin_Compatibility {
 	 * @return string
 	 */
 	function regenerate_thumbnails_download_file( $url, $file, $attachment_id, $s3_object ) {
-		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
-			return $url;
-		}
-
-		if ( isset( $_POST['action'] ) && 'regeneratethumbnail' == sanitize_key( $_POST['action'] ) ) { // input var okay
-			if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
-				// Return the file if successfully downloaded from S3
-				return $file;
-			};
-		}
-
-		return $url;
+		return $this->copy_image_to_server_on_action( 'regeneratethumbnail', true, $url, $file, $s3_object );
 	}
 
 	/**
@@ -360,5 +447,80 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		return $file;
+	}
+
+	/**
+	 * Register stream wrappers per region
+	 *
+	 * @param string $region
+	 *
+	 * @return mixed
+	 */
+	protected function register_stream_wrapper( $region ) {
+		$stored_region = ( '' === $region ) ? Amazon_S3_And_CloudFront::DEFAULT_REGION : $region;
+
+		if ( in_array( $stored_region, self::$stream_wrappers ) ) {
+			return;
+		}
+
+		$client   = $this->as3cf->get_s3client( $region, true );
+		$protocol = $this->get_stream_wrapper_protocol( $region );
+
+		// Register the region specific S3 stream wrapper to be used by plugins
+		AS3CF_Stream_Wrapper::register( $client, $protocol );
+
+		self::$stream_wrappers[] = $stored_region;
+	}
+
+	/**
+	 * Generate the stream wrapper protocol
+	 *
+	 * @param string $region
+	 *
+	 * @return string
+	 */
+	protected function get_stream_wrapper_protocol( $region ) {
+		$protocol = 's3';
+		$protocol .= str_replace( '-', '', $region );
+
+		return $protocol;
+	}
+
+	/**
+	 * Generate an S3 stream wrapper compatible URL
+	 *
+	 * @param string $bucket
+	 * @param string $key
+	 *
+	 * @return string
+	 */
+	function prepare_stream_wrapper_file( $bucket, $region, $key ) {
+		$protocol = $this->get_stream_wrapper_protocol( $region );
+
+		return $protocol . '://' . $bucket . '/' . $key;
+	}
+
+	/**
+	 * Allow access to the S3 file via the stream wrapper.
+	 * This is useful for compatibility with plugins when attachments are removed from the
+	 * local server after upload.
+	 *
+	 * @param string $url
+	 * @param string $file
+	 * @param int    $attachment_id
+	 * @param array  $s3_object
+	 *
+	 * @return string
+	 */
+	public function get_stream_wrapper_file( $url, $file, $attachment_id, $s3_object ) {
+		if ( $url === $file ) {
+			// Abort if an earlier hook to get the file has been called and it has been copied back.
+			return $file;
+		}
+
+		// Make sure the region stream wrapper is registered
+		$this->register_stream_wrapper( $s3_object['region'] );
+
+		return $this->prepare_stream_wrapper_file( $s3_object['bucket'], $s3_object['region'], $s3_object['key'] );
 	}
 }

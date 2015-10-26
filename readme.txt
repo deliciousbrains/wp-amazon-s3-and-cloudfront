@@ -3,7 +3,7 @@ Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.7
 Tested up to: 4.3
-Stable tag: 0.9.6
+Stable tag: 0.9.7
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -63,8 +63,25 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
-= 0.9.6 - 2015-10-01 =
+= 0.9.7 - 2015-10-26 =
+* Improvement: Improve compatibility with third party plugins when the _Remove Files From Server_ option is enabled
+* Improvement: Fix inconsistent spacing on the WP Offload S3 settings screen
+* Improvement: Validate _CloudFront or custom domain_ input field
+* Improvement: Link to current S3 bucket added to WP Offload S3 settings screen
+* Improvement: Show notice when neither GD or Imagick image libraries are not installed
+* Improvement: Supply Cache-Control header to S3 when the _Far Future Expiration Header_ option is enabled
+* Improvement: Additional information added to _Diagnostic Information_
+* Improvement: Added warning when _Remove Files From Server_ option is enabled
+* Improvement: Filter added to allow additional image versions to be uploaded to S3
+* Bug fix: File size not stored in _wp_attachment_metadata_ when _Remove Files From Server_ option is enabled
+* Bug fix: Uploads on Multisite installs allowed after surpassing upload limit
+* Bug fix: Site icon in WordPress customizer returns 404
+* Bug fix: Image versions remain locally and on S3 after deletion, when the file name contains characters which require escaping
+* Bug fix: Files with the same file name overwritten when __Remove Files From Server_ option is enabled
+* Bug fix: Cron tasks incorrectly scheduled due to passing the wrong time to `wp_schedule_event`
+* Bug fix: Default options not shown in the UI after first install
 
+= 0.9.6 - 2015-10-01 =
 * Improvement: Update text domains for translate.wordpress.org integration
 
 = 0.9.5 - 2015-09-01 =

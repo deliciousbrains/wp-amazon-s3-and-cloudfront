@@ -11,7 +11,8 @@ $prefix = $this->get_plugin_prefix_slug();
 	</p>
 </div>
 <?php
-$selected_bucket = $this->get_setting( 'bucket' ); ?>
+$selected_bucket        = $this->get_setting( 'bucket' );
+$selected_bucket_prefix = $this->get_object_prefix(); ?>
 <div id="tab-media" data-prefix="as3cf" class="as3cf-tab aws-content<?php echo ( $selected_bucket ) ? ' as3cf-has-bucket' : ''; // xss ok ?>">
 	<div class="error inline as3cf-bucket-error as3cf-error" style="display: none;">
 		<p>
@@ -35,9 +36,10 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 				<?php
 				$this->render_view( 'bucket-setting',
 					array(
-						'prefix'          => $prefix,
-						'selected_bucket' => $selected_bucket,
-						'tr_class'        => 'as3cf-border-bottom',
+						'prefix'                 => $prefix,
+						'selected_bucket'        => $selected_bucket,
+						'selected_bucket_prefix' => $selected_bucket_prefix,
+						'tr_class'               => 'as3cf-border-bottom',
 					)
 				); ?>
 				<tr class="as3cf-setting-title">
@@ -138,6 +140,27 @@ $selected_bucket = $this->get_setting( 'bucket' ); ?>
 					<td>
 						<h4><?php _e( 'Remove Files From Server', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p><?php _e( 'Once a file has been copied to S3, remove it from the local server.', 'amazon-s3-and-cloudfront' ) ?></p>
+						<?php
+						$lost_files_msg  = apply_filters( 'as3cf_lost_files_notice', __( '<strong>Broken URLs</strong> &mdash; There will be broken URLs for files that don\'t exist locally. You can fix this by enabling <strong>Rewrite File URLs</strong> to use the S3 URLs.', 'amazon-s3-and-cloudfront' ) );
+						$lost_files_args = array(
+							'message' => $lost_files_msg,
+							'id'      => 'as3cf-lost-files-notice',
+							'inline'  => true,
+							'type'    => 'error',
+							'style'   => 'display: none',
+						);
+						$this->render_view( 'notice', $lost_files_args );
+
+						$remove_local_link = sprintf( '<a href="%s">%s &raquo;</a>', 'https://deliciousbrains.com/wp-offload-s3/doc/compatibility-with-other-plugins/', __( 'More info', 'amazon-s3-and-cloudfront' ) );
+						$remove_local_msg  = apply_filters( 'as3cf_remove_local_notice', sprintf( __( '<strong>Warning</strong> &mdash; Some plugins depend on the file being present on the local server and may not work when the file is removed. %s', 'amazon-s3-and-cloudfront' ), $remove_local_link ) );
+						$remove_local_args = array(
+							'message' => $remove_local_msg,
+							'id'      => 'as3cf-remove-local-notice',
+							'inline'  => true,
+							'type'    => 'notice-warning',
+							'style'   => 'display: none',
+						);
+						$this->render_view( 'notice', $remove_local_args ); ?>
 					</td>
 				</tr>
 				<tr class="advanced-options url-preview">
