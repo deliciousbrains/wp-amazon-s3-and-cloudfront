@@ -1510,7 +1510,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_attached_file( $file, $attachment_id ) {
-		if ( file_exists( $file ) || ! $this->get_setting( 'serve-from-s3' ) ) {
+		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
 			return $file;
 		}
 
