@@ -46,6 +46,9 @@ class AS3CF_Plugin_Compatibility {
 	 * Register the compatibility hooks
 	 */
 	function compatibility_init() {
+		// Add notices about compatibility addons to install
+		add_action( 'admin_init', array( $this, 'maybe_render_compatibility_addons_notice' ) );
+
 		// Turn on stream wrapper S3 file
 		add_filter( 'as3cf_get_attached_file', array( $this, 'get_stream_wrapper_file' ), 20, 4 );
 
@@ -76,6 +79,166 @@ class AS3CF_Plugin_Compatibility {
 		 * https://wordpress.org/plugins/regenerate-thumbnails/
 		 */
 		add_filter( 'as3cf_get_attached_file', array( $this, 'regenerate_thumbnails_download_file' ), 10, 4 );
+	}
+
+	/**
+	 * Get the addons for the Pro upgrade
+	 *
+	 * @return array
+	 */
+	public function get_pro_addons() {
+		global $amazon_web_services;
+
+		$all_addons = $amazon_web_services->get_addons( true );
+		if ( ! isset( $all_addons['amazon-s3-and-cloudfront']['addons']['amazon-s3-and-cloudfront-pro']['addons'] ) ) {
+			return array();
+		}
+
+		$addons = $all_addons['amazon-s3-and-cloudfront']['addons']['amazon-s3-and-cloudfront-pro']['addons'];
+
+		return $addons;
+	}
+
+	/**
+	 * Get compatibility addons that are required to be installed
+	 *
+	 * @return array
+	 */
+	public function get_compatibility_addons_to_install() {
+		$addons = $this->get_pro_addons();
+
+		$addons_to_install = array();
+
+		if ( empty ( $addons ) ) {
+			return $addons_to_install;
+		}
+
+		foreach( $addons as $addon_slug => $addon ) {
+			if ( file_exists( WP_PLUGIN_DIR . '/' . $addon_slug . '/' . $addon_slug . '.php' ) ) {
+				// Addon already installed, ignore.
+				continue;
+			}
+
+			if ( ! isset( $addon['parent_plugin_basename'] ) || '' === $addon['parent_plugin_basename'] ) {
+				// Addon doesn't have a parent plugin, ignore.
+				continue;
+			}
+
+			if ( ! file_exists( WP_PLUGIN_DIR . '/' . $addon['parent_plugin_basename'] ) || ! is_plugin_active( $addon['parent_plugin_basename'] ) ) {
+				// Parent plugin not installed or not activated, ignore.
+				continue;
+			}
+
+			$addons_to_install[ $addon_slug ] = $addon['title'];
+		}
+
+		return $addons_to_install;
+	}
+
+	/**
+	 * Maybe show a notice about installing addons when the site is using the
+	 * plugins they add compatibility for.
+	 */
+	public function maybe_render_compatibility_addons_notice() {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return;
+		}
+
+		global $as3cf_compat_check;
+		if ( ! $as3cf_compat_check->check_capabilities() ){
+			// User can't install plugins anyway, bail.
+			return;
+		}
+
+		$addons_to_install = $this->get_compatibility_addons_to_install();
+
+		$notice_id = 'as3cf-compat-addons';
+
+		$this->maybe_prepare_compatibility_addons_notice( $notice_id, $addons_to_install );
+
+		if ( empty( $addons_to_install ) ) {
+			return;
+		}
+
+		$title       = __( 'WP Offload S3 Compatibility Addons', 'amazon-s3-and-cloudfront' );
+		$compat_url  = 'https://deliciousbrains.com/wp-offload-s3/doc/compatibility-with-other-plugins/';
+		$compat_link = sprintf( '<a href="%s">%s</a>', $compat_url, __( 'compatibility addons', 'amazon-s3-and-cloudfront' ) );
+		$message     = sprintf( __( "To get WP Offload S3 to work with certain 3rd party plugins, you must install and activate some of our %s. We've detected the following addons need to be installed.", 'amazon-s3-and-cloudfront' ), $compat_link );
+
+		$notice_addons_text = $this->render_addon_list( $addons_to_install );
+		$notice_addons_text .= '<p>' . __( 'You will need to purchase a license to get access to these addons.', 'amazon-s3-and-cloudfront' ) . '</p>';
+		$notice_addons_text .= sprintf( '<p><a href="%s">%s</a></p>', 'https://deliciousbrains.com/wp-offload-s3/pricing/', __( 'View Licenses', 'amazon-s3-and-cloudfront' ) );
+
+		$notice_addons_text = apply_filters( 'wpos3_compat_addons_notice', $notice_addons_text, $addons_to_install );
+
+		if ( false === $notice_addons_text ) {
+			// Allow the notice to be aborted.
+			return;
+		}
+
+		$notice = '<p><strong>' . $title . '</strong> &mdash; ' . $message . '</p>' . $notice_addons_text;
+
+		$notice_args = array(
+			'type'              => 'notice-warning',
+			'custom_id'         => $notice_id,
+			'only_show_to_user' => false,
+			'flash'             => false,
+			'auto_p'            => false,
+		);
+
+		$notice_args = apply_filters( 'wpos3_compat_addons_notice_args', $notice_args, $addons_to_install );
+
+		update_site_option( 'as3cf_compat_addons_to_install', $addons_to_install );
+
+		$this->as3cf->notices->add_notice( $notice, $notice_args );
+	}
+
+	/**
+	 * Remove the notice if exists already and undismiss the notice
+	 * if the addons available have changed.
+	 *
+	 * @param int $notice_id
+	 * @param array $addons_to_install
+	 */
+	protected function maybe_prepare_compatibility_addons_notice( $notice_id, $addons_to_install ) {
+		$notice = $this->as3cf->notices->find_notice_by_id( $notice_id );
+
+		if ( is_null( $notice ) ) {
+			return;
+		}
+
+		$previous_addons_to_install = get_site_option( 'as3cf_compat_addons_to_install', array() );
+
+		if ( ! empty( $previous_addons_to_install ) && $addons_to_install !== $previous_addons_to_install ) {
+			// Remove dismissed flag for all users, so we reshow the notice with new addons
+			$this->as3cf->notices->undismiss_notice_for_all( $notice_id );
+		}
+
+		// Remove the notice so we refresh it later on
+		$this->as3cf->notices->remove_notice( $notice );
+	}
+
+	/**
+	 * Render list of addons for a notice
+	 *
+	 * @param array $addons
+	 *
+	 * @return string
+	 */
+	protected function render_addon_list( $addons ) {
+		if ( ! is_array( $addons ) || empty( $addons ) ) {
+			return '';
+		}
+
+		sort( $addons );
+
+		$html = '<ul style="list-style-type: disc; padding: 0 0 0 30px; margin: 5px 0;">';
+		foreach ( $addons as $addon ) {
+			$html .= '<li style="margin: 0;">' . $addon . '</li>';
+		}
+		$html .= '</ul>';
+
+		return $html;
 	}
 
 	/**

@@ -114,9 +114,9 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 110, 2 );
-		add_filter( 'get_image_tag', array( $this, 'maybe_encode_get_image_tag' ), 10, 6 );
-		add_filter( 'wp_get_attachment_image_src', array( $this, 'maybe_encode_wp_get_attachment_image_src' ), 10, 4 );
-		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js' ), 10, 3 );
+		add_filter( 'get_image_tag', array( $this, 'maybe_encode_get_image_tag' ), 99, 6 );
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'maybe_encode_wp_get_attachment_image_src' ), 99, 4 );
+		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js' ), 99, 3 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 		add_filter( 'update_attached_file', array( $this, 'update_attached_file' ), 100, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
@@ -1444,37 +1444,50 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$url = parse_url( $file );
 
 		if ( ! isset( $url['path'] ) ) {
+			// Can't determine path, return original
 			return $file;
 		}
 
-		if ( in_array( $this->leading_slash_it( $url['path'] ), $this->encode_files ) ) {
-			// Already encoded return original file
+		if ( in_array( $this->normalize_file_path( $url['path'] ), $this->encode_files ) ) {
+			// Already encoded, return original
 			return $file;
 		}
 
 		$file_path         = dirname( $file );
 		$file_path         = ( '.' !== $file_path ) ? trailingslashit( $file_path ) : '';
-		$file_name         = basename( $file );
+		$file_name         = basename( $url['path'] );
 		$encoded_file_name = rawurlencode( $file_name );
 		$encoded_file_path = $file_path . $encoded_file_name;
 
-		if ( $file_name !== $encoded_file_name ) {
-			$encoded_url          = parse_url( $encoded_file_path );
-			$this->encode_files[] = $this->leading_slash_it( $encoded_url['path'] );
+		if ( $file_name === $encoded_file_name ) {
+			// File name doesn't need encoding, return original
+			return $file;
 		}
 
-		return $file_path . $encoded_file_name;
+		$normalized_file_path = $this->normalize_file_path( $encoded_file_path );
+
+		if ( ! in_array( $normalized_file_path, $this->encode_files ) ) {
+			$this->encode_files[] = $normalized_file_path;
+		}
+
+		return str_replace( $file_name, $encoded_file_name, $file );
 	}
 
 	/**
-	 * Leading slash it
+	 * Normalize file path
 	 *
 	 * @param string $path
 	 *
-	 * @return string
+	 * @return string mixed
 	 */
-	function leading_slash_it( $path ) {
-		return '/' . ltrim( $path, '/\\' );
+	function normalize_file_path( $path ) {
+		$url = parse_url( $path );
+
+		if ( isset( $url['scheme'] ) ) {
+			$path = str_replace( $url['scheme'] . '://', '', $path );
+		}
+
+		return '/' . ltrim( $path, '/' );
 	}
 
 	/**
