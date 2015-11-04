@@ -1819,7 +1819,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$args = array();
 			}
 
-			$this->s3client = $this->aws->get_client()->get( 's3', $args );
+			$client = $this->aws->get_client();
+
+			if ( ! is_wp_error( $client ) ) {
+				$this->s3client = $client->get( 's3', $args );
+			}
 		}
 
 		return $this->s3client;

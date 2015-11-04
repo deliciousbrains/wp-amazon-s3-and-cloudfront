@@ -629,6 +629,10 @@ class AS3CF_Plugin_Compatibility {
 		$client   = $this->as3cf->get_s3client( $region, true );
 		$protocol = $this->get_stream_wrapper_protocol( $region );
 
+		if ( ! $client instanceof \Aws\S3\S3Client ) {
+			return;
+		}
+
 		// Register the region specific S3 stream wrapper to be used by plugins
 		AS3CF_Stream_Wrapper::register( $client, $protocol );
 
