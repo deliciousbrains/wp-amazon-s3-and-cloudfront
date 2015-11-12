@@ -9,6 +9,10 @@ class AS3CF_Stream_Wrapper extends Aws\S3\StreamWrapper {
 	 * @param string          $protocol
 	 */
 	public static function register( Aws\S3\S3Client $client, $protocol = 's3' ) {
+		if ( in_array( $protocol, stream_get_wrappers() ) ) {
+			stream_wrapper_unregister( $protocol );
+		}
+
 		stream_wrapper_register( $protocol, __CLASS__, STREAM_IS_URL );
 		static::$client = $client;
 	}

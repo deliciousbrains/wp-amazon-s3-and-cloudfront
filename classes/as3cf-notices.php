@@ -176,7 +176,7 @@ class AS3CF_Notices {
 		$notice = $this->find_notice_by_id( $notice_id );
 		if ( $notice ) {
 			if ( $notice['only_show_to_user'] ) {
-				$notices = get_user_meta( $user_id, 'as3cf_notices' );
+				$notices = get_user_meta( $user_id, 'as3cf_notices', true );
 				unset( $notices[ $notice['id'] ] );
 
 				$this->update_user_meta( $user_id, 'as3cf_notices', $notices );
@@ -291,6 +291,7 @@ class AS3CF_Notices {
 		}
 
 		$user_notices = get_user_meta( $user_id, 'as3cf_notices', true );
+		$user_notices = $this->cleanup_corrupt_user_notices( $user_id, $user_notices );
 		if ( is_array( $user_notices ) && ! empty( $user_notices ) ) {
 			foreach ( $user_notices as $notice ) {
 				$this->maybe_show_notice( $notice, $dismissed_notices );
@@ -303,6 +304,32 @@ class AS3CF_Notices {
 				$this->maybe_show_notice( $notice, $dismissed_notices );
 			}
 		}
+	}
+
+	/**
+	 * Cleanup corrupt user notices. Corrupt notices start with a
+	 * numerically indexed array, opposed to string ID
+	 *
+	 * @param int   $user_id
+	 * @param array $notices
+	 *
+	 * @return array
+	 */
+	protected function cleanup_corrupt_user_notices( $user_id, $notices ) {
+		if ( ! is_array( $notices ) || empty( $notices ) ) {
+			return $notices;
+		}
+
+		foreach ( $notices as $key => $notice ) {
+			if ( is_int( $key ) ) {
+				// Corrupt, remove
+				unset( $notices[ $key ] );
+
+				$this->update_user_meta( $user_id, 'as3cf_notices', $notices );
+			}
+		}
+
+		return $notices;
 	}
 
 	/**

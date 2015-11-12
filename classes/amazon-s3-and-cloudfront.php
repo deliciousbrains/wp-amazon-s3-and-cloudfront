@@ -104,24 +104,30 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		new AS3CF_Upgrade_File_Sizes( $this );
 		new AS3CF_Upgrade_Meta_WP_Error( $this );
 
+		// Plugin setup
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
+		add_filter( 'plugin_action_links', array( $this, 'plugin_actions_settings_link' ), 10, 2 );
+		add_filter( 'pre_get_space_used', array( $this, 'multisite_get_spaced_used' ) );
+
+		// UI AJAX
 		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
 		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
 		add_action( 'wp_ajax_as3cf-manual-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-get-url-preview', array( $this, 'ajax_get_url_preview' ) );
 
+		// Rewriting URLs, doesn't depend on plugin being setup
 		add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 99, 2 );
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
-		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 110, 2 );
 		add_filter( 'get_image_tag', array( $this, 'maybe_encode_get_image_tag' ), 99, 6 );
 		add_filter( 'wp_get_attachment_image_src', array( $this, 'maybe_encode_wp_get_attachment_image_src' ), 99, 4 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js' ), 99, 3 );
+		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
+
+		// Communication with S3, plugin needs to be setup
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
+		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 110, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 		add_filter( 'update_attached_file', array( $this, 'update_attached_file' ), 100, 2 );
-		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
-		add_filter( 'plugin_action_links', array( $this, 'plugin_actions_settings_link' ), 10, 2 );
-		add_filter( 'pre_get_space_used', array( $this, 'multisite_get_spaced_used' ) );
 
 		// include compatibility code for other plugins
 		$this->plugin_compat = new AS3CF_Plugin_Compatibility( $this );
@@ -387,7 +393,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( is_wp_error( $region ) ) {
 			$region = '';
 		}
-		$domain = $this->sanitize_custom_domain( $this->get_s3_url_domain( $bucket, $region ) );
+
+		$domain = $this->get_s3_url_domain( $bucket, $region, null, array(), true );
 
 		$url = $scheme . '://' . $domain . '/' . $path . $suffix;
 
@@ -1117,14 +1124,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param int|null    $expires Seconds for the link to live
 	 * @param string|null $size    Size of the image to get
 	 * @param array       $headers Header overrides for request
+	 * @param bool        $skip_rewrite_check
 	 *
 	 * @return mixed|void|WP_Error
 	 */
-	function get_secure_attachment_url( $post_id, $expires = null, $size = null, $headers = array() ) {
+	function get_secure_attachment_url( $post_id, $expires = null, $size = null, $headers = array(), $skip_rewrite_check = false ) {
 		if ( is_null( $expires ) ) {
 			$expires = self::DEFAULT_EXPIRES;
 		}
-		return $this->get_attachment_url( $post_id, $expires, $size, null, $headers );
+		return $this->get_attachment_url( $post_id, $expires, $size, null, $headers, $skip_rewrite_check );
 	}
 
 	/**
@@ -1236,10 +1244,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @param string $region
 	 * @param int    $expires
 	 * @param array  $args    Allows you to specify custom URL settings
+	 * @param bool   $preview When generating the URL preview sanitize certain output
 	 *
 	 * @return mixed|string|void
 	 */
-	function get_s3_url_domain( $bucket, $region = '', $expires = null, $args = array() ) {
+	function get_s3_url_domain( $bucket, $region = '', $expires = null, $args = array(), $preview = false ) {
 		if ( ! isset( $args['cloudfront'] ) ) {
 			$args['cloudfront'] = $this->get_setting( 'cloudfront' );
 		}
@@ -1255,7 +1264,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$prefix = $this->get_s3_url_prefix( $region, $expires );
 
 		if ( 'cloudfront' === $args['domain'] && is_null( $expires ) && $args['cloudfront'] ) {
-			$s3_domain = $args['cloudfront'];
+			$cloudfront = $args['cloudfront'];
+			if ( $preview ) {
+				$cloudfront = $this->sanitize_custom_domain( $cloudfront );
+			}
+
+			$s3_domain = $cloudfront;
 		}
 		elseif ( 'virtual-host' === $args['domain'] ) {
 			$s3_domain = $bucket;
@@ -1273,16 +1287,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get the url of the file from Amazon S3
 	 *
-	 * @param int         $post_id Post ID of the attachment
-	 * @param int|null    $expires Seconds for the link to live
-	 * @param string|null $size    Size of the image to get
-	 * @param array|null  $meta    Pre retrieved _wp_attachment_metadata for the attachment
-	 * @param array       $headers Header overrides for request
+	 * @param int         $post_id            Post ID of the attachment
+	 * @param int|null    $expires            Seconds for the link to live
+	 * @param string|null $size               Size of the image to get
+	 * @param array|null  $meta               Pre retrieved _wp_attachment_metadata for the attachment
+	 * @param array       $headers            Header overrides for request
+	 * @param bool        $skip_rewrite_check Always return the URL regardless of the 'Rewrite File URLs' setting.
+	 *                                        Useful for the EDD and Woo addons to not break download URLs when the
+	 *                                        option is disabled.
 	 *
 	 * @return bool|mixed|void|WP_Error
 	 */
-	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null, $headers = array() ) {
-		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
+	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null, $headers = array(), $skip_rewrite_check = false ) {
+		if ( ! $skip_rewrite_check && ! $this->get_setting( 'serve-from-s3' ) ) {
 			return false;
 		}
 
@@ -1317,7 +1334,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		if ( ! is_null( $expires ) ) {
+		if ( ! is_null( $expires ) && $this->is_plugin_setup() ) {
 			try {
 				$expires    = time() + $expires;
 				$secure_url = $this->get_s3client( $region )->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires, $headers );
@@ -2021,8 +2038,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Register modal scripts and styles so they can be enqueued later
 	 */
-	function register_modal_assets()
-	{
+	function register_modal_assets() {
 		$version = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? time() : $this->plugin_version;
 		$suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
 
@@ -2963,8 +2979,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return bool
 	 */
 	public function memory_exceeded( $filter_name = null ) {
+		$memory_limit   =  $this->get_memory_limit() * 0.9; // 90% of max memory
 		$current_memory = memory_get_usage( true );
-		$memory_limit   = ( intval( WP_MEMORY_LIMIT ) * 1024 * 1024 ) * 0.9; // 90% of max memory
 		$return         = false;
 
 		if ( $current_memory >= $memory_limit ) {
@@ -2976,6 +2992,27 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return apply_filters( $filter_name, $return );
+	}
+
+	/**
+	 * Get memory limit
+	 *
+	 * @return int
+	 */
+	public function get_memory_limit() {
+		if ( function_exists( 'ini_get' ) ) {
+			$memory_limit = ini_get( 'memory_limit' );
+		} else {
+			// Sensible default
+			$memory_limit = '128M';
+		}
+
+		if ( ! $memory_limit || -1 == $memory_limit ) {
+			// Unlimited, set to 32GB
+			$memory_limit = '32000M';
+		}
+
+		return intval( $memory_limit ) * 1024 * 1024;
 	}
 
 	/**

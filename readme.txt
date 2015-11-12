@@ -3,7 +3,7 @@ Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 3.7
 Tested up to: 4.3
-Stable tag: 0.9.8
+Stable tag: 0.9.9
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -62,6 +62,14 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= 0.9.9 - 2015-11-12 =
+* Improvement: Improve wording of compatibility notices
+* Improvement: Compatibility with Easy Digital Downloads 1.0.1 and WooCommerce 1.0.3 addons
+* Improvement: Better determine available memory for background processes
+* Bug fix: URL previews incorrect due to stripping `/` characters
+* Bug fix: PHP Warning: stream_wrapper_register(): Protocol s3:// is already defined
+* Bug fix: PHP Fatal error:  Call to undefined method WP_Error::get()
 
 = 0.9.8 - 2015-11-02 =
 * Bug fix: Attachment URLs containing query string parameters incorrectly encoded
