@@ -2447,7 +2447,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		echo "\r\n";
 
 		echo 'MySQL: ';
-		echo esc_html( empty( $wpdb->use_mysqli ) ? mysql_get_server_info() : mysqli_get_server_info( $wpdb->dbh ) );
+		echo esc_html( $wpdb->db_version() );
 		echo "\r\n";
 
 		echo 'ext/mysqli: ';
