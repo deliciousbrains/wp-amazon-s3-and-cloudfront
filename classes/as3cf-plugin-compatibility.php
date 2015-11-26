@@ -52,6 +52,11 @@ class AS3CF_Plugin_Compatibility {
 		 */
 		add_filter( 'attachment_url_to_postid', array( $this, 'customizer_background_image' ), 10, 2 );
 
+		/*
+		 * Responsive Images WP 4.4+
+		 */
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'wp_calculate_image_srcset' ), 10, 5 );
+
 		if ( $this->as3cf->is_plugin_setup() ) {
 			$this->compatibility_init_if_setup();
 		}
@@ -702,5 +707,59 @@ class AS3CF_Plugin_Compatibility {
 		$this->register_stream_wrapper( $s3_object['region'] );
 
 		return $this->prepare_stream_wrapper_file( $s3_object['bucket'], $s3_object['region'], $s3_object['key'] );
+	}
+
+	/**
+	 * Replace local URLs with S3 ones for srcset image sources
+	 *
+	 * @param array  $sources
+	 * @param array  $size_array
+	 * @param string $image_src
+	 * @param array  $image_meta
+	 * @param int    $attachment_id
+	 *
+	 * @return array
+	 */
+	public function wp_calculate_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
+		if ( ! $this->as3cf->get_setting( 'serve-from-s3' ) ) {
+			// S3 URLs disabled, abort
+			return $sources;
+		}
+
+		if ( ! ( $s3object = $this->as3cf->get_attachment_s3_info( $attachment_id ) ) ) {
+			// Attachment not uploaded to S3, abort
+			return $sources;
+		}
+
+		foreach ( $sources as $width => $source ) {
+			$size   = $this->find_image_size_from_width( $image_meta['sizes'], $width );
+			$s3_url = $this->as3cf->get_attachment_s3_url( $attachment_id, $s3object, null, $size, $image_meta );
+
+			if ( false === $s3_url || is_wp_error( $s3_url ) ) {
+				continue;
+			}
+
+			$sources[ $width ]['url'] = $s3_url;
+		}
+
+		return $sources;
+	}
+
+	/**
+	 * Helper function to find size name from width
+	 *
+	 * @param array  $sizes
+	 * @param string $width
+	 *
+	 * @return null|string
+	 */
+	protected function find_image_size_from_width( $sizes, $width ) {
+		foreach ( $sizes as $name => $size ) {
+			if ( $width === $size['width'] ) {
+				return $name;
+			}
+		}
+
+		return null;
 	}
 }

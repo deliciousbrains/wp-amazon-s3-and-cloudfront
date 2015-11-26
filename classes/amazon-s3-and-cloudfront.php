@@ -121,6 +121,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		add_filter( 'get_image_tag', array( $this, 'maybe_encode_get_image_tag' ), 99, 6 );
 		add_filter( 'wp_get_attachment_image_src', array( $this, 'maybe_encode_wp_get_attachment_image_src' ), 99, 4 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js' ), 99, 3 );
+		add_filter( 'image_get_intermediate_size', array( $this, 'maybe_encode_image_get_intermediate_size' ), 99, 3 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 
 		// Communication with S3, plugin needs to be setup
@@ -599,7 +600,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$acl = $old_s3object['acl'];
 			}
 			// use existing prefix
-			$prefix = trailingslashit( dirname( $old_s3object['key'] ) );
+			$prefix = dirname( $old_s3object['key'] );
+			$prefix = ( '.' === $prefix ) ? '' : $prefix . '/';
 			// use existing bucket
 			$bucket = $old_s3object['bucket'];
 			// get existing region
@@ -1299,15 +1301,26 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return bool|mixed|void|WP_Error
 	 */
 	function get_attachment_url( $post_id, $expires = null, $size = null, $meta = null, $headers = array(), $skip_rewrite_check = false ) {
-		if ( ! $skip_rewrite_check && ! $this->get_setting( 'serve-from-s3' ) ) {
+		if ( ! ( $s3object = $this->is_attachment_served_by_s3( $post_id, $skip_rewrite_check ) ) ) {
 			return false;
 		}
 
-		// check that the file has been uploaded to S3
-		if ( ! ( $s3object = $this->get_attachment_s3_info( $post_id ) ) ) {
-			return false;
-		}
+		return $this->get_attachment_s3_url( $post_id, $s3object, $expires, $size, $meta, $headers );
+	}
 
+	/**
+	 * Get the S3 URL for an attachment
+	 *
+	 * @param int         $post_id
+	 * @param array       $s3object
+	 * @param null|int    $expires
+	 * @param null|string $size
+	 * @param null|array  $meta
+	 * @param array       $headers
+	 *
+	 * @return mixed|void|WP_Error
+	 */
+	public function get_attachment_s3_url( $post_id, $s3object, $expires = null, $size = null, $meta = null, $headers = array() ) {
 		$scheme = $this->get_s3_url_scheme();
 
 		// We don't use $this->get_s3object_region() here because we don't want
@@ -1330,7 +1343,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$meta = get_post_meta( $post_id, '_wp_attachment_metadata', true );
 			}
 			if ( isset( $meta['sizes'][ $size ]['file'] ) ) {
-				$s3object['key'] = dirname( $s3object['key'] ) . '/' . $meta['sizes'][ $size ]['file'];
+				$size_prefix      = dirname( $s3object['key'] );
+				$size_file_prefix = ( '.' === $size_prefix ) ? '' : $size_prefix . '/';
+
+				$s3object['key'] = $size_file_prefix . $meta['sizes'][ $size ]['file'];
 			}
 		}
 
@@ -1364,14 +1380,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return string
 	 */
-	function maybe_encode_get_image_tag( $html, $id, $alt, $title, $align, $size ) {
-		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
-			// Not serving S3 URLs
-			return $html;
-		}
-
-		if ( ! $this->get_attachment_s3_info( $id ) ) {
-			// File not uploaded to S3
+	public function maybe_encode_get_image_tag( $html, $id, $alt, $title, $align, $size ) {
+		if ( ! $this->is_attachment_served_by_s3( $id ) ) {
 			return $html;
 		}
 
@@ -1398,14 +1408,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return array
 	 */
-	function maybe_encode_wp_get_attachment_image_src( $image, $attachment_id, $size, $icon ) {
-		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
-			// Not serving S3 URLs
-			return $image;
-		}
-
-		if ( ! $this->get_attachment_s3_info( $attachment_id ) ) {
-			// File not uploaded to S3
+	public function maybe_encode_wp_get_attachment_image_src( $image, $attachment_id, $size, $icon ) {
+		if ( ! $this->is_attachment_served_by_s3( $attachment_id ) ) {
 			return $image;
 		}
 
@@ -1425,14 +1429,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return array
 	 */
-	function maybe_encode_wp_prepare_attachment_for_js( $response, $attachment, $meta ) {
-		if ( ! $this->get_setting( 'serve-from-s3' ) ) {
-			// Not serving S3 URLs
-			return $response;
-		}
-
-		if ( ! $this->get_attachment_s3_info( $attachment->ID ) ) {
-			// File not uploaded to S3
+	public function maybe_encode_wp_prepare_attachment_for_js( $response, $attachment, $meta ) {
+		if ( ! $this->is_attachment_served_by_s3( $attachment->ID ) ) {
 			return $response;
 		}
 
@@ -1447,6 +1445,49 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Maybe encode URLs when retrieving intermediate sizes.
+	 *
+	 * @param array        $data
+	 * @param int          $post_id
+	 * @param string|array $size
+	 *
+	 * @return array
+	 */
+	public function maybe_encode_image_get_intermediate_size( $data, $post_id, $size ) {
+		if ( ! $this->is_attachment_served_by_s3( $post_id ) ) {
+			return $data;
+		}
+
+		if ( isset( $data['url'] ) ) {
+			$data['url'] = $this->encode_filename_in_path( $data['url'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Is attachment served by S3.
+	 *
+	 * @param int  $attachment_id
+	 * @param bool $skip_rewrite_check
+	 *
+	 * @return bool|array
+	 */
+	public function is_attachment_served_by_s3( $attachment_id, $skip_rewrite_check = false ) {
+		if ( ! $skip_rewrite_check && ! $this->get_setting( 'serve-from-s3' ) ) {
+			// Not serving S3 URLs
+			return false;
+		}
+
+		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
+			// File not uploaded to S3
+			return false;
+		}
+
+		return $s3object;
 	}
 
 	/**
@@ -1540,11 +1581,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return string
 	 */
 	function get_attached_file( $file, $attachment_id ) {
-		if ( file_exists( $file ) || ! $this->get_setting( 'serve-from-s3' ) ) {
-			return $file;
-		}
-
-		if ( ! ( $s3object = $this->get_attachment_s3_info( $attachment_id ) ) ) {
+		if ( file_exists( $file ) || ! ( $s3object = $this->is_attachment_served_by_s3( $attachment_id ) ) ) {
 			return $file;
 		}
 
@@ -1836,10 +1873,20 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$args = array();
 			}
 
-			$this->s3client = $this->aws->get_client()->get( 's3', $args );
+			$client = $this->aws->get_client()->get( 's3', $args );
+			$this->set_client( $client );
 		}
 
 		return $this->s3client;
+	}
+
+	/**
+	 * Setter for S3 client
+	 *
+	 * @param Aws\S3\S3Client $client
+	 */
+	public function set_client( $client ) {
+		$this->s3client = $client;
 	}
 
 	/**
