@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: amazon-s3-and-cloudfront\n"
 "Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
-"POT-Creation-Date: 2015-11-26 14:06+0000\n"
+"POT-Creation-Date: 2015-12-19 11:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,15 +167,15 @@ msgstr ""
 msgid "Invalid notice ID."
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:180
+#: classes/as3cf-plugin-compatibility.php:185
 msgid "WP Offload S3 Compatibility Addons"
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:182
+#: classes/as3cf-plugin-compatibility.php:187
 msgid "compatibility addons"
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:183
+#: classes/as3cf-plugin-compatibility.php:188
 #, php-format
 msgid ""
 "To get WP Offload S3 to work with certain 3rd party plugins, you might need "
@@ -184,7 +184,7 @@ msgid ""
 "about each addon to determine if you need it or not."
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:189
+#: classes/as3cf-plugin-compatibility.php:194
 #, php-format
 msgid ""
 "You will need to purchase a license to get access to these addons. If you're "
@@ -192,11 +192,11 @@ msgid ""
 "to %s."
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:190
+#: classes/as3cf-plugin-compatibility.php:195
 msgid "View Licenses"
 msgstr ""
 
-#: classes/as3cf-plugin-compatibility.php:629
+#: classes/as3cf-plugin-compatibility.php:634
 #: classes/upgrades/as3cf-meta-wp-error.php:72
 #, php-format
 msgid "There was an error attempting to download the file %s from S3: %s"
