@@ -1,5 +1,8 @@
 <?php
-$tr_class = ( isset( $tr_class ) ) ? $tr_class : ''; ?>
+$constant = strtoupper( str_replace( '-', '_', $prefix ) . '_DOMAIN' );
+$tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
+?>
+
 <tr class="<?php echo $tr_class; ?>">
 	<td>
 		<h4><?php _e( 'Domain:', 'amazon-s3-and-cloudfront' ) ?></h4>
@@ -37,7 +40,10 @@ $tr_class = ( isset( $tr_class ) ) ? $tr_class : ''; ?>
 				<input id="cloudfront" type="radio" name="domain" value="cloudfront" <?php checked( $domain, 'cloudfront' ); ?>>
 				<?php _e( 'CloudFront or custom domain', 'amazon-s3-and-cloudfront' ); ?>
 				<p class="as3cf-setting cloudfront <?php echo ( 'cloudfront' == $domain ) ? '' : 'hide'; // xss ok ?>">
-					<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="30" />
+					<input type="text" name="cloudfront" value="<?php echo esc_attr( $this->get_setting( 'cloudfront' ) ); ?>" size="30" <?php if ( defined( $constant ) ) { ?>disabled<?php } ?>/>
+					<?php if ( defined( $constant ) ) { ?>
+						<?php _e( '(defined in wp-config.php)', 'amazon-s3-and-cloudfront' );
+					} ?>
 					<span class="as3cf-validation-error" style="display: none;">
 						<?php _e( 'Invalid character. Letters, numbers, periods and hyphens are allowed.', 'amazon-s3-and-cloudfront' ); ?>
 					</span>
