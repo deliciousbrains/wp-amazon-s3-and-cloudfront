@@ -76,7 +76,13 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						</div>
 					</td>
 				</tr>
-				<?php $this->render_view( 'domain-setting', array( 'tr_class' => 'configure-url url-preview' ) ); ?>
+				<?php
+				$this->render_view( 'domain-setting',
+					array(
+						'prefix'                 => $prefix,
+						'tr_class'               => 'configure-url url-preview',
+					)
+				); ?>
 				<tr class="configure-url url-preview">
 					<td>
 						<?php $this->render_view( 'checkbox', array( 'key' => 'enable-object-prefix', 'class' => 'sub-toggle' ) ); ?>
