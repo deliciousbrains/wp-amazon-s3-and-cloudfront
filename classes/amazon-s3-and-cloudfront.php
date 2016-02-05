@@ -287,6 +287,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $bucket;
 		}
 
+		if ( 'cloudfront' == $key && defined( 'AS3CF_DOMAIN' ) ) {
+			$cloudfront = AS3CF_DOMAIN;
+
+			if ( $cloudfront !== $value ) {
+				// Save the defined cloudfront
+				parent::set_setting( 'cloudfront', $cloudfront );
+			}
+
+			return $cloudfront;
+		}
+
 		return apply_filters( 'as3cf_setting_' . $key, $value );
 	}
 
