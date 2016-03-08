@@ -37,11 +37,21 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 				return false;
 			}
 
-			$plugin_to_deactivate  = 'wordpress-s3.php';
-			$deactivated_notice_id = '1';
+			$plugin_to_deactivate             = 'wordpress-s3.php';
+			$deactivated_notice_id            = '1';
+			$activated_plugin_min_version     = '1.1';
+			$plugin_to_deactivate_min_version = '1.0';
 			if ( basename( $plugin ) === $plugin_to_deactivate ) {
-				$plugin_to_deactivate  = 'amazon-s3-and-cloudfront-pro.php';
-				$deactivated_notice_id = '2';
+				$plugin_to_deactivate             = 'amazon-s3-and-cloudfront-pro.php';
+				$deactivated_notice_id            = '2';
+				$activated_plugin_min_version     = '1.0';
+				$plugin_to_deactivate_min_version = '1.1';
+			}
+
+			$version = self::get_plugin_version_from_basename( $plugin );
+
+			if ( version_compare( $version, $activated_plugin_min_version, '<' ) ) {
+				return false;
 			}
 
 			if ( is_multisite() ) {
@@ -53,6 +63,12 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 
 			foreach ( $active_plugins as $basename ) {
 				if ( false !== strpos( $basename, $plugin_to_deactivate ) ) {
+					$version = self::get_plugin_version_from_basename( $basename );
+
+					if ( version_compare( $version, $plugin_to_deactivate_min_version, '<' ) ) {
+						return false;
+					}
+
 					set_transient( 'as3cf_deactivated_notice_id', $deactivated_notice_id, HOUR_IN_SECONDS );
 					deactivate_plugins( $basename );
 
@@ -61,6 +77,22 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return false;
+		}
+
+		/**
+		 * Get plugin data from basename
+		 *
+		 * @param string $basename
+		 *
+		 * @return string
+		 */
+		public static function get_plugin_version_from_basename( $basename ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+			$plugin_path = WP_PLUGIN_DIR . '/' . $basename;
+			$plugin_data = get_plugin_data( $plugin_path );
+
+			return $plugin_data['Version'];
 		}
 	}
 }

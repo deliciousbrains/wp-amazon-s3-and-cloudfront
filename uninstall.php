@@ -14,6 +14,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+if ( 'amazon-s3-and-cloudfront/wordpress-s3.php' === WP_UNINSTALL_PLUGIN && file_exists( WP_PLUGIN_DIR . '/amazon-s3-and-cloudfront-pro/amazon-s3-and-cloudfront-pro.php' ) ) {
+	// Don't uninstall if the pro plugin is installed
+	return;
+}
+
 require dirname( __FILE__ ) . '/classes/wp-aws-uninstall.php';
 
 $options = array(
