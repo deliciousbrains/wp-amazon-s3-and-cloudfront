@@ -791,7 +791,7 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		foreach ( $selected_images as $image => $attachment_id ) {
-			if ( ! ( $s3object = $this->as3cf->get_attachment_s3_info( $attachment_id ) ) ) {
+			if ( ! ( $s3object = $this->as3cf->is_attachment_served_by_s3( $attachment_id ) ) ) {
 				// Attachment not uploaded to S3, abort
 				continue;
 			}
@@ -910,7 +910,7 @@ class AS3CF_Plugin_Compatibility {
 			return $image_meta;
 		}
 
-		if ( ! ( $s3object = $this->as3cf->get_attachment_s3_info( $attachment_id ) ) ) {
+		if ( ! ( $s3object = $this->as3cf->is_attachment_served_by_s3( $attachment_id ) ) ) {
 			// Attachment not uploaded to S3, abort
 			return $image_meta;
 		}
@@ -946,7 +946,7 @@ class AS3CF_Plugin_Compatibility {
 			return $sources;
 		}
 
-		if ( ! ( $s3object = $this->as3cf->get_attachment_s3_info( $attachment_id ) ) ) {
+		if ( ! ( $s3object = $this->as3cf->is_attachment_served_by_s3( $attachment_id ) ) ) {
 			// Attachment not uploaded to S3, abort
 			return $sources;
 		}
