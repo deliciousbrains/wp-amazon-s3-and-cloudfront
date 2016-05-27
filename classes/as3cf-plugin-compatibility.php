@@ -467,7 +467,7 @@ class AS3CF_Plugin_Compatibility {
 		// but we actually need to copy back the original image at this point
 		// for the restore to be successful and edited images to be deleted from S3
 		// via image_editor_remove_files()
-		if ( isset( $_POST['do'] ) && 'restore' == $_POST['do'] ) {
+		if ( isset( $_REQUEST['do'] ) && 'restore' == $_REQUEST['do'] ) {
 			$backup_sizes      = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 			$original_filename = $backup_sizes['full-orig']['file'];
 
@@ -486,7 +486,9 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		// must be the image-editor process
-		if ( isset( $_POST['action'] ) && 'image-editor' == sanitize_key( $_POST['action'] ) ) { // input var okay
+		$allowed_actions = array('image-editor', 'imgedit-preview');
+
+		if ( isset( $_REQUEST['action'] ) && in_array(sanitize_key( $_REQUEST['action']), $allowed_actions) ) { // input var okay
 			$callers = debug_backtrace();
 			foreach ( $callers as $caller ) {
 				if ( isset( $caller['function'] ) && '_load_image_to_edit_path' == $caller['function'] ) {
