@@ -2,8 +2,8 @@
 Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.4
-Tested up to: 4.5.2
-Stable tag: 1.0.4
+Tested up to: 4.6
+Stable tag: 1.0.5
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -61,13 +61,11 @@ You can see the minimum requirements [here](https://deliciousbrains.com/wp-offlo
 = 0.6 =
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
-= 0.6.1 =
-This version requires PHP 5.3.3+ and the Amazon Web Services plugin
-
-= 0.6.2 =
-This version requires PHP 5.3.3+ and the Amazon Web Services plugin
-
 == Changelog ==
+
+= WP Offload S3 Lite 1.0.5 - 2016-09-01 =
+* New: Compatibility with WordPress 4.6
+* Improvement: No longer delete plugin data on uninstall. Manual removal possible, as per this [doc](https://deliciousbrains.com/wp-offload-s3/doc/uninstall/)
 
 = WP Offload S3 Lite 1.0.4 - 2016-05-30 =
 * New: Now using simpler Force HTTPS setting, removed redundant Always Use HTTP setting.

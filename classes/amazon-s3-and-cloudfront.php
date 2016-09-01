@@ -2458,6 +2458,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	}
 
 	/**
+	 * List of settings that should skip full sanitize.
+	 *
+	 * @return array
+	 */
+	function get_skip_sanitize_settings() {
+		return array();
+	}
+
+	/**
 	 * Handle the saving of the settings page
 	 */
 	function handle_post_request() {
@@ -2475,7 +2484,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		do_action( 'as3cf_pre_save_settings' );
 
-		$post_vars = $this->get_settings_whitelist();
+		$post_vars     = $this->get_settings_whitelist();
+		$skip_sanitize = $this->get_skip_sanitize_settings();
 
 		foreach ( $post_vars as $var ) {
 			$this->remove_setting( $var );
@@ -2484,7 +2494,11 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				continue;
 			}
 
-			$value = sanitize_text_field( $_POST[ $var ] ); // input var okay
+			if ( in_array( $var, $skip_sanitize ) ) {
+				$value = wp_strip_all_tags( $_POST[ $var ] ); // input var okay
+			} else {
+				$value = sanitize_text_field( $_POST[ $var ] ); // input var okay
+			}
 
 			$this->set_setting( $var, $value );
 		}
@@ -2678,19 +2692,30 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	/**
 	 * Get all the blog IDs for the multisite network used for table prefixes
 	 *
-	 * @return array
+	 * @return false|array
 	 */
-	function get_blog_ids() {
+	public function get_blog_ids() {
+		if ( ! is_multisite() ) {
+			return false;
+		}
+
 		$args = array(
 			'limit'    => false,
 			'spam'     => 0,
 			'deleted'  => 0,
 			'archived' => 0,
 		);
-		$blogs = wp_get_sites( $args );
+
+		if ( version_compare( $GLOBALS['wp_version'], '4.6', '>=' ) ) {
+			$blogs = get_sites( $args );
+		} else {
+			$blogs = wp_get_sites( $args );
+		}
 
 		$blog_ids = array();
+
 		foreach ( $blogs as $blog ) {
+			$blog       = (array) $blog;
 			$blog_ids[] = $blog['blog_id'];
 		}
 
