@@ -671,6 +671,11 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		try {
+			$directory = dirname($file);
+			if (!file_exists($directory)) {
+				mkdir($directory, 0775, true);
+			}
+			
 			$this->as3cf->get_s3client( $s3_object['region'], true )->getObject(
 				array(
 					'Bucket' => $s3_object['bucket'],
