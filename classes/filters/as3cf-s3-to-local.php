@@ -14,6 +14,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		add_filter( 'pre_set_theme_mod_header_image_data', array( $this, 'filter_header_image_data' ), 10, 2 );
 		// Posts
 		add_filter( 'content_save_pre', array( $this, 'filter_post' ) );
+		add_filter( 'excerpt_save_pre', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_update_callback', array( $this, 'filter_widget_update' ), 10, 4 );
 	}

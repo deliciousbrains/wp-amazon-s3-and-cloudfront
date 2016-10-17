@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: amazon-s3-and-cloudfront\n"
 "Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
-"POT-Creation-Date: 2016-09-29 13:21+0100\n"
+"POT-Creation-Date: 2016-10-17 13:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -346,25 +346,25 @@ msgstr ""
 msgid "and ensuring that only the local URL exists in post content."
 msgstr ""
 
-#: classes/upgrades/as3cf-content-replace-urls.php:565
+#: classes/upgrades/as3cf-content-replace-urls.php:566
 #, php-format
 msgid ""
 "<strong>Running 1.2 Upgrade%1$s</strong><br>A find &amp; replace is running "
 "in the background to update URLs in your content. %2$s"
 msgstr ""
 
-#: classes/upgrades/as3cf-content-replace-urls.php:574
+#: classes/upgrades/as3cf-content-replace-urls.php:575
 #, php-format
 msgid ""
 "<strong>Paused 1.2 Upgrade</strong><br>The find &amp; replace to update URLs "
 "in your content has been paused. %s"
 msgstr ""
 
-#: classes/upgrades/as3cf-content-replace-urls.php:583
+#: classes/upgrades/as3cf-content-replace-urls.php:584
 msgid "See our documentation"
 msgstr ""
 
-#: classes/upgrades/as3cf-content-replace-urls.php:586
+#: classes/upgrades/as3cf-content-replace-urls.php:587
 #, php-format
 msgid ""
 "%s for details on why we&#8217;re doing this, why it runs slowly, and how to "

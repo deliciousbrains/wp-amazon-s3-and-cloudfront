@@ -406,12 +406,10 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 		$url_pairs = $this->maybe_add_encoded_url_pairs( $url_pairs );
 
 		// Remove URL protocols
-		$url_pairs = array_map( function ( $url_pair ) {
-			$url_pair['old_url'] = $this->as3cf->remove_scheme( $url_pair['old_url'] );
-			$url_pair['new_url'] = $this->as3cf->remove_scheme( $url_pair['new_url'] );
-
-			return $url_pair;
-		}, $url_pairs );
+		foreach ( $url_pairs as $key => $url_pair ) {
+			$url_pairs[ $key ]['old_url'] = $this->as3cf->remove_scheme( $url_pair['old_url'] );
+			$url_pairs[ $key ]['new_url'] = $this->as3cf->remove_scheme( $url_pair['new_url'] );
+		}
 
 		return apply_filters( 'as3cf_find_replace_url_pairs', $url_pairs, $file_path, $old_url, $new_url, $meta );
 	}
@@ -506,12 +504,15 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 	protected function generate_select_sql( $url_pairs, $where_lowest_id, $where_highest_id ) {
 		global $wpdb;
 
-		// Get unique URLs without size string and extension
-		$paths = array_unique( array_map( function ( $pair ) {
-			return $this->as3cf->remove_size_from_filename( $pair['old_url'], true );
-		}, $url_pairs ) );
+		$paths = array();
 
-		$sql = '';
+		// Get unique URLs without size string and extension
+		foreach ( $url_pairs as $url_pair ) {
+			$paths[] = $this->as3cf->remove_size_from_filename( $url_pair['old_url'], true );
+		}
+
+		$paths = array_unique( $paths );
+		$sql   = '';
 
 		foreach ( $paths as $path ) {
 			if ( ! empty( $sql ) ) {

@@ -104,6 +104,11 @@ abstract class AS3CF_Filter {
 	 * @return string
 	 */
 	public function filter_post( $content ) {
+		if ( empty( $content ) ) {
+			// Nothing to filter, continue
+			return $content;
+		}
+
 		$cache    = $this->get_post_cache();
 		$to_cache = array();
 		$content  = $this->process_content( $content, $cache, $to_cache );

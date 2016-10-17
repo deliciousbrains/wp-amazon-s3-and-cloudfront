@@ -22,6 +22,8 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		// Posts
 		add_filter( 'the_content', array( $this, 'filter_post' ), $priority, 1 );
 		add_filter( 'content_edit_pre', array( $this, 'filter_post' ) );
+		add_filter( 'the_excerpt', array( $this, 'filter_post' ) );
+		add_filter( 'excerpt_edit_pre', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_text', array( $this, 'filter_widget' ) );
 		add_filter( 'widget_form_callback', array( $this, 'filter_widget_form' ), 10, 2 );

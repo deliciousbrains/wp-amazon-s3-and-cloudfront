@@ -2030,7 +2030,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $file;
 		}
 
-		$file_name = basename( $file );
+		$file_name = basename( $url['path'] );
 
 		if ( false !== strpos( $file_name, '%' ) ) {
 			// File name already encoded, return original
