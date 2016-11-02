@@ -1937,8 +1937,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return null|string
 	 */
 	protected function convert_dimensions_to_size_name( $attachment_id, $dimensions ) {
-		$w                     = $dimensions[0];
-		$h                     = $dimensions[1];
+		$w                     = ( isset( $dimensions[0] ) && $dimensions[0] > 0 ) ? $dimensions[0] : 1;
+		$h                     = ( isset( $dimensions[1] ) && $dimensions[1] > 0 ) ? $dimensions[1] : 1;
 		$original_aspect_ratio = $w / $h;
 		$meta                  = wp_get_attachment_metadata( $attachment_id );
 

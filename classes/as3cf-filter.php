@@ -128,6 +128,11 @@ abstract class AS3CF_Filter {
 	 * @return mixed
 	 */
 	protected function process_content( $content, $cache, &$to_cache ) {
+		if ( empty( $content ) ) {
+			// Nothing to filter, return
+			return $content;
+		}
+
 		if ( ! $this->should_filter_content() ) {
 			// Not filtering content, return
 			return $content;

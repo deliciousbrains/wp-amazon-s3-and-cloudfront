@@ -6,27 +6,64 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 * Init.
 	 */
 	protected function init() {
-		// Hot fix for 4.4 responsive images
-		$priority = 1;
-
-		global $wp_version;
-		if ( 0 === version_compare( $wp_version, '4.4' ) ) {
-			$priority = 10;
-		}
-
 		// EDD
 		add_filter( 'edd_download_files', array( $this, 'filter_edd_download_files' ) );
 		// Customizer
 		add_filter( 'theme_mod_background_image', array( $this, 'filter_customizer_image' ) );
 		add_filter( 'theme_mod_header_image', array( $this, 'filter_customizer_image' ) );
 		// Posts
-		add_filter( 'the_content', array( $this, 'filter_post' ), $priority, 1 );
+		add_action( 'the_post', array( $this, 'filter_post_data' ) );
+		add_filter( 'content_pagination', array( $this, 'filter_content_pagination' ) );
+		add_filter( 'the_content', array( $this, 'filter_post' ), 100 );
+		add_filter( 'the_excerpt', array( $this, 'filter_post' ), 100 );
 		add_filter( 'content_edit_pre', array( $this, 'filter_post' ) );
-		add_filter( 'the_excerpt', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_edit_pre', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_text', array( $this, 'filter_widget' ) );
 		add_filter( 'widget_form_callback', array( $this, 'filter_widget_form' ), 10, 2 );
+	}
+
+	/**
+	 * Filter post data.
+	 *
+	 * @param WP_Post $post
+	 */
+	public function filter_post_data( $post ) {
+		global $pages;
+
+		$cache    = $this->get_post_cache();
+		$to_cache = array();
+
+		if ( count( $pages ) === 1 ) {
+			// Post already filtered and available on global $page array, continue
+			$post->post_content = $pages[0];
+		} else {
+			$post->post_content = $this->process_content( $post->post_content, $cache, $to_cache );
+		}
+
+		$post->post_excerpt = $this->process_content( $post->post_excerpt, $cache, $to_cache );
+
+		$this->maybe_update_post_cache( $to_cache );
+	}
+
+	/**
+	 * Filter content pagination.
+	 *
+	 * @param array $pages
+	 *
+	 * @return array
+	 */
+	public function filter_content_pagination( $pages ) {
+		$cache    = $this->get_post_cache();
+		$to_cache = array();
+
+		foreach ( $pages as $key => $page ) {
+			$pages[ $key ] = $this->process_content( $page, $cache, $to_cache );
+		}
+
+		$this->maybe_update_post_cache( $to_cache );
+
+		return $pages;
 	}
 
 	/**

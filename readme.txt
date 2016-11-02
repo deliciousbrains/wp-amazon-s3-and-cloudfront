@@ -3,7 +3,7 @@ Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.4
 Tested up to: 4.6.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -65,12 +65,16 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
+= WP Offload S3 Lite 1.1.2 - 2016-11-02 =
+* Improvement: Better content filtering support for third party plugins and themes
+* Bug fix: PHP Warning: Division by zero
+
 = WP Offload S3 Lite 1.1.1 - 2016-10-17 =
 * New: Filter post excerpts - S3 URLs will no longer be saved to the database
 * Bug fix: PHP 5.3 Fatal error: Using $this when not in object context
 * Bug fix: Query string parameters incorrectly encoded for Media Library items
 
-= WP Offload S3 Lite 1.1 - 2016-10-29 =
+= WP Offload S3 Lite 1.1 - 2016-09-29 =
 * New: Filter post content. S3 URLs will no longer be saved to the database
 * New: Upgrade routine to replace all S3 URLs in content with local URLs
 * New: Support for theme custom logos
