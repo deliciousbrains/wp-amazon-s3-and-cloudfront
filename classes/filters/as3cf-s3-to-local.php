@@ -98,13 +98,14 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		global $wpdb;
 
 		$full_url = $this->as3cf->remove_size_from_filename( $url );
-		$parts    = parse_url( $full_url );
-		$path     = $this->as3cf->decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
 		if ( isset( $this->query_cache[ $full_url ] ) ) {
 			// ID already cached, return
 			return $this->query_cache[ $full_url ];
 		}
+
+		$parts = parse_url( $full_url );
+		$path  = $this->as3cf->decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
 		if ( false !== strpos( $path, '/' ) ) {
 			// Remove the first directory to cater for bucket in path domain settings
@@ -160,6 +161,31 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		$this->query_cache[ $full_url ] = false;
 
 		return false;
+	}
+
+	/**
+	 * Get attachment IDs from URLs.
+	 *
+	 * @param array $urls
+	 *
+	 * @return array url => attachment ID (or false)
+	 */
+	protected function get_attachment_ids_from_urls( $urls ) {
+		$results = array();
+
+		if ( empty( $urls ) ) {
+			return $results;
+		}
+
+		if ( ! is_array( $urls ) ) {
+			$urls = array( $urls );
+		}
+
+		foreach ( $urls as $url ) {
+			$results[ $url ] = $this->get_attachment_id_from_url( $url );
+		}
+
+		return $results;
 	}
 
 	/**
