@@ -80,7 +80,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	const SETTINGS_KEY = 'tantan_wordpress_s3';
 	const SETTINGS_CONSTANT = 'WPOS3_SETTINGS';
 
-	const LATEST_UPGRADE_ROUTINE = 5;
+	const LATEST_UPGRADE_ROUTINE = 6;
 
 	/**
 	 * @param string              $plugin_file_path
@@ -113,6 +113,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		new AS3CF_Upgrade_Meta_WP_Error( $this );
 		new AS3CF_Upgrade_Content_Replace_URLs( $this );
 		new AS3CF_Upgrade_EDD_Replace_URLs( $this );
+		new AS3CF_Upgrade_Filter_Post_Excerpt( $this );
 
 		// Plugin setup
 		add_action( 'aws_admin_menu', array( $this, 'admin_menu' ) );
@@ -400,18 +401,39 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		if ( 'bucket' === $key && defined( $constant ) ) {
 			$bucket = constant( $constant );
 
-			if ( $bucket !== $value ) {
-				// Save the defined bucket
-				parent::set_setting( 'bucket', $bucket );
-				// Clear region
-				$this->remove_setting( 'region' );
+			if ( ! empty( $value ) ) {
+				// Clear bucket
+				$this->remove_setting( 'bucket' );
 				$this->save_settings();
 			}
+
+			$this->remove_region_on_constant_change( $bucket, $constant );
 
 			return $bucket;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Remove region on constant change.
+	 *
+	 * @param string $bucket
+	 * @param string $constant
+	 */
+	private function remove_region_on_constant_change( $bucket, $constant ) {
+		$key   = 'as3cf_constant_' . strtolower( $constant );
+		$value = get_site_transient( $key );
+
+		if ( false === $value || $bucket !== $value ) {
+			set_site_transient( $key, $bucket );
+		}
+
+		if ( false !== $value && $bucket !== $value ) {
+			// Clear region
+			$this->remove_setting( 'region' );
+			$this->save_settings();
+		}
 	}
 
 	/**
@@ -746,6 +768,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$bucket = $s3object['bucket'];
 		$region = $this->get_s3object_region( $s3object );
 		$paths  = $this->get_attachment_file_paths( $post_id, false, false, $remove_backup_sizes );
+		$paths  = apply_filters( 'as3cf_remove_attachment_paths', $paths, $post_id, $s3object, $remove_backup_sizes );
 
 		if ( is_wp_error( $region ) ) {
 			$region = '';
@@ -1145,7 +1168,15 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 
 			if ( ! @unlink( $path ) ) {
-				AS3CF_Error::log( 'Error removing local file ' . $path );
+				$message = 'Error removing local file ';
+
+				if ( ! file_exists( $path ) ) {
+					$message = "Error removing local file. Couldn't find the file at ";
+				} else if ( ! is_writable( $path ) ) {
+					$message = 'Error removing local file. Ownership or permissions are mis-configured for ';
+				}
+
+				AS3CF_Error::log( $message . $path );
 			}
 		}
 	}
@@ -1750,7 +1781,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 		if ( ! is_null( $expires ) && $this->is_plugin_setup() ) {
 			try {
-				$expires    = time() + $expires;
+				$expires    = time() + apply_filters( 'as3cf_expires', $expires );
 				$secure_url = $this->get_s3client( $region )->getObjectUrl( $s3object['bucket'], $s3object['key'], $expires, $headers );
 
 				return apply_filters( 'as3cf_get_attachment_secure_url', $secure_url, $s3object, $post_id, $expires, $headers );
@@ -2030,7 +2061,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $file;
 		}
 
-		$file_name = basename( $url['path'] );
+		if ( isset( $url['query'] ) ) {
+			// Manually strip query string, as passing $url['path'] to basename results in corrupt � characters
+			$file_name = basename( str_replace( '?' . $url['query'], '', $file ) );
+		} else {
+			$file_name = basename( $file );
+		}
 
 		if ( false !== strpos( $file_name, '%' ) ) {
 			// File name already encoded, return original
@@ -2337,32 +2373,6 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Get all AWS regions
-	 *
-	 * @return array
-	 */
-	function get_aws_regions() {
-		$regionEnum  = new ReflectionClass( 'Aws\Common\Enum\Region' );
-		$all_regions = $regionEnum->getConstants();
-
-		$regions = array();
-		foreach ( $all_regions as $label => $region ) {
-			// Nicely format region name
-			if ( self::DEFAULT_REGION === $region ) {
-				$label = 'US Standard';
-			} else {
-				$label = strtolower( $label );
-				$label = str_replace( '_', ' ', $label );
-				$label = ucwords( $label );
-			}
-
-			$regions[ $region ] = $label;
-		}
-
-		return $regions;
 	}
 
 	/**
@@ -2934,7 +2944,8 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		$args = array(
-			'limit'    => false,
+			'limit'    => false, // Deprecated
+			'number'   => false, // WordPress 4.6+
 			'spam'     => 0,
 			'deleted'  => 0,
 			'archived' => 0,
@@ -3122,10 +3133,13 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		$output .= 'WordPress: ';
 		$output .= get_bloginfo( 'version', 'display' );
 		if ( is_multisite() ) {
-			$output .= ' Multisite';
+			$output .= ' Multisite ';
+			$output .= '(' . ( is_subdomain_install() ? 'subdomain' : 'subdirectory' ) . ')';
 			$output .= "\r\n";
 			$output .= 'Multisite Site Count: ';
 			$output .= esc_html( get_blog_count() );
+			$output .= "\r\n";
+			$output .= 'Domain Mapping: ' . ( defined( 'SUNRISE' ) && SUNRISE ? 'Enabled' : 'Disabled' );
 		}
 		$output .= "\r\n";
 
@@ -3442,6 +3456,17 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 
 			asort( $mu_plugin_details );
 			$output .= implode( '', $mu_plugin_details );
+		}
+
+		$dropins = get_dropins();
+		if ( $dropins ) {
+			$output .= "\r\n\r\n";
+			$output .= "Drop-ins:\r\n";
+
+			foreach ( $dropins as $file => $dropin ) {
+				$output .= $file . ( isset( $dropin['Name'] ) ? ' - ' . $dropin['Name'] : '' );
+				$output .= "\r\n";
+			}
 		}
 
 		return $output;
@@ -4316,22 +4341,5 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $url;
-	}
-
-	/**
-	 * Update site option.
-	 *
-	 * @param string $option
-	 * @param mixed  $value
-	 * @param bool   $autoload
-	 *
-	 * @return bool
-	 */
-	public function update_site_option( $option, $value, $autoload = true ) {
-		if ( is_multisite() ) {
-			return update_site_option( $option, $value );
-		}
-
-		return update_option( $option, $value, $autoload );
 	}
 }

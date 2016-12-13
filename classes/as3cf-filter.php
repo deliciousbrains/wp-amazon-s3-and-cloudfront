@@ -344,8 +344,7 @@ abstract class AS3CF_Filter {
 	 * @return bool
 	 */
 	protected function attachment_id_matches_src( $attachment_id, $url ) {
-		$base_urls = array();
-		$meta      = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
+		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
 
 		if ( ! isset( $meta['sizes'] ) ) {
 			// No sizes found, return

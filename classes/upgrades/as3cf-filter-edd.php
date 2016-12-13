@@ -16,18 +16,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Upgrade_EDD_Replace_URLs extends AS3CF_Upgrade {
 
 	/**
-	 * Initiate the upgrade
-	 *
-	 * @param object $as3cf Instance of calling class
+	 * @var int
 	 */
-	public function __construct( $as3cf ) {
-		$this->upgrade_id   = 5;
-		$this->upgrade_name = 'replace_edd_urls';
-		$this->upgrade_type = 'post meta';
+	protected $upgrade_id = 5;
 
-		$this->running_update_text = __( 'and ensuring that only the local URL exists in EDD post meta.', 'amazon-s3-and-cloudfront' );
+	/**
+	 * @var string
+	 */
+	protected $upgrade_name = 'replace_edd_urls';
 
-		parent::__construct( $as3cf );
+	/**
+	 * @var string 'metadata', 'attachment'
+	 */
+	protected $upgrade_type = 'post meta';
+
+	/**
+	 * Get running update text.
+	 *
+	 * @return string
+	 */
+	protected function get_running_update_text() {
+		return __( 'and ensuring that only the local URL exists in EDD post meta.', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**

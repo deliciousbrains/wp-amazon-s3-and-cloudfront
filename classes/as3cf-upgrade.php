@@ -78,6 +78,11 @@ abstract class AS3CF_Upgrade {
 	 */
 	protected $error_count;
 
+	/**
+	 * @var string
+	 */
+	protected $lock_key = 'as3cf_upgrade_lock';
+
 	const STATUS_RUNNING = 1;
 	const STATUS_ERROR = 2;
 	const STATUS_PAUSED = 3;
@@ -90,8 +95,9 @@ abstract class AS3CF_Upgrade {
 	public function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
-		$this->cron_hook         = 'as3cf_cron_update_' . $this->upgrade_name;
-		$this->cron_schedule_key = 'as3cf_update_' . $this->upgrade_name . '_interval';
+		$this->running_update_text = $this->get_running_update_text();
+		$this->cron_hook           = 'as3cf_cron_update_' . $this->upgrade_name;
+		$this->cron_schedule_key   = 'as3cf_update_' . $this->upgrade_name . '_interval';
 
 		$this->cron_interval_in_minutes = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_interval', 2 );
 		$this->error_threshold          = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_error_threshold', 20 );
@@ -128,16 +134,6 @@ abstract class AS3CF_Upgrade {
 			return false;
 		}
 
-		// If the upgrade status is already set, then we've already initialized the upgrade
-		if ( $upgrade_status = $this->get_upgrade_status() ) {
-			if ( self::STATUS_RUNNING === $upgrade_status ) {
-				// Make sure cron job is persisted in case it has dropped
-				$this->schedule();
-			}
-			
-			return false;
-		}
-
 		// Have we completed the upgrade?
 		if ( $this->get_saved_upgrade_id() >= $this->upgrade_id ) {
 			return false;
@@ -148,9 +144,24 @@ abstract class AS3CF_Upgrade {
 			return false;
 		}
 
+		// Does the upgrade lock exist?
+		if ( false !== get_site_transient( $this->lock_key ) ) {
+			return false;
+		}
+
 		// Do we actually have attachments to process?
 		if ( 0 === $this->count_items_to_process() ) {
 			$this->upgrade_finished();
+
+			return false;
+		}
+
+		// If the upgrade status is already set, then we've already initialized the upgrade
+		if ( $upgrade_status = $this->get_upgrade_status() ) {
+			if ( self::STATUS_RUNNING === $upgrade_status ) {
+				// Make sure cron job is persisted in case it has dropped
+				$this->schedule();
+			}
 
 			return false;
 		}
@@ -186,6 +197,13 @@ abstract class AS3CF_Upgrade {
 	abstract protected function upgrade_item( $attachment );
 
 	/**
+	 * Get running update text.
+	 *
+	 * @return string
+	 */
+	abstract protected function get_running_update_text();
+
+	/**
 	 * Fire up the upgrade
 	 */
 	protected function init() {
@@ -199,6 +217,8 @@ abstract class AS3CF_Upgrade {
 	 * Cron job to update the region of the bucket in s3 metadata
 	 */
 	public function do_upgrade() {
+		$this->lock_upgrade();
+
 		// Check if the cron should even be running
 		if ( $this->get_saved_upgrade_id() >= $this->upgrade_id || $this->get_upgrade_status() !== self::STATUS_RUNNING ) {
 			$this->unschedule();
@@ -569,5 +589,12 @@ abstract class AS3CF_Upgrade {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Lock upgrade.
+	 */
+	protected function lock_upgrade() {
+		set_site_transient( $this->lock_key, $this->upgrade_id, MINUTE_IN_SECONDS * 3 );
 	}
 }

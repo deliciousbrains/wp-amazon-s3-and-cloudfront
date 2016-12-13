@@ -6,14 +6,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * AS3CF_Upgrade_Content_Replace_URLs Class
+ * AS3CF_Upgrade_Filter Class
  *
- * This class handles replacing all S3 URLs in post
- * content with the local URL.
+ * The base upgrade class for handling find and replace
+ * on the posts tables for content filtering.
  *
- * @since 1.2
+ * @since 1.3
  */
-class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
+abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
+
+	/**
+	 * @var string 'metadata', 'attachment'
+	 */
+	protected $upgrade_type = 'posts';
 
 	/**
 	 * @var int Current blog ID
@@ -31,19 +36,9 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 	protected $session;
 
 	/**
-	 * Initiate the upgrade
-	 *
-	 * @param object $as3cf Instance of calling class
+	 * @var string
 	 */
-	public function __construct( $as3cf ) {
-		$this->upgrade_id   = 4;
-		$this->upgrade_name = 'replace_s3_urls';
-		$this->upgrade_type = 'posts';
-
-		$this->running_update_text = __( 'and ensuring that only the local URL exists in post content.', 'amazon-s3-and-cloudfront' );
-
-		parent::__construct( $as3cf );
-	}
+	protected $column_name;
 
 	/**
 	 * Fire up the upgrade
@@ -94,6 +89,8 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 	 * Cron job to update post content, ensuring no S3 URLs exist.
 	 */
 	public function do_upgrade() {
+		$this->lock_upgrade();
+
 		// Check if the cron should even be running
 		if ( $this->get_saved_upgrade_id() >= $this->upgrade_id || $this->get_upgrade_status() !== self::STATUS_RUNNING ) {
 			$this->unschedule();
@@ -162,6 +159,19 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 			$this->as3cf->restore_current_blog();
 		}
 
+		$this->maybe_finish_upgrade();
+	}
+
+	/**
+	 * Maybe finish the upgrade process.
+	 */
+	protected function maybe_finish_upgrade() {
+		if ( $this->session['processed_attachments'] >= $this->session['total_attachments']) {
+			$this->upgrade_finished();
+
+			return;
+		}
+
 		$this->save_session( $this->session );
 	}
 
@@ -183,8 +193,9 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 			}
 
 			if ( is_null( $blog['total_attachments'] ) ) {
-				// Handle theme mods
-				$this->upgrade_theme_mods( $blog['prefix'] );
+				if ( method_exists( $this, 'process_blog' ) ) {
+					$this->process_blog( $blog );
+				}
 
 				// Count total attachments
 				$count = $this->as3cf->count_attachments( $blog['prefix'], true );
@@ -233,39 +244,6 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Upgrade theme mods. Ensures background and header images have local URLs saved to the database.
-	 *
-	 * @param string $prefix
-	 */
-	protected function upgrade_theme_mods( $prefix ) {
-		global $wpdb;
-
-		$mods = $wpdb->get_results( "SELECT * FROM `{$prefix}options` WHERE option_name LIKE 'theme_mods_%'" );
-
-		foreach ( $mods as $mod ) {
-			$value = maybe_unserialize( $mod->option_value );
-
-			if ( isset( $value['background_image'] ) ) {
-				$value['background_image'] = $this->as3cf->filter_s3->filter_customizer_image( $value['background_image'] );
-			}
-
-			if ( isset( $value['header_image'] ) ) {
-				$value['header_image'] = $this->as3cf->filter_s3->filter_customizer_image( $value['header_image'] );
-			}
-
-			if ( isset( $value['header_image_data'] ) ) {
-				$value['header_image_data'] = $this->as3cf->filter_s3->filter_header_image_data( $value['header_image_data'] );
-			}
-
-			$value = maybe_serialize( $value );
-
-			if ( $value !== $mod->option_value ) {
-				$wpdb->query( "UPDATE `{$prefix}options` SET option_value = '{$value}' WHERE option_id = '{$mod->option_id}'" );
-			}
-		}
 	}
 
 	/**
@@ -411,7 +389,7 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 			$url_pairs[ $key ]['new_url'] = $this->as3cf->remove_scheme( $url_pair['new_url'] );
 		}
 
-		return apply_filters( 'as3cf_find_replace_url_pairs', $url_pairs, $file_path, $old_url, $new_url, $meta );
+		return apply_filters( 'as3cf_update_' . $this->upgrade_name . '_url_pairs', $url_pairs, $file_path, $old_url, $new_url, $meta );
 	}
 
 	/**
@@ -519,7 +497,7 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 				$sql .= " OR ";
 			}
 
-			$sql .= "post_content LIKE '%{$path}%'";
+			$sql .= "{$this->column_name} LIKE '%{$path}%'";
 		}
 
 		return "SELECT ID FROM {$wpdb->posts} WHERE ID > {$where_lowest_id} AND ID <= {$where_highest_id} AND ({$sql})";
@@ -547,23 +525,14 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 
 			if ( empty( $sql ) ) {
 				// First replace statement
-				$sql = "REPLACE(post_content, '{$pair['old_url']}', '{$pair['new_url']}')";
+				$sql = "REPLACE({$this->column_name}, '{$pair['old_url']}', '{$pair['new_url']}')";
 			} else {
 				// Nested replace statement
 				$sql = "REPLACE({$sql}, '{$pair['old_url']}', '{$pair['new_url']}')";
 			}
 		}
 
-		return "UPDATE {$wpdb->posts} SET `post_content` = {$sql} WHERE `ID` IN({$ids})";
-	}
-
-	/**
-	 * Get running message.
-	 *
-	 * @return string
-	 */
-	protected function get_running_message() {
-		return sprintf( __( '<strong>Running 1.2 Upgrade%1$s</strong><br>A find &amp; replace is running in the background to update URLs in your content. %2$s', 'amazon-s3-and-cloudfront' ), $this->get_progress_text(), $this->get_generic_message() );
+		return "UPDATE {$wpdb->posts} SET `{$this->column_name}` = {$sql} WHERE `ID` IN({$ids})";
 	}
 
 	/**
@@ -572,7 +541,7 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade {
 	 * @return string
 	 */
 	protected function get_paused_message() {
-		return sprintf( __( '<strong>Paused 1.2 Upgrade</strong><br>The find &amp; replace to update URLs in your content has been paused. %s', 'amazon-s3-and-cloudfront' ), $this->get_generic_message() );
+		return sprintf( __( '<strong>Paused Upgrade</strong><br>The find &amp; replace to update URLs has been paused. %s', 'amazon-s3-and-cloudfront' ), $this->get_generic_message() );
 	}
 
 	/**

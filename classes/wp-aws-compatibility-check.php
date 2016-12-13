@@ -332,7 +332,7 @@ if ( ! class_exists( 'WP_AWS_Compatibility_Check' ) ) {
 					} else {
 						$msg .= ' ' . __( 'It appears to be installed already.', 'amazon-s3-and-cloudfront' );
 						$activate_url = $this->get_plugin_action_url( 'activate', $parent_basename );
-						$msg .= ' <a style="font-weight:bold;text-decoration:none;" href="' . $activate_url . '">' . _x( 'Activate it now.', 'Activate plugin', 'amazon-s3-and-cloudfront' ) . '</a>';
+						$msg .= ' <a id="'. $this->plugin_slug . '-activate-parent" style="font-weight:bold;text-decoration:none;" href="' . $activate_url . '">' . _x( 'Activate it now.', 'Activate plugin', 'amazon-s3-and-cloudfront' ) . '</a>';
 					}
 				} else {
 					$install_url = 'https://deliciousbrains.com/my-account/';
@@ -479,7 +479,7 @@ if ( ! class_exists( 'WP_AWS_Compatibility_Check' ) ) {
 		 * @param string $message
 		 */
 		function render_notice( $message ) {
-			printf( '<div class="' . $this->notice_class . ' aws-compatibility-notice"><p>%s</p></div>', $message );
+			printf( '<div id="aws-compat-notice' . $this->plugin_slug . '" class="' . $this->notice_class . ' aws-compatibility-notice"><p>%s</p></div>', $message );
 		}
 
 		/**

@@ -24,18 +24,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Upgrade_Region_Meta extends AS3CF_Upgrade {
 
 	/**
-	 * Initiate the upgrade
-	 *
-	 * @param object $as3cf Instance of calling class
+	 * @var int
 	 */
-	public function __construct( $as3cf ) {
-		$this->upgrade_id   = 1;
-		$this->upgrade_name = 'meta_with_region';
-		$this->upgrade_type = 'metadata';
+	protected $upgrade_id = 1;
 
-		$this->running_update_text = __( 'and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper S3 region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>.', 'amazon-s3-and-cloudfront' );
+	/**
+	 * @var string
+	 */
+	protected $upgrade_name = 'meta_with_region';
 
-		parent::__construct( $as3cf );
+	/**
+	 * @var string 'metadata', 'attachment'
+	 */
+	protected $upgrade_type = 'metadata';
+
+	/**
+	 * Get running update text.
+	 *
+	 * @return string
+	 */
+	protected function get_running_update_text() {
+		return __( 'and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper S3 region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>.', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**

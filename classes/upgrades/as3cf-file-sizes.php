@@ -25,18 +25,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 
 	/**
-	 * Initiate the upgrade
-	 *
-	 * @param object $as3cf Instance of calling class
+	 * @var int
 	 */
-	public function __construct( $as3cf ) {
-		$this->upgrade_id   = 2;
-		$this->upgrade_name = 'file_sizes';
-		$this->upgrade_type = 'attachments';
+	protected $upgrade_id = 2;
 
-		$this->running_update_text = __( 'and updating the metadata with the sizes of files that have been removed from the server. This will allow us to serve the correct size for media items and the total space used in Multisite subsites.', 'amazon-s3-and-cloudfront' );
+	/**
+	 * @var string
+	 */
+	protected $upgrade_name = 'file_sizes';
 
-		parent::__construct( $as3cf );
+	/**
+	 * @var string 'metadata', 'attachment'
+	 */
+	protected $upgrade_type = 'attachments';
+
+	/**
+	 * Get running update text.
+	 *
+	 * @return string
+	 */
+	protected function get_running_update_text() {
+		return __( 'and updating the metadata with the sizes of files that have been removed from the server. This will allow us to serve the correct size for media items and the total space used in Multisite subsites.', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**

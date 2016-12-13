@@ -4,7 +4,7 @@ Plugin Name: WP Offload S3 Lite
 Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
 Description: Automatically copies media uploads to Amazon S3 for storage and delivery. Optionally configure Amazon CloudFront for even faster delivery.
 Author: Delicious Brains
-Version: 1.1.3
+Version: 1.1.4
 Author URI: http://deliciousbrains.com/
 Network: True
 Text Domain: amazon-s3-and-cloudfront
@@ -26,9 +26,9 @@ Domain Path: /languages/
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '1.1.3';
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '1.1.4';
 
-$aws_plugin_version_required = '1.0';
+$aws_plugin_version_required = '1.0.1';
 
 require_once dirname( __FILE__ ) . '/classes/wp-aws-compatibility-check.php';
 require_once dirname( __FILE__ ) . '/classes/as3cf-utils.php';
@@ -62,11 +62,13 @@ function as3cf_init( $aws ) {
 	require_once $abspath . '/include/functions.php';
 	require_once $abspath . '/classes/as3cf-error.php';
 	require_once $abspath . '/classes/as3cf-upgrade.php';
+	require_once $abspath . '/classes/as3cf-upgrade-filter-post.php';
 	require_once $abspath . '/classes/upgrades/as3cf-region-meta.php';
 	require_once $abspath . '/classes/upgrades/as3cf-file-sizes.php';
 	require_once $abspath . '/classes/upgrades/as3cf-meta-wp-error.php';
-	require_once $abspath . '/classes/upgrades/as3cf-content-replace-urls.php';
-	require_once $abspath . '/classes/upgrades/as3cf-edd-replace-urls.php';
+	require_once $abspath . '/classes/upgrades/as3cf-filter-edd.php';
+	require_once $abspath . '/classes/upgrades/as3cf-filter-post-content.php';
+	require_once $abspath . '/classes/upgrades/as3cf-filter-post-excerpt.php';
 	require_once $abspath . '/classes/as3cf-filter.php';
 	require_once $abspath . '/classes/filters/as3cf-local-to-s3.php';
 	require_once $abspath . '/classes/filters/as3cf-s3-to-local.php';

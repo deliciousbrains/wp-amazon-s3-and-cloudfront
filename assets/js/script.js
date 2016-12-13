@@ -430,8 +430,8 @@
 			if ( 'as3cf' === as3cfModal.prefix && 0 === $activeBucket.text().trim().length ) {
 
 				// First time bucket select - enable main options by default
-				setCheckbox( 'copy-to-s3-wrap' );
-				setCheckbox( 'serve-from-s3-wrap' );
+				setCheckbox( 'as3cf-copy-to-s3-wrap' );
+				setCheckbox( 'as3cf-serve-from-s3-wrap' );
 
 				// Update the saved settings string so we don't trigger the navigation alert
 				var id = $activeTab.attr( 'id' );
@@ -636,7 +636,7 @@
 	 * Toggle the lost files notice
 	 */
 	function toggleLostFilesNotice() {
-		if ( $( '#remove-local-file' ).is( ':checked' ) && $( '#serve-from-s3' ).is( ':not(:checked)' ) ) {
+		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) && $( '#as3cf-serve-from-s3' ).is( ':not(:checked)' ) ) {
 			$( '#as3cf-lost-files-notice' ).show();
 		} else {
 			$( '#as3cf-lost-files-notice' ).hide();
@@ -647,7 +647,7 @@
 	 * Toggle the remove local files notice
 	 */
 	function toggleRemoveLocalNotice() {
-		if ( $( '#remove-local-file' ).is( ':checked' ) ) {
+		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) ) {
 			$( '#as3cf-remove-local-notice' ).show();
 		} else {
 			$( '#as3cf-remove-local-notice' ).hide();
@@ -749,12 +749,12 @@
 		} );
 
 		toggleLostFilesNotice();
-		$( '#serve-from-s3,#remove-local-file' ).on( 'change', function( e ) {
+		$( '#as3cf-serve-from-s3,#as3cf-remove-local-file' ).on( 'change', function( e ) {
 			toggleLostFilesNotice();
 		} );
 
 		toggleRemoveLocalNotice();
-		$( '#remove-local-file' ).on( 'change', function( e ) {
+		$( '#as3cf-remove-local-file' ).on( 'change', function( e ) {
 			toggleRemoveLocalNotice();
 		} );
 

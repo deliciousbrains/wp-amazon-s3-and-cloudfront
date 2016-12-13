@@ -13,7 +13,7 @@ $tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
 			<span class="dashicons dashicons-external"></span>
 		</a>
 		<?php if ( ! defined( $constant ) && ! $this->get_defined_setting( 'bucket', false ) ) { ?>
-			<a href="#" class="as3cf-change-bucket" data-as3cf-modal=".as3cf-bucket-container"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
+			<a href="#" id="<?php echo $prefix; ?>-change-bucket" class="as3cf-change-bucket" data-as3cf-modal=".as3cf-bucket-container"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
 		<?php } else {
 			echo '<span class="as3cf-defined-in-config">' . __( 'defined in wp-config.php', 'amazon-s3-and-cloudfront' ) . '</span>';
 		} ?>

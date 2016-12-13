@@ -39,7 +39,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						'prefix'                 => $prefix,
 						'selected_bucket'        => $selected_bucket,
 						'selected_bucket_prefix' => $selected_bucket_prefix,
-						'tr_class'               => 'as3cf-border-bottom as3cf-bucket-setting',
+						'tr_class'               => "as3cf-border-bottom {$prefix}-bucket-setting",
 					)
 				); ?>
 
@@ -103,7 +103,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 							<?php _e( 'By default the path is the same as your local WordPress files.', 'amazon-s3-and-cloudfront' ); ?>
 							<?php echo $this->settings_more_info_link( 'object-prefix' ); ?>
 						</p>
-						<p class="as3cf-setting enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; // xss ok ?>">
+						<p class="as3cf-setting <?php echo $prefix; ?>-enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; // xss ok ?>">
 							<?php $args = $this->get_setting_args( 'object-prefix' ); ?>
 							<input type="text" name="object-prefix" value="<?php echo esc_attr( $this->get_setting( 'object-prefix' ) ); ?>" size="30" placeholder="<?php echo $this->get_default_object_prefix(); ?>" <?php echo $args['disabled_attr']; ?> />
 						</p>

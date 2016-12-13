@@ -26,18 +26,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Upgrade_Meta_WP_Error extends AS3CF_Upgrade {
 
 	/**
-	 * Initiate the upgrade
-	 *
-	 * @param object $as3cf Instance of calling class
+	 * @var int
 	 */
-	public function __construct( $as3cf ) {
-		$this->upgrade_id   = 3;
-		$this->upgrade_name = 'meta_error';
-		$this->upgrade_type = 'attachments';
+	protected $upgrade_id = 3;
 
-		$this->running_update_text = __( 'and rebuilding the metadata for attachments that may have been corrupted.', 'amazon-s3-and-cloudfront' );
+	/**
+	 * @var string
+	 */
+	protected $upgrade_name = 'meta_error';
 
-		parent::__construct( $as3cf );
+	/**
+	 * @var string 'metadata', 'attachment'
+	 */
+	protected $upgrade_type = 'attachments';
+
+	/**
+	 * Get running update text.
+	 *
+	 * @return string
+	 */
+	protected function get_running_update_text() {
+		return __( 'and rebuilding the metadata for attachments that may have been corrupted.', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**
