@@ -11,6 +11,8 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		// Customizer
 		add_filter( 'theme_mod_background_image', array( $this, 'filter_customizer_image' ) );
 		add_filter( 'theme_mod_header_image', array( $this, 'filter_customizer_image' ) );
+		add_filter( 'customize_value_custom_css', array( $this, 'filter_customize_value_custom_css' ), 10, 2 );
+		add_filter( 'wp_get_custom_css', array( $this, 'filter_wp_get_custom_css' ), 10, 2 );
 		// Posts
 		add_action( 'the_post', array( $this, 'filter_post_data' ) );
 		add_filter( 'content_pagination', array( $this, 'filter_content_pagination' ) );
@@ -24,6 +26,30 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	}
 
 	/**
+	 * Filter customize value custom CSS.
+	 *
+	 * @param mixed                           $value
+	 * @param WP_Customize_Custom_CSS_Setting $setting
+	 *
+	 * @return mixed
+	 */
+	public function filter_customize_value_custom_css( $value, $setting ) {
+		return $this->filter_custom_css( $value, $setting->stylesheet );
+	}
+
+	/**
+	 * Filter `wp_get_custom_css`.
+	 *
+	 * @param string $css
+	 * @param string $stylesheet
+	 *
+	 * @return string
+	 */
+	public function filter_wp_get_custom_css( $css, $stylesheet ) {
+		return $this->filter_custom_css( $css, $stylesheet );
+	}
+
+	/**
 	 * Filter post data.
 	 *
 	 * @param WP_Post $post
@@ -34,7 +60,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		$cache    = $this->get_post_cache();
 		$to_cache = array();
 
-		if ( count( $pages ) === 1 ) {
+		if ( 1 === count( $pages ) && ! empty( $pages[0] ) ) {
 			// Post already filtered and available on global $page array, continue
 			$post->post_content = $pages[0];
 		} else {

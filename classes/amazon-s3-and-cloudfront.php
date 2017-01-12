@@ -1017,9 +1017,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 				$acl = apply_filters( 'as3cf_upload_acl_sizes', self::DEFAULT_ACL, $size, $post_id, $data );
 
 				$additional_images[] = array(
-					'Key'        => $prefix . basename( $file_path ),
-					'SourceFile' => $file_path,
-					'ACL'        => $acl,
+					'Key'         => $prefix . basename( $file_path ),
+					'SourceFile'  => $file_path,
+					'ACL'         => $acl,
+					'ContentType' => $this->get_mime_type( $file_path ),
 				);
 
 				if ( self::DEFAULT_ACL !== $acl ) {
@@ -1091,6 +1092,19 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 		}
 
 		return $s3object;
+	}
+
+	/**
+	 * Get a file's real mime type
+	 *
+	 * @param string $file_path
+	 *
+	 * @return string
+	 */
+	protected function get_mime_type( $file_path ) {
+		$file_type = wp_check_filetype_and_ext( $file_path, basename( $file_path ) );
+
+		return $file_type['type'];
 	}
 
 	/**
@@ -3676,10 +3690,10 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 * @return array
 	 */
 	public function get_attachment_file_paths( $attachment_id, $exists_locally = true, $meta = false, $include_backups = true ) {
-		$paths     = array();
 		$file_path = get_attached_file( $attachment_id, true );
-		$file_name = basename( $file_path );
-		$backups   = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+		$paths     = array(
+			'original' => $file_path,
+		);
 
 		if ( ! $meta ) {
 			$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
@@ -3689,14 +3703,12 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			return $paths;
 		}
 
-		$original_file = $file_path; // Not all attachments will have meta
+		$file_name = basename( $file_path );
 
-		if ( isset( $meta['file'] ) ) {
-			$original_file = str_replace( $file_name, basename( $meta['file'] ), $file_path );
+		// Thumb
+		if ( isset( $meta['thumb'] ) ) {
+			$paths['thumb'] = str_replace( $file_name, $meta['thumb'], $file_path );
 		}
-
-		// Original file
-		$paths['full'] = $original_file;
 
 		// Sizes
 		if ( isset( $meta['sizes'] ) ) {
@@ -3707,15 +3719,14 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 			}
 		}
 
-		// Thumb
-		if ( isset( $meta['thumb'] ) ) {
-			$paths[] = str_replace( $file_name, $meta['thumb'], $file_path );
-		}
+		$backups = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 
 		// Backups
 		if ( $include_backups && is_array( $backups ) ) {
-			foreach ( $backups as $backup ) {
-				$paths[] = str_replace( $file_name, $backup['file'], $file_path );
+			foreach ( $backups as $size => $file ) {
+				if ( isset( $file['file'] ) ) {
+					$paths[ $size ] = str_replace( $file_name, $file['file'], $file_path );
+				}
 			}
 		}
 

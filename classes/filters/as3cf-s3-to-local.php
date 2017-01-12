@@ -12,11 +12,26 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		add_filter( 'pre_set_theme_mod_background_image', array( $this, 'filter_customizer_image' ), 10, 2 );
 		add_filter( 'pre_set_theme_mod_header_image', array( $this, 'filter_customizer_image' ), 10, 2 );
 		add_filter( 'pre_set_theme_mod_header_image_data', array( $this, 'filter_header_image_data' ), 10, 2 );
+		add_filter( 'update_custom_css_data', array( $this, 'filter_update_custom_css_data' ), 10, 2 );
 		// Posts
 		add_filter( 'content_save_pre', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_save_pre', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_update_callback', array( $this, 'filter_widget_update' ), 10, 4 );
+	}
+
+	/**
+	 * Filter update custom CSS data.
+	 *
+	 * @param array $data
+	 * @param array $args
+	 *
+	 * @return array
+	 */
+	public function filter_update_custom_css_data( $data, $args ) {
+		$data['css'] = $this->filter_custom_css( $data['css'], $args['stylesheet'] );
+
+		return $data;
 	}
 
 	/**
@@ -42,6 +57,15 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		$this->maybe_update_option_cache( $to_cache );
 
 		return $instance;
+	}
+
+	/**
+	 * Should filter content.
+	 *
+	 * @return bool
+	 */
+	protected function should_filter_content() {
+		return true;
 	}
 
 	/**

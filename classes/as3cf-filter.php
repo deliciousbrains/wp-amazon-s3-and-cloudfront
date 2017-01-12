@@ -248,7 +248,7 @@ abstract class AS3CF_Filter {
 	protected function get_urls_from_content( $content, $cache, &$to_cache ) {
 		$url_pairs = array();
 
-		if ( ! preg_match_all( '/(http|https)?:?\/\/[^"\'\s<>\\\]*/', $content, $matches ) || ! isset( $matches[0] ) ) {
+		if ( ! preg_match_all( '/(http|https)?:?\/\/[^"\'\s<>()\\\]*/', $content, $matches ) || ! isset( $matches[0] ) ) {
 			// No URLs found, return
 			return $url_pairs;
 		}
@@ -495,17 +495,19 @@ abstract class AS3CF_Filter {
 	/**
 	 * Get post cache
 	 *
+	 * @param bool|int $post_id
+	 *
 	 * @return array
 	 */
-	protected function get_post_cache() {
-		global $post;
+	protected function get_post_cache( $post_id = false ) {
+		$post_id = $this->get_post_id( $post_id );
 
-		if ( ! isset( $post->ID ) ) {
+		if ( ! $post_id ) {
 			// Post ID not found, return empty cache
 			return array();
 		}
 
-		$cache = get_post_meta( $post->ID, 'amazonS3_cache', true );
+		$cache = get_post_meta( $post_id, 'amazonS3_cache', true );
 
 		if ( empty( $cache ) ) {
 			$cache = array();
@@ -517,18 +519,40 @@ abstract class AS3CF_Filter {
 	/**
 	 * Maybe update post cache
 	 *
-	 * @param array $to_cache
+	 * @param array    $to_cache
+	 * @param bool|int $post_id
 	 */
-	protected function maybe_update_post_cache( $to_cache ) {
-		global $post;
+	protected function maybe_update_post_cache( $to_cache, $post_id = false ) {
+		$post_id = $this->get_post_id( $post_id );
 
-		if ( ! isset( $post->ID ) || empty( $to_cache ) ) {
+		if ( ! $post_id || empty( $to_cache ) ) {
 			return;
 		}
 
-		$urls = array_merge( $this->get_post_cache(), $to_cache );
+		$urls = array_merge( $this->get_post_cache( $post_id ), $to_cache );
 
-		update_post_meta( $post->ID, 'amazonS3_cache', $urls );
+		update_post_meta( $post_id, 'amazonS3_cache', $urls );
+	}
+
+	/**
+	 * Get post ID.
+	 *
+	 * @param bool|int $post_id
+	 *
+	 * @return bool|int
+	 */
+	protected function get_post_id( $post_id ) {
+		if ( false !== $post_id ) {
+			return $post_id;
+		}
+
+		global $post;
+
+		if ( isset( $post->ID ) ) {
+			return $post->ID;
+		}
+
+		return false;
 	}
 
 	/**
@@ -642,6 +666,46 @@ abstract class AS3CF_Filter {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Filter custom CSS.
+	 *
+	 * @param string $css
+	 * @param string $stylesheet
+	 *
+	 * @return string
+	 */
+	protected function filter_custom_css( $css, $stylesheet ) {
+		if ( empty( $css ) ) {
+			return $css;
+		}
+
+		$post_id  = $this->get_custom_css_post_id( $stylesheet );
+		$cache    = $this->get_post_cache( $post_id );
+		$to_cache = array();
+		$css      = $this->process_content( $css, $cache, $to_cache );
+
+		$this->maybe_update_post_cache( $to_cache, $post_id );
+
+		return $css;
+	}
+
+	/**
+	 * Get custom CSS post ID.
+	 *
+	 * @param string $stylesheet
+	 *
+	 * @return int
+	 */
+	protected function get_custom_css_post_id( $stylesheet ) {
+		$post = wp_get_custom_css_post( $stylesheet );
+
+		if ( ! $post ) {
+			return 0;
+		}
+
+		return $post->ID;
 	}
 
 	/**
