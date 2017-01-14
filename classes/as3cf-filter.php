@@ -521,7 +521,7 @@ abstract class AS3CF_Filter {
 				$cache = array();
 			}
 		}
-		
+
 		return $cache;
 	}
 
