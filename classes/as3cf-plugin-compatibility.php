@@ -93,6 +93,7 @@ class AS3CF_Plugin_Compatibility {
 		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_crop_download_file' ), 10, 4 );
 		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'customizer_crop_remove_original_image' ), 10, 3 );
+		add_filter( 'wp_unique_filename', array( $this, 'customizer_crop_unique_filename' ), 10, 3 );
 
 		/*
 		 * Regenerate Thumbnails
@@ -413,7 +414,7 @@ class AS3CF_Plugin_Compatibility {
 	function get_original_image_file( $post_id, $file_path ) {
 		// remove original main image after edit
 		$meta          = get_post_meta( $post_id, '_wp_attachment_metadata', true );
-		$original_file = trailingslashit( dirname( $file_path ) ) . basename( $meta['file'] );
+		$original_file = trailingslashit( dirname( $file_path ) ) . wp_basename( $meta['file'] );
 		if ( file_exists( $original_file ) ) {
 			return $original_file;
 		}
@@ -552,8 +553,12 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @return string
 	 */
-	function customizer_crop_download_file( $url, $file, $attachment_id, $s3_object ) {
+	public function customizer_crop_download_file( $url, $file, $attachment_id, $s3_object ) {
 		if ( false === $this->is_customizer_crop_action() ) {
+			return $url;
+		}
+
+		if ( $this->as3cf->attachment_just_uploaded( $attachment_id ) ) {
 			return $url;
 		}
 
@@ -915,7 +920,7 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		foreach ( $sources as $width => $source ) {
-			$filename = basename( $source['url'] );
+			$filename = wp_basename( $source['url'] );
 			$size     = $this->find_image_size_from_width( $image_meta['sizes'], $width, $filename );
 			$s3_url   = $this->as3cf->get_attachment_s3_url( $attachment_id, $s3object, null, $size, $image_meta );
 
@@ -947,5 +952,27 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Filters the result when generating a unique file name for a customizer crop.
+	 *
+	 * @param string $filename Unique file name.
+	 * @param string $ext      File extension, eg. ".png".
+	 * @param string $dir      Directory path.
+	 *
+	 * @return string
+	 */
+	public function customizer_crop_unique_filename( $filename, $ext, $dir ) {
+		if ( false === $this->is_customizer_crop_action() ) {
+			return $filename;
+		}
+
+		// Get parent Post ID for cropped image.
+		$post_id = filter_input( INPUT_POST, 'id', FILTER_VALIDATE_INT );
+
+		$filename = $this->as3cf->filter_unique_filename( $filename, $post_id );
+
+		return $filename;
 	}
 }

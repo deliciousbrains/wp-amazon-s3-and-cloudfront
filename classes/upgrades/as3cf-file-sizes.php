@@ -75,11 +75,11 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 		$s3client   = $this->as3cf->get_s3client( $region, true );
 		$main_file  = $s3object['key'];
 
-		$path_parts = pathinfo( $main_file );
+		$ext        = pathinfo( $main_file, PATHINFO_EXTENSION );
 		$prefix     = trailingslashit( dirname( $s3object['key'] ) );
 
 		// Used to search S3 for all files related to an attachment
-		$search_prefix = $prefix . basename( $main_file, '.' . $path_parts['extension'] );
+		$search_prefix = $prefix . wp_basename( $main_file, ".$ext" );
 
 		$args = array(
 			'Bucket' => $s3object['bucket'],

@@ -346,9 +346,9 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 	 */
 	protected function get_find_and_replace_urls( $file_path, $old_url, $new_url, $meta, $backups = '' ) {
 		$url_pairs     = array();
-		$file_name     = basename( $file_path );
-		$old_file_name = basename( $old_url );
-		$new_file_name = basename( $new_url );
+		$file_name     = wp_basename( $file_path );
+		$old_file_name = wp_basename( $old_url );
+		$new_file_name = wp_basename( $new_url );
 
 		// Full size image
 		$url_pairs[] = $this->add_url_pair( $file_path, $file_name, $old_url, $old_file_name, $new_url, $new_file_name );
@@ -430,7 +430,7 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 	 */
 	protected function maybe_add_encoded_url_pairs( $url_pairs ) {
 		foreach ( $url_pairs as $url_pair ) {
-			$file_name         = basename( $url_pair['old_url'] );
+			$file_name         = wp_basename( $url_pair['old_url'] );
 			$encoded_file_name = $this->as3cf->encode_filename_in_path( $file_name );
 
 			if ( $file_name !== $encoded_file_name ) {

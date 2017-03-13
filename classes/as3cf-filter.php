@@ -257,6 +257,8 @@ abstract class AS3CF_Filter {
 		$urls    = array();
 
 		foreach ( $matches as $url ) {
+			$url = preg_replace( '/[^a-zA-Z0-9]$/', '', $url );
+
 			if ( ! $this->url_needs_replacing( $url ) ) {
 				// URL already correct, skip
 				continue;
@@ -269,9 +271,7 @@ abstract class AS3CF_Filter {
 				continue;
 			}
 
-			$info = pathinfo( $parts['path'] );
-
-			if ( ! isset( $info['extension'] ) ) {
+			if ( ! pathinfo( $parts['path'], PATHINFO_EXTENSION ) ) {
 				// URL doesn't have a file extension, continue
 				continue;
 			}

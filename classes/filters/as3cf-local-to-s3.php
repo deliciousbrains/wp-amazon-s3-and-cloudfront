@@ -20,6 +20,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		add_filter( 'the_excerpt', array( $this, 'filter_post' ), 100 );
 		add_filter( 'content_edit_pre', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_edit_pre', array( $this, 'filter_post' ) );
+		add_filter( 'as3cf_filter_post_local_to_s3', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_text', array( $this, 'filter_widget' ) );
 		add_filter( 'widget_form_callback', array( $this, 'filter_widget_form' ), 10, 2 );
@@ -140,7 +141,8 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 */
 	protected function url_needs_replacing( $url ) {
 		$uploads  = wp_upload_dir();
-		$base_url = $this->as3cf->remove_scheme( $uploads['baseurl'] );
+		$base_url = $this->as3cf->maybe_fix_local_subsite_url( $uploads['baseurl'] );
+		$base_url = $this->as3cf->remove_scheme( $base_url );
 
 		if ( false !== strpos( $url, $base_url ) ) {
 			// Local URL, perform replacement

@@ -16,6 +16,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		// Posts
 		add_filter( 'content_save_pre', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_save_pre', array( $this, 'filter_post' ) );
+		add_filter( 'as3cf_filter_post_s3_to_local', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_update_callback', array( $this, 'filter_widget_update' ), 10, 4 );
 	}
@@ -53,6 +54,12 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		$cache            = $this->get_option_cache();
 		$to_cache         = array();
 		$instance['text'] = $this->process_content( $instance['text'], $cache, $to_cache );
+
+		// Editing Text Widget in Customizer throws an error if more than one option record is updated.
+		// Therefore cache updating has to wait until render or edit via Appearance menu.
+		if ( isset( $_POST['wp_customize'] ) && 'on' === $_POST['wp_customize'] ) {
+			return $instance;
+		}
 
 		$this->maybe_update_option_cache( $to_cache );
 

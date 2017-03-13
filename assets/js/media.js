@@ -140,11 +140,14 @@ var test = {};
 		},
 
 		updateACL: function( response ) {
-			if ( 'undefined' === typeof response.acl_display || 'undefined' === typeof response.title || 'undefined' === typeof response.acl ) {
+			if ( null == response.acl_display || null == response.title || null == response.acl || null == response.url ) {
 				this.renderACLError();
 
 				return;
 			}
+
+			this.model.set( 'url', response.url );
+			this.render();
 
 			var toggle = $( '#as3cfpro-toggle-acl' );
 

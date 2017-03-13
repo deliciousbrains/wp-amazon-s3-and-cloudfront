@@ -2,7 +2,8 @@ var as3cfModal = (function( $ ) {
 
 	var modal = {
 		prefix: 'as3cf',
-		loading: false
+		loading: false,
+		dismissible: true
 	};
 
 	var modals = {};
@@ -54,7 +55,12 @@ var as3cfModal = (function( $ ) {
 		var $overlay = $( '#as3cf-overlay' );
 
 		// Modal container
-		$overlay.append( '<div id="as3cf-modal"><span class="close-as3cf-modal">×</span></div>' );
+		if ( modal.dismissible ) {
+			$overlay.append( '<div id="as3cf-modal"><span class="close-as3cf-modal">×</span></div>' );
+		} else {
+			$overlay.append( '<div id="as3cf-modal"></div>' );
+		}
+
 		var $modal = $( '#as3cf-modal' );
 
 		if ( undefined === modals[ key ] ) {
@@ -88,7 +94,7 @@ var as3cfModal = (function( $ ) {
 	 * @param {function} callback
 	 */
 	modal.close = function( callback ) {
-		if ( modal.loading ) {
+		if ( modal.loading || ! modal.dismissible ) {
 			return;
 		}
 
@@ -110,10 +116,19 @@ var as3cfModal = (function( $ ) {
 	/**
 	 * Set loading state
 	 *
-	 * @param {bool} state
+	 * @param {boolean} state
 	 */
 	modal.setLoadingState = function( state ) {
 		modal.loading = state;
+	};
+
+	/**
+	 * Set dismissible state.
+	 *
+	 * @param {boolean} state
+	 */
+	modal.setDismissibleState = function( state ) {
+		modal.dismissible = state;
 	};
 
 	// Setup click handlers
