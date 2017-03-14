@@ -507,15 +507,24 @@ abstract class AS3CF_Filter {
 			return array();
 		}
 
-		$cache = get_post_meta( $post_id, 'amazonS3_cache', true );
+		$found = true;
 
-		if ( empty( $cache ) ) {
+		if ( wp_using_ext_object_cache() ) {
+			$cache = wp_cache_get( 'post_' . $post_id, 'amazonS3', false, $found );
+		} else {
+			$cache = get_post_meta( $post_id, 'amazonS3_cache', true );
+			if ( empty( $cache ) ) {
+				$found = false;
+			}
+		}
+
+		if ( ! $found || ! is_array( $cache ) ) {
 			$cache = array();
 		}
 
 		return $cache;
 	}
-
+	
 	/**
 	 * Maybe update post cache
 	 *
@@ -531,7 +540,11 @@ abstract class AS3CF_Filter {
 
 		$urls = array_merge( $this->get_post_cache( $post_id ), $to_cache );
 
-		update_post_meta( $post_id, 'amazonS3_cache', $urls );
+		if ( wp_using_ext_object_cache() ) {
+			wp_cache_set( 'post_' . $post_id, $urls, 'amazonS3', 0 );
+		} else {
+			update_post_meta( $post_id, 'amazonS3_cache', $urls );
+		}
 	}
 
 	/**
