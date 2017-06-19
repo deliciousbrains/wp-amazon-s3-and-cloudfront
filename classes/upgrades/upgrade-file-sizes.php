@@ -9,20 +9,20 @@
  * @since       0.9.3
  */
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+
+use AS3CF_Error;
+use Exception;
 
 /**
- * AS3CF_Upgrade_File_Sizes Class
+ * Upgrade_File_Sizes Class
  *
  * This class handles updating the file sizes in the meta data
  * for attachments that have been removed from the local server
  *
  * @since 0.9.3
  */
-class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
+class Upgrade_File_Sizes extends Upgrade {
 
 	/**
 	 * @var int
@@ -72,11 +72,11 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 			return false;
 		}
 
-		$s3client   = $this->as3cf->get_s3client( $region, true );
-		$main_file  = $s3object['key'];
+		$s3client  = $this->as3cf->get_s3client( $region, true );
+		$main_file = $s3object['key'];
 
-		$ext        = pathinfo( $main_file, PATHINFO_EXTENSION );
-		$prefix     = trailingslashit( dirname( $s3object['key'] ) );
+		$ext    = pathinfo( $main_file, PATHINFO_EXTENSION );
+		$prefix = trailingslashit( dirname( $s3object['key'] ) );
 
 		// Used to search S3 for all files related to an attachment
 		$search_prefix = $prefix . wp_basename( $main_file, ".$ext" );
@@ -91,15 +91,15 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 			$result = $s3client->ListObjects( $args );
 		} catch ( Exception $e ) {
 			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $attachment->ID . ' from S3: ' . $e->getMessage() );
-			$this->error_count ++;
+			$this->error_count++;
 
 			return false;
 		}
 
 		$file_size_total = 0;
-		$main_file_size = 0;
+		$main_file_size  = 0;
 
-		foreach ( $result->get( 'Contents' ) as $object ) {
+		foreach ( (array) $result->get( 'Contents' ) as $object ) {
 			if ( ! isset( $object['Size'] ) ) {
 				continue;
 			}
@@ -117,7 +117,7 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 
 		if ( 0 === $file_size_total ) {
 			AS3CF_Error::log( 'Total file size for the attachment is 0: ' . $attachment->ID );
-			$this->error_count ++;
+			$this->error_count++;
 
 			return false;
 		}
@@ -134,26 +134,7 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 	}
 
 	/**
-	 * Get a count of all attachments without region in their S3 metadata
-	 * for the whole site
-	 *
-	 * @return int
-	 */
-	protected function count_items_to_process() {
-		// get the table prefixes for all the blogs
-		$table_prefixes = $this->as3cf->get_all_blog_table_prefixes();
-		$all_count      = 0;
-
-		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-			$count = $this->get_attachments_removed_from_server( $table_prefix, true );
-			$all_count += $count;
-		}
-
-		return $all_count;
-	}
-
-	/**
-	 * Get all attachments that don't have region in their S3 meta data for a blog
+	 * Get all attachments removed from the server.
 	 *
 	 * @param string     $prefix
 	 * @param int        $limit
@@ -162,7 +143,14 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 	 * @return array
 	 */
 	protected function get_items_to_process( $prefix, $limit, $offset = false ) {
-		$attachments = $this->get_attachments_removed_from_server( $prefix, false, $limit );
+		$all_attachments = $this->get_s3_attachments( $prefix, $limit );
+		$attachments     = array();
+
+		foreach ( $all_attachments as $attachment ) {
+			if ( ! file_exists( get_attached_file( $attachment->ID, true ) ) ) {
+				$attachments[] = $attachment;
+			}
+		}
 
 		return $attachments;
 	}
@@ -187,39 +175,10 @@ class AS3CF_Upgrade_File_Sizes extends AS3CF_Upgrade {
 				WHERE pm1.`meta_key` = 'amazonS3_info'
 				AND pm2.`post_id` is null";
 
-		if ( ! is_null( $limit ) ) {
-			$sql .= ' LIMIT %d';
-
-			$sql = $wpdb->prepare( $sql, $limit );
+		if ( $limit && $limit > 0 ) {
+			$sql .= sprintf( ' LIMIT %d', (int) $limit );
 		}
 
 		return $wpdb->get_results( $sql, OBJECT );
 	}
-
-	/**
-	 * Get S3 attachments that have had their local file removed from the server
-	 *
-	 * @param string     $prefix
-	 * @param bool|false $count
-	 * @param null|int   $limit
-	 *
-	 * @return array|int
-	 */
-	protected function get_attachments_removed_from_server( $prefix, $count = false, $limit = null ) {
-		$all_attachments = $this->get_s3_attachments( $prefix, $limit );
-		$attachments     = array();
-
-		foreach ( $all_attachments as $attachment ) {
-			if ( ! file_exists( get_attached_file( $attachment->ID, true ) ) ) {
-				$attachments[] = $attachment;
-			}
-		}
-
-		if ( $count ) {
-			return count( $attachments );
-		}
-
-		return $attachments;
-	}
-
 }

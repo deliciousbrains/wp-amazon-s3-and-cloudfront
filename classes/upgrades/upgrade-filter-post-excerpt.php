@@ -1,19 +1,16 @@
 <?php
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
 
 /**
- * AS3CF_Upgrade_Filter_Post_Excerpt Class
+ * Upgrade_Filter_Post_Excerpt Class
  *
  * This class handles replacing all S3 URLs in post
  * excerpts with the local URL.
  *
  * @since 1.3
  */
-class AS3CF_Upgrade_Filter_Post_Excerpt extends AS3CF_Upgrade_Filter_Post  {
+class Upgrade_Filter_Post_Excerpt extends Upgrade_Filter_Post {
 
 	/**
 	 * @var int

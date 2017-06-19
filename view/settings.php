@@ -56,7 +56,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Copy Files to S3', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
 							<?php _e( 'When a file is uploaded to the Media Library, copy it to S3. Existing files are <em>not</em> copied to S3.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'copy-to-s3' ); ?>
+							<?php echo $this->settings_more_info_link( 'copy-to-s3', 'media+copy+files+to+S3' ); ?>
 						</p>
 
 					</td>
@@ -71,7 +71,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Rewrite File URLs', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
 							<?php _e( 'For Media Library files that have been copied to S3, rewrite the URLs so that they are served from S3/CloudFront instead of your server.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'serve-from-s3' ); ?>
+							<?php echo $this->settings_more_info_link( 'serve-from-s3', 'media+rewrite+file+urls' ); ?>
 						</p>
 
 					</td>
@@ -101,7 +101,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Path', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p class="object-prefix-desc">
 							<?php _e( 'By default the path is the same as your local WordPress files.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'object-prefix' ); ?>
+							<?php echo $this->settings_more_info_link( 'object-prefix', 'media+path' ); ?>
 						</p>
 						<p class="as3cf-setting <?php echo $prefix; ?>-enable-object-prefix <?php echo ( $this->get_setting( 'enable-object-prefix' ) ) ? '' : 'hide'; // xss ok ?>">
 							<?php $args = $this->get_setting_args( 'object-prefix' ); ?>
@@ -120,7 +120,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Year/Month', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
 							<?php _e( 'Add the Year/Month in the URL.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'use-yearmonth-folders' ); ?>
+							<?php echo $this->settings_more_info_link( 'use-yearmonth-folders', 'media+year+month' ); ?>
 						</p>
 					</td>
 				</tr>
@@ -135,7 +135,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Force HTTPS', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
 							<?php _e( 'By default we use HTTPS when the request is HTTPS and regular HTTP when the request is HTTP, but you may want to force the use of HTTPS always, regardless of the request.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'force-https' ); ?>
+							<?php echo $this->settings_more_info_link( 'force-https', 'media+force+https' ); ?>
 						</p>
 					</td>
 				</tr>
@@ -152,7 +152,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<?php echo $args['setting_msg']; ?>
 						<h4><?php _e( 'Remove Files From Server', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p><?php _e( 'Once a file has been copied to S3, remove it from the local server.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'remove-local-file' ); ?>
+							<?php echo $this->settings_more_info_link( 'remove-local-file', 'media+remove+files+from+server' ); ?>
 						</p>
 						<?php
 						$lost_files_msg  = apply_filters( 'as3cf_lost_files_notice', __( '<strong>Broken URLs</strong> &mdash; There will be broken URLs for files that don\'t exist locally. You can fix this by enabling <strong>Rewrite File URLs</strong> to use the S3 URLs.', 'amazon-s3-and-cloudfront' ) );
@@ -165,7 +165,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						);
 						$this->render_view( 'notice', $lost_files_args );
 
-						$remove_local_link = $this->more_info_link( 'https://deliciousbrains.com/wp-offload-s3/doc/compatibility-with-other-plugins/' );
+						$remove_local_link = $this->more_info_link( '/wp-offload-s3/doc/compatibility-with-other-plugins/', 'error-media+remove+files+from+server' );
 						$remove_local_msg  = apply_filters( 'as3cf_remove_local_notice', sprintf( __( '<strong>Warning</strong> &mdash; Some plugins depend on the file being present on the local server and may not work when the file is removed. %s', 'amazon-s3-and-cloudfront' ), $remove_local_link ) );
 						$remove_local_args = array(
 							'message' => $remove_local_msg,
@@ -187,7 +187,7 @@ $selected_bucket_prefix = $this->get_object_prefix(); ?>
 						<h4><?php _e( 'Object Versioning', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
 							<?php _e( 'Append a timestamp to the S3 file path. Recommended when using CloudFront so you don\'t have to worry about cache invalidation.', 'amazon-s3-and-cloudfront' ); ?>
-							<?php echo $this->settings_more_info_link( 'object-versioning' ); ?>
+							<?php echo $this->settings_more_info_link( 'object-versioning', 'media+object+versioning' ); ?>
 						</p>
 					</td>
 				</tr>

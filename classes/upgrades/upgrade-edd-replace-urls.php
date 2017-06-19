@@ -1,19 +1,16 @@
 <?php
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
 
 /**
- * AS3CF_Upgrade_EDD_Replace_URLs Class
+ * Upgrade_EDD_Replace_URLs Class
  *
  * This class handles replacing all S3 URLs in EDD
  * downloads with the local URL.
  *
  * @since 1.2
  */
-class AS3CF_Upgrade_EDD_Replace_URLs extends AS3CF_Upgrade {
+class Upgrade_EDD_Replace_URLs extends Upgrade {
 
 	/**
 	 * @var int
@@ -40,24 +37,6 @@ class AS3CF_Upgrade_EDD_Replace_URLs extends AS3CF_Upgrade {
 	}
 
 	/**
-	 * Count attachments to process.
-	 *
-	 * @return int
-	 */
-	protected function count_items_to_process() {
-		global $wpdb;
-
-		$table_prefixes = $this->as3cf->get_all_blog_table_prefixes();
-		$count          = 0;
-
-		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-			$count += (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table_prefix}postmeta` WHERE meta_key = 'edd_download_files'" );
-		}
-
-		return $count;
-	}
-
-	/**
 	 * Get items to process.
 	 *
 	 * @param string     $prefix
@@ -75,7 +54,9 @@ class AS3CF_Upgrade_EDD_Replace_URLs extends AS3CF_Upgrade {
 			$sql .= " AND meta_id > {$offset->meta_id}";
 		}
 
-		$sql .= " LIMIT {$limit}";
+		if ( $limit && $limit > 0 ) {
+			$sql .= sprintf( ' LIMIT %d', (int) $limit );
+		}
 
 		return $wpdb->get_results( $sql );
 	}
@@ -107,8 +88,8 @@ class AS3CF_Upgrade_EDD_Replace_URLs extends AS3CF_Upgrade {
 		}
 
 		update_post_meta( $item->post_id, 'edd_download_files', $attachments );
-		
+
 		return true;
 	}
-	
+
 }

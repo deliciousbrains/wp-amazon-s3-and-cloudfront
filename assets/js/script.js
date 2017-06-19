@@ -459,7 +459,12 @@
 
 			setBucketLink();
 
-			as3cfModal.close( unlockBucketSelect );
+			as3cfModal.close( function() {
+				$activeTab.trigger( 'bucket-change', [ canWrite ] );
+
+				// Unlock setting the bucket
+				as3cf.buckets.bucketSelectLock = false;
+			} );
 		},
 
 		/**
@@ -623,15 +628,6 @@
 		} );
 	}
 
-	/**
-	 * Reset the bucket select lock
-	 */
-	function unlockBucketSelect( target ) {
-
-		// Unlock setting the bucket
-		as3cf.buckets.bucketSelectLock = false;
-	}
-
 	/*
 	 * Toggle the lost files notice
 	 */
@@ -654,46 +650,40 @@
 		}
 	}
 
+	/**
+	 * Update the UI with the current active tab set in the URL hash.
+	 */
+	function renderCurrentTab() {
+
+		// If rendering the default tab, or a bare hash clean the hash.
+		if ( '#' + as3cf.tabs.defaultTab === location.hash ) {
+			location.hash = '';
+
+			return;
+		}
+
+		// Strip the # if still on the end of the URL
+		if ( 'function' === typeof history.replaceState && '#' === location.href.slice( -1 ) ) {
+			history.replaceState( {}, '', location.href.slice( 0, -1 ) );
+		}
+
+		as3cf.tabs.toggle( location.hash.replace( '#', '' ), true );
+	}
+
 	$( document ).ready( function() {
 
 		// Tabs
 		// --------------------
+		renderCurrentTab();
+
+		/**
+		 * Set the hashchange callback to update the rendered active tab.
+		 */
+		window.onhashchange = renderCurrentTab;
 
 		// Move any compatibility errors below the nav tabs
 		var $navTabs = $( '.wrap.aws-main .nav-tab-wrapper' );
 		$( '.aws-compatibility-notice, div.updated, div.error, div.notice' ).not( '.below-h2, .inline' ).insertAfter( $navTabs );
-
-		// Check for hash in url and switch tabs accordingly
-		if ( window.location.hash ) {
-			var hash = window.location.hash.substring( 1 );
-			as3cf.tabs.toggle( hash, true );
-		} else {
-
-			// Default settings tab
-			$activeTab = $( '#tab-' + as3cf.tabs.defaultTab );
-			$( '.aws-main' ).attr( 'data-tab', as3cf.tabs.defaultTab );
-		}
-
-		$( '.aws-main' ).on( 'click', '.nav-tab', function( e ) {
-			e.preventDefault();
-			if ( $( this ).hasClass( 'nav-tab-active' ) ) {
-				return;
-			}
-			var nextTab = $( this ).attr( 'data-tab' );
-			as3cf.tabs.toggle( nextTab );
-			if ( 'media' === nextTab ) {
-
-				// As it's the default remove the hash
-				window.location.hash = '';
-				if ( 'function' === typeof window.history.replaceState && '#' === window.location.href.slice( -1 ) ) {
-
-					// Strip the # if still on the end of the URL
-					history.replaceState( {}, '', window.location.href.slice( 0, -1 ) );
-				}
-			} else {
-				window.location.hash = nextTab;
-			}
-		} );
 
 		// Settings
 		// --------------------

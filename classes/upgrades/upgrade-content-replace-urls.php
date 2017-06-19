@@ -1,19 +1,16 @@
 <?php
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
 
 /**
- * AS3CF_Upgrade_Content_Replace_URLs Class
+ * Upgrade_Content_Replace_URLs Class
  *
  * This class handles replacing all S3 URLs in post
  * content with the local URL.
  *
  * @since 1.2
  */
-class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade_Filter_Post  {
+class Upgrade_Content_Replace_URLs extends Upgrade_Filter_Post {
 
 	/**
 	 * @var int
@@ -49,23 +46,23 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade_Filter_Post  {
 	}
 
 	/**
-	 * Process blog.
+	 * Switch to a new blog for processing.
 	 *
-	 * @param array $blog
+	 * @return bool
 	 */
-	protected function process_blog( $blog ) {
-		$this->upgrade_theme_mods( $blog['prefix'] );
+	protected function upgrade_blog() {
+		$this->upgrade_theme_mods();
+
+		return parent::upgrade_blog();
 	}
 
 	/**
 	 * Upgrade theme mods. Ensures background and header images have local URLs saved to the database.
-	 *
-	 * @param string $prefix
 	 */
-	protected function upgrade_theme_mods( $prefix ) {
+	protected function upgrade_theme_mods() {
 		global $wpdb;
 
-		$mods = $wpdb->get_results( "SELECT * FROM `{$prefix}options` WHERE option_name LIKE 'theme_mods_%'" );
+		$mods = $wpdb->get_results( "SELECT * FROM `{$wpdb->prefix}options` WHERE option_name LIKE 'theme_mods_%'" );
 
 		foreach ( $mods as $mod ) {
 			$value = maybe_unserialize( $mod->option_value );
@@ -85,7 +82,7 @@ class AS3CF_Upgrade_Content_Replace_URLs extends AS3CF_Upgrade_Filter_Post  {
 			$value = maybe_serialize( $value );
 
 			if ( $value !== $mod->option_value ) {
-				$wpdb->query( "UPDATE `{$prefix}options` SET option_value = '{$value}' WHERE option_id = '{$mod->option_id}'" );
+				$wpdb->query( "UPDATE `{$wpdb->prefix}options` SET option_value = '{$value}' WHERE option_id = '{$mod->option_id}'" );
 			}
 		}
 	}

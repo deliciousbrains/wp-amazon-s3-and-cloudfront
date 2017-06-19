@@ -22,8 +22,8 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		add_filter( 'excerpt_edit_pre', array( $this, 'filter_post' ) );
 		add_filter( 'as3cf_filter_post_local_to_s3', array( $this, 'filter_post' ) );
 		// Widgets
-		add_filter( 'widget_text', array( $this, 'filter_widget' ) );
-		add_filter( 'widget_form_callback', array( $this, 'filter_widget_form' ), 10, 2 );
+		add_filter( 'widget_form_callback', array( $this, 'filter_widget_display' ), 10, 2 );
+		add_filter( 'widget_display_callback', array( $this, 'filter_widget_display' ), 10, 2 );
 	}
 
 	/**
@@ -58,7 +58,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	public function filter_post_data( $post ) {
 		global $pages;
 
-		$cache    = $this->get_post_cache();
+		$cache    = $this->get_post_cache( $post->ID );
 		$to_cache = array();
 
 		if ( 1 === count( $pages ) && ! empty( $pages[0] ) ) {
@@ -94,42 +94,15 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	}
 
 	/**
-	 * Filter widget.
-	 *
-	 * @param string $content
-	 *
-	 * @return string
-	 */
-	public function filter_widget( $content ) {
-		$cache    = $this->get_option_cache();
-		$to_cache = array();
-		$content  = $this->process_content( $content, $cache, $to_cache );
-
-		$this->maybe_update_option_cache( $to_cache );
-
-		return $content;
-	}
-
-	/**
-	 * Filter widget form.
+	 * Filter widget display.
 	 *
 	 * @param array     $instance
 	 * @param WP_Widget $class
 	 *
-	 * @return string
+	 * @return array
 	 */
-	public function filter_widget_form( $instance, $class ) {
-		if ( ! is_a( $class, 'WP_Widget_Text' ) || empty( $instance ) ) {
-			return $instance;
-		}
-
-		$cache            = $this->get_option_cache();
-		$to_cache         = array();
-		$instance['text'] = $this->process_content( $instance['text'], $cache, $to_cache );
-
-		$this->maybe_update_option_cache( $to_cache );
-
-		return $instance;
+	public function filter_widget_display( $instance, $class ) {
+		return $this->handle_widget( $instance, $class );
 	}
 
 	/**
@@ -142,7 +115,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	protected function url_needs_replacing( $url ) {
 		$uploads  = wp_upload_dir();
 		$base_url = $this->as3cf->maybe_fix_local_subsite_url( $uploads['baseurl'] );
-		$base_url = $this->as3cf->remove_scheme( $base_url );
+		$base_url = AS3CF_Utils::remove_scheme( $base_url );
 
 		if ( false !== strpos( $url, $base_url ) ) {
 			// Local URL, perform replacement
@@ -186,7 +159,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	protected function get_attachment_id_from_url( $url ) {
 		global $wpdb;
 
-		$full_url = $this->as3cf->remove_scheme( $this->as3cf->remove_size_from_filename( $url ) );
+		$full_url = AS3CF_Utils::remove_scheme( AS3CF_Utils::remove_size_from_filename( $url ) );
 
 		if ( isset( $this->query_cache[ $full_url ] ) ) {
 			// ID already cached, return
@@ -194,7 +167,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		}
 
 		$upload_dir = wp_upload_dir();
-		$base_url   = $this->as3cf->remove_scheme( $upload_dir['baseurl'] );
+		$base_url   = AS3CF_Utils::remove_scheme( $upload_dir['baseurl'] );
 		$path       = $this->as3cf->decode_filename_in_path( ltrim( str_replace( $base_url, '', $full_url ), '/' ) );
 
 		$sql = $wpdb->prepare( "
@@ -238,13 +211,13 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		}
 
 		$upload_dir = wp_upload_dir();
-		$base_url   = $this->as3cf->remove_scheme( $upload_dir['baseurl'] );
+		$base_url   = AS3CF_Utils::remove_scheme( $upload_dir['baseurl'] );
 
 		$paths     = array();
 		$full_urls = array();
 
 		foreach ( $urls as $url ) {
-			$full_url = $this->as3cf->remove_scheme( $this->as3cf->remove_size_from_filename( $url ) );
+			$full_url = AS3CF_Utils::remove_scheme( AS3CF_Utils::remove_size_from_filename( $url ) );
 
 			if ( isset( $this->query_cache[ $full_url ] ) ) {
 				// ID already cached, use it.
@@ -335,7 +308,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 */
 	protected function pre_replace_content( $content ) {
 		$uploads  = wp_upload_dir();
-		$base_url = $this->as3cf->remove_scheme( $uploads['baseurl'] );
+		$base_url = AS3CF_Utils::remove_scheme( $uploads['baseurl'] );
 
 		return $this->remove_aws_query_strings( $content, $base_url );
 	}

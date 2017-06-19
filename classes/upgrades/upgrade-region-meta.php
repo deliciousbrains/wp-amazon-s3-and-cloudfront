@@ -9,19 +9,18 @@
  * @since       0.6.2
  */
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+
+use AS3CF_Error;
 
 /**
- * AS3CF_Upgrade_Region_Meta Class
+ * Upgrade_Region_Meta Class
  *
  * This class handles updating the region of the attachment's bucket in the meta data
  *
  * @since 0.6.2
  */
-class AS3CF_Upgrade_Region_Meta extends AS3CF_Upgrade {
+class Upgrade_Region_Meta extends Upgrade {
 
 	/**
 	 * @var int
@@ -81,16 +80,7 @@ class AS3CF_Upgrade_Region_Meta extends AS3CF_Upgrade {
 	 * @return int
 	 */
 	protected function count_items_to_process() {
-		// get the table prefixes for all the blogs
-		$table_prefixes = $this->as3cf->get_all_blog_table_prefixes();
-		$all_count      = 0;
-
-		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-			$count = $this->count_attachments_without_region( $table_prefix );
-			$all_count += $count;
-		}
-
-		return $all_count;
+		return $this->count_attachments_without_region( $this->blog_prefix );
 	}
 
 	/**
@@ -110,6 +100,7 @@ class AS3CF_Upgrade_Region_Meta extends AS3CF_Upgrade {
 
 	/**
 	 * Get a count of attachments that don't have region in their S3 meta data for a blog
+	 *
 	 * @param $prefix
 	 *
 	 * @return int
@@ -144,10 +135,8 @@ class AS3CF_Upgrade_Region_Meta extends AS3CF_Upgrade {
 
 		$sql = "SELECT `post_id` as `ID`, `meta_value` AS 's3object'" . $sql;
 
-		if ( ! is_null( $limit ) ) {
-			$sql .= ' LIMIT %d';
-
-			$sql = $wpdb->prepare( $sql, $limit );
+		if ( $limit && $limit > 0 ) {
+			$sql .= sprintf( ' LIMIT %d', (int) $limit );
 		}
 
 		return $wpdb->get_results( $sql, OBJECT );

@@ -9,13 +9,13 @@
  * @since       0.9.5
  */
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+
+use AS3CF_Error;
+use Exception;
 
 /**
- * AS3CF_Upgrade_Meta_WP_Error Class
+ * Upgrade_Meta_WP_Error Class
  *
  * This class handles updating the _wp_attachment_metadata
  * for attachments that have been removed from the local server
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 0.9.5
  */
-class AS3CF_Upgrade_Meta_WP_Error extends AS3CF_Upgrade {
+class Upgrade_Meta_WP_Error extends Upgrade {
 
 	/**
 	 * @var int
@@ -95,22 +95,12 @@ class AS3CF_Upgrade_Meta_WP_Error extends AS3CF_Upgrade {
 	}
 
 	/**
-	 * Get a count of all attachments without region in their S3 metadata
-	 * for the whole site
+	 * Get a count of all attachments without region in their S3 metadata.
 	 *
 	 * @return int
 	 */
 	protected function count_items_to_process() {
-		// get the table prefixes for all the blogs
-		$table_prefixes = $this->as3cf->get_all_blog_table_prefixes();
-		$all_count      = 0;
-
-		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-			$count = $this->get_attachments_with_error_metadata( $table_prefix, true );
-			$all_count += $count;
-		}
-
-		return $all_count;
+		return (int) $this->get_attachments_with_error_metadata( $this->blog_prefix, true );
 	}
 
 	/**
@@ -155,10 +145,8 @@ class AS3CF_Upgrade_Meta_WP_Error extends AS3CF_Upgrade {
 
 		$sql = "SELECT pm1.`post_id` as `ID`, pm1.`meta_value` AS 's3object'" . $sql;
 
-		if ( ! is_null( $limit ) ) {
-			$sql .= ' LIMIT %d';
-
-			$sql = $wpdb->prepare( $sql, $limit );
+		if ( $limit && $limit > 0 ) {
+			$sql .= sprintf( ' LIMIT %d', (int) $limit );
 		}
 
 		return $wpdb->get_results( $sql, OBJECT );

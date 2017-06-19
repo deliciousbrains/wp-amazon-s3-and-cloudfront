@@ -1,19 +1,30 @@
 <?php
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+
+use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
+use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Too_Many_Errors_Exception;
 
 /**
- * AS3CF_Upgrade_Filter Class
+ * Upgrade_Filter_Post Class
  *
  * The base upgrade class for handling find and replace
  * on the posts tables for content filtering.
  *
  * @since 1.3
  */
-abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
+abstract class Upgrade_Filter_Post extends Upgrade {
+
+	/**
+	 * @var int Time limit in seconds.
+	 */
+	protected $time_limit = 10;
+
+	/**
+	 * @var int Batch size limit for this request session.
+	 */
+	protected $size_limit = 50;
 
 	/**
 	 * @var string 'metadata', 'attachment'
@@ -21,229 +32,24 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 	protected $upgrade_type = 'posts';
 
 	/**
-	 * @var int Current blog ID
-	 */
-	protected $blog_id;
-
-	/**
-	 * @var int Finish time
-	 */
-	protected $finish;
-
-	/**
-	 * @var array Session data
-	 */
-	protected $session;
-
-	/**
 	 * @var string
 	 */
 	protected $column_name;
 
 	/**
-	 * Fire up the upgrade
+	 * @var int The last post ID used for the bottom range of the item upgrade.
 	 */
-	protected function init() {
-		$session = array(
-			'status'                => self::STATUS_RUNNING,
-			'total_attachments'     => 0,
-			'processed_attachments' => 0,
-			'blogs_processed'       => false,
-			'blogs'                 => array(),
-		);
-
-		foreach ( $this->as3cf->get_all_blog_table_prefixes() as $blog_id => $prefix ) {
-			$session['blogs'][ $blog_id ] = array(
-				'prefix'                => $prefix,
-				'processed'             => false,
-				'total_attachments'     => null,
-				'last_attachment_id'    => null,
-				'highest_post_id'       => null,
-				'last_post_id'          => null,
-			);
-		}
-
-		$this->save_session( $session );
-		$this->schedule();
-	}
-
-	/**
-	 * Count attachments to process. We don't care about the total at this stage
-	 * so just loop over blogs until attachments exist on S3.
-	 *
-	 * @return int
-	 */
-	protected function count_items_to_process() {
-		$table_prefixes = $this->as3cf->get_all_blog_table_prefixes();
-
-		foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-			if ( $this->as3cf->count_attachments( $table_prefix, true ) ) {
-				return 1;
-			}
-		}
-
-		return 0;
-	}
-
-	/**
-	 * Cron job to update post content, ensuring no S3 URLs exist.
-	 */
-	public function do_upgrade() {
-		$this->lock_upgrade();
-
-		// Check if the cron should even be running
-		if ( $this->get_saved_upgrade_id() >= $this->upgrade_id || $this->get_upgrade_status() !== self::STATUS_RUNNING ) {
-			$this->unschedule();
-
-			return;
-		}
-
-		$limit         = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_batch_size', 50 );
-		$this->finish  = time() + apply_filters( 'as3cf_update_' . $this->upgrade_name . '_time_limit', 10 );
-		$this->session = $this->get_session();
-
-		if ( ! $this->maybe_process_blogs() ) {
-			// Blogs still to process but limits reached, return
-			$this->save_session( $this->session );
-
-			return;
-		}
-
-		foreach ( $this->session['blogs'] as $blog_id => $blog ) {
-			$this->blog_id = $blog_id;
-			$this->as3cf->switch_to_blog( $blog_id );
-
-			if ( $this->batch_limit_reached() ) {
-				// Limits reached, end batch
-				break;
-			}
-
-			if ( $blog['processed'] ) {
-				// Blog processed, move onto the next
-				continue;
-			}
-
-			$offset      = $this->session['blogs'][ $blog_id ]['last_attachment_id'];
-			$attachments = $this->get_items_to_process( $blog['prefix'], $limit, $offset );
-
-			if ( empty( $attachments ) ) {
-				// All attachments processed, maybe move onto next blog
-				$this->session['blogs'][ $blog_id ]['processed'] = true;
-
-				if ( $this->all_blogs_processed() ) {
-					// All blogs processed, complete upgrade
-					$this->upgrade_finished();
-
-					return;
-				}
-
-				continue;
-			}
-
-			foreach ( $attachments as $attachment ) {
-				if ( $this->batch_limit_reached() ) {
-					// Limits reached, end batch
-					break 2;
-				}
-
-				if ( $this->upgrade_item( $attachment ) ) {
-					$this->session['processed_attachments'] += 1;
-					$this->session['blogs'][ $blog_id ]['last_attachment_id'] = $attachment->ID;
-					$this->session['blogs'][ $blog_id ]['last_post_id']       = null;
-				} else {
-					// Limits reached while processing posts, end batch
-					break 2;
-				}
-			}
-
-			$this->as3cf->restore_current_blog();
-		}
-
-		$this->maybe_finish_upgrade();
-	}
-
-	/**
-	 * Maybe finish the upgrade process.
-	 */
-	protected function maybe_finish_upgrade() {
-		if ( $this->session['processed_attachments'] >= $this->session['total_attachments']) {
-			$this->upgrade_finished();
-
-			return;
-		}
-
-		$this->save_session( $this->session );
-	}
-
-	/**
-	 * Maybe process blogs.
-	 *
-	 * @return bool
-	 */
-	protected function maybe_process_blogs() {
-		if ( $this->session['blogs_processed'] ) {
-			// Blogs already processed, return
-			return true;
-		}
-
-		foreach ( $this->session['blogs'] as $blog_id => $blog ) {
-			if ( $this->batch_limit_reached() ) {
-				// Limits reached, return
-				return false;
-			}
-
-			if ( is_null( $blog['total_attachments'] ) ) {
-				if ( method_exists( $this, 'process_blog' ) ) {
-					$this->process_blog( $blog );
-				}
-
-				// Count total attachments
-				$count = $this->as3cf->count_attachments( $blog['prefix'], true );
-
-				// Update blog session data
-				$this->session['blogs'][ $blog_id ]['total_attachments'] = $count;
-				$this->session['total_attachments'] += $count;
-			}
-
-			if ( is_null( $blog['highest_post_id'] ) ) {
-				// Retrieve highest post ID
-				$this->session['blogs'][ $blog_id ]['highest_post_id'] = $this->get_highest_post_id( $blog['prefix'] );
-			}
-		}
-
-		$this->session['blogs_processed'] = true;
-
-		return true;
-	}
+	protected $last_post_id;
 
 	/**
 	 * Get highest post ID.
 	 *
-	 * @param string $prefix
-	 *
 	 * @return int
 	 */
-	protected function get_highest_post_id( $prefix ) {
+	protected function get_highest_post_id() {
 		global $wpdb;
 
-		$sql = "SELECT ID FROM `{$prefix}posts` ORDER BY ID DESC LIMIT 1";
-
-		return (int) $wpdb->get_var( $sql );
-	}
-
-	/**
-	 * All blogs processed.
-	 *
-	 * @return bool
-	 */
-	protected function all_blogs_processed() {
-		foreach ( $this->session['blogs'] as $blog ) {
-			if ( ! $blog['processed'] ) {
-				return false;
-			}
-		}
-
-		return true;
+		return (int) $wpdb->get_var( "SELECT MAX(ID) FROM {$wpdb->prefix}posts" );
 	}
 
 	/**
@@ -268,13 +74,46 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 			$sql .= " AND posts.ID < '{$offset}'";
 		}
 
-		$sql .= " ORDER BY posts.ID DESC LIMIT {$limit}";
+		$sql .= " ORDER BY posts.ID DESC";
+
+		if ( $limit && $limit > 0 ) {
+			$sql .= sprintf( ' LIMIT %d', (int) $limit );
+		}
 
 		return $wpdb->get_results( $sql );
 	}
 
 	/**
+	 * Switch to the given blog, and update blog-specific state.
+	 *
+	 * @param $blog_id
+	 */
+	protected function switch_to_blog( $blog_id ) {
+		parent::switch_to_blog( $blog_id );
+		$this->last_post_id = $this->load_last_post_id();
+	}
+
+	/**
+	 * Mark the current blog upgrade as complete.
+	 */
+	protected function blog_upgrade_completed() {
+		parent::blog_upgrade_completed();
+		$this->last_post_id = null;
+	}
+
+	/**
+	 * Prepare the session to be persisted.
+	 */
+	protected function close_session() {
+		parent::close_session();
+		$this->session['last_post_id'] = $this->last_post_id;
+	}
+
+	/**
 	 * Upgrade attachment.
+	 *
+	 * @throws Batch_Limits_Exceeded_Exception
+	 * @throws Too_Many_Errors_Exception
 	 *
 	 * @param mixed $attachment
 	 *
@@ -282,18 +121,11 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 	 */
 	protected function upgrade_item( $attachment ) {
 		$limit            = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_sql_limit', 100000 );
-		$highest_post_id  = $this->session['blogs'][ $this->blog_id ]['highest_post_id'];
-		$last_post_id     = $this->session['blogs'][ $this->blog_id ]['last_post_id'];
-		$where_highest_id = is_null( $last_post_id ) ? $highest_post_id : $last_post_id;
+		$where_highest_id = $this->last_post_id;
 		$where_lowest_id  = max( $where_highest_id - $limit, 0 );
 
 		while ( true ) {
 			$this->find_and_replace_attachment_urls( $attachment->ID, $where_lowest_id, $where_highest_id );
-
-			if ( $this->batch_limit_reached() ) {
-				// Batch limit reached
-				break;
-			}
 
 			if ( $where_lowest_id <= 0 ) {
 				// Batch completed
@@ -302,11 +134,23 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 
 			$where_highest_id = $where_lowest_id;
 			$where_lowest_id  = max( $where_lowest_id - $limit, 0 );
+
+			$this->check_batch_limits();
 		}
 
-		$this->session['blogs'][ $this->blog_id ]['last_post_id'] = $where_lowest_id;
+		$this->last_post_id = $where_lowest_id;
 
 		return false;
+	}
+
+	/**
+	 * Perform any actions necessary after the given item is completed.
+	 *
+	 * @param $item
+	 */
+	protected function item_upgrade_completed( $item ) {
+		parent::item_upgrade_completed( $item );
+		$this->last_item = $item->ID;
 	}
 
 	/**
@@ -385,8 +229,8 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 
 		// Remove URL protocols
 		foreach ( $url_pairs as $key => $url_pair ) {
-			$url_pairs[ $key ]['old_url'] = $this->as3cf->remove_scheme( $url_pair['old_url'] );
-			$url_pairs[ $key ]['new_url'] = $this->as3cf->remove_scheme( $url_pair['new_url'] );
+			$url_pairs[ $key ]['old_url'] = AS3CF_Utils::remove_scheme( $url_pair['old_url'] );
+			$url_pairs[ $key ]['new_url'] = AS3CF_Utils::remove_scheme( $url_pair['new_url'] );
 		}
 
 		return apply_filters( 'as3cf_update_' . $this->upgrade_name . '_url_pairs', $url_pairs, $file_path, $old_url, $new_url, $meta );
@@ -486,7 +330,7 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 
 		// Get unique URLs without size string and extension
 		foreach ( $url_pairs as $url_pair ) {
-			$paths[] = $this->as3cf->remove_size_from_filename( $url_pair['old_url'], true );
+			$paths[] = AS3CF_Utils::remove_size_from_filename( $url_pair['old_url'], true );
 		}
 
 		$paths = array_unique( $paths );
@@ -551,42 +395,62 @@ abstract class AS3CF_Upgrade_Filter_Post extends AS3CF_Upgrade {
 	 */
 	protected function get_generic_message() {
 		$link_text = __( 'See our documentation', 'amazon-s3-and-cloudfront' );
-		$link      = $this->as3cf->dbrains_link( 'https://deliciousbrains.com/wp-offload-s3/doc/version-1-2-upgrade', $link_text );
+		$url       = $this->as3cf->dbrains_url( '/wp-offload-s3/doc/version-1-2-upgrade', array(
+			'utm_campaign' => 'support+docs',
+		) );
+		$link      = AS3CF_Utils::dbrains_link( $url, $link_text );
 
 		return sprintf( __( '%s for details on why we&#8217;re doing this, why it runs slowly, and how to make it run faster.', 'amazon-s3-and-cloudfront' ), $link );
 	}
 
 	/**
-	 * Calculate progress.
+	 * Load the last blog ID from the session.
 	 *
-	 * @return bool|int|float
+	 * If the ID is found using the standard session key, use that.
+	 * Otherwise if it is an older session, derive the ID from the blogs in the session.
+	 *
+	 * @return bool|int|mixed
 	 */
-	protected function calculate_progress() {
-		$session = $this->get_session();
-
-		if ( ! isset( $session['total_attachments'] ) || ! isset( $session['processed_attachments'] ) ) {
-			// Session data not created, return
-			return false;
+	protected function load_last_blog_id() {
+		if ( $blog_id = parent::load_last_blog_id() ) {
+			return $blog_id;
 		}
 
-		if ( ! $session['blogs_processed'] || is_null( $session['total_attachments'] ) || is_null( $session['processed_attachments'] ) ) {
-			// Still processing blogs, return 0
-			return 0;
-		}
+		$blog_ids = $this->load_processesed_blog_ids();
 
-		return round( $session['processed_attachments'] / $session['total_attachments'] * 100, 2 );
+		return end( $blog_ids );
 	}
 
 	/**
-	 * Batch limit reached.
+	 * Get all of the processed blog IDs from the session.
 	 *
-	 * @return bool
+	 * @return array
 	 */
-	protected function batch_limit_reached() {
-		if ( time() >= $this->finish || $this->as3cf->memory_exceeded( 'as3cf_update_' . $this->upgrade_name . '_memory_exceeded' ) ) {
-			return true;
+	protected function load_processesed_blog_ids() {
+		if ( $ids = parent::load_processesed_blog_ids() ) {
+			return $ids;
 		}
 
-		return false;
+		if ( isset( $this->session['blogs'] ) && is_array( $this->session['blogs'] ) ) {
+			return array_keys( $this->session['blogs'] );
+		}
+
+		return array();
+	}
+
+	/**
+	 * Populate the last post ID.
+	 *
+	 * The last post ID is set from the session if set,
+	 * otherwise it defaults to the highest post ID on the site.
+	 *
+	 * @return int Post ID.
+	 */
+	protected function load_last_post_id() {
+		if ( isset( $this->session['last_post_id'] ) ) {
+			return (int) $this->session['last_post_id'];
+		}
+
+		return $this->get_highest_post_id();
 	}
 }

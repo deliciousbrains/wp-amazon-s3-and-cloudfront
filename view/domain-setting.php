@@ -19,7 +19,7 @@ if ( $this->show_deprecated_domain_setting( $domain ) ) {
 		<h4><?php _e( 'CloudFront or Custom Domain', 'amazon-s3-and-cloudfront' ) ?></h4>
 		<p class="domain-desc">
 			<?php _e( 'Replace the default S3 domain and path with your CloudFront domain or any domain.', 'amazon-s3-and-cloudfront' ); ?>
-			<?php echo $this->settings_more_info_link( 'domain' ); ?>
+			<?php echo $this->settings_more_info_link( 'domain', 'media+cloudfront+or+custom+domain' ); ?>
 		</p>
 		<?php
 		$args = $this->get_setting_args( 'cloudfront' );

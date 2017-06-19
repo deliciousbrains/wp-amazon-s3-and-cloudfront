@@ -30,6 +30,14 @@ $tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
 		if ( isset( $after_bucket_content ) ) {
 			echo $after_bucket_content;
 		}
-		?>
+
+		$lock_bucket_args = array(
+			'message' => __( '<strong>Bucket Select Disabled</strong> &mdash; Bucket selection has been disabled while files are copied between buckets.', 'amazon-s3-and-cloudfront' ),
+			'id'      => 'as3cf-bucket-select-locked',
+			'inline'  => true,
+			'type'    => 'notice-warning',
+			'style'   => 'display: none',
+		);
+		$this->render_view( 'notice', $lock_bucket_args ); ?>
 	</td>
 </tr>

@@ -72,9 +72,6 @@ class AS3CF_Plugin_Compatibility {
 	 * Register the compatibility hooks as long as the plugin is setup.
 	 */
 	function compatibility_init_if_setup() {
-		// Add notices about compatibility addons to install
-		add_action( 'admin_init', array( $this, 'maybe_render_compatibility_addons_notice' ) );
-
 		// Turn on stream wrapper S3 file
 		add_filter( 'as3cf_get_attached_file', array( $this, 'get_stream_wrapper_file' ), 20, 4 );
 
@@ -88,7 +85,7 @@ class AS3CF_Plugin_Compatibility {
 		 * WP_Image_Editor
 		 * /wp-includes/class-wp-image-editor.php
 		 */
-		add_action( 'as3cf_upload_attachment_pre_remove', array( $this, 'image_editor_remove_files' ), 10, 4 );
+		add_action( 'as3cf_pre_upload_attachment', array( $this, 'image_editor_remove_files' ), 10, 3 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'image_editor_download_file' ), 10, 4 );
 		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_crop_download_file' ), 10, 4 );
@@ -100,202 +97,13 @@ class AS3CF_Plugin_Compatibility {
 		 * https://wordpress.org/plugins/regenerate-thumbnails/
 		 */
 		add_filter( 'as3cf_get_attached_file', array( $this, 'regenerate_thumbnails_download_file' ), 10, 4 );
-	}
 
-	/**
-	 * Get the addons for the Pro upgrade
-	 *
-	 * @return array
-	 */
-	public function get_pro_addons() {
-		global $amazon_web_services;
-
-		$all_addons = $amazon_web_services->get_addons( true );
-		if ( ! isset( $all_addons['amazon-s3-and-cloudfront-pro']['addons'] ) ) {
-			return array();
+		/*
+		 * WP-CLI Compatibility
+		 */
+		if ( defined( 'WP_CLI' ) && class_exists( 'WP_CLI') ) {
+			WP_CLI::add_hook( 'before_invoke:media regenerate', array( $this, 'enable_get_attached_file_copy_back_to_local' ) );
 		}
-
-		$addons = $all_addons['amazon-s3-and-cloudfront-pro']['addons'];
-
-		return $addons;
-	}
-
-	/**
-	 * Get compatibility addons that are required to be installed
-	 *
-	 * @return array
-	 */
-	public function get_compatibility_addons_to_install() {
-		if ( isset( $this->compatibility_addons ) ) {
-			return $this->compatibility_addons;
-		}
-
-		$addons            = $this->get_pro_addons();
-		$addons_to_install = array();
-
-		if ( empty ( $addons ) ) {
-			return $addons_to_install;
-		}
-
-		foreach ( $addons as $addon_slug => $addon ) {
-			if ( file_exists( WP_PLUGIN_DIR . '/' . $addon_slug . '/' . $addon_slug . '.php' ) ) {
-				// Addon already installed, ignore.
-				continue;
-			}
-
-			if ( ! isset( $addon['parent_plugin_basename'] ) || '' === $addon['parent_plugin_basename'] ) {
-				// Addon doesn't have a parent plugin, ignore.
-				continue;
-			}
-
-			if ( ! file_exists( WP_PLUGIN_DIR . '/' . $addon['parent_plugin_basename'] ) || ! is_plugin_active( $addon['parent_plugin_basename'] ) ) {
-				// Parent plugin not installed or not activated, ignore.
-				continue;
-			}
-
-			$addons_to_install[ $addon_slug ] = array(
-				'title' => $addon['title'],
-				'url'   => $addon['url'],
-			);
-		}
-
-		$this->compatibility_addons = $addons_to_install;
-
-		return $addons_to_install;
-	}
-
-	/**
-	 * Maybe show a notice about installing addons when the site is using the
-	 * plugins they add compatibility for.
-	 */
-	public function maybe_render_compatibility_addons_notice() {
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-			return;
-		}
-
-		global $as3cf_compat_check;
-		if ( ! $as3cf_compat_check->check_capabilities() ) {
-			// User can't install plugins anyway, bail.
-			return;
-		}
-
-		if ( ! $this->should_show_compatibility_notice() ) {
-			// No addons to install, or addons haven't changed
-			return;
-		}
-
-		$notice_id         = 'as3cf-compat-addons';
-		$addons_to_install = $this->get_compatibility_addons_to_install();
-
-		// Remove previous notice to refresh addon list
-		$this->remove_compatibility_notice();
-
-		$title       = __( 'WP Offload S3 Compatibility Addons', 'amazon-s3-and-cloudfront' );
-		$compat_url  = 'https://deliciousbrains.com/wp-offload-s3/doc/compatibility-with-other-plugins/';
-		$compat_link = sprintf( '<a href="%s">%s</a>', $compat_url, __( 'compatibility addons', 'amazon-s3-and-cloudfront' ) );
-		$message     = sprintf( __( "To get WP Offload S3 to work with certain 3rd party plugins, you might need to install and activate some of our %s. We've detected the following addons might need to be installed. Please click the links for more information about each addon to determine if you need it or not.", 'amazon-s3-and-cloudfront' ), $compat_link );
-
-		$notice_addons_text = $this->render_addon_list( $addons_to_install );
-		$support_email      = 'nom@deliciousbrains.com';
-		$support_link       = sprintf( '<a href="mailto:%1$s">%1$s</a>', $support_email );
-
-		$notice_addons_text .= '<p>' . sprintf( __( "You will need to purchase a license to get access to these addons. If you're having trouble determining whether or not you need the addons, send an email to %s.", 'amazon-s3-and-cloudfront' ), $support_link ) . '</p>';
-		$notice_addons_text .= sprintf( '<p><a href="%s" class="button button-large">%s</a></p>', 'https://deliciousbrains.com/wp-offload-s3/pricing/', __( 'View Licenses', 'amazon-s3-and-cloudfront' ) );
-
-		$notice_addons_text = apply_filters( 'wpos3_compat_addons_notice', $notice_addons_text, $addons_to_install );
-
-		if ( false === $notice_addons_text ) {
-			// Allow the notice to be aborted.
-			return;
-		}
-
-		$notice = '<p><strong>' . $title . '</strong> &mdash; ' . $message . '</p>' . $notice_addons_text;
-
-		$notice_args = array(
-			'type'              => 'notice-info',
-			'custom_id'         => $notice_id,
-			'only_show_to_user' => false,
-			'flash'             => false,
-			'auto_p'            => false,
-		);
-
-		$notice_args = apply_filters( 'wpos3_compat_addons_notice_args', $notice_args, $addons_to_install );
-
-		update_site_option( 'as3cf_compat_addons_to_install', $addons_to_install );
-
-		$this->as3cf->notices->add_notice( $notice, $notice_args );
-	}
-
-	/**
-	 * Should show compatibility notice
-	 *
-	 * @return bool
-	 */
-	protected function should_show_compatibility_notice() {
-		$addons          = $this->get_compatibility_addons_to_install();
-		$previous_addons = get_site_option( 'as3cf_compat_addons_to_install', array() );
-
-		if ( empty( $addons ) && empty( $previous_addons ) ) {
-			// No addons to install
-			return false;
-		}
-
-		if ( empty( $addons ) && ! empty( $previous_addons ) ) {
-			// No addons to install but previous exist
-			$this->remove_compatibility_notice( true );
-
-			return false;
-		}
-
-		if ( $previous_addons === $addons ) {
-			// Addons have not changed
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Remove compatibility notice
-	 *
-	 * @param bool $delete_option
-	 */
-	protected function remove_compatibility_notice( $delete_option = false ) {
-		$notice_id = 'as3cf-compat-addons';
-
-		if ( $this->as3cf->notices->find_notice_by_id( $notice_id ) ) {
-			$this->as3cf->notices->undismiss_notice_for_all( $notice_id );
-			$this->as3cf->notices->remove_notice_by_id( $notice_id );
-		}
-
-		if ( $delete_option ) {
-			delete_site_option( 'as3cf_compat_addons_to_install' );
-		}
-	}
-
-	/**
-	 * Render list of addons for a notice
-	 *
-	 * @param array $addons
-	 *
-	 * @return string
-	 */
-	protected function render_addon_list( $addons ) {
-		if ( ! is_array( $addons ) || empty( $addons ) ) {
-			return '';
-		}
-
-		sort( $addons );
-
-		$html = '<ul style="list-style-type: disc; padding: 0 0 0 30px; margin: 5px 0;">';
-		foreach ( $addons as $addon ) {
-			$html .= '<li style="margin: 0;">';
-			$html .= '<a href="' . $addon['url'] . '">' . $addon['title'] . '</a>';
-			$html .= '</li>';
-		}
-		$html .= '</ul>';
-
-		return $html;
 	}
 
 	/**
@@ -323,6 +131,13 @@ class AS3CF_Plugin_Compatibility {
 
 		// Return S3 URL as a fallback
 		return $url;
+	}
+
+	/**
+	 * Enables copying missing local files back to the server when `get_attached_file` filter is called.
+	 */
+	public function enable_get_attached_file_copy_back_to_local() {
+		add_filter( 'as3cf_get_attached_file_copy_back_to_local', '__return_true' );
 	}
 
 	/**
@@ -426,21 +241,49 @@ class AS3CF_Plugin_Compatibility {
 	 * Allow the WordPress Image Editor to remove edited version of images
 	 * if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
 	 *
-	 * @param int    $post_id
-	 * @param array  $s3object
-	 * @param string $prefix
-	 * @param array  $args
+	 * @param bool  $pre
+	 * @param int   $post_id
+	 * @param array $data
+	 *
+	 * @return bool
 	 */
-	function image_editor_remove_files( $post_id, $s3object, $prefix, $args ) {
+	public function image_editor_remove_files( $pre, $post_id, $data ) {
 		if ( ! isset( $_POST['do'] ) || 'restore' !== $_POST['do'] ) {
-			return;
+			return $pre;
 		}
 
 		if ( ! defined( 'IMAGE_EDIT_OVERWRITE' ) || ! IMAGE_EDIT_OVERWRITE ) {
+			return $pre;
+		}
+
+		$s3object = $this->as3cf->get_attachment_s3_info( $post_id );
+		$this->remove_edited_image_files( $post_id, $s3object );
+
+		// Update object key with original filename
+		$restored_filename = wp_basename( $data['file'] );
+		$old_filename      = wp_basename( $s3object['key'] );
+		$s3object['key']   = str_replace( $old_filename, $restored_filename, $s3object['key'] );
+		update_post_meta( $post_id, 'amazonS3_info', $s3object );
+
+		return true;
+	}
+
+	/**
+	 * Remove edited image files from S3.
+	 *
+	 * @param int   $attachment_id
+	 * @param array $s3object
+	 */
+	protected function remove_edited_image_files( $attachment_id, $s3object ) {
+		$bucket = $s3object['bucket'];
+		$region = $this->as3cf->get_s3object_region( $s3object );
+		$keys   = AS3CF_Utils::get_attachment_edited_keys( $attachment_id, $s3object );
+
+		if ( empty( $keys ) ) {
 			return;
 		}
 
-		$this->as3cf->remove_attachment_files_from_s3( $post_id, $s3object, false );
+		$this->as3cf->delete_s3_objects( $region, $bucket, $keys );
 	}
 
 	/**
@@ -475,19 +318,19 @@ class AS3CF_Plugin_Compatibility {
 			$this->copy_s3_file_to_server( $orig_s3, $orig_file );
 
 			// Copy the edited file back to the server as well, it will be cleaned up later
-			if ( ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+			if ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) {
 				// Return the file if successfully downloaded from S3
 				return $s3_file;
 			};
 		}
 
-		// must be the image-editor process
-		if ( isset( $_POST['action'] ) && 'image-editor' == sanitize_key( $_POST['action'] ) ) { // input var okay
-			$callers = debug_backtrace();
-			foreach ( $callers as $caller ) {
+		$action = filter_input( INPUT_GET, 'action' ) ?: filter_input( INPUT_POST, 'action' );
+
+		if ( in_array( $action, array( 'image-editor', 'imgedit-preview' ) ) ) { // input var okay
+			foreach ( debug_backtrace() as $caller ) {
 				if ( isset( $caller['function'] ) && '_load_image_to_edit_path' == $caller['function'] ) {
 					// check this has been called by '_load_image_to_edit_path' so as only to copy back once
-					if ( ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+					if ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) {
 						// Return the file if successfully downloaded from S3
 						return $s3_file;
 					};

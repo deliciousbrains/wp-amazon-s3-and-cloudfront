@@ -423,15 +423,8 @@ class AS3CF_Notices {
 	 * Enqueue notice scripts in the admin
 	 */
 	public function enqueue_notice_scripts() {
-		$version = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? time() : $GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'];
-		$suffix  = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
-
-		// Enqueue notice.css & notice.js globally as some notices can be shown & dismissed on any admin page.
-		$src = plugins_url( 'assets/css/notice.css', $this->as3cf->get_plugin_file_path() );
-		wp_enqueue_style( 'as3cf-notice', $src, array(), $version );
-		
-		$src = plugins_url( 'assets/js/notice' . $suffix . '.js', $this->as3cf->get_plugin_file_path() );
-		wp_enqueue_script( 'as3cf-notice', $src, array( 'jquery' ), $version, true );
+		$this->as3cf->enqueue_style( 'as3cf-notice', 'assets/css/notice' );
+		$this->as3cf->enqueue_script( 'as3cf-notice', 'assets/js/notice', array( 'jquery' ) );
 
 		wp_localize_script( 'as3cf-notice', 'as3cf_notice', array(
 			'strings' => array(

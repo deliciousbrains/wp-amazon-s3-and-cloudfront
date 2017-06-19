@@ -101,13 +101,13 @@ var as3cfModal = (function( $ ) {
 		var target = $( '#as3cf-modal' ).data( 'as3cf-modal-target' );
 
 		$( '#as3cf-overlay' ).fadeOut( 150, function() {
-			if ( 'function' === typeof callback ) {
-				callback( target );
-			}
-
 			$( 'body' ).removeClass( 'as3cf-modal-open' );
 
 			$( this ).remove();
+
+			if ( 'function' === typeof callback ) {
+				callback( target );
+			}
 		} );
 
 		$( 'body' ).trigger( 'as3cf-modal-close', [ target ] );
