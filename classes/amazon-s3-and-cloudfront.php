@@ -1861,7 +1861,7 @@ class Amazon_S3_And_CloudFront extends AWS_Plugin_Base {
 	 *
 	 * @return bool|mixed|void|WP_Error
 	 */
-	public function wp_get_attachment_url( $url, $post_id ) {
+	public function wp_get_attachment_url( $url, $post_id = null ) {
 		$new_url = $this->get_attachment_url( $post_id );
 
 		if ( false === $new_url ) {
