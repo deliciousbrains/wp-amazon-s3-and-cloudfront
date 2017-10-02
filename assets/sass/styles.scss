@@ -573,6 +573,11 @@
 	top: 9px;
 	left: 670px;
 	width: 292px;
+	
+	body[dir="rtl"] & {
+		left: auto;
+		right: 670px;
+	}
 
 	.block {
 		padding: 20px;
