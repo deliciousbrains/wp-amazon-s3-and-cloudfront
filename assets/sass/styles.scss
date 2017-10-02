@@ -574,7 +574,7 @@
 	left: 670px;
 	width: 292px;
 	
-	body[dir="rtl"] & {
+	html[dir="rtl"] & {
 		left: auto;
 		right: 670px;
 	}
