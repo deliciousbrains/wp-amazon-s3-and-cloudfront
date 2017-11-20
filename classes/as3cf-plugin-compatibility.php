@@ -63,6 +63,9 @@ class AS3CF_Plugin_Compatibility {
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'wp_calculate_image_srcset' ), 10, 5 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'wp_calculate_image_srcset_meta' ), 10, 4 );
 
+		// Maybe warn about PHP version if in admin screens.
+		add_action( 'admin_init', array( $this, 'maybe_warn_about_php_version' ) );
+
 		if ( $this->as3cf->is_plugin_setup() ) {
 			$this->compatibility_init_if_setup();
 		}
@@ -817,5 +820,47 @@ class AS3CF_Plugin_Compatibility {
 		$filename = $this->as3cf->filter_unique_filename( $filename, $post_id );
 
 		return $filename;
+	}
+
+	/**
+	 * Display an admin message if PHP version is soon to be unsupported by plugin.
+	 *
+	 * NOTE: This is not added to AWS SDK compatibility checks as it is remaining compatible with earlier PHP versions.
+	 * This function should be removed or reworked once PHP 5.5 is required.
+	 */
+	public function maybe_warn_about_php_version() {
+		$key_base = 'php-version-55';
+
+		if ( version_compare( PHP_VERSION, '5.5', '<' ) ) {
+			$message = sprintf(
+				__( '<strong>Warning:</strong> This site is using PHP %1$s, in a future update WP Offload S3 will require PHP %2$s or later. %3$s', 'amazon-s3-and-cloudfront' ),
+				PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION,
+				'5.5',
+				$this->as3cf->more_info_link( '/wp-offload-s3/doc/php-version-requirements/', 'upgrade-php-version' )
+			);
+
+			// Show notice to user if not already dismissed.
+			$args = array(
+				'custom_id'         => $key_base . '-site',
+				'type'              => 'notice-warning',
+				'flash'             => false,
+				'only_show_to_user' => false,
+			);
+
+			if ( ! in_array( $args['custom_id'], $this->as3cf->notices->get_dismissed_notices() ) ) {
+				$this->as3cf->notices->add_notice( $message, $args );
+			} else {
+				// If user has dismissed site-wide notice but we're in settings pages, show notice.
+				$args['custom_id']             = $key_base . '-settings';
+				$args['dismissible']           = false;
+				$args['only_show_in_settings'] = true;
+
+				$this->as3cf->notices->add_notice( $message, $args );
+			}
+		} else {
+			// If PHP version (now) OK, make sure notices not shown.
+			$this->as3cf->notices->remove_notice_by_id( $key_base . '-site' );
+			$this->as3cf->notices->remove_notice_by_id( $key_base . '-settings' );
+		}
 	}
 }

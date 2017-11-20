@@ -1,3 +1,13 @@
+<?php
+/** @var array|bool $s3object */
+/** @var WP_Post $post */
+/** @var array $available_actions */
+/** @var bool $local_file_exists */
+/** @var string $sendback */
+$is_removable    = $s3object && in_array( 'remove', $available_actions );
+$is_copyable     = $local_file_exists && in_array( 'copy', $available_actions );
+$is_downloadable = ! $local_file_exists && in_array( 'download', $available_actions );
+?>
 <div class="s3-details">
 	<?php if ( ! $s3object ) : ?>
 		<div class="misc-pub-section">
@@ -24,7 +34,7 @@
 				<?php echo $this->get_acl_value_string( $s3object['acl'] ); ?>
 			</div>
 		</div>
-		<?php if ( $user_can_perform_actions && ! $local_file_exists ) : ?>
+		<?php if ( $is_downloadable ) : ?>
 			<div class="misc-pub-section">
 				<div class="not-copied"><?php _e( 'File does not exist on server', 'amazon-s3-and-cloudfront' ); ?></div>
 				<a id="as3cf-download-action" href="<?php echo $this->get_media_action_url( 'download', $post->ID, $sendback ); ?>">
@@ -35,16 +45,17 @@
 	<?php endif; ?>
 	<div class="clear"></div>
 </div>
-<?php if ( $user_can_perform_actions && ( $s3object || $local_file_exists ) ) : ?>
+
+<?php if ( $is_removable || $is_copyable ) : ?>
 	<div class="s3-actions">
-		<?php if ( $s3object ) : ?>
+		<?php if ( $is_removable ) : ?>
 			<div class="remove-action">
-				<a id="as3cf-remove-action" href="<?php echo $this->get_media_action_url( 'remove', $post->ID, $sendback ); ?>" class="<?php echo ( ! $local_file_exists ) ? 'local-warning' : ''; ?>">
+				<a id="as3cf-remove-action" href="<?php echo $this->get_media_action_url( 'remove', $post->ID, $sendback ); ?>">
 					<?php echo $this->get_media_action_strings( 'remove' ); ?>
 				</a>
 			</div>
 		<?php endif; ?>
-		<?php if ( $local_file_exists ) : ?>
+		<?php if ( $is_copyable ) : ?>
 			<div class="copy-action">
 				<a id="as3cf-copy-action" href="<?php echo $this->get_media_action_url( 'copy', $post->ID, $sendback ); ?>" class="button button-secondary">
 					<?php echo $this->get_media_action_strings( 'copy' ); ?>

@@ -7,3 +7,10 @@
 		max-width: 800px;
 	}
 }
+
+/**
+ * Prevent WP from adding the circular arrow icon to all P tags inside the notice html.
+ */
+.as3cf-license-notice p:not(.as3cf-before):before {
+	display: none;
+}

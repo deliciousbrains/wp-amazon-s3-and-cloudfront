@@ -168,11 +168,13 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Parses a URL into its components. Compatible with PHP < 5.4.7.
 		 *
-		 * @param $url string The URL to parse.
+		 * @param     $url string The URL to parse.
 		 *
-		 * @return array|false The parsed components or false on error.
+		 * @param int $component PHP_URL_ constant for URL component to return.
+		 *
+		 * @return mixed An array of the parsed components, mixed for a requested component, or false on error.
 		 */
-		public static function parse_url( $url ) {
+		public static function parse_url( $url, $component = -1 ) {
 			$url       = trim( $url );
 			$no_scheme = 0 === strpos( $url, '//' );
 
@@ -180,9 +182,13 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 				$url = 'http:' . $url;
 			}
 
-			$parts = parse_url( $url );
+			$parts = parse_url( $url, $component );
 
-			if ( $no_scheme ) {
+			if ( 0 < $component ) {
+				return $parts;
+			}
+
+			if ( $no_scheme && is_array( $parts ) ) {
 				unset( $parts['scheme'] );
 			}
 
@@ -197,11 +203,28 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return bool
 		 */
 		public static function is_url( $string ) {
-			if ( preg_match( '@^(?:https?:)?\/\/[a-zA-Z0-9\-]{3,}@', $string ) ) {
+			if ( preg_match( '@^(?:https?:)?//[a-zA-Z0-9\-]+@', $string ) ) {
 				return true;
 			}
 
 			return false;
+		}
+
+		/**
+		 * Is the string a relative URL?
+		 *
+		 * @param $string
+		 *
+		 * @return bool
+		 */
+		public static function is_relative_url( $string ) {
+			if ( empty( $string ) || ! is_string( $string ) ) {
+				return false;
+			}
+
+			$url = static::parse_url( $string );
+
+			return ( empty( $url['scheme'] ) && empty( $url['host'] ) );
 		}
 
 		/**
@@ -356,6 +379,58 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 */
 		public static function dbrains_link( $url, $text ) {
 			return sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $text ) );
+		}
+
+		/**
+		 * Check whether two URLs share the same domain.
+		 *
+		 * @param string $url_a
+		 * @param string $url_b
+		 *
+		 * @return bool
+		 */
+		public static function url_domains_match( $url_a, $url_b ) {
+			if ( ! static::is_url( $url_a ) || ! static::is_url( $url_b ) ) {
+				return false;
+			}
+
+			return static::parse_url( $url_a, PHP_URL_HOST ) === static::parse_url( $url_b, PHP_URL_HOST );
+		}
+
+		/**
+		 * Get the current domain.
+		 *
+		 * @return string|false
+		 */
+		public static function current_domain() {
+			return parse_url( home_url(), PHP_URL_HOST );
+		}
+
+		/**
+		 * Get the base domain of the current domain.
+		 *
+		 * @return string
+		 */
+		public static function current_base_domain() {
+			$domain = static::current_domain();
+			$parts  = explode( '.', $domain, 2 );
+
+			if ( isset( $parts[1] ) && in_array( $parts[0], array( 'www' ) ) ) {
+				return $parts[1];
+			}
+
+			return $domain;
+		}
+
+		/**
+		 * A safe wrapper for deactivate_plugins()
+		 */
+		public static function deactivate_plugins() {
+			if ( ! function_exists( 'deactivate_plugins' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			}
+
+			call_user_func_array( 'deactivate_plugins', func_get_args() );
 		}
 	}
 }

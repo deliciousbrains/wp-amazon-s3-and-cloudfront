@@ -174,6 +174,10 @@ abstract class AS3CF_Filter {
 			return $this->filter_text_widget( $instance, $update_cache );
 		}
 
+		if ( $class instanceof WP_Widget_Custom_HTML ) {
+			return $this->filter_custom_html_widget( $instance, $update_cache );
+		}
+
 		return $instance;
 	}
 
@@ -218,6 +222,26 @@ abstract class AS3CF_Filter {
 		$cache            = $this->get_option_cache();
 		$to_cache         = array();
 		$instance['text'] = $this->process_content( $instance['text'], $cache, $to_cache );
+
+		if ( $update_cache ) {
+			$this->maybe_update_option_cache( $to_cache );
+		}
+
+		return $instance;
+	}
+
+	/**
+	 * Filter custom html widget.
+	 *
+	 * @param array $instance
+	 * @param bool  $update_cache
+	 *
+	 * @return array
+	 */
+	protected function filter_custom_html_widget( $instance, $update_cache ) {
+		$cache               = $this->get_option_cache();
+		$to_cache            = array();
+		$instance['content'] = $this->process_content( $instance['content'], $cache, $to_cache );
 
 		if ( $update_cache ) {
 			$this->maybe_update_option_cache( $to_cache );

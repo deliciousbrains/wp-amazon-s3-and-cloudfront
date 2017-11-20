@@ -395,7 +395,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	 */
 	protected function get_generic_message() {
 		$link_text = __( 'See our documentation', 'amazon-s3-and-cloudfront' );
-		$url       = $this->as3cf->dbrains_url( '/wp-offload-s3/doc/version-1-2-upgrade', array(
+		$url       = $this->as3cf->dbrains_url( '/wp-offload-s3/doc/content-filtering-upgrade', array(
 			'utm_campaign' => 'support+docs',
 		) );
 		$link      = AS3CF_Utils::dbrains_link( $url, $link_text );
