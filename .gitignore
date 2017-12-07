@@ -1,5 +1,5 @@
 mirror
 .sass-cache
 assets/node_modules
-/vendor
+/vendor/deliciousbrains
 /languages/amazon-s3-and-cloudfront-en.mo
