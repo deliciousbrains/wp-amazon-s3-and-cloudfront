@@ -3,7 +3,7 @@
 **Tags:** uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.6  
 **Tested up to:** 4.9  
-**Stable tag:** 1.3-dev  
+**Stable tag:** 1.2.1  
 **License:** GPLv3  
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
