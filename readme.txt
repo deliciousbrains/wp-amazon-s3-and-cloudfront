@@ -3,7 +3,7 @@ Contributors: bradt, deliciousbrains
 Tags: uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.6
 Tested up to: 4.9
-Stable tag: 1.2.1
+Stable tag: 1.3
 License: GPLv3
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -64,6 +64,23 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload S3 Lite 1.3 - 2018-02-20 =
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-s3-1-6-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: [Amazon Web Services plugin](https://wordpress.org/plugins/amazon-web-services/) is no longer required to run WP Offload S3 Lite
+* New: Added [`as3cf_local_domains`](https://deliciousbrains.com/wp-offload-s3/doc/filtering-urls-for-multiple-domains/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting) filter for when site content is updated through multiple domains
+* Improvement: AWS keys can be set in new "Settings" tab if not defined in wp-config.php
+* Improvement: Minor tweaks to settings page UI including right aligning tabs and consistent title across Lite and Pro plugins
+* Improvement: cURL version, theme version and parent theme information added to diagnostics
+* Bug fix: Incompatible with plugins that include AWS PHP SDK v3
+* Bug fix: Regenerate Thumbnails v3.0+ does not work with Remove Files From Server option
+* Bug fix: "Warning: count(): Parameter must be an array or an object that implements Countable" error with PHP 7.2
+* Bug fix: Force HTTPS not being applied to non-srcset S3 URLs in pages served over HTTP
+* Bug fix: Content URLs not filtered to S3 URLs if AWS keys not set
+* Bug fix: URL preview can be coerced to display invalid URL
+* Bug fix: Changes to upload made via `as3cf_object_meta` filter are not reflected in amazonS3_info records
+* Bug fix: Settings link not showing in network admin plugins page
+* Bug fix: License in composer.json fails Packagist validation
 
 = WP Offload S3 Lite 1.2.1 - 2017-11-20 =
 * New: Compatibility with HTML Widget

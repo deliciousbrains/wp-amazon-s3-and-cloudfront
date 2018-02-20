@@ -2,7 +2,7 @@
  * Common as3cf-notice styles.
  */
 .as3cf-notice,
-.aws-compatibility-notice {
+.as3cf-compatibility-notice {
 	p {
 		max-width: 800px;
 	}
@@ -13,4 +13,8 @@
  */
 .as3cf-license-notice p:not(.as3cf-before):before {
 	display: none;
+}
+
+.as3cf-notice-warning {
+	border-left-color: #ffba00;
 }

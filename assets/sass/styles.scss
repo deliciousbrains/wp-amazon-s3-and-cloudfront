@@ -1,7 +1,23 @@
-/**
- * AWS wrap
- */
-.aws-main.wrap {
+$aws_orange: #f7a80d;
+$as3cf_assets: #0769ad;
+
+.as3cf-content,
+.as3cf-updated,
+.as3cf-compatibility-notice {
+	box-sizing: border-box;
+	max-width: 650px;
+}
+
+.settings_page_amazon-s3-and-cloudfront {
+	.error,
+	.notice,
+	.updated {
+		box-sizing: border-box;
+		max-width: 650px;
+	}
+}
+
+.as3cf-main.wrap {
 	position: relative;
 
 	& > h1 {
@@ -9,8 +25,6 @@
 	}
 
 	.as3cf-notice, .as3cf-updated, .as3cf-error {
-		-webkit-box-sizing: border-box;
-		-moz-box-sizing: border-box;
 		box-sizing: border-box;
 	}
 
@@ -25,13 +39,20 @@
 		margin-top: 10px;
 		padding: 9px 0 0 5px;
 
+		.nav-tab-container {
+			float: right;
+
+			:last-child {
+				margin-right: 5px;
+			}
+		}
+
 		a.nav-tab-active {
 			color: #464646;
 			cursor: default;
 		}
 
 		a:focus {
-			-webkit-box-shadow: none;
 			box-shadow: none;
 		}
 	}
@@ -65,8 +86,6 @@
 	.as3cf-notice, .error, .updated {
 		max-width: 650px;
 		margin-top: 15px;
-		-webkit-box-sizing: border-box;
-		-moz-box-sizing: border-box;
 		box-sizing: border-box;
 	}
 
@@ -75,6 +94,15 @@
 		&.as3cf-notice, &.show {
 			display: block;
 		}
+	}
+
+	.alignleft {
+		margin-right: 20px;
+		margin-bottom: 20px;
+	}
+
+	.spinner {
+		min-width: 20px;
 	}
 }
 
@@ -97,6 +125,21 @@
 
 		.as3cf-bucket-container {
 			display: none;
+		}
+	}
+}
+
+.as3cf-content {
+	> section {
+		margin-bottom: 20px;
+	}
+
+	> section + section.as3cf-access-keys {
+		padding-top: 20px;
+		border-top: 1px solid #d3d3d3;
+
+		.as3cf-section-heading {
+			margin-top: 0;
 		}
 	}
 }
@@ -130,8 +173,6 @@
 		padding: 20px 0 0;
 		max-width: 650px;
 		width: 100%;
-		-webkit-box-sizing: border-box;
-		-moz-box-sizing: border-box;
 		box-sizing: border-box;
 
 		.as3cf-url-preview {
@@ -173,7 +214,6 @@
 		padding: 2px;
 		overflow: hidden;
 		border-radius: 2px;
-		-webkit-border-radius: 2px;
 		background-color: #d4d3d3;
 		cursor: pointer;
 
@@ -183,8 +223,6 @@
 
 		span {
 			visibility: hidden;
-			-webkit-box-sizing: border-box;
-			-moz-box-sizing: border-box;
 			box-sizing: border-box;
 			float: left;
 			display: inline-block;
@@ -192,7 +230,6 @@
 			font-size: 12px;
 			line-height: 20px;
 			border-radius: 2px;
-			-webkit-border-radius: 2px;
 			font-weight: bold;
 			padding: 4px 8px;
 			background: #fff;
@@ -241,7 +278,6 @@
 	h3 {
 		font-weight: normal;
 		text-transform: uppercase;
-		margin: 15px 0;
 	}
 
 	.form-table {
@@ -271,12 +307,6 @@
 
 				& > p:first-child {
 					margin-top: 0;
-				}
-			}
-
-			&:first-of-type {
-				td {
-					padding-top: 5px;
 				}
 			}
 		}
@@ -338,8 +368,6 @@
 		margin-left: -250px;
 		padding: 10px;
 		width: 500px;
-		-webkit-border-radius: 3px;
-		-moz-border-radius: 3px;
 		border-radius: 3px;
 		background-color: #000;
 		background-color: hsla(0, 0%, 20%, 0.9);
@@ -381,6 +409,7 @@
 		padding: 2px 5px;
 		margin: 0 0 5px 5px;
 		float: right;
+		white-space: nowrap;
 	}
 
 	.as3cf-defined-setting {
@@ -414,6 +443,10 @@
 		display: none;
 	}
 
+	.as3cf-bucket-setting td {
+		padding-top: 5px;
+	}
+
 	.as3cf-bucket-container {
 		display: block;
 	}
@@ -439,7 +472,6 @@
 	}
 
 	a:focus {
-		-webkit-box-shadow: none;
 		box-shadow: none;
 		outline: none;
 	}
@@ -535,12 +567,45 @@
 	}
 }
 
-.as3cf-tab {
-	display: none;
-}
-
 #tab-media {
 	display: block;
+}
+
+#tab-settings {
+	.as3cf-field-wrap {
+		display: flex;
+		align-items: center;
+
+		input {
+			width: 100%;
+		}
+
+		button, .as3cf-defined-in-config {
+			margin-left: 20px;
+		}
+
+		.as3cf-defined-in-config {
+			display: none;
+			margin-bottom: 0;
+		}
+
+		&.as3cf-defined {
+			button {
+				display: none;
+			}
+			.as3cf-defined-in-config {
+				display: inline-block;
+			}
+		}
+
+		&.as3cf-saved-field .as3cf-activate-licence {
+			display: none;
+		}
+
+		&.as3cf-licence-not-entered .as3cf-remove-licence {
+			display: none;
+		}
+	}
 }
 
 #tab-support {
@@ -553,6 +618,10 @@
 		border-bottom: 1px solid #ccc;
 		padding-bottom: 20px;
 		margin-bottom: 20px;
+
+		h3 {
+			font-size: 20px;
+		}
 	}
 
 	.debug {
@@ -750,7 +819,7 @@
 	}
 }
 
-.aws-compatibility-notice.error {
+.as3cf-compatibility-notice.error {
 	clear: both;
 	margin: 5px 20px 5px 0;
 }
@@ -778,5 +847,111 @@
 		margin-left: 0;
 		padding-left: 40px;
 		color: #dc3232;
+	}
+}
+
+.as3cf-need-help {
+	background-color: white;
+	font-size: 16px;
+	font-weight: bold;
+	padding: 1em;
+
+	a {
+		text-decoration: none;
+	}
+}
+
+.as3cf-aws-logo {
+	color: white;
+	background-color: $aws_orange;
+	padding: 1em;
+}
+
+.as3cf-settings {
+	h3 {
+		font-size: 20px;
+	}
+
+	p {
+		font-size: 14px;
+	}
+}
+
+.as3cf-addons,
+.as3cf-tab .as3cf-compatibility-notice {
+	max-width: cover;
+}
+
+textarea.as3cf-access-key-constants-snippet.code {
+	width: 100%;
+	white-space: pre;
+	overflow: hidden;
+	font-size: 12px;
+	padding: 10px;
+	height: 53px;
+}
+
+/**
+ * Addons Tab
+ */
+.as3cf-addons {
+	.as3cf-addons-list {
+		margin: 20px 0 200px;
+		padding-top: 5px;
+	}
+
+	.as3cf-addon {
+		display: flex;
+		padding: 20px;
+		font-size: 14px;
+
+		&-info {
+			min-height: 100px;
+		}
+
+		&-links {
+			float: right;
+
+			span {
+				padding: 4px 6px;
+			}
+		}
+
+		&-icon {
+			float: left;
+			margin-right: 20px;
+		}
+
+		&-details {
+			white-space: nowrap;
+		}
+
+		&-title,
+		&-description {
+			font-weight: 100;
+		}
+
+		+ .as3cf-addon {
+			margin-top: 20px;
+		}
+
+		&.amazon-s3-and-cloudfront-assets-pull {
+			background-color: $as3cf_assets;
+			color: white;
+
+			.as3cf-addon-title,
+			.as3cf-addon-description,
+			a {
+				color: white;
+			}
+
+			.extra {
+				background: white;
+				a {
+					color: $as3cf_assets;
+					text-decoration: none;
+				}
+			}
+		}
 	}
 }

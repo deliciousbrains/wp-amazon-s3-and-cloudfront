@@ -621,8 +621,22 @@ abstract class AS3CF_Filter {
 		foreach ( $url_pairs as $find => $replace ) {
 			$replace = $this->normalize_replace_value( $replace );
 			$content = str_replace( $find, $replace, $content );
+			$content = $this->url_replaced( $find, $replace, $content );
 		}
 
+		return $content;
+	}
+
+	/**
+	 * Each time a URL is replaced this function is called to allow for logging or further updates etc.
+	 *
+	 * @param string $find    URL with no scheme.
+	 * @param string $replace URL with no scheme.
+	 * @param string $content
+	 *
+	 * @return string
+	 */
+	protected function url_replaced( $find, $replace, $content ) {
 		return $content;
 	}
 

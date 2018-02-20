@@ -1,14 +1,17 @@
 <?php
 
-class AS3CF_Stream_Wrapper extends Aws\S3\StreamWrapper {
+use DeliciousBrains\WP_Offload_S3\Aws2\Aws\S3\S3Client;
+use DeliciousBrains\WP_Offload_S3\Aws2\Aws\S3\StreamWrapper;
+
+class AS3CF_Stream_Wrapper extends StreamWrapper {
 
 	/**
 	 * Register the 's3://' stream wrapper
 	 *
-	 * @param Aws\S3\S3Client $client
+	 * @param S3Client $client
 	 * @param string          $protocol
 	 */
-	public static function register( Aws\S3\S3Client $client, $protocol = 's3' ) {
+	public static function register( S3Client $client, $protocol = 's3' ) {
 		if ( in_array( $protocol, stream_get_wrappers() ) ) {
 			stream_wrapper_unregister( $protocol );
 		}

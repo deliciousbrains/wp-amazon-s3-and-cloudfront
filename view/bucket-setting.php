@@ -1,6 +1,7 @@
 <?php
-$constant = strtoupper( str_replace( '-', '_', $prefix ) . '_BUCKET' );
-$tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
+$needs_keys = $this->get_aws()->needs_access_keys();
+$constant   = strtoupper( str_replace( '-', '_', $prefix ) . '_BUCKET' );
+$tr_class   = ( isset( $tr_class ) ) ? $tr_class : '';
 ?>
 
 <tr class="<?php echo $tr_class; ?>">
@@ -12,11 +13,11 @@ $tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
 		<a id="<?php echo $prefix; ?>-view-bucket" target="_blank" class="as3cf-view-bucket" href="<?php echo $this->get_aws_bucket_link( $selected_bucket, $selected_bucket_prefix ); ?>" title="<?php _e( 'View in S3 console', 'amazon-s3-and-cloudfront' ); ?>">
 			<span class="dashicons dashicons-external"></span>
 		</a>
-		<?php if ( ! defined( $constant ) && ! $this->get_defined_setting( 'bucket', false ) ) { ?>
-			<a href="#" id="<?php echo $prefix; ?>-change-bucket" class="as3cf-change-bucket" data-as3cf-modal=".as3cf-bucket-container"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
-		<?php } else {
+		<?php if ( defined( $constant ) || false !== $this->get_defined_setting( 'bucket', false ) ) {
 			echo '<span class="as3cf-defined-in-config">' . __( 'defined in wp-config.php', 'amazon-s3-and-cloudfront' ) . '</span>';
-		} ?>
+		} elseif ( ! $needs_keys ) { ?>
+			<a href="#" id="<?php echo $prefix; ?>-change-bucket" class="as3cf-change-bucket" data-as3cf-modal=".as3cf-bucket-container"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
+		<?php } ?>
 		<input id="<?php echo $prefix; ?>-bucket" type="hidden" class="no-compare" name="bucket" value="<?php echo esc_attr( $selected_bucket ); ?>">
 		<?php
 		$region = $this->get_setting( 'region' );
@@ -25,10 +26,20 @@ $tr_class = ( isset( $tr_class ) ) ? $tr_class : '';
 		} ?>
 		<input id="<?php echo $prefix; ?>-region" type="hidden" class="no-compare" name="region" value="<?php echo esc_attr( $region ); ?>">
 		<?php $bucket_select = $this->get_setting( 'manual_bucket' ) ? 'manual' : ''; ?>
-		<input id="<?php echo $prefix; ?>-bucket-select" type="hidden" class="no-compare"  value="<?php echo esc_attr( $bucket_select ); ?>">
+		<input id="<?php echo $prefix; ?>-bucket-select" type="hidden" class="no-compare" value="<?php echo esc_attr( $bucket_select ); ?>">
 		<?php
 		if ( isset( $after_bucket_content ) ) {
 			echo $after_bucket_content;
+		}
+
+		if ( ! defined( $constant ) && ! $this->get_defined_setting( 'bucket', false ) && $needs_keys ) {
+			$needs_keys_notice = array(
+				'message' => sprintf( __( '<strong>Bucket Select Disabled</strong> &mdash; <a href="%s">Define your AWS keys</a> to configure the bucket', 'amazon-s3-and-cloudfront' ), '#settings' ),
+				'id'      => 'as3cf-bucket-select-needs-keys',
+				'inline'  => true,
+				'type'    => 'notice-warning',
+			);
+			$this->render_view( 'notice', $needs_keys_notice );
 		}
 
 		$lock_bucket_args = array(
