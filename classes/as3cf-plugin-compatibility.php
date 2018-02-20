@@ -71,7 +71,7 @@ class AS3CF_Plugin_Compatibility {
 		// Maybe warn about PHP version if in admin screens.
 		add_action( 'admin_init', array( $this, 'maybe_warn_about_php_version' ) );
 
-		if ( $this->as3cf->is_plugin_setup() ) {
+		if ( $this->as3cf->is_plugin_setup( true ) ) {
 			$this->compatibility_init_if_setup();
 		}
 	}

@@ -3,7 +3,7 @@
 **Tags:** uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.6  
 **Tested up to:** 4.9  
-**Stable tag:** 1.3  
+**Stable tag:** 1.3.1  
 **License:** GPLv3  
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -68,6 +68,9 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload S3 Lite 1.3.1 - 2018-02-20 ###
+* Bug fix: Fatal error in stream wrapper setup when AWS Keys not set
 
 ### WP Offload S3 Lite 1.3 - 2018-02-20 ###
 * [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-s3-1-6-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
