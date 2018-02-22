@@ -58,7 +58,7 @@ class ContainerAwareEventDispatcher extends \DeliciousBrains\WP_Offload_S3\Aws2\
         $this->lazyLoad($eventName);
         if (isset($this->listenerIds[$eventName])) {
             foreach ($this->listenerIds[$eventName] as $i => $args) {
-                list($serviceId, $method, $priority) = $args;
+                list($serviceId, $method) = $args;
                 $key = $serviceId . '.' . $method;
                 if (isset($this->listeners[$eventName][$key]) && $listener === array($this->listeners[$eventName][$key], $method)) {
                     unset($this->listeners[$eventName][$key]);

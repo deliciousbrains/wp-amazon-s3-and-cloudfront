@@ -4592,7 +4592,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	private function handle_aws_access_key_migration() {
 		add_action( 'aws_access_key_form_header', array( $this, 'handle_aws_access_key_form_header' ) );
 
-		if ( class_exists( '\Amazon_Web_Services' ) ) {
+		if ( is_plugin_active( 'amazon-web-services/amazon-web-services.php' ) ) {
 			$message = sprintf(
 				__( '<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of version 1.6 of WP Offload S3, the <a href="%1$s">Amazon Web Services</a> plugin is no longer required. We have removed the dependency by bundling a small portion of the AWS SDK into WP Offload S3. As long as none of your other active plugins or themes depend on the Amazon Web Services plugin, it should be safe to deactivate and delete it. %2$s', 'amazon-s3-and-cloudfront' ),
 				'https://wordpress.org/plugins/amazon-web-services/',
@@ -4607,7 +4607,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 			if ( is_a( $this->aws, '\DeliciousBrains\WP_Offload_S3\Amazon_Web_Services' ) && $this->aws->needs_access_keys() ) {
 				// Have access keys been defined in still active AWS plugin's database settings?
-				$aws_settings = get_site_option( \Amazon_Web_Services::SETTINGS_KEY );
+				$aws_settings = get_site_option( 'aws_settings' );
 
 				// If both AWS keys set and we already have a bucket set, safe to use the AWS keys.
 				if ( ! empty( $aws_settings['access_key_id'] ) && ! empty( $aws_settings['secret_access_key'] ) && false !== $this->get_setting( 'bucket' ) ) {
