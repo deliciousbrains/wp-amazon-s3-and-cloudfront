@@ -524,13 +524,16 @@ class AS3CF_Plugin_Compatibility {
 		$length2 = strlen( $key2 );
 
 		global $wpdb;
-		$sql = "
+		$sql = $wpdb->prepare("
 			SELECT `post_id`
 			FROM `{$wpdb->prefix}postmeta`
 			WHERE `{$wpdb->prefix}postmeta`.`meta_key` = 'amazonS3_info'
-			AND ( `{$wpdb->prefix}postmeta`.`meta_value` LIKE '%s:3:\"key\";s:{$length1}:\"{$key1}\";%'
-			OR `{$wpdb->prefix}postmeta`.`meta_value` LIKE '%s:3:\"key\";s:{$length2}:\"{$key2}\";%' )
-		";
+			AND ( `{$wpdb->prefix}postmeta`.`meta_value` LIKE %s
+			OR `{$wpdb->prefix}postmeta`.`meta_value` LIKE %s )
+		",
+			"%s:3:\"key\";s:{$length1}:\"{$key1}\";%",
+			"%s:3:\"key\";s:{$length2}:\"{$key2}\";%"
+		);
 
 		if ( $id = $wpdb->get_var( $sql ) ) {
 			return $id;
