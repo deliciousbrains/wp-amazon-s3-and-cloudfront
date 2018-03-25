@@ -1733,8 +1733,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		if ( '' !== $region ) {
 			$delimiter = '-';
-			if ( 'eu-central-1' == $region && ! is_null( $expires ) ) {
-				// if we are creating a secure URL for a Frankfurt base file use the alternative delimiter
+			if ( ('eu-central-1' == $region || 'cn-north-1' == $region || 'cn-northwest-1' == $region)! is_null( $expires ) ) {
+				// if we are creating a secure URL for a Frankfurt/China base file use the alternative delimiter
 				// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 				$delimiter = '.';
 			}
@@ -1743,6 +1743,26 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		return $prefix;
+	}
+
+	/**
+	 * Get the primary domain specific prefix for S3 URL
+	 *
+	 * @param string   $region
+	 *
+	 * @return string
+	 */
+	function get_s3_url_primary_domain( $region = '') {
+		$primary_domain = '.amazonaws.com/';
+		if ( '' !== $region ) {
+			if ( 'cn-north-1' == $region || 'cn-northwest-1' == $region ) {
+				// if we are creating a secure URL for a China base file use the alternative delimiter
+				// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+				$primary_domain = '.amazonaws.com.cn/';
+			}
+		}
+
+		return $primary_domain;
 	}
 
 	/**
@@ -1770,6 +1790,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		$prefix = $this->get_s3_url_prefix( $region, $expires );
+		$primary_domain = $this->get_s3_url_primary_domain($region);
 
 		if ( 'cloudfront' === $args['domain'] && is_null( $expires ) && $args['cloudfront'] ) {
 			$cloudfront = $args['cloudfront'];
@@ -1781,9 +1802,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		} elseif ( 'virtual-host' === $args['domain'] ) {
 			$s3_domain = $bucket;
 		} elseif ( 'path' === $args['domain'] || $this->use_ssl( $args['force-https'] ) ) {
-			$s3_domain = $prefix . '.amazonaws.com/' . $bucket;
+			$s3_domain = $prefix . $primary_domain . $bucket;
 		} else {
-			$s3_domain = $bucket . '.' . $prefix . '.amazonaws.com';
+			$s3_domain = $bucket . '.' . $prefix . $primary_domain;
 		}
 
 		return $s3_domain;
