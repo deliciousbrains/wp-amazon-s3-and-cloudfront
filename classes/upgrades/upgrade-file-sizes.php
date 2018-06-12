@@ -88,7 +88,7 @@ class Upgrade_File_Sizes extends Upgrade {
 
 		try {
 			// List objects for the attachment
-			$result = $s3client->ListObjects( $args );
+			$result = $s3client->list_objects( $args );
 		} catch ( Exception $e ) {
 			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $attachment->ID . ' from S3: ' . $e->getMessage() );
 			$this->error_count++;
@@ -99,19 +99,21 @@ class Upgrade_File_Sizes extends Upgrade {
 		$file_size_total = 0;
 		$main_file_size  = 0;
 
-		foreach ( (array) $result->get( 'Contents' ) as $object ) {
-			if ( ! isset( $object['Size'] ) ) {
-				continue;
-			}
+		if ( ! empty( $result['Contents'] ) ) {
+			foreach ( $result['Contents'] as $object ) {
+				if ( ! isset( $object['Size'] ) ) {
+					continue;
+				}
 
-			$size = $object['Size'];
+				$size = $object['Size'];
 
-			// Increment the total size of files for the attachment
-			$file_size_total += $size;
+				// Increment the total size of files for the attachment
+				$file_size_total += $size;
 
-			if ( $object['Key'] === $main_file ) {
-				// Record the size of the main file
-				$main_file_size = $size;
+				if ( $object['Key'] === $main_file ) {
+					// Record the size of the main file
+					$main_file_size = $size;
+				}
 			}
 		}
 

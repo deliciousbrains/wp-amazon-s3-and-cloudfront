@@ -619,7 +619,7 @@
 		var prefix = $objectPrefix.val();
 
 		if ( '' !== prefix ) {
-			prefix = '&prefix=' + encodeURIComponent( prefix );
+			prefix = as3cf.aws_bucket_link_param + encodeURIComponent( prefix );
 		}
 
 		var url = as3cf.aws_bucket_link + bucket + prefix;

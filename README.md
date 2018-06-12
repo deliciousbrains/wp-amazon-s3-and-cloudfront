@@ -3,7 +3,8 @@
 **Tags:** uploads, amazon, s3, amazon s3, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.6  
 **Tested up to:** 4.9  
-**Stable tag:** 1.3.2  
+**Requires PHP:** 5.5  
+**Stable tag:** 1.4  
 **License:** GPLv3  
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -23,8 +24,8 @@ If you're adding this plugin to a site that's been around for a while, your exis
 * Upload existing Media Library to Amazon S3
 * Control Amazon S3 files from the Media Library
 * [Assets addon](https://deliciousbrains.com/wp-offload-s3/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=assets%2Baddon#addons) - Serve your CSS & JS from Amazon S3/CloudFront
-* [WooCommerce addon](https://deliciousbrains.com/wp-offload-s3/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=woocommerce%2Baddon#addons)
-* [Easy Digital Downloads addon](https://deliciousbrains.com/wp-offload-s3/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=edd%2Baddon#addons)
+* [WooCommerce integration](https://deliciousbrains.com/wp-offload-s3/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=woocommerce%2Baddon#integrations)
+* [Easy Digital Downloads integration](https://deliciousbrains.com/wp-offload-s3/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=edd%2Baddon#integrations)
 * PriorityExpert&trade; email support
 
 [Compare pro vs free &rarr;](https://deliciousbrains.com/wp-offload-s3/upgrade/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
@@ -39,10 +40,11 @@ which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins
 
 ## Installation ##
 
-1. Install the required [Amazon Web Services plugin](http://wordpress.org/extend/plugins/amazon-web-services/) using WordPress' built-in installer
-2. Follow the instructions to setup your AWS access keys
-3. Install this plugin using WordPress' built-in installer
-4. Access the *S3 and CloudFront* option under *AWS* and configure
+1. Install this plugin using WordPress' built-in installer
+2. Access the *Offload S3* option under *Settings*
+3. Follow the instructions to setup your AWS access keys and configure
+
+Check out the [Quick Start Guide](https://deliciousbrains.com/wp-offload-s3/doc/quick-start-guide/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting) for more information on configuring WP Offload S3.
 
 ## Frequently Asked Questions ##
 
@@ -68,6 +70,18 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload S3 Lite 1.4 - 2018-06-12 ###
+* New: Using AWS PHP SDK v3
+* New: Requires PHP 5.5+
+* Improvement: Supported AWS S3 regions updated and names changed to match current AWS nomenclature
+* Bug fix: PHP Warning: Declaration of AS3CF_Stream_Wrapper::register should be compatible with Aws\S3\StreamWrapper::register
+* Bug fix: File size not stored in _wp_attachment_metadata for audio/video files
+* Bug fix: Image srcset uses full size image if metadata size is stored as string
+* Bug fix: PHP Warning: preg_match() expects parameter 2 to be string, array given
+* Bug fix: SQL syntax error when using `attachment_url_to_postid()` with non-ascii file name
+* Tested: WordPress 4.9.6
+* Tested: Gutenberg 3.0
 
 ### WP Offload S3 Lite 1.3.2 - 2018-02-22 ###
 * Bug fix: Fatal error: Uncaught Error: Call to undefined method Composer\Autoload\ClassLoader::setClassMapAuthoritative()

@@ -9,6 +9,8 @@
  * @since       0.8.3
  */
 
+use DeliciousBrains\WP_Offload_S3\Providers\Provider;
+
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -114,7 +116,7 @@ class AS3CF_Plugin_Compatibility {
 		/*
 		 * WP-CLI Compatibility
 		 */
-		if ( defined( 'WP_CLI' ) && class_exists( 'WP_CLI') ) {
+		if ( defined( 'WP_CLI' ) && class_exists( 'WP_CLI' ) ) {
 			WP_CLI::add_hook( 'before_invoke:media regenerate', array( $this, 'enable_get_attached_file_copy_back_to_local' ) );
 		}
 	}
@@ -524,13 +526,16 @@ class AS3CF_Plugin_Compatibility {
 		$length2 = strlen( $key2 );
 
 		global $wpdb;
-		$sql = "
+		$sql = $wpdb->prepare( "
 			SELECT `post_id`
 			FROM `{$wpdb->prefix}postmeta`
 			WHERE `{$wpdb->prefix}postmeta`.`meta_key` = 'amazonS3_info'
-			AND ( `{$wpdb->prefix}postmeta`.`meta_value` LIKE '%s:3:\"key\";s:{$length1}:\"{$key1}\";%'
-			OR `{$wpdb->prefix}postmeta`.`meta_value` LIKE '%s:3:\"key\";s:{$length2}:\"{$key2}\";%' )
-		";
+			AND ( `{$wpdb->prefix}postmeta`.`meta_value` LIKE %s
+			OR `{$wpdb->prefix}postmeta`.`meta_value` LIKE %s )
+		",
+			"%s:3:\"key\";s:{$length1}:\"{$key1}\";%",
+			"%s:3:\"key\";s:{$length2}:\"{$key2}\";%"
+		);
 
 		if ( $id = $wpdb->get_var( $sql ) ) {
 			return $id;
@@ -574,7 +579,7 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		try {
-			$this->as3cf->get_s3client( $s3_object['region'], true )->getObject( array(
+			$this->as3cf->get_s3client( $s3_object['region'], true )->get_object( array(
 				'Bucket' => $s3_object['bucket'],
 				'Key'    => $s3_object['key'],
 				'SaveAs' => $file,
@@ -593,56 +598,30 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @param string $region
 	 *
-	 * @return mixed
+	 * @return Provider|null
 	 */
 	protected function register_stream_wrapper( $region ) {
-		$stored_region = ( '' === $region ) ? Amazon_S3_And_CloudFront::DEFAULT_REGION : $region;
+		$stored_region = ( '' === $region ) ? $this->as3cf->get_default_region() : $region;
 
-		if ( in_array( $stored_region, self::$stream_wrappers ) ) {
-			return;
+		if ( ! empty( self::$stream_wrappers[ $stored_region ] ) ) {
+			return self::$stream_wrappers[ $stored_region ];
 		}
 
-		$client   = $this->as3cf->get_s3client( $region, true );
-		$protocol = $this->get_stream_wrapper_protocol( $region );
+		$client = $this->as3cf->get_s3client( $region, true );
 
-		// Register the region specific S3 stream wrapper to be used by plugins
-		AS3CF_Stream_Wrapper::register( $client, $protocol );
 
-		self::$stream_wrappers[] = $stored_region;
+		if ( ! empty( $client ) && $client->register_stream_wrapper( $region ) ) {
+			self::$stream_wrappers[ $stored_region ] = $client;
+
+			return $client;
+		}
+
+		return null;
 	}
 
 	/**
-	 * Generate the stream wrapper protocol
-	 *
-	 * @param string $region
-	 *
-	 * @return string
-	 */
-	protected function get_stream_wrapper_protocol( $region ) {
-		$protocol = 's3';
-		$protocol .= str_replace( '-', '', $region );
-
-		return $protocol;
-	}
-
-	/**
-	 * Generate an S3 stream wrapper compatible URL
-	 *
-	 * @param string $bucket
-	 * @param string $key
-	 *
-	 * @return string
-	 */
-	function prepare_stream_wrapper_file( $bucket, $region, $key ) {
-		$protocol = $this->get_stream_wrapper_protocol( $region );
-
-		return $protocol . '://' . $bucket . '/' . $key;
-	}
-
-	/**
-	 * Allow access to the S3 file via the stream wrapper.
-	 * This is useful for compatibility with plugins when attachments are removed from the
-	 * local server after upload.
+	 * Allow access to the remote file via the stream wrapper.
+	 * This is useful for compatibility with plugins when attachments are removed from the local server after upload.
 	 *
 	 * @param string $url
 	 * @param string $file
@@ -657,10 +636,14 @@ class AS3CF_Plugin_Compatibility {
 			return $file;
 		}
 
-		// Make sure the region stream wrapper is registered
-		$this->register_stream_wrapper( $s3_object['region'] );
+		// Make sure the region stream wrapper is registered.
+		$client = $this->register_stream_wrapper( $s3_object['region'] );
 
-		return $this->prepare_stream_wrapper_file( $s3_object['bucket'], $s3_object['region'], $s3_object['key'] );
+		if ( ! empty( $client ) ) {
+			return $client->prepare_stream_wrapper_file( $s3_object['region'], $s3_object['bucket'], $s3_object['key'] );
+		}
+
+		return $url;
 	}
 
 	/**
@@ -675,6 +658,10 @@ class AS3CF_Plugin_Compatibility {
 	public function wp_image_add_srcset_and_sizes( $image, $image_meta, $attachment_id ) {
 		// Ensure the image meta exists.
 		if ( empty( $image_meta['sizes'] ) ) {
+			return $image;
+		}
+
+		if ( ! is_string( $image ) ) {
 			return $image;
 		}
 
@@ -847,7 +834,7 @@ class AS3CF_Plugin_Compatibility {
 	 */
 	protected function find_image_size_from_width( $sizes, $width, $filename ) {
 		foreach ( $sizes as $name => $size ) {
-			if ( $width === $size['width'] && $size['file'] === $filename ) {
+			if ( $width === absint( $size['width'] ) && $size['file'] === $filename ) {
 				return $name;
 			}
 		}

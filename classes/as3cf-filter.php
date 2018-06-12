@@ -317,6 +317,10 @@ abstract class AS3CF_Filter {
 	protected function get_urls_from_img_src( $content, &$to_cache ) {
 		$url_pairs = array();
 
+		if ( ! is_string( $content ) ) {
+			return $url_pairs;
+		}
+
 		if ( ! preg_match_all( '/<img [^>]+>/', $content, $matches ) || ! isset( $matches[0] ) ) {
 			// No img tags found, return
 			return $url_pairs;
@@ -381,6 +385,10 @@ abstract class AS3CF_Filter {
 	 */
 	protected function get_urls_from_content( $content, $cache, &$to_cache ) {
 		$url_pairs = array();
+
+		if ( ! is_string( $content ) ) {
+			return $url_pairs;
+		}
 
 		if ( ! preg_match_all( '/(http|https)?:?\/\/[^"\'\s<>()\\\]*/', $content, $matches ) || ! isset( $matches[0] ) ) {
 			// No URLs found, return
@@ -835,6 +843,10 @@ abstract class AS3CF_Filter {
 	protected function remove_aws_query_strings( $content, $base_url = '' ) {
 		$pattern = '\?[^\s"<\?]*(?:X-Amz-Algorithm|AWSAccessKeyId)=[^\s"<\?]+';
 		$group   = 0;
+
+		if ( ! is_string( $content ) ) {
+			return $content;
+		}
 
 		if ( ! empty( $base_url ) ) {
 			$pattern = preg_quote( $base_url, '/' ) . '[^\s"<\?]+(' . $pattern . ')';

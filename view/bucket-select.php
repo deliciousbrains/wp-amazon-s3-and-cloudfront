@@ -47,9 +47,11 @@
 					</td>
 					<td>
 						<?php
-						$aws_regions = $this->get_aws_regions();
+						/* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
+						$aws         = $this->get_aws();
+						$aws_regions = $aws->get_regions();
 						if ( ! defined( 'AS3CF_REGION' ) ) { ?>
-							<select id="<?php echo $prefix ;?>-bucket-create-region" class="bucket-create-region" name="region_name">
+							<select id="<?php echo $prefix; ?>-bucket-create-region" class="bucket-create-region" name="region_name">
 								<?php foreach ( $aws_regions as $value => $label ) : ?>
 									<option value="<?php echo $value; ?>"> <?php echo $label; ?></option>
 								<?php endforeach; ?>

@@ -76,7 +76,7 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 					'Key'    => $s3object['key'],
 					'SaveAs' => $file,
 				);
-				$this->as3cf->get_s3client( $s3object['region'], true )->getObject( $args );
+				$this->as3cf->get_s3client( $s3object['region'], true )->get_object( $args );
 			} catch ( Exception $e ) {
 				AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'amazon-s3-and-cloudfront' ), $s3object['key'], $e->getMessage() ) );
 

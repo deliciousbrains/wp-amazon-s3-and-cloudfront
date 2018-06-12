@@ -132,6 +132,10 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return bool
 		 */
 		public static function is_url( $string ) {
+			if ( ! is_string( $string ) ) {
+				return false;
+			}
+
 			if ( preg_match( '@^(?:https?:)?//[a-zA-Z0-9\-]+@', $string ) ) {
 				return true;
 			}
@@ -377,6 +381,28 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return false;
+		}
+
+		/**
+		 * Ensure returned keys are for correct attachment.
+		 *
+		 * @param array $keys
+		 *
+		 * @return array
+		 */
+		public static function validate_attachment_keys( $attachment_id, $keys ) {
+			$paths     = self::get_attachment_file_paths( $attachment_id, false );
+			$filenames = array_map( 'wp_basename', $paths );
+
+			foreach ( $keys as $key => $value ) {
+				$filename = wp_basename( $value );
+
+				if ( ! in_array( $filename, $filenames ) ) {
+					unset( $keys[ $key ] );
+				}
+			}
+
+			return $keys;
 		}
 	}
 }

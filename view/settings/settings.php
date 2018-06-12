@@ -5,7 +5,7 @@ $key_constant         = $aws->access_key_id_constant();
 $secret_constant      = $aws->secret_access_key_constant();
 $any_constant_defined = (bool) $key_constant || $secret_constant;
 $hide_form_initially  = false;
-$database_warning_url = $aws->dbrains_url( '/wp-offload-s3/doc/quick-start-guide/#save-access-keys', array(
+$database_warning_url = $this->dbrains_url( '/wp-offload-s3/doc/quick-start-guide/#save-access-keys', array(
 	'utm_campaign' => 'support+docs',
 ) );
 ?>
@@ -18,7 +18,7 @@ $database_warning_url = $aws->dbrains_url( '/wp-offload-s3/doc/quick-start-guide
 			<img class="as3cf-aws-logo alignleft" src="<?php echo plugins_url( 'assets/img/aws-logo.svg', $this->get_plugin_file_path() ) ?>" alt="" width="75" height="75">
 			<h3 class="as3cf-section-heading"><?php _e( 'AWS Access Keys', 'amazon-s3-and-cloudfront' ) ?></h3>
 
-			<?php if ( $aws->use_ec2_iam_roles() ) : ?>
+			<?php if ( $aws->use_server_roles() ) : ?>
 				<p>
 					<?php _e( 'You have enabled the use of IAM roles for Amazon EC2 instances.', 'amazon-s3-and-cloudfront' ) ?>
 				</p>
@@ -124,7 +124,7 @@ define( 'AS3CF_AWS_SECRET_ACCESS_KEY', '**************************************' 
 		<?php if ( $aws->needs_access_keys() ) : ?>
 			<p class="as3cf-need-help">
 				<span class="dashicons dashicons-info"></span>
-				<?php printf( __( 'Need help getting your Access Keys? <a href="%s">Check out the Quick Start Guide &rarr;</a>', 'amazon-s3-and-cloudfront' ), $aws->dbrains_url( '/wp-offload-s3/doc/quick-start-guide/', array(
+				<?php printf( __( 'Need help getting your Access Keys? <a href="%s">Check out the Quick Start Guide &rarr;</a>', 'amazon-s3-and-cloudfront' ), $this->dbrains_url( '/wp-offload-s3/doc/quick-start-guide/', array(
 					'utm_campaign' => 'support+docs',
 				) ) ) ?>
 			</p>
