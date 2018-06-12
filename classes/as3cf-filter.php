@@ -198,7 +198,7 @@ abstract class AS3CF_Filter {
 				continue;
 			}
 
-			if ( AS3CF_Utils::is_url( $value ) ) {
+			if ( is_string( $value ) && AS3CF_Utils::is_url( $value ) ) {
 				$instance[ $key ] = $this->process_content( $value, $cache, $to_cache );
 			}
 		}
