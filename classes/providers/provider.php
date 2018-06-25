@@ -110,7 +110,7 @@ abstract class Provider {
 			return $constant ? constant( $constant ) : '';
 		}
 
-		return $this->as3cf->get_setting( $this->access_key_id_setting_name );
+		return $this->as3cf->get_core_setting( $this->access_key_id_setting_name );
 	}
 
 	/**
@@ -127,7 +127,7 @@ abstract class Provider {
 			return $constant ? constant( $constant ) : '';
 		}
 
-		return $this->as3cf->get_setting( $this->secret_access_key_setting_name );
+		return $this->as3cf->get_core_setting( $this->secret_access_key_setting_name );
 	}
 
 	/**

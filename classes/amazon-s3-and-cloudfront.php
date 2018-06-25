@@ -1015,6 +1015,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			return $this->return_upload_error( $error_msg, $return_metadata );
 		}
 
+		// Get original file's stats.
+		$filesize      = filesize( $file_path );
 		$file_name     = wp_basename( $file_path );
 		$type          = get_post_mime_type( $post_id );
 		$allowed_types = $this->get_allowed_mime_types();
@@ -1163,7 +1165,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				$files_to_remove = array_unique( $files_to_remove );
 
 				// Delete the files and record original file's size before removal.
-				$filesize = $this->remove_local_files( $files_to_remove, $post_id );
+				$this->remove_local_files( $files_to_remove, $post_id );
 
 				// Store filesize in the attachment meta data for use by WP
 				if ( 0 < $filesize ) {
@@ -1287,23 +1289,15 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 *
 	 * @param array $file_paths array of files to remove
 	 * @param int   $attachment_id
-	 *
-	 * @return int Original file's size if attachment ID given, otherwise always 0.
 	 */
 	function remove_local_files( $file_paths, $attachment_id = 0 ) {
-		$filesize       = 0;
 		$filesize_total = 0;
 
 		foreach ( $file_paths as $index => $path ) {
 			if ( ! empty( $attachment_id ) && is_int( $attachment_id ) ) {
 				$bytes = filesize( $path );
 
-				if ( false !== $bytes ) {
-					$filesize_total += $bytes;
-
-					// Will return the original file's size.
-					$filesize = $bytes;
-				}
+				$filesize_total += ( false !== $bytes ) ? $bytes : 0;
 			}
 
 			// Individual files might still be kept local, but we're still going to count them towards total above.
@@ -1328,8 +1322,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		if ( $filesize_total > 0 ) {
 			update_post_meta( $attachment_id, 'wpos3_filesize_total', $filesize_total );
 		}
-
-		return $filesize;
 	}
 
 	/**

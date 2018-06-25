@@ -313,6 +313,18 @@ abstract class AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * Get a specific setting from the core plugin.
+	 *
+	 * @param        $key
+	 * @param string $default
+	 *
+	 * @return string
+	 */
+	public function get_core_setting( $key, $default = '' ) {
+		return $this->get_setting( $key, $default );
+	}
+
+	/**
 	 * Gets a single setting that has been defined in the plugin settings constant
 	 *
 	 * @param string $key

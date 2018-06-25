@@ -4,7 +4,7 @@
 **Requires at least:** 4.6  
 **Tested up to:** 4.9  
 **Requires PHP:** 5.5  
-**Stable tag:** 1.4  
+**Stable tag:** 1.4.1  
 **License:** GPLv3  
 
 Copies files to Amazon S3 as they are uploaded to the Media Library. Optionally configure Amazon CloudFront for faster delivery.
@@ -70,6 +70,9 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload S3 Lite 1.4.1 - 2018-06-21 ###
+* Bug fix: Incorrect filesize saved to metadata when image removed from local server
 
 ### WP Offload S3 Lite 1.4 - 2018-06-12 ###
 * New: Using AWS PHP SDK v3
