@@ -138,7 +138,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
         return $result instanceof \Exception ? 'failed' : 'retry';
     }
     /**
-     * @param result $result   Result or exception.
+     * @param Result $result   Result or exception.
      * @param array  $acceptor Acceptor configuration being checked.
      *
      * @return bool
@@ -148,7 +148,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
         return !$result instanceof ResultInterface ? false : $acceptor['expected'] == $result->search($acceptor['argument']);
     }
     /**
-     * @param result $result   Result or exception.
+     * @param Result $result   Result or exception.
      * @param array  $acceptor Acceptor configuration being checked.
      *
      * @return bool
@@ -167,7 +167,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
         return true;
     }
     /**
-     * @param result $result   Result or exception.
+     * @param Result $result   Result or exception.
      * @param array  $acceptor Acceptor configuration being checked.
      *
      * @return bool
@@ -186,7 +186,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
         return false;
     }
     /**
-     * @param result $result   Result or exception.
+     * @param Result $result   Result or exception.
      * @param array  $acceptor Acceptor configuration being checked.
      *
      * @return bool
@@ -202,7 +202,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
         return false;
     }
     /**
-     * @param result $result   Result or exception.
+     * @param Result $result   Result or exception.
      * @param array  $acceptor Acceptor configuration being checked.
      *
      * @return bool

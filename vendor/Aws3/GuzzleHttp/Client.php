@@ -270,7 +270,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
         }
         if (!empty($options['decode_content']) && $options['decode_content'] !== true) {
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Accept-Encoding'], $modify['set_headers']);
+            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Accept-Encoding'], $options['_conditional']);
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
         if (isset($options['body'])) {

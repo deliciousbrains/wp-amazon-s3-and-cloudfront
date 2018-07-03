@@ -12,7 +12,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
  */
 interface ClientInterface
 {
-    const VERSION = '6.3.2';
+    const VERSION = '6.3.3';
     /**
      * Send an HTTP request.
      *

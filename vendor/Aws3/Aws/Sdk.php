@@ -97,6 +97,8 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionDynamoDb(array $args = [])
  * @method \Aws\DynamoDbStreams\DynamoDbStreamsClient createDynamoDbStreams(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionDynamoDbStreams(array $args = [])
+ * @method \Aws\EKS\EKSClient createEKS(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionEKS(array $args = [])
  * @method \Aws\Ec2\Ec2Client createEc2(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionEc2(array $args = [])
  * @method \Aws\Ecr\EcrClient createEcr(array $args = [])
@@ -141,6 +143,12 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionImportExport(array $args = [])
  * @method \Aws\Inspector\InspectorClient createInspector(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionInspector(array $args = [])
+ * @method \Aws\IoT1ClickDevicesService\IoT1ClickDevicesServiceClient createIoT1ClickDevicesService(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIoT1ClickDevicesService(array $args = [])
+ * @method \Aws\IoT1ClickProjects\IoT1ClickProjectsClient createIoT1ClickProjects(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIoT1ClickProjects(array $args = [])
+ * @method \Aws\IoTAnalytics\IoTAnalyticsClient createIoTAnalytics(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIoTAnalytics(array $args = [])
  * @method \Aws\IoTJobsDataPlane\IoTJobsDataPlaneClient createIoTJobsDataPlane(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionIoTJobsDataPlane(array $args = [])
  * @method \Aws\Iot\IotClient createIot(array $args = [])
@@ -173,6 +181,8 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionMTurk(array $args = [])
  * @method \Aws\MachineLearning\MachineLearningClient createMachineLearning(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMachineLearning(array $args = [])
+ * @method \Aws\Macie\MacieClient createMacie(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionMacie(array $args = [])
  * @method \Aws\MarketplaceCommerceAnalytics\MarketplaceCommerceAnalyticsClient createMarketplaceCommerceAnalytics(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMarketplaceCommerceAnalytics(array $args = [])
  * @method \Aws\MarketplaceEntitlementService\MarketplaceEntitlementServiceClient createMarketplaceEntitlementService(array $args = [])
@@ -189,16 +199,22 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionMediaStore(array $args = [])
  * @method \Aws\MediaStoreData\MediaStoreDataClient createMediaStoreData(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMediaStoreData(array $args = [])
+ * @method \Aws\MediaTailor\MediaTailorClient createMediaTailor(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionMediaTailor(array $args = [])
  * @method \Aws\MigrationHub\MigrationHubClient createMigrationHub(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMigrationHub(array $args = [])
  * @method \Aws\Mobile\MobileClient createMobile(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMobile(array $args = [])
+ * @method \Aws\Neptune\NeptuneClient createNeptune(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionNeptune(array $args = [])
  * @method \Aws\OpsWorks\OpsWorksClient createOpsWorks(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionOpsWorks(array $args = [])
  * @method \Aws\OpsWorksCM\OpsWorksCMClient createOpsWorksCM(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionOpsWorksCM(array $args = [])
  * @method \Aws\Organizations\OrganizationsClient createOrganizations(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionOrganizations(array $args = [])
+ * @method \Aws\PI\PIClient createPI(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionPI(array $args = [])
  * @method \Aws\Pinpoint\PinpointClient createPinpoint(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionPinpoint(array $args = [])
  * @method \Aws\Polly\PollyClient createPolly(array $args = [])
@@ -276,7 +292,7 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  */
 class Sdk
 {
-    const VERSION = '3.54.2';
+    const VERSION = '3.62.6';
     /** @var array Arguments for creating clients */
     private $args;
     /**

@@ -199,7 +199,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
     }
     private function convertToTimestamp($dateValue, $relativeTimeBase = null)
     {
-        if ($dateValue instanceof \DateTime) {
+        if ($dateValue instanceof \DateTimeInterface) {
             $timestamp = $dateValue->getTimestamp();
         } elseif (!is_numeric($dateValue)) {
             $timestamp = strtotime($dateValue, $relativeTimeBase === null ? time() : $relativeTimeBase);

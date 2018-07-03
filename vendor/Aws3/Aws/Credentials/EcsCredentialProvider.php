@@ -37,7 +37,7 @@ class EcsCredentialProvider
     {
         $client = $this->client;
         $request = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request('GET', self::getEcsUri());
-        return $client($request, ['timeout' => $this->timeout])->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response) {
+        return $client($request, ['timeout' => $this->timeout, 'proxy' => ''])->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response) {
             $result = $this->decodeResult((string) $response->getBody());
             return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials($result['AccessKeyId'], $result['SecretAccessKey'], $result['Token'], strtotime($result['Expiration']));
         })->otherwise(function ($reason) {

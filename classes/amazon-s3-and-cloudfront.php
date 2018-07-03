@@ -2662,7 +2662,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		try {
-			$region = $this->get_s3client()->get_bucket_location( array( 'Bucket' => $bucket ) );
+			$region = $this->get_s3client( false, true )->get_bucket_location( array( 'Bucket' => $bucket ) );
 		} catch ( Exception $e ) {
 			$error_msg_title = '<strong>' . __( 'Error Getting Bucket Region', 'amazon-s3-and-cloudfront' ) . '</strong> &mdash;';
 			$error_msg       = sprintf( __( 'There was an error attempting to get the region of the bucket %s: %s', 'amazon-s3-and-cloudfront' ), $bucket, $e->getMessage() );
@@ -2693,7 +2693,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	function get_s3object_region( $s3object, $post_id = null ) {
 		if ( ! isset( $s3object['region'] ) ) {
 			// if region hasn't been stored in the s3 metadata retrieve using the bucket
-			$region = $this->get_bucket_region( $s3object['bucket'] );
+			$region = $this->get_bucket_region( $s3object['bucket'], true );
 			if ( is_wp_error( $region ) ) {
 				return $region;
 			}
@@ -3590,24 +3590,34 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		$theme_info = wp_get_theme();
-		$output     .= "Active Theme Name: " . esc_html( $theme_info->get( 'Name' ) );
-		$output     .= "\r\n";
-		$output     .= "Active Theme Version: " . esc_html( $theme_info->get( 'Version' ) );
-		$output     .= "\r\n";
-		$output     .= "Active Theme Folder: " . esc_html( $theme_info->get_stylesheet() );
-		$output     .= "\r\n";
 
-		if ( is_child_theme() ) {
-			$parent_info = $theme_info->parent();
-			$output      .= "Parent Theme Name: " . esc_html( $parent_info->get( 'Name' ) );
-			$output      .= "\r\n";
-			$output      .= "Parent Theme Version: " . esc_html( $parent_info->get( 'Version' ) );
-			$output      .= "\r\n";
-			$output      .= "Parent Theme Folder: " . esc_html( $parent_info->get_stylesheet() );
-			$output      .= "\r\n";
-		}
-		if ( ! file_exists( $theme_info->get_stylesheet_directory() ) ) {
-			$output .= "WARNING: Active Theme Folder Not Found\r\n";
+		if ( ! empty( $theme_info ) && is_a( $theme_info, 'WP_Theme' ) ) {
+			$output .= "Active Theme Name: " . esc_html( $theme_info->get( 'Name' ) );
+			$output .= "\r\n";
+			$output .= "Active Theme Version: " . esc_html( $theme_info->get( 'Version' ) );
+			$output .= "\r\n";
+			$output .= "Active Theme Folder: " . esc_html( $theme_info->get_stylesheet() );
+			$output .= "\r\n";
+
+			if ( is_child_theme() ) {
+				$parent_info = $theme_info->parent();
+
+				if ( ! empty( $parent_info ) && is_a( $parent_info, 'WP_Theme' ) ) {
+					$output .= "Parent Theme Name: " . esc_html( $parent_info->get( 'Name' ) );
+					$output .= "\r\n";
+					$output .= "Parent Theme Version: " . esc_html( $parent_info->get( 'Version' ) );
+					$output .= "\r\n";
+					$output .= "Parent Theme Folder: " . esc_html( $parent_info->get_stylesheet() );
+					$output .= "\r\n";
+				} else {
+					$output .= "WARNING: Parent theme metadata not found\r\n";
+				}
+			}
+			if ( ! file_exists( $theme_info->get_stylesheet_directory() ) ) {
+				$output .= "WARNING: Active theme folder not found\r\n";
+			}
+		} else {
+			$output .= "WARNING: Theme metadata not found\r\n";
 		}
 
 		$output .= "\r\n";

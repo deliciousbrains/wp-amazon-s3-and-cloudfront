@@ -39,7 +39,7 @@ $database_warning_url = $this->dbrains_url( '/wp-offload-s3/doc/quick-start-guid
 			<?php else : // no access keys defined & not using IAM roles ?>
 
 				<p>
-					<?php _e( 'We recommend defining your Access Keys in wp-config.php so long as you don&#8217;t commit it to source control (you shouldn&#8217;t be). Simply copy the following snippet and replace the stars with the keys.', 'amazon-s3-and-cloudfront' ) ?>
+					<?php _e( 'We recommend defining your Access Keys <strong>near the top</strong> of your wp-config.php so long as you don&#8217;t commit it to source control (you shouldn&#8217;t be). Simply copy the following snippet and replace the stars with the keys.', 'amazon-s3-and-cloudfront' ) ?>
 				</p>
 
 				<textarea rows="2" class="as3cf-access-key-constants-snippet code clear" readonly>

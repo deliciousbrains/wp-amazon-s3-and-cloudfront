@@ -30,7 +30,7 @@ class Service extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractModel
      */
     public function __construct(array $definition, callable $provider)
     {
-        static $defaults = ['operations' => [], 'shapes' => [], 'metadata' => []], $defaultMeta = ['apiVersion' => null, 'serviceFullName' => null, 'endpointPrefix' => null, 'signingName' => null, 'signatureVersion' => null, 'protocol' => null, 'uid' => null];
+        static $defaults = ['operations' => [], 'shapes' => [], 'metadata' => []], $defaultMeta = ['apiVersion' => null, 'serviceFullName' => null, 'serviceId' => null, 'endpointPrefix' => null, 'signingName' => null, 'signatureVersion' => null, 'protocol' => null, 'uid' => null];
         $definition += $defaults;
         $definition['metadata'] += $defaultMeta;
         $this->definition = $definition;
@@ -107,6 +107,15 @@ class Service extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractModel
     public function getServiceFullName()
     {
         return $this->definition['metadata']['serviceFullName'];
+    }
+    /**
+     * Get the service id
+     *
+     * @return string
+     */
+    public function getServiceId()
+    {
+        return $this->definition['metadata']['serviceId'];
     }
     /**
      * Get the API version of the service

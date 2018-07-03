@@ -145,7 +145,11 @@ class AWS_Provider extends Provider {
 	 * @return S3Client
 	 */
 	protected function init_service_client( Array $args ) {
-		$this->s3_client = $this->aws_client->createS3( $args );
+		if ( empty( $args['region'] ) || $args['region'] === $this->default_region ) {
+			$this->s3_client = $this->aws_client->createMultiRegionS3( $args );
+		} else {
+			$this->s3_client = $this->aws_client->createS3( $args );
+		}
 
 		return $this->s3_client;
 	}
