@@ -68,7 +68,7 @@ class AS3CF_Notices {
 			'only_show_to_user'     => true, // The user who has initiated an action resulting in notice. Otherwise show to all users.
 			'user_capabilities'     => array( 'as3cf_compat_check', 'check_capabilities' ), // A user with these capabilities can see the notice. Can be a callback with the first array item the name of global class instance.
 			'only_show_in_settings' => false,
-			'only_show_on_tab'      => false, // Only show on a specific WP Offload S3 tab.
+			'only_show_on_tab'      => false, // Only show on a specific WP Offload Media tab.
 			'custom_id'             => '',
 			'auto_p'                => true, // Automatically wrap the message in a <p>
 			'class'                 => '', // Extra classes for the notice

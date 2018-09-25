@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\LruArrayCache;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\CachingStream;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\CachingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Amazon S3 stream wrapper to use "s3://<bucket>/<key>" files with PHP
  * streams, supporting "r", "w", "a", "x".
@@ -90,7 +90,7 @@ class StreamWrapper
      * @param string            $protocol Protocol to register as.
      * @param CacheInterface    $cache    Default cache for the protocol.
      */
-    public static function register(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface $client, $protocol = 's3', \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface $cache = null)
+    public static function register(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $protocol = 's3', \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface $cache = null)
     {
         if (in_array($protocol, stream_get_wrappers())) {
             stream_wrapper_unregister($protocol);
@@ -103,7 +103,7 @@ class StreamWrapper
             $default[$protocol]['cache'] = $cache;
         } elseif (!isset($default[$protocol]['cache'])) {
             // Set a default cache adapter.
-            $default[$protocol]['cache'] = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\LruArrayCache();
+            $default[$protocol]['cache'] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache();
         }
         stream_context_set_default($default);
     }
@@ -146,7 +146,7 @@ class StreamWrapper
         $params['Body'] = $this->body;
         // Attempt to guess the ContentType of the upload based on the
         // file extension of the key
-        if (!isset($params['ContentType']) && ($type = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($params['Key']))) {
+        if (!isset($params['ContentType']) && ($type = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($params['Key']))) {
             $params['ContentType'] = $type;
         }
         $this->clearCacheKey("s3://{$params['Bucket']}/{$params['Key']}");
@@ -340,7 +340,7 @@ class StreamWrapper
         $this->openedBucketPrefix = $params['Key'];
         // Filter our "/" keys added by the console as directories, and ensure
         // that if a filter function is provided that it passes the filter.
-        $this->objectIterator = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\flatmap($this->getClient()->getPaginator('ListObjects', $op), function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result $result) use($filterFn) {
+        $this->objectIterator = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\flatmap($this->getClient()->getPaginator('ListObjects', $op), function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) use($filterFn) {
             $contentsAndPrefixes = $result->search('[Contents[], CommonPrefixes[]][]');
             // Filter out dir place holder keys and use the filter fn.
             return array_filter($contentsAndPrefixes, function ($key) use($filterFn) {
@@ -553,13 +553,13 @@ class StreamWrapper
         $this->body = $result['Body'];
         // Wrap the body in a caching entity body if seeking is allowed
         if ($this->getOption('seekable') && !$this->body->isSeekable()) {
-            $this->body = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\CachingStream($this->body);
+            $this->body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\CachingStream($this->body);
         }
         return true;
     }
     private function openWriteStream()
     {
-        $this->body = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'));
+        $this->body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'));
         return true;
     }
     private function openAppendStream()
@@ -738,7 +738,7 @@ class StreamWrapper
     private function getCacheStorage()
     {
         if (!$this->cache) {
-            $this->cache = $this->getOption('cache') ?: new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\LruArrayCache();
+            $this->cache = $this->getOption('cache') ?: new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache();
         }
         return $this->cache;
     }

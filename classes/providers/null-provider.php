@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Providers;
+namespace DeliciousBrains\WP_Offload_Media\Providers;
 
 use AS3CF_Error;
 
@@ -16,7 +16,7 @@ class Null_Provider {
 	 */
 	public function __call( $name, $arguments ) {
 		AS3CF_Error::log( $arguments, __CLASS__ . "->$name()" );
-		throw new \Exception( 'Failed to instantiate the AWS S3 client. Check your error log.' );
+		throw new \Exception( 'Failed to instantiate the provider client. Check your error log.' );
 	}
 
 	/**
@@ -29,6 +29,6 @@ class Null_Provider {
 	 */
 	public static function __callStatic( $name, $arguments ) {
 		AS3CF_Error::log( $arguments, __CLASS__ . "::$name()" );
-		throw new \Exception( 'Failed to instantiate the AWS S3 client. Check your error log.' );
+		throw new \Exception( 'Failed to instantiate the provider client. Check your error log.' );
 	}
 }

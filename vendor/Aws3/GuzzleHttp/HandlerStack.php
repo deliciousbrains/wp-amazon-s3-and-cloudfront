@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of
  * an HTTP handler function.
@@ -35,10 +35,10 @@ class HandlerStack
     public static function create(callable $handler = null)
     {
         $stack = new self($handler ?: choose_handler());
-        $stack->push(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Middleware::httpErrors(), 'http_errors');
-        $stack->push(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Middleware::redirect(), 'allow_redirects');
-        $stack->push(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Middleware::cookies(), 'cookies');
-        $stack->push(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Middleware::prepareBody(), 'prepare_body');
+        $stack->push(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Middleware::httpErrors(), 'http_errors');
+        $stack->push(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Middleware::redirect(), 'allow_redirects');
+        $stack->push(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Middleware::cookies(), 'cookies');
+        $stack->push(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Middleware::prepareBody(), 'prepare_body');
         return $stack;
     }
     /**
@@ -54,7 +54,7 @@ class HandlerStack
      * @param RequestInterface $request
      * @param array            $options
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         $handler = $this->resolve();
         return $handler($request, $options);

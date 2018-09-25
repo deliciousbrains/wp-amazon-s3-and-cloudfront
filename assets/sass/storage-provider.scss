@@ -1,0 +1,112 @@
+$aws_orange: #f7a80d;
+$do_blue: #0080ff;
+
+.as3cf-provider-select {
+	h3 {
+		font-size: 20px;
+	}
+
+	table {
+		border-collapse: collapse;
+	}
+
+	.as3cf-provider-title {
+		margin: 0;
+		padding: 0;
+		background: #f1f1f1;
+
+		label {
+			position: relative;
+			display: inline-block;
+
+			&:hover {
+				cursor: pointer;
+			}
+		}
+
+		.as3cf-provider-logo {
+			color: white;
+			padding: 1em;
+		}
+
+		h3 {
+			display: inline-block;
+			position: absolute;
+			top: 50%;
+			left: 76px;
+			transform: translateY(-50%);
+			font-weight: bold;
+			text-transform: none;
+			padding: 0;
+			margin: 0 15px;
+			white-space: nowrap;
+		}
+
+		&.as3cf-provider-selected {
+			cursor: default;
+		}
+
+		&.as3cf-provider-aws {
+			.as3cf-provider-logo {
+				background-color: $aws_orange;
+			}
+		}
+
+		&.as3cf-provider-do {
+			.as3cf-provider-logo {
+				background-color: $do_blue;
+			}
+		}
+	}
+
+	.as3cf-provider-content {
+		td {
+			padding-bottom: 10px;
+		}
+
+		table {
+			background: #e5e5e5;
+
+			th {
+				padding: 10px 0 10px 10px;
+			}
+
+			td {
+				padding: 10px;
+			}
+		}
+
+		.asc3f-provider-authmethod-title {
+			label {
+				font-weight: bold;
+			}
+		}
+
+		.asc3f-provider-authmethod-content {
+			td {
+				padding-top: 0;
+			}
+
+			textarea.as3cf-define-snippet.code {
+				width: 100%;
+				white-space: pre;
+				overflow: hidden;
+				font-size: 11px;
+				padding: 10px;
+				margin-top: 10px;
+			}
+
+			table.as3cf-access-keys {
+				margin-top: 10px;
+
+				th {
+					padding-left: 0;
+				}
+
+				input {
+					width: 100%;
+				}
+			}
+		}
+	}
+}

@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
 
 /**
  * Persists cookies in the client session
  */
-class SessionCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar
+class SessionCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar
 {
     /** @var string session key */
     private $sessionKey;
@@ -40,7 +40,7 @@ class SessionCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Co
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if (\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
+            if (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }
@@ -57,7 +57,7 @@ class SessionCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Co
         $data = json_decode($_SESSION[$this->sessionKey], true);
         if (is_array($data)) {
             foreach ($data as $cookie) {
-                $this->setCookie(new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\SetCookie($cookie));
+                $this->setCookie(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie($cookie));
             }
         } elseif (strlen($data)) {
             throw new \RuntimeException("Invalid cookie data");

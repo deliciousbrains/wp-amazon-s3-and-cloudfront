@@ -1,16 +1,16 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Represents an API operation.
  */
-class Operation extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractModel
+class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
 {
     private $input;
     private $output;
     private $errors;
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
     {
         $definition['type'] = 'structure';
         if (!isset($definition['http']['method'])) {
@@ -44,7 +44,7 @@ class Operation extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractMode
             if ($input = $this['input']) {
                 $this->input = $this->shapeFor($input);
             } else {
-                $this->input = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
+                $this->input = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
             }
         }
         return $this->input;
@@ -60,7 +60,7 @@ class Operation extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractMode
             if ($output = $this['output']) {
                 $this->output = $this->shapeFor($output);
             } else {
-                $this->output = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
+                $this->output = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
             }
         }
         return $this->output;

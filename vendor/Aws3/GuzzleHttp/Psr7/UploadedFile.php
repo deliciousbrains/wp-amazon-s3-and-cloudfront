@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UploadedFileInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
-class UploadedFile implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UploadedFileInterface
+class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UploadedFileInterface
 {
     /**
      * @var int[]
@@ -68,7 +68,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Messa
         if (is_string($streamOrFile)) {
             $this->file = $streamOrFile;
         } elseif (is_resource($streamOrFile)) {
-            $this->stream = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream($streamOrFile);
+            $this->stream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($streamOrFile);
         } elseif ($streamOrFile instanceof StreamInterface) {
             $this->stream = $streamOrFile;
         } else {
@@ -176,7 +176,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Messa
         if ($this->stream instanceof StreamInterface) {
             return $this->stream;
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LazyOpenStream($this->file, 'r+');
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($this->file, 'r+');
     }
     /**
      * {@inheritdoc}
@@ -198,7 +198,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Messa
         if ($this->file) {
             $this->moved = php_sapi_name() == 'cli' ? rename($this->file, $targetPath) : move_uploaded_file($this->file, $targetPath);
         } else {
-            copy_to_stream($this->getStream(), new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
+            copy_to_stream($this->getStream(), new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
             $this->moved = true;
         }
         if (false === $this->moved) {

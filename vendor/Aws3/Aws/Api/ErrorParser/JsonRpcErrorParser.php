@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ErrorParser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Parsers JSON-RPC errors.
  */
 class JsonRpcErrorParser
 {
     use JsonParserTrait;
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         $data = $this->genericHandler($response);
         // Make the casing consistent across services.

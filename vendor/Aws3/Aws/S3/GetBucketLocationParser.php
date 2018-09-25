@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\AbstractParser;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * @internal Decorates a parser for the S3 service to correctly handle the
  *           GetBucketLocation operation.
  */
-class GetBucketLocationParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\AbstractParser
+class GetBucketLocationParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
     /** @var callable */
     private $parser;
@@ -20,7 +20,7 @@ class GetBucketLocationParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Ap
     {
         $this->parser = $parser;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         $fn = $this->parser;
         $result = $fn($command, $response);

@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher;
 
 use InvalidArgumentException;
 use LogicException;
@@ -8,7 +8,7 @@ use LogicException;
  * An implementation of the CBC cipher for use with an AesEncryptingStream or
  * AesDecrypting stream.
  */
-class Cbc implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\CipherMethod
+class Cbc implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod
 {
     const BLOCK_SIZE = 16;
     /**

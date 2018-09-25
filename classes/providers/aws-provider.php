@@ -1,13 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Providers;
+namespace DeliciousBrains\WP_Offload_Media\Providers;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandPool;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Sdk;
-use DeliciousBrains\WP_Offload_S3\Providers\Streams\AWS_S3_Stream_Wrapper;
+use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sdk;
+use DeliciousBrains\WP_Offload_Media\Providers\Streams\AWS_S3_Stream_Wrapper;
 
 class AWS_Provider extends Provider {
 
@@ -24,22 +25,43 @@ class AWS_Provider extends Provider {
 	/**
 	 * @var string
 	 */
-	protected $provider_short_name = 'aws';
+	protected static $provider_name = 'Amazon Web Services';
 
 	/**
 	 * @var string
 	 */
-	protected $service_short_name = 's3';
+	protected static $provider_short_name = 'AWS';
+
+	/**
+	 * Used in filters and settings.
+	 *
+	 * @var string
+	 */
+	protected static $provider_key_name = 'aws';
 
 	/**
 	 * @var string
 	 */
-	protected $access_key_id_setting_name = 'aws-access-key-id';
+	protected static $service_name = 'Simple Storage Solution';
 
 	/**
 	 * @var string
 	 */
-	protected $secret_access_key_setting_name = 'aws-secret-access-key';
+	protected static $service_short_name = 'S3';
+
+	/**
+	 * Used in filters and settings.
+	 *
+	 * @var string
+	 */
+	protected static $service_key_name = 's3';
+
+	/**
+	 * Optional override of "Provider Name" + "Service Name" for friendly name for service.
+	 *
+	 * @var string
+	 */
+	protected static $provider_service_name = 'Amazon S3';
 
 	/**
 	 * @var array
@@ -97,6 +119,21 @@ class AWS_Provider extends Provider {
 	 */
 	protected $default_region = 'us-east-1';
 
+	/**
+	 * @var string
+	 */
+	protected $default_domain = 'amazonaws.com';
+
+	/**
+	 * @var string
+	 */
+	protected $console_url = 'https://console.aws.amazon.com/s3/home?bucket=';
+
+	/**
+	 * @var string
+	 */
+	protected $console_url_param = '&prefix=';
+
 	const API_VERSION = '2006-03-01';
 	const SIGNATURE_VERSION = 'v4';
 
@@ -122,10 +159,21 @@ class AWS_Provider extends Provider {
 	 */
 	protected function default_client_args() {
 		return array(
-			'signature_version' => self::SIGNATURE_VERSION,
-			'version'           => self::API_VERSION,
+			'signature_version' => static::SIGNATURE_VERSION,
+			'version'           => static::API_VERSION,
 			'region'            => $this->default_region,
 		);
+	}
+
+	/**
+	 * Process the args before instantiating a new client for the provider's SDK.
+	 *
+	 * @param array $args
+	 *
+	 * @return array
+	 */
+	protected function init_client_args( Array $args ) {
+		return $args;
 	}
 
 	/**
@@ -135,6 +183,17 @@ class AWS_Provider extends Provider {
 	 */
 	protected function init_client( Array $args ) {
 		$this->aws_client = new Sdk( $args );
+	}
+
+	/**
+	 * Process the args before instantiating a new service specific client.
+	 *
+	 * @param array $args
+	 *
+	 * @return array
+	 */
+	protected function init_service_client_args( Array $args ) {
+		return $args;
 	}
 
 	/**
@@ -251,7 +310,7 @@ class AWS_Provider extends Provider {
 	 * @return string
 	 */
 	public function get_default_acl() {
-		return self::DEFAULT_ACL;
+		return static::DEFAULT_ACL;
 	}
 
 	/**
@@ -260,7 +319,7 @@ class AWS_Provider extends Provider {
 	 * @return string
 	 */
 	public function get_private_acl() {
-		return self::PRIVATE_ACL;
+		return static::PRIVATE_ACL;
 	}
 
 	/**
@@ -294,7 +353,7 @@ class AWS_Provider extends Provider {
 		$command = $this->s3_client->getCommand( 'GetObject', $commandArgs );
 
 		if ( empty( $expires ) ) {
-			return (string) \DeliciousBrains\WP_Offload_S3\Aws3\Aws\serialize( $command )->getUri();
+			return (string) \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize( $command )->getUri();
 		} else {
 			return (string) $this->s3_client->createPresignedRequest( $command, $expires )->getUri();
 		}
@@ -399,7 +458,7 @@ class AWS_Provider extends Provider {
 		if ( ! empty( $results ) ) {
 			foreach ( $results as $result ) {
 				/* @var S3Exception $result */
-				if ( is_a( $result, 'DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception' ) ) {
+				if ( is_a( $result, 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception' ) ) {
 					$command    = $result->getCommand()->toArray();
 					$failures[] = array(
 						'Key'     => $command['Key'],
@@ -476,5 +535,61 @@ class AWS_Provider extends Provider {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get the region specific prefix for raw URL
+	 *
+	 * @param string   $region
+	 * @param null|int $expires
+	 *
+	 * @return string
+	 */
+	protected function url_prefix( $region = '', $expires = null ) {
+		$prefix = 's3';
+
+		if ( '' !== $region ) {
+			$delimiter = '-';
+			if ( 'eu-central-1' == $region && ! is_null( $expires ) ) {
+				// if we are creating a secure URL for a Frankfurt base file use the alternative delimiter
+				// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+				$delimiter = '.';
+			}
+
+			$prefix .= $delimiter . $region;
+		}
+
+		return $prefix;
+	}
+
+	/**
+	 * Get the url domain for the files
+	 *
+	 * @param string $domain  Likely prefixed with region
+	 * @param string $bucket
+	 * @param string $region
+	 * @param int    $expires
+	 * @param array  $args    Allows you to specify custom URL settings
+	 * @param bool   $preview When generating the URL preview sanitize certain output
+	 *
+	 * @return string
+	 */
+	protected function url_domain( $domain, $bucket, $region = '', $expires = null, $args = array(), $preview = false ) {
+		if ( 'cloudfront' === $args['domain'] && is_null( $expires ) && $args['cloudfront'] ) {
+			$cloudfront = $args['cloudfront'];
+			if ( $preview ) {
+				$cloudfront = AS3CF_Utils::sanitize_custom_domain( $cloudfront );
+			}
+
+			$domain = $cloudfront;
+		} elseif ( 'virtual-host' === $args['domain'] ) {
+			$domain = $bucket;
+		} elseif ( 'path' === $args['domain'] || $args['force-https'] ) {
+			$domain = $domain . '/' . $bucket;
+		} else {
+			$domain = $bucket . '.' . $domain;
+		}
+
+		return $domain;
 	}
 }

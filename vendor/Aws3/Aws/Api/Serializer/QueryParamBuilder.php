@@ -1,19 +1,19 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ListShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\TimestampShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 /**
  * @internal
  */
 class QueryParamBuilder
 {
     private $methods;
-    protected function queryName(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $default = null)
+    protected function queryName(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $default = null)
     {
         if (null !== $shape['queryName']) {
             return $shape['queryName'];
@@ -26,11 +26,11 @@ class QueryParamBuilder
         }
         return $default;
     }
-    protected function isFlat(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape)
+    protected function isFlat(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape)
     {
         return $shape['flattened'] === true;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $shape, array $params)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $shape, array $params)
     {
         if (!$this->methods) {
             $this->methods = array_fill_keys(get_class_methods($this), true);
@@ -39,7 +39,7 @@ class QueryParamBuilder
         $this->format_structure($shape, $params, '', $query);
         return $query;
     }
-    protected function format(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
+    protected function format(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
     {
         $type = 'format_' . $shape['type'];
         if (isset($this->methods[$type])) {
@@ -48,7 +48,7 @@ class QueryParamBuilder
             $query[$prefix] = (string) $value;
         }
     }
-    protected function format_structure(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $shape, array $value, $prefix, &$query)
+    protected function format_structure(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $shape, array $value, $prefix, &$query)
     {
         if ($prefix) {
             $prefix .= '.';
@@ -60,7 +60,7 @@ class QueryParamBuilder
             }
         }
     }
-    protected function format_list(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ListShape $shape, array $value, $prefix, &$query)
+    protected function format_list(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape $shape, array $value, $prefix, &$query)
     {
         // Handle empty list serialization
         if (!$value) {
@@ -80,7 +80,7 @@ class QueryParamBuilder
             $this->format($items, $v, $prefix . '.' . ($k + 1), $query);
         }
     }
-    protected function format_map(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape $shape, array $value, $prefix, array &$query)
+    protected function format_map(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape $shape, array $value, $prefix, array &$query)
     {
         $vals = $shape->getValue();
         $keys = $shape->getKey();
@@ -96,15 +96,15 @@ class QueryParamBuilder
             $this->format($vals, $v, sprintf($valueName, $prefix, $i), $query);
         }
     }
-    protected function format_blob(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
+    protected function format_blob(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
     {
         $query[$prefix] = base64_encode($value);
     }
-    protected function format_timestamp(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\TimestampShape $shape, $value, $prefix, array &$query)
+    protected function format_timestamp(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape $shape, $value, $prefix, array &$query)
     {
-        $query[$prefix] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\TimestampShape::format($value, 'iso8601');
+        $query[$prefix] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'iso8601');
     }
-    protected function format_boolean(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
+    protected function format_boolean(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
     {
         $query[$prefix] = $value ? 'true' : 'false';
     }

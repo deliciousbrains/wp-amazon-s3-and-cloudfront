@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Stream decorator that calculates a rolling hash of the stream as it is read.
  */
-class HashingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class HashingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     use StreamDecoratorTrait;
     /** @var HashInterface */
@@ -20,7 +20,7 @@ class HashingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Mess
      * @param callable        $onComplete Optional function invoked when the
      *                                    hash calculation is completed.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HashInterface $hash, callable $onComplete = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashInterface $hash, callable $onComplete = null)
     {
         $this->stream = $stream;
         $this->hash = $hash;

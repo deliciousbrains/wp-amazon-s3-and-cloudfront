@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
 trait PayloadParserTrait
 {
     /**
@@ -16,7 +16,7 @@ trait PayloadParserTrait
     {
         $jsonPayload = json_decode($json, true);
         if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\Exception\ParserException('Error parsing JSON: ' . json_last_error_msg());
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Error parsing JSON: ' . json_last_error_msg());
         }
         return $jsonPayload;
     }
@@ -37,7 +37,7 @@ trait PayloadParserTrait
                 throw new \RuntimeException($error->message);
             }
         } catch (\Exception $e) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\Exception\ParserException("Error parsing XML: {$e->getMessage()}", 0, $e);
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException("Error parsing XML: {$e->getMessage()}", 0, $e);
         } finally {
             libxml_use_internal_errors($priorSetting);
         }

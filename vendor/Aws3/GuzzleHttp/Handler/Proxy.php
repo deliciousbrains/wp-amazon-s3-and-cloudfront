@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RequestOptions;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Provides basic proxies for handlers.
  */
@@ -20,8 +20,8 @@ class Proxy
      */
     public static function wrapSync(callable $default, callable $sync)
     {
-        return function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $sync) {
-            return empty($options[\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS]) ? $default($request, $options) : $sync($request, $options);
+        return function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $sync) {
+            return empty($options[\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS]) ? $default($request, $options) : $sync($request, $options);
         };
     }
     /**
@@ -39,7 +39,7 @@ class Proxy
      */
     public static function wrapStreaming(callable $default, callable $streaming)
     {
-        return function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $streaming) {
+        return function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $streaming) {
             return empty($options['stream']) ? $default($request, $options) : $streaming($request, $options);
         };
     }

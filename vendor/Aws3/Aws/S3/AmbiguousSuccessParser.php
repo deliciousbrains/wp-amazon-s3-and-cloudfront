@@ -1,17 +1,17 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\AbstractParser;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Converts errors returned with a status code of 200 to a retryable error type.
  *
  * @internal
  */
-class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\AbstractParser
+class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
     private static $ambiguousSuccesses = ['UploadPartCopy' => true, 'CopyObject' => true, 'CompleteMultipartUpload' => true];
     /** @var callable */
@@ -20,13 +20,13 @@ class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api
     private $errorParser;
     /** @var string */
     private $exceptionClass;
-    public function __construct(callable $parser, callable $errorParser, $exceptionClass = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException::class)
+    public function __construct(callable $parser, callable $errorParser, $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException::class)
     {
         $this->parser = $parser;
         $this->errorParser = $errorParser;
         $this->exceptionClass = $exceptionClass;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         if (200 === $response->getStatusCode() && isset(self::$ambiguousSuccesses[$command->getName()])) {
             $errorParser = $this->errorParser;

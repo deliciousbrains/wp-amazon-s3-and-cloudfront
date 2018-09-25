@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Simplifies the SSE-C process by encoding and hashing the key.
  * @internal
@@ -30,7 +30,7 @@ class SSECMiddleware
         $this->nextHandler = $nextHandler;
         $this->endpointScheme = $endpointScheme;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request = null)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null)
     {
         // Allows only HTTPS connections when using SSE-C
         if (($command['SSECustomerKey'] || $command['CopySourceSSECustomerKey']) && $this->endpointScheme !== 'https') {
@@ -47,7 +47,7 @@ class SSECMiddleware
         $f = $this->nextHandler;
         return $f($command, $request);
     }
-    private function prepareSseParams(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $prefix = '')
+    private function prepareSseParams(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $prefix = '')
     {
         // Base64 encode the provided key
         $key = $command[$prefix . 'SSECustomerKey'];

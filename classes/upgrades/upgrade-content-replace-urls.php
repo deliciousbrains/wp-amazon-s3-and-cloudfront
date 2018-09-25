@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 /**
  * Upgrade_Content_Replace_URLs Class
@@ -20,7 +20,7 @@ class Upgrade_Content_Replace_URLs extends Upgrade_Filter_Post {
 	/**
 	 * @var string
 	 */
-	protected $upgrade_name = 'replace_s3_urls';
+	protected $upgrade_name = 'replace_provider_urls';
 
 	/**
 	 * @var string
@@ -68,15 +68,15 @@ class Upgrade_Content_Replace_URLs extends Upgrade_Filter_Post {
 			$value = maybe_unserialize( $mod->option_value );
 
 			if ( isset( $value['background_image'] ) ) {
-				$value['background_image'] = $this->as3cf->filter_s3->filter_customizer_image( $value['background_image'] );
+				$value['background_image'] = $this->as3cf->filter_provider->filter_customizer_image( $value['background_image'] );
 			}
 
 			if ( isset( $value['header_image'] ) ) {
-				$value['header_image'] = $this->as3cf->filter_s3->filter_customizer_image( $value['header_image'] );
+				$value['header_image'] = $this->as3cf->filter_provider->filter_customizer_image( $value['header_image'] );
 			}
 
 			if ( isset( $value['header_image_data'] ) ) {
-				$value['header_image_data'] = $this->as3cf->filter_s3->filter_header_image_data( $value['header_image_data'] );
+				$value['header_image_data'] = $this->as3cf->filter_provider->filter_header_image_data( $value['header_image_data'] );
 			}
 
 			$value = maybe_serialize( $value );

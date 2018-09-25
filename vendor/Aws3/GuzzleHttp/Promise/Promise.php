@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Promises/A+ implementation that avoids recursion when possible.
  *
  * @link https://promisesaplus.com/
  */
-class Promise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface
+class Promise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
 {
     private $state = self::PENDING;
     private $result;
@@ -27,7 +27,7 @@ class Promise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\
     public function then(callable $onFulfilled = null, callable $onRejected = null)
     {
         if ($this->state === self::PENDING) {
-            $p = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise(null, [$this, 'cancel']);
+            $p = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise(null, [$this, 'cancel']);
             $this->handlers[] = [$p, $onFulfilled, $onRejected];
             $p->waitList = $this->waitList;
             $p->waitList[] = $this;
@@ -82,7 +82,7 @@ class Promise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\
         }
         // Reject the promise only if it wasn't rejected in a then callback.
         if ($this->state === self::PENDING) {
-            $this->reject(new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\CancellationException('Promise has been cancelled'));
+            $this->reject(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\CancellationException('Promise has been cancelled'));
         }
     }
     public function resolve($value)

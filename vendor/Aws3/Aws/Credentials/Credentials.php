@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
 /**
  * Basic implementation of the AWS Credentials interface that allows callers to
  * pass in the AWS Access Key and AWS Secret Access Key in the constructor.
  */
-class Credentials implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface, \Serializable
+class Credentials implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface, \Serializable
 {
     private $key;
     private $secret;

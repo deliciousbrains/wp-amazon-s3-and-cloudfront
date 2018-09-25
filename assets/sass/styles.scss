@@ -1,4 +1,3 @@
-$aws_orange: #f7a80d;
 $as3cf_assets: #0769ad;
 
 .as3cf-content,
@@ -107,20 +106,76 @@ $as3cf_assets: #0769ad;
 }
 
 /**
- * Bucket select
+ * Show Storage Provider / Bucket Select / media Settings
  */
 .as3cf-tab {
 	.as3cf-main-settings {
 		display: none;
+
+		.as3cf-provider-select {
+			display: none;
+		}
+
+		.as3cf-media-settings {
+			display: none;
+		}
 	}
 
 	.as3cf-bucket-container {
-		display: block;
+		display: none;
 	}
 
-	&.as3cf-has-bucket {
+	&.as3cf-needs-access-keys, &.as3cf-has-access-keys.as3cf-change-provider {
+		.as3cf-can-write-error {
+			display: none;
+		}
+
 		.as3cf-main-settings {
 			display: block;
+
+			.as3cf-provider-select {
+				display: block;
+			}
+
+			.as3cf-media-settings {
+				display: none;
+			}
+		}
+
+		.as3cf-bucket-container {
+			display: none;
+		}
+	}
+
+	&.as3cf-has-access-keys.as3cf-needs-bucket:not(.as3cf-change-provider) {
+		.as3cf-main-settings {
+			display: none;
+
+			.as3cf-provider-select {
+				display: none;
+			}
+
+			.as3cf-media-settings {
+				display: none;
+			}
+		}
+
+		.as3cf-bucket-container {
+			display: block;
+		}
+	}
+
+	&.as3cf-has-access-keys.as3cf-has-bucket:not(.as3cf-change-provider) {
+		.as3cf-main-settings {
+			display: block;
+
+			.as3cf-provider-select {
+				display: none;
+			}
+
+			.as3cf-media-settings {
+				display: block;
+			}
 		}
 
 		.as3cf-bucket-container {
@@ -294,11 +349,16 @@ $as3cf_assets: #0769ad;
 			&.as3cf-setting-title:first-child td {
 				padding-top: 20px;
 			}
+			&.configure-url:first-child td {
+				padding-top: 5px;
+				padding-bottom: 0;
+			}
 			td {
 				padding: 15px 0;
 				&:first-child {
 					vertical-align: top;
 					min-width: 120px;
+					padding-top: 20px;
 				}
 
 				.as3cf-notice:last-child {
@@ -311,10 +371,6 @@ $as3cf_assets: #0769ad;
 			}
 		}
 
-		tr.as3cf-bucket-setting .as3cf-defined-in-config {
-			float: none;
-		}
-
 		h3 {
 			padding: 0;
 			margin: 0;
@@ -324,10 +380,10 @@ $as3cf_assets: #0769ad;
 		}
 	}
 
-	.as3cf-active-bucket {
-		font-weight: bold;
-		margin-right: 10px;
+	.as3cf-active-region {
+		font-style: italic;
 	}
+
 	.as3cf-view-bucket {
 		color: #444;
 		text-decoration: none;
@@ -439,26 +495,13 @@ $as3cf_assets: #0769ad;
 #tab-media {
 	display: block;
 
-	.as3cf-main-settings {
-		display: none;
+	.as3cf-provider-setting td {
+		padding-top: 20px;
+		padding-bottom: 5px;
 	}
 
 	.as3cf-bucket-setting td {
-		padding-top: 5px;
-	}
-
-	.as3cf-bucket-container {
-		display: block;
-	}
-
-	&.as3cf-has-bucket {
-		.as3cf-main-settings {
-			display: block;
-		}
-
-		.as3cf-bucket-container {
-			display: none;
-		}
+		padding: 5px 0;
 	}
 }
 
@@ -487,6 +530,15 @@ $as3cf_assets: #0769ad;
 	}
 
 	.form-table {
+		.as3cf-provider-setting {
+			h4 {
+				font-weight: inherit;
+				margin: 0;
+			}
+		}
+		.as3cf-bucket-list {
+			margin: 5px 0 0 0;
+		}
 		td {
 			padding: 5px 0;
 
@@ -569,43 +621,6 @@ $as3cf_assets: #0769ad;
 
 #tab-media {
 	display: block;
-}
-
-#tab-settings {
-	.as3cf-field-wrap {
-		display: flex;
-		align-items: center;
-
-		input {
-			width: 100%;
-		}
-
-		button, .as3cf-defined-in-config {
-			margin-left: 20px;
-		}
-
-		.as3cf-defined-in-config {
-			display: none;
-			margin-bottom: 0;
-		}
-
-		&.as3cf-defined {
-			button {
-				display: none;
-			}
-			.as3cf-defined-in-config {
-				display: inline-block;
-			}
-		}
-
-		&.as3cf-saved-field .as3cf-activate-licence {
-			display: none;
-		}
-
-		&.as3cf-licence-not-entered .as3cf-remove-licence {
-			display: none;
-		}
-	}
 }
 
 #tab-support {
@@ -765,6 +780,11 @@ $as3cf_assets: #0769ad;
 /**
  * Misc
  */
+.as3cf-active-provider, .as3cf-active-bucket {
+	font-weight: bold;
+	margin-right: 10px;
+}
+
 .as3cf-banner {
 	margin-top: 35px;
 	width: 292px;
@@ -859,12 +879,6 @@ $as3cf_assets: #0769ad;
 	a {
 		text-decoration: none;
 	}
-}
-
-.as3cf-aws-logo {
-	color: white;
-	background-color: $aws_orange;
-	padding: 1em;
 }
 
 .as3cf-settings {

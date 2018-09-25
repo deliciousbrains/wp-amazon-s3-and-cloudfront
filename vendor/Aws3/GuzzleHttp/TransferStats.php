@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * Represents data at the point after it was transferred either successfully
  * or after a network error.
@@ -23,7 +23,7 @@ final class TransferStats
      * @param mixed             $handlerErrorData Handler error data.
      * @param array             $handlerStats     Handler specific stats.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null, $transferTime = null, $handlerErrorData = null, $handlerStats = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, $transferTime = null, $handlerErrorData = null, $handlerStats = [])
     {
         $this->request = $request;
         $this->response = $response;

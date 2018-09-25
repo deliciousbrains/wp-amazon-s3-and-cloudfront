@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Base class that is used by most API shapes
@@ -15,7 +15,7 @@ abstract class AbstractModel implements \ArrayAccess
      * @param array    $definition Service description
      * @param ShapeMap $shapeMap   Shapemap used for creating shapes
      */
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
     {
         $this->definition = $definition;
         $this->shapeMap = $shapeMap;
@@ -49,6 +49,6 @@ abstract class AbstractModel implements \ArrayAccess
     }
     protected function shapeFor(array $definition)
     {
-        return isset($definition['shape']) ? $this->shapeMap->resolve($definition) : \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape::create($definition, $this->shapeMap);
+        return isset($definition['shape']) ? $this->shapeMap->resolve($definition) : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape::create($definition, $this->shapeMap);
     }
 }

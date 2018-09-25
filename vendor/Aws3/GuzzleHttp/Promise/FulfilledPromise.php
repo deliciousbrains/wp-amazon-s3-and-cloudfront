@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * A promise that has been fulfilled.
@@ -8,7 +8,7 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onFulfilled callback
  * immediately and ignore other callbacks.
  */
-class FulfilledPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface
+class FulfilledPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
 {
     private $value;
     public function __construct($value)
@@ -25,7 +25,7 @@ class FulfilledPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp
             return $this;
         }
         $queue = queue();
-        $p = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $p = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
         $value = $this->value;
         $queue->add(static function () use($p, $value, $onFulfilled) {
             if ($p->getState() === self::PENDING) {

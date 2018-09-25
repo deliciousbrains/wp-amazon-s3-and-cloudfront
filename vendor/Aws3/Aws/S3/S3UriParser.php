@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * Extracts a region, bucket, key, and and if a URI is in path-style
  */
@@ -28,7 +28,7 @@ class S3UriParser
      */
     public function parse($uri)
     {
-        $url = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\uri_for($uri);
+        $url = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($uri);
         if ($url->getScheme() == $this->streamWrapperScheme) {
             return $this->parseStreamWrapper($url);
         }
@@ -44,7 +44,7 @@ class S3UriParser
         $result['region'] = $matches[2] == 'amazonaws' ? null : $matches[2];
         return $result;
     }
-    private function parseStreamWrapper(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parseStreamWrapper(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
     {
         $result = self::$defaultResult;
         $result['path_style'] = false;
@@ -57,7 +57,7 @@ class S3UriParser
         }
         return $result;
     }
-    private function parseCustomEndpoint(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parseCustomEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
     {
         $result = self::$defaultResult;
         $path = ltrim($url->getPath(), '/ ');
@@ -70,7 +70,7 @@ class S3UriParser
         }
         return $result;
     }
-    private function parsePathStyle(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parsePathStyle(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
     {
         $result = self::$defaultResult;
         if ($url->getPath() != '/') {
@@ -92,7 +92,7 @@ class S3UriParser
         }
         return $result;
     }
-    private function parseVirtualHosted(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface $url, array $matches)
+    private function parseVirtualHosted(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url, array $matches)
     {
         $result = self::$defaultResult;
         $result['path_style'] = false;

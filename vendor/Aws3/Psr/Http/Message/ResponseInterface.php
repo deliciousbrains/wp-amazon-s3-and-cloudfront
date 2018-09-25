@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message;
 
 /**
  * Representation of an outgoing, server-side response.

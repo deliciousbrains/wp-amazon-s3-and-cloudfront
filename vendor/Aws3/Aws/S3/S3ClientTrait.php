@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\PayloadParserTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 /**
  * A trait providing S3-specific functionality. This is meant to be used in
  * classes implementing \Aws\S3\S3ClientInterface
@@ -29,7 +29,7 @@ trait S3ClientTrait
      */
     public function uploadAsync($bucket, $key, $body, $acl = 'private', array $options = [])
     {
-        return (new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\ObjectUploader($this, $bucket, $key, $body, $acl, $options))->promise();
+        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ObjectUploader($this, $bucket, $key, $body, $acl, $options))->promise();
     }
     /**
      * @see S3ClientInterface::copy()
@@ -48,14 +48,14 @@ trait S3ClientTrait
             $source['VersionId'] = $opts['version_id'];
         }
         $destination = ['Bucket' => $destB, 'Key' => $destK];
-        return (new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\ObjectCopier($this, $source, $destination, $acl, $opts))->promise();
+        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ObjectCopier($this, $source, $destination, $acl, $opts))->promise();
     }
     /**
      * @see S3ClientInterface::registerStreamWrapper()
      */
     public function registerStreamWrapper()
     {
-        \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\StreamWrapper::register($this);
+        \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\StreamWrapper::register($this);
     }
     /**
      * @see S3ClientInterface::deleteMatchingObjects()
@@ -70,16 +70,16 @@ trait S3ClientTrait
     public function deleteMatchingObjectsAsync($bucket, $prefix = '', $regex = '', array $options = [])
     {
         if (!$prefix && !$regex) {
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException('A prefix or regex is required.'));
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException('A prefix or regex is required.'));
         }
         $params = ['Bucket' => $bucket, 'Prefix' => $prefix];
         $iter = $this->getIterator('ListObjects', $params);
         if ($regex) {
-            $iter = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\filter($iter, function ($c) use($regex) {
+            $iter = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\filter($iter, function ($c) use($regex) {
                 return preg_match($regex, $c['Key']);
             });
         }
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\BatchDelete::fromIterator($this, $bucket, $iter, $options)->promise();
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete::fromIterator($this, $bucket, $iter, $options)->promise();
     }
     /**
      * @see S3ClientInterface::uploadDirectory()
@@ -94,7 +94,7 @@ trait S3ClientTrait
     public function uploadDirectoryAsync($directory, $bucket, $keyPrefix = null, array $options = [])
     {
         $d = "s3://{$bucket}" . ($keyPrefix ? '/' . ltrim($keyPrefix, '/') : '');
-        return (new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Transfer($this, $directory, $d, $options))->promise();
+        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer($this, $directory, $d, $options))->promise();
     }
     /**
      * @see S3ClientInterface::downloadBucket()
@@ -109,7 +109,7 @@ trait S3ClientTrait
     public function downloadBucketAsync($directory, $bucket, $keyPrefix = '', array $options = [])
     {
         $s = "s3://{$bucket}" . ($keyPrefix ? '/' . ltrim($keyPrefix, '/') : '');
-        return (new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Transfer($this, $s, $directory, $options))->promise();
+        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer($this, $s, $directory, $options))->promise();
     }
     /**
      * @see S3ClientInterface::determineBucketRegion()
@@ -132,9 +132,9 @@ trait S3ClientTrait
         $handlerList->remove('s3.permanent_redirect');
         $handlerList->remove('signer');
         $handler = $handlerList->resolve();
-        return $handler($command)->then(static function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface $result) {
+        return $handler($command)->then(static function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result) {
             return $result['@metadata']['headers']['x-amz-bucket-region'];
-        }, function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException $e) {
+        }, function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException $e) {
             $response = $e->getResponse();
             if ($response === null) {
                 throw $e;
@@ -183,7 +183,7 @@ trait S3ClientTrait
      * @return bool
      * @throws S3Exception|\Exception if there is an unhandled exception
      */
-    private function checkExistenceWithCommand(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    private function checkExistenceWithCommand(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         try {
             $this->execute($command);
@@ -201,7 +201,7 @@ trait S3ClientTrait
     /**
      * @see S3ClientInterface::execute()
      */
-    public abstract function execute(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command);
+    public abstract function execute(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command);
     /**
      * @see S3ClientInterface::getCommand()
      */

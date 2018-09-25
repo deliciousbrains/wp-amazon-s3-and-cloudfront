@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Trait implementing functionality common to requests and responses.
  */
@@ -100,7 +100,7 @@ trait MessageTrait
         }
         return $this->stream;
     }
-    public function withBody(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $body)
+    public function withBody(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $body)
     {
         if ($body === $this->stream) {
             return $this;

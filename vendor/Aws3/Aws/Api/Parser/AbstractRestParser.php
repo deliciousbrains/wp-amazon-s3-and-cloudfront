@@ -1,17 +1,17 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * @internal
  */
-abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\AbstractParser
+abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
     use PayloadParserTrait;
     /**
@@ -23,8 +23,8 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
      *
      * @return mixed
      */
-    protected abstract function payload(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $member, array &$result);
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    protected abstract function payload(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, array &$result);
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         $output = $this->api->getOperation($command->getName())->getOutput();
         $result = [];
@@ -48,9 +48,9 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
             // if no payload was found, then parse the contents of the body
             $this->payload($response, $output, $result);
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result($result);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result($result);
     }
-    private function extractPayload($payload, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $output, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
+    private function extractPayload($payload, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $output, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
     {
         $member = $output->getMember($payload);
         if ($member instanceof StructureShape) {
@@ -65,7 +65,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
     /**
      * Extract a single header from the response into the result.
      */
-    private function extractHeader($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
+    private function extractHeader($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
     {
         $value = $response->getHeaderLine($shape['locationName'] ?: $name);
         switch ($shape->getType()) {
@@ -84,7 +84,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
                 break;
             case 'timestamp':
                 try {
-                    $value = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult($value);
+                    $value = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult($value);
                     break;
                 } catch (\Exception $e) {
                     // If the value cannot be parsed, then do not add it to the
@@ -102,7 +102,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
     /**
      * Extract a map of headers with an optional prefix from the response.
      */
-    private function extractHeaders($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
+    private function extractHeaders($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
     {
         // Check if the headers are prefixed by a location name
         $result[$name] = [];
@@ -119,7 +119,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_S3\Aws3\Aw
     /**
      * Places the status code of the response into the result array.
      */
-    private function extractStatus($name, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
+    private function extractStatus($name, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
     {
         $result[$name] = (int) $response->getStatusCode();
     }

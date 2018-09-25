@@ -1,14 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\HandlerStack;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\TransferStats;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\HandlerStack;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Handler that returns responses or throw exceptions from a queue.
  */
@@ -31,7 +31,7 @@ class MockHandler implements \Countable
      */
     public static function createWithMiddleware(array $queue = null, callable $onFulfilled = null, callable $onRejected = null)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
     }
     /**
      * The passed in value must be an array of
@@ -50,7 +50,7 @@ class MockHandler implements \Countable
             call_user_func_array([$this, 'append'], $queue);
         }
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         if (!$this->queue) {
             throw new \OutOfBoundsException('Mock queue is empty');
@@ -69,13 +69,13 @@ class MockHandler implements \Countable
                 $options['on_headers']($response);
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
-                $response = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException($msg, $request, $response, $e);
+                $response = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException($msg, $request, $response, $e);
             }
         }
         if (is_callable($response)) {
             $response = call_user_func($response, $request, $options);
         }
-        $response = $response instanceof \Exception ? \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($response) : \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($response);
+        $response = $response instanceof \Exception ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($response) : \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($response);
         return $response->then(function ($value) use($request, $options) {
             $this->invokeStats($request, $options, $value);
             if ($this->onFulfilled) {
@@ -98,7 +98,7 @@ class MockHandler implements \Countable
             if ($this->onRejected) {
                 call_user_func($this->onRejected, $reason);
             }
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($reason);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
         });
     }
     /**
@@ -111,7 +111,7 @@ class MockHandler implements \Countable
             if ($value instanceof ResponseInterface || $value instanceof \Exception || $value instanceof PromiseInterface || is_callable($value)) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected a response or ' . 'exception. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\describe_type($value));
+                throw new \InvalidArgumentException('Expected a response or ' . 'exception. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\describe_type($value));
             }
         }
     }
@@ -142,10 +142,10 @@ class MockHandler implements \Countable
     {
         return count($this->queue);
     }
-    private function invokeStats(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null, $reason = null)
+    private function invokeStats(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, $reason = null)
     {
         if (isset($options['on_stats'])) {
-            $stats = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\TransferStats($request, $response, 0, $reason);
+            $stats = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats($request, $response, 0, $reason);
             call_user_func($options['on_stats'], $stats);
         }
     }

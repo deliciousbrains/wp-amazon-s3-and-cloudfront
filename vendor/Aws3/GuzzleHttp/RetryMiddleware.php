@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Middleware that retries requests based on the boolean result of
  * invoking the provided "decider" function.
@@ -50,7 +50,7 @@ class RetryMiddleware
      *
      * @return PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
@@ -58,7 +58,7 @@ class RetryMiddleware
         $fn = $this->nextHandler;
         return $fn($request, $options)->then($this->onFulfilled($request, $options), $this->onRejected($request, $options));
     }
-    private function onFulfilled(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
+    private function onFulfilled(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
     {
         return function ($value) use($req, $options) {
             if (!call_user_func($this->decider, $options['retries'], $req, $value, null)) {
@@ -67,16 +67,16 @@ class RetryMiddleware
             return $this->doRetry($req, $options, $value);
         };
     }
-    private function onRejected(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
+    private function onRejected(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
     {
         return function ($reason) use($req, $options) {
             if (!call_user_func($this->decider, $options['retries'], $req, null, $reason)) {
-                return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($reason);
+                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
             }
             return $this->doRetry($req, $options);
         };
     }
-    private function doRetry(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null)
+    private function doRetry(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);
         return $this($request, $options);

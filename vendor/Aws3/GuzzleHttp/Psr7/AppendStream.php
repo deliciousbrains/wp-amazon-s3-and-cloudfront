@@ -1,14 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Reads from multiple streams, one after the other.
  *
  * This is a read-only stream decorator.
  */
-class AppendStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     /** @var StreamInterface[] Streams being decorated */
     private $streams = [];
@@ -42,7 +42,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Messa
      *
      * @throws \InvalidArgumentException if the stream is not readable
      */
-    public function addStream(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public function addStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
     {
         if (!$stream->isReadable()) {
             throw new \InvalidArgumentException('Each stream must be readable');

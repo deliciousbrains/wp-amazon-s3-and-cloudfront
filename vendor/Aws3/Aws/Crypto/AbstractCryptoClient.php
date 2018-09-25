@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\CipherMethod;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\Cbc;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\Cbc;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 /**
  * @internal
  */
@@ -76,7 +76,7 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function encrypt(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    public abstract function encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
     /**
      * Dependency to provide an interface for building a decryption stream for
      * cipher text given metadata and materials to do so.
@@ -93,5 +93,5 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
+    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
 }

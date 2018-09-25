@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
 /**
  * Represents a section of the AWS cloud.

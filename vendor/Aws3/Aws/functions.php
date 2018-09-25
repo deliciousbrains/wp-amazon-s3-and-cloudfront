@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\FulfilledPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise;
 //-----------------------------------------------------------------------------
 // Functional functions
 //-----------------------------------------------------------------------------
@@ -241,12 +241,12 @@ function describe_type($input)
  */
 function default_http_handler()
 {
-    $version = (string) \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInterface::VERSION;
+    $version = (string) \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION;
     if ($version[0] === '5') {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Handler\GuzzleV5\GuzzleHandler();
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV5\GuzzleHandler();
     }
     if ($version[0] === '6') {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Handler\GuzzleV6\GuzzleHandler();
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV6\GuzzleHandler();
     }
     throw new \RuntimeException('Unknown Guzzle version: ' . $version);
 }
@@ -260,14 +260,14 @@ function default_http_handler()
  * @return RequestInterface
  * @throws \RuntimeException
  */
-function serialize(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+function serialize(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
 {
     $request = null;
     $handlerList = $command->getHandlerList();
     // Return a mock result.
-    $handlerList->setHandler(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $_, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $r) use(&$request) {
+    $handlerList->setHandler(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $_, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $r) use(&$request) {
         $request = $r;
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\FulfilledPromise(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result([]));
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result([]));
     });
     call_user_func($handlerList->resolve(), $command)->wait();
     if (!$request instanceof RequestInterface) {

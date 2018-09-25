@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Provides a simple environment based search.
@@ -26,7 +26,7 @@ final class Env
     {
         static $runtime;
         if (!$runtime) {
-            $runtime = \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Env::createRuntime();
+            $runtime = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::createRuntime();
         }
         return $runtime($expression, $data);
     }
@@ -40,11 +40,11 @@ final class Env
     {
         switch ($compileDir = getenv(self::COMPILE_DIR)) {
             case false:
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\AstRuntime();
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\AstRuntime();
             case 'on':
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\CompilerRuntime();
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\CompilerRuntime();
             default:
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\CompilerRuntime($compileDir);
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\CompilerRuntime($compileDir);
         }
     }
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Builds a single handler function from zero or more middleware functions and

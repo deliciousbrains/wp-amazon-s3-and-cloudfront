@@ -1,16 +1,16 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CouldNotCreateChecksumException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Signature Version 4
  * @link http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
  */
-class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureInterface
+class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureInterface
 {
     use SignatureTrait;
     const ISO8601_BASIC = 'Ymd\\THis\\Z';
@@ -34,7 +34,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
         $this->region = $region;
         $this->unsigned = isset($options['unsigned-body']) ? $options['unsigned-body'] : false;
     }
-    public function signRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $credentials)
+    public function signRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials)
     {
         $ldt = gmdate(self::ISO8601_BASIC);
         $sdt = substr($ldt, 0, 8);
@@ -55,7 +55,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
         $parsed['headers']['Authorization'] = ["AWS4-HMAC-SHA256 " . "Credential={$credentials->getAccessKeyId()}/{$cs}, " . "SignedHeaders={$context['headers']}, Signature={$signature}"];
         return $this->buildRequest($parsed);
     }
-    public function presign(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $credentials, $expires, array $options = [])
+    public function presign(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials, $expires, array $options = [])
     {
         $startTimestamp = isset($options['start_time']) ? $this->convertToTimestamp($options['start_time'], null) : time();
         $expiresTimestamp = $this->convertToTimestamp($expires, $startTimestamp);
@@ -87,12 +87,12 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
      * @return RequestInterface
      * @throws \InvalidArgumentException if the method is not POST
      */
-    public static function convertPostToGet(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    public static function convertPostToGet(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         if ($request->getMethod() !== 'POST') {
             throw new \InvalidArgumentException('Expected a POST request but ' . 'received a ' . $request->getMethod() . ' request.');
         }
-        $sr = $request->withMethod('GET')->withBody(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for(''))->withoutHeader('Content-Type')->withoutHeader('Content-Length');
+        $sr = $request->withMethod('GET')->withBody(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(''))->withoutHeader('Content-Type')->withoutHeader('Content-Length');
         // Move POST fields to the query if they are present
         if ($request->getHeaderLine('Content-Type') === 'application/x-www-form-urlencoded') {
             $body = (string) $request->getBody();
@@ -100,7 +100,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
         }
         return $sr;
     }
-    protected function getPayload(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    protected function getPayload(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         if ($this->unsigned && $request->getUri()->getScheme() == 'https') {
             return self::UNSIGNED_PAYLOAD;
@@ -111,15 +111,15 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
             return $request->getHeaderLine('X-Amz-Content-Sha256');
         }
         if (!$request->getBody()->isSeekable()) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CouldNotCreateChecksumException('sha256');
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException('sha256');
         }
         try {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\hash($request->getBody(), 'sha256');
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\hash($request->getBody(), 'sha256');
         } catch (\Exception $e) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CouldNotCreateChecksumException('sha256', $e);
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException('sha256', $e);
         }
     }
-    protected function getPresignedPayload(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    protected function getPresignedPayload(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         return $this->getPayload($request);
     }
@@ -133,7 +133,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
         $hash = hash('sha256', $creq);
         return "AWS4-HMAC-SHA256\n{$longDate}\n{$credentialScope}\n{$hash}";
     }
-    private function createPresignedRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $credentials)
+    private function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials)
     {
         $parsedRequest = $this->parseRequest($request);
         // Make sure to handle temporary credentials
@@ -230,19 +230,19 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S
         }
         return $parsedRequest;
     }
-    private function parseRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function parseRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         // Clean up any previously set headers.
         /** @var RequestInterface $request */
         $request = $request->withoutHeader('X-Amz-Date')->withoutHeader('Date')->withoutHeader('Authorization');
         $uri = $request->getUri();
-        return ['method' => $request->getMethod(), 'path' => $uri->getPath(), 'query' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\parse_query($uri->getQuery()), 'uri' => $uri, 'headers' => $request->getHeaders(), 'body' => $request->getBody(), 'version' => $request->getProtocolVersion()];
+        return ['method' => $request->getMethod(), 'path' => $uri->getPath(), 'query' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\parse_query($uri->getQuery()), 'uri' => $uri, 'headers' => $request->getHeaders(), 'body' => $request->getBody(), 'version' => $request->getProtocolVersion()];
     }
     private function buildRequest(array $req)
     {
         if ($req['query']) {
-            $req['uri'] = $req['uri']->withQuery(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\build_query($req['query']));
+            $req['uri'] = $req['uri']->withQuery(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\build_query($req['query']));
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request($req['method'], $req['uri'], $req['headers'], $req['body'], $req['version']);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request($req['method'], $req['uri'], $req['headers'], $req['body'], $req['version']);
     }
 }

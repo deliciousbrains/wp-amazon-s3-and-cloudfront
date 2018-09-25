@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LimitStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream;
 trait DecryptionTrait
 {
     /**
@@ -50,32 +50,32 @@ trait DecryptionTrait
      *
      * @internal
      */
-    protected function decrypt($cipherText, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
+    protected function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
     {
-        $cipherOptions['Iv'] = base64_decode($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::IV_HEADER]);
-        $cipherOptions['TagLength'] = $envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::CRYPTO_TAG_LENGTH_HEADER] / 8;
-        $cek = $provider->decryptCek(base64_decode($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_KEY_V2_HEADER]), json_decode($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true));
+        $cipherOptions['Iv'] = base64_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::IV_HEADER]);
+        $cipherOptions['TagLength'] = $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CRYPTO_TAG_LENGTH_HEADER] / 8;
+        $cek = $provider->decryptCek(base64_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_KEY_V2_HEADER]), json_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true));
         $cipherOptions['KeySize'] = strlen($cek) * 8;
-        $cipherOptions['Cipher'] = $this->getCipherFromAesName($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_CRYPTO_SCHEME_HEADER]);
+        $cipherOptions['Cipher'] = $this->getCipherFromAesName($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_CRYPTO_SCHEME_HEADER]);
         $decryptionSteam = $this->getDecryptingStream($cipherText, $cek, $cipherOptions);
         unset($cek);
         return $decryptionSteam;
     }
-    private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
+    private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
     {
         $cipherTextSize = $cipherText->getSize();
         if ($cipherTextSize == null || $cipherTextSize <= 0) {
             throw new \RuntimeException('Cannot decrypt a stream of unknown' . ' size.');
         }
-        return (string) new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LimitStream($cipherText, $tagLength, $cipherTextSize - $tagLength);
+        return (string) new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($cipherText, $tagLength, $cipherTextSize - $tagLength);
     }
-    private function getStrippedCiphertextStream(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
+    private function getStrippedCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
     {
         $cipherTextSize = $cipherText->getSize();
         if ($cipherTextSize == null || $cipherTextSize <= 0) {
             throw new \RuntimeException('Cannot decrypt a stream of unknown' . ' size.');
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LimitStream($cipherText, $cipherTextSize - $tagLength, 0);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($cipherText, $cipherTextSize - $tagLength, 0);
     }
     /**
      * Generates a stream that wraps the cipher text with the proper cipher and
@@ -94,14 +94,14 @@ trait DecryptionTrait
      */
     protected function getDecryptingStream($cipherText, $cek, $cipherOptions)
     {
-        $cipherTextStream = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($cipherText);
+        $cipherTextStream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($cipherText);
         switch ($cipherOptions['Cipher']) {
             case 'gcm':
                 $cipherOptions['Tag'] = $this->getTagFromCiphertextStream($cipherTextStream, $cipherOptions['TagLength']);
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AesGcmDecryptingStream($this->getStrippedCiphertextStream($cipherTextStream, $cipherOptions['TagLength']), $cek, $cipherOptions['Iv'], $cipherOptions['Tag'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : null, $cipherOptions['TagLength'] ?: null, $cipherOptions['KeySize']);
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesGcmDecryptingStream($this->getStrippedCiphertextStream($cipherTextStream, $cipherOptions['TagLength']), $cek, $cipherOptions['Iv'], $cipherOptions['Tag'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : null, $cipherOptions['TagLength'] ?: null, $cipherOptions['KeySize']);
             default:
                 $cipherMethod = $this->buildCipherMethod($cipherOptions['Cipher'], $cipherOptions['Iv'], $cipherOptions['KeySize']);
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AesDecryptingStream($cipherTextStream, $cek, $cipherMethod);
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesDecryptingStream($cipherTextStream, $cek, $cipherMethod);
         }
     }
 }

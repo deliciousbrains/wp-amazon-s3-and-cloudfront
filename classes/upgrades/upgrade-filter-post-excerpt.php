@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 /**
  * Upgrade_Filter_Post_Excerpt Class

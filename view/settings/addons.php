@@ -7,7 +7,7 @@
 		<div class="notice inline as3cf-get-addons as3cf-notice-warning">
 			<p>
 			<?php
-				printf( __( '<strong>Get Addons</strong> — The following addons are available with a WP Offload S3 Gold license or better.<br>Visit <a href="%s">deliciousbrains.com</a> to purchase in just a few clicks.', 'amazon-s3-and-cloudfront' ),
+				printf( __( '<strong>Get Addons</strong> — The following addons are available with a WP Offload Media Gold license or better.<br>Visit <a href="%s">deliciousbrains.com</a> to purchase in just a few clicks.', 'amazon-s3-and-cloudfront' ),
 					esc_url( $this->get_my_account_url() )
 				);
 			?>

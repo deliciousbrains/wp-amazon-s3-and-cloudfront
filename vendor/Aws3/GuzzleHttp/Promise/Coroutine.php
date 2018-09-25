@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 use Exception;
 use Generator;
@@ -40,7 +40,7 @@ use Throwable;
  * @return Promise
  * @link https://github.com/petkaantonov/bluebird/blob/master/API.md#generators inspiration
  */
-final class Coroutine implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface
+final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
 {
     /**
      * @var PromiseInterface|null
@@ -57,7 +57,7 @@ final class Coroutine implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\
     public function __construct(callable $generatorFn)
     {
         $this->generator = $generatorFn();
-        $this->result = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise(function () {
+        $this->result = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise(function () {
             while (isset($this->currentPromise)) {
                 $this->currentPromise->wait();
             }

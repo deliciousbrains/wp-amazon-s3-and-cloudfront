@@ -1,16 +1,16 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DocModel;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 /**
  * Default AWS client implementation
  */
-class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface
+class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface
 {
     use AwsClientTrait;
     /** @var array */
@@ -36,7 +36,7 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
      */
     public static function getArguments()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ClientResolver::getDefaultArguments();
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver::getDefaultArguments();
     }
     /**
      * The client constructor accepts the following options:
@@ -142,12 +142,12 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
         if (!isset($args['exception_class'])) {
             $args['exception_class'] = $exceptionClass;
         }
-        $this->handlerList = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList();
-        $resolver = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ClientResolver(static::getArguments());
+        $this->handlerList = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList();
+        $resolver = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver(static::getArguments());
         $config = $resolver->resolve($args, $this->handlerList);
         $this->api = $config['api'];
         $this->signatureProvider = $config['signature_provider'];
-        $this->endpoint = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri($config['endpoint']);
+        $this->endpoint = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($config['endpoint']);
         $this->credentialProvider = $config['credentials'];
         $this->region = isset($config['region']) ? $config['region'] : null;
         $this->config = $config['config'];
@@ -197,7 +197,7 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
         } else {
             $args['@http'] += $this->defaultRequestOptions;
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Command($name, $args, clone $this->getHandlerList());
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command($name, $args, clone $this->getHandlerList());
     }
     public function __sleep()
     {
@@ -222,10 +222,10 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
     {
         $klass = get_class($this);
         if ($klass === __CLASS__) {
-            return ['', 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Exception\\AwsException'];
+            return ['', 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Exception\\AwsException'];
         }
         $service = substr($klass, strrpos($klass, '\\') + 1, -6);
-        return [strtolower($service), "DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\{$service}\\Exception\\{$service}Exception"];
+        return [strtolower($service), "DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\{$service}\\Exception\\{$service}Exception"];
     }
     private function addSignatureMiddleware()
     {
@@ -234,7 +234,7 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
         $version = $this->config['signature_version'];
         $name = $this->config['signing_name'];
         $region = $this->config['signing_region'];
-        $resolver = static function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $c) use($api, $provider, $name, $region, $version) {
+        $resolver = static function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $c) use($api, $provider, $name, $region, $version) {
             $authType = $api->getOperation($c->getName())['authtype'];
             switch ($authType) {
                 case 'none':
@@ -244,14 +244,14 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
                     $version = 'v4-unsigned-body';
                     break;
             }
-            return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureProvider::resolve($provider, $version, $name, $region);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider::resolve($provider, $version, $name, $region);
         };
-        $this->handlerList->appendSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::signer($this->credentialProvider, $resolver), 'signer');
+        $this->handlerList->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::signer($this->credentialProvider, $resolver), 'signer');
     }
     private function addInvocationId()
     {
         // Add invocation id to each request
-        $this->handlerList->prependSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::invocationId(), 'invocation-id');
+        $this->handlerList->prependSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::invocationId(), 'invocation-id');
     }
     /**
      * Returns a service model and doc model with any necessary changes
@@ -267,7 +267,7 @@ class AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInte
      */
     public static function applyDocFilters(array $api, array $docs)
     {
-        return [new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service($api, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider::defaultProvider()), new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DocModel($docs)];
+        return [new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service($api, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::defaultProvider()), new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel($docs)];
     }
     /**
      * @deprecated

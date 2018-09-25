@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Utils;
-use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
-use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Too_Many_Errors_Exception;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Too_Many_Errors_Exception;
 
 /**
  * Upgrade_Filter_Post Class
@@ -395,7 +395,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	 */
 	protected function get_generic_message() {
 		$link_text = __( 'See our documentation', 'amazon-s3-and-cloudfront' );
-		$url       = $this->as3cf->dbrains_url( '/wp-offload-s3/doc/content-filtering-upgrade', array(
+		$url       = $this->as3cf->dbrains_url( '/wp-offload-media/doc/content-filtering-upgrade', array(
 			'utm_campaign' => 'support+docs',
 		) );
 		$link      = AS3CF_Utils::dbrains_link( $url, $link_text );

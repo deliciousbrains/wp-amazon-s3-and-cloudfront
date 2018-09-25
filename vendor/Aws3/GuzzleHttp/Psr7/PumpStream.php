@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Provides a read only stream that pumps data from a PHP callable.
  *
@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
  * the read() function of the PumpStream. The provided callable MUST return
  * false when there is no more data to read.
  */
-class PumpStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     /** @var callable */
     private $source;
@@ -40,7 +40,7 @@ class PumpStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message
         $this->source = $source;
         $this->size = isset($options['size']) ? $options['size'] : null;
         $this->metadata = isset($options['metadata']) ? $options['metadata'] : [];
-        $this->buffer = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\BufferStream();
+        $this->buffer = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\BufferStream();
     }
     public function __toString()
     {

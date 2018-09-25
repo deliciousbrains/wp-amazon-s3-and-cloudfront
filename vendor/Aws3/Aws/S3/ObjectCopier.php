@@ -1,19 +1,19 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\MultipartUploadException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use InvalidArgumentException;
 /**
  * Copies objects from one S3 location to another, utilizing a multipart copy
  * when appropriate.
  */
-class ObjectCopier implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+class ObjectCopier implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
-    const DEFAULT_MULTIPART_THRESHOLD = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\MultipartUploader::PART_MAX_SIZE;
+    const DEFAULT_MULTIPART_THRESHOLD = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader::PART_MAX_SIZE;
     private $client;
     private $source;
     private $destination;
@@ -41,7 +41,7 @@ class ObjectCopier implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Pro
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface $client, array $source, array $destination, $acl = 'private', array $options = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, array $source, array $destination, $acl = 'private', array $options = [])
     {
         $this->validateLocation($source);
         $this->validateLocation($destination);
@@ -58,14 +58,14 @@ class ObjectCopier implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Pro
      */
     public function promise()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () {
             $headObjectCommand = $this->client->getCommand('HeadObject', $this->options['params'] + $this->source);
             if (is_callable($this->options['before_lookup'])) {
                 $this->options['before_lookup']($headObjectCommand);
             }
             $objectStats = (yield $this->client->executeAsync($headObjectCommand));
             if ($objectStats['ContentLength'] > $this->options['mup_threshold']) {
-                $mup = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\MultipartCopy($this->client, $this->getSourcePath(), ['source_metadata' => $objectStats, 'acl' => $this->acl] + $this->destination + $this->options);
+                $mup = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartCopy($this->client, $this->getSourcePath(), ['source_metadata' => $objectStats, 'acl' => $this->acl] + $this->destination + $this->options);
                 (yield $mup->promise());
             } else {
                 $defaults = ['ACL' => $this->acl, 'MetadataDirective' => 'COPY', 'CopySource' => $this->getSourcePath()];

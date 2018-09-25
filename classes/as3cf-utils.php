@@ -23,10 +23,11 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 	 *
 	 */
 	class AS3CF_Utils {
+
 		/**
 		 * Get post ID.
 		 *
-		 * @param null|int|WP_Post $post    Optional. Post ID or post object. Defaults to current post.
+		 * @param null|int|WP_Post $post Optional. Post ID or post object. Defaults to current post.
 		 *
 		 * @return int
 		 */
@@ -97,9 +98,9 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Parses a URL into its components. Compatible with PHP < 5.4.7.
 		 *
-		 * @param     $url string The URL to parse.
+		 * @param  string $url       The URL to parse.
 		 *
-		 * @param int $component PHP_URL_ constant for URL component to return.
+		 * @param int     $component PHP_URL_ constant for URL component to return.
 		 *
 		 * @return mixed An array of the parsed components, mixed for a requested component, or false on error.
 		 */
@@ -254,12 +255,12 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * Get an attachment's edited S3 keys.
 		 *
 		 * @param int   $attachment_id
-		 * @param array $s3object
+		 * @param array $provider_object
 		 *
 		 * @return array
 		 */
-		public static function get_attachment_edited_keys( $attachment_id, $s3object ) {
-			$prefix = trailingslashit( pathinfo( $s3object['key'], PATHINFO_DIRNAME ) );
+		public static function get_attachment_edited_keys( $attachment_id, $provider_object ) {
+			$prefix = trailingslashit( pathinfo( $provider_object['key'], PATHINFO_DIRNAME ) );
 			$paths  = self::get_attachment_edited_file_paths( $attachment_id );
 			$paths  = array_map( function ( $path ) use ( $prefix ) {
 				return array( 'Key' => $prefix . wp_basename( $path ) );
@@ -345,14 +346,86 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string
 		 */
 		public static function current_base_domain() {
-			$domain = static::current_domain();
-			$parts  = explode( '.', $domain, 2 );
+			return static::base_domain( static::current_domain() );
+		}
 
-			if ( isset( $parts[1] ) && in_array( $parts[0], array( 'www' ) ) ) {
-				return $parts[1];
+		/**
+		 * Get the base domain of the supplied domain.
+		 *
+		 * @param string $domain
+		 *
+		 * @return string
+		 */
+		public static function base_domain( $domain ) {
+			if ( WP_Http::is_ip_address( $domain ) ) {
+				return $domain;
 			}
 
-			return $domain;
+			$parts = explode( '.', $domain );
+
+			// localhost etc.
+			if ( is_string( $parts ) ) {
+				return $domain;
+			}
+
+			if ( count( $parts ) < 3 ) {
+				return $domain;
+			}
+
+			// Just knock off the first segment.
+			unset( $parts[0] );
+
+			return implode( '.', $parts );
+		}
+
+		/**
+		 * Very basic check of whether domain is real.
+		 *
+		 * @param string $domain
+		 *
+		 * @return bool
+		 *
+		 * Note: Very early version, may extend with further "local" domain checks if relevant.
+		 */
+		public static function is_public_domain( $domain ) {
+			// We're not going to test SEO etc. for ip addresses.
+			if ( WP_Http::is_ip_address( $domain ) ) {
+				return false;
+			}
+
+			$parts = explode( '.', $domain );
+
+			// localhost etc.
+			if ( is_string( $parts ) ) {
+				return false;
+			}
+
+			// TODO: Maybe check domain TLD.
+
+			return true;
+		}
+
+		/**
+		 * Is given URL considered SEO friendly?
+		 *
+		 * @param string $url
+		 *
+		 * @return bool
+		 */
+		public static function seo_friendly_url( $url ) {
+			$domain      = static::base_domain( parse_url( $url, PHP_URL_HOST ) );
+			$base_domain = static::current_base_domain();
+
+			// If either domain is not a public domain then skip checks.
+			if ( ! static::is_public_domain( $domain ) || ! static::is_public_domain( $base_domain ) ) {
+				return true;
+			}
+
+			if ( substr( $domain, -strlen( $base_domain ) ) === $base_domain ) {
+				return true;
+			}
+
+			return false;
 		}
 
 		/**
@@ -374,9 +447,11 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string|false string constant name if defined, otherwise false if none are defined
 		 */
 		public static function get_first_defined_constant( $constants ) {
-			foreach ( (array) $constants as $constant ) {
-				if ( defined( $constant ) ) {
-					return $constant;
+			if ( ! empty( $constants ) ) {
+				foreach ( (array) $constants as $constant ) {
+					if ( defined( $constant ) ) {
+						return $constant;
+					}
 				}
 			}
 
@@ -403,6 +478,20 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return $keys;
+		}
+
+		/**
+		 * Sanitize custom domain
+		 *
+		 * @param string $domain
+		 *
+		 * @return string
+		 */
+		public static function sanitize_custom_domain( $domain ) {
+			$domain = preg_replace( '@^[a-zA-Z]*:\/\/@', '', $domain );
+			$domain = preg_replace( '@[^a-zA-Z0-9\.\-]@', '', $domain );
+
+			return $domain;
 		}
 	}
 }

@@ -1,18 +1,18 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Operation;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\TimestampShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\UriResolver;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Serializes HTTP locations like header, uri, payload, etc...
  * @internal
@@ -27,23 +27,23 @@ abstract class RestSerializer
      * @param Service $api      Service API description
      * @param string  $endpoint Endpoint to connect to
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service $api, $endpoint)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, $endpoint)
     {
         $this->api = $api;
-        $this->endpoint = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\uri_for($endpoint);
+        $this->endpoint = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($endpoint);
     }
     /**
      * @param CommandInterface $command Command to serialized
      *
      * @return RequestInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         $operation = $this->api->getOperation($command->getName());
         $args = $command->toArray();
         $opts = $this->serialize($operation, $args);
         $uri = $this->buildEndpoint($operation, $args, $opts);
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request($operation['http']['method'], $uri, isset($opts['headers']) ? $opts['headers'] : [], isset($opts['body']) ? $opts['body'] : null);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request($operation['http']['method'], $uri, isset($opts['headers']) ? $opts['headers'] : [], isset($opts['body']) ? $opts['body'] : null);
     }
     /**
      * Modifies a hash of request options for a payload body.
@@ -52,8 +52,8 @@ abstract class RestSerializer
      * @param array            $value   Value to serialize
      * @param array            $opts    Request options to modify.
      */
-    protected abstract function payload(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $member, array $value, array &$opts);
-    private function serialize(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Operation $operation, array $args)
+    protected abstract function payload(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, array $value, array &$opts);
+    private function serialize(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation $operation, array $args)
     {
         $opts = [];
         $input = $operation->getInput();
@@ -81,7 +81,7 @@ abstract class RestSerializer
         }
         return $opts;
     }
-    private function applyPayload(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $input, $name, array $args, array &$opts)
+    private function applyPayload(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $input, $name, array $args, array &$opts)
     {
         if (!isset($args[$name])) {
             return;
@@ -90,15 +90,15 @@ abstract class RestSerializer
         if ($m['streaming'] || ($m['type'] == 'string' || $m['type'] == 'blob')) {
             // Streaming bodies or payloads that are strings are
             // always just a stream of data.
-            $opts['body'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($args[$name]);
+            $opts['body'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($args[$name]);
             return;
         }
         $this->payload($m, $args[$name], $opts);
     }
-    private function applyHeader($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $member, $value, array &$opts)
+    private function applyHeader($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, $value, array &$opts)
     {
         if ($member->getType() == 'timestamp') {
-            $value = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\TimestampShape::format($value, 'rfc822');
+            $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'rfc822');
         }
         if ($member['jsonvalue']) {
             $value = json_encode($value);
@@ -112,14 +112,14 @@ abstract class RestSerializer
     /**
      * Note: This is currently only present in the Amazon S3 model.
      */
-    private function applyHeaderMap($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $member, array $value, array &$opts)
+    private function applyHeaderMap($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, array $value, array &$opts)
     {
         $prefix = $member['locationName'];
         foreach ($value as $k => $v) {
             $opts['headers'][$prefix . $k] = $v;
         }
     }
-    private function applyQuery($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $member, $value, array &$opts)
+    private function applyQuery($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, $value, array &$opts)
     {
         if ($member instanceof MapShape) {
             $opts['query'] = isset($opts['query']) && is_array($opts['query']) ? $opts['query'] + $value : $value;
@@ -130,7 +130,7 @@ abstract class RestSerializer
             $opts['query'][$member['locationName'] ?: $name] = $value;
         }
     }
-    private function buildEndpoint(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Operation $operation, array $args, array $opts)
+    private function buildEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation $operation, array $args, array $opts)
     {
         $varspecs = [];
         // Create an associative array of varspecs used in expansions
@@ -152,11 +152,11 @@ abstract class RestSerializer
         }, $operation['http']['requestUri']);
         // Add the query string variables or appending to one if needed.
         if (!empty($opts['query'])) {
-            $append = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\build_query($opts['query']);
+            $append = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\build_query($opts['query']);
             $relative .= strpos($relative, '?') ? "&{$append}" : "?{$append}";
         }
         // Expand path place holders using Amazon's slightly different URI
         // template syntax.
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\UriResolver::resolve($this->endpoint, new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri($relative));
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver::resolve($this->endpoint, new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($relative));
     }
 }

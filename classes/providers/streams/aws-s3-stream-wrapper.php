@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Providers\Streams;
+namespace DeliciousBrains\WP_Offload_Media\Providers\Streams;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\StreamWrapper;
-use DeliciousBrains\WP_Offload_S3\Providers\AWS_Provider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\StreamWrapper;
+use DeliciousBrains\WP_Offload_Media\Providers\AWS_Provider;
 
 class AWS_S3_Stream_Wrapper extends StreamWrapper {
 
@@ -87,7 +87,8 @@ class AWS_S3_Stream_Wrapper extends StreamWrapper {
 		// Set the ACL as public by default
 		$options[ static::$wrapper ]['ACL'] = AWS_Provider::DEFAULT_ACL;
 
-		$options = apply_filters( 'wpos3_stream_flush_params', $options );
+		$options = apply_filters( 'wpos3_stream_flush_params', $options ); // Backwards compatibility
+		$options = apply_filters( 'as3cf_stream_flush_params', $options );
 
 		stream_context_set_option( $context, $options );
 

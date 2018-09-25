@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Base class representing a modeled shape.
  */
-class Shape extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractModel
+class Shape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
 {
     /**
      * Get a concrete shape for the given definition.
@@ -16,9 +16,9 @@ class Shape extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\AbstractModel
      * @return mixed
      * @throws \RuntimeException if the type is invalid
      */
-    public static function create(array $definition, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public static function create(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
     {
-        static $map = ['structure' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\StructureShape', 'map' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\MapShape', 'list' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\ListShape', 'timestamp' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\TimestampShape', 'integer' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'double' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'float' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'long' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'string' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'byte' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'character' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'blob' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape', 'boolean' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Api\\Shape'];
+        static $map = ['structure' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\StructureShape', 'map' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\MapShape', 'list' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ListShape', 'timestamp' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\TimestampShape', 'integer' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'double' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'float' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'long' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'string' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'byte' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'character' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'blob' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'boolean' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape'];
         if (isset($definition['shape'])) {
             return $shapeMap->resolve($definition);
         }

@@ -1,9 +1,9 @@
 <?php
 
 // Check if already defined
-if ( ! class_exists( 'WP_Offload_S3_Autoloader' ) ) {
+if ( ! class_exists( 'WP_Offload_Media_Autoloader' ) ) {
 
-	class WP_Offload_S3_Autoloader {
+	class WP_Offload_Media_Autoloader {
 
 		/**
 		 * @var string

@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Stream decorator that can cache previously read bytes from a sequentially
  * read stream.
  */
-class CachingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class CachingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     use StreamDecoratorTrait;
     /** @var StreamInterface Stream being wrapped */
@@ -20,10 +20,10 @@ class CachingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Mess
      * @param StreamInterface $stream Stream to cache
      * @param StreamInterface $target Optionally specify where data is cached
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $target = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $target = null)
     {
         $this->remoteStream = $stream;
-        $this->stream = $target ?: new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'));
+        $this->stream = $target ?: new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'));
     }
     public function getSize()
     {
@@ -108,7 +108,7 @@ class CachingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Mess
     }
     private function cacheEntireStream()
     {
-        $target = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\FnStream(['write' => 'strlen']);
+        $target = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\FnStream(['write' => 'strlen']);
         copy_to_stream($this, $target);
         return $this->tell();
     }

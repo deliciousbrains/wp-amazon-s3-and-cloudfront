@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
  */
-class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\TransferException
+class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\TransferException
 {
     /** @var RequestInterface */
     private $request;
@@ -17,7 +17,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Ex
     private $response;
     /** @var array */
     private $handlerContext;
-    public function __construct($message, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $handlerContext = [])
+    public function __construct($message, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $handlerContext = [])
     {
         // Set the code of the exception if the response is set and not future.
         $code = $response && !$response instanceof PromiseInterface ? $response->getStatusCode() : 0;
@@ -34,9 +34,9 @@ class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Ex
      *
      * @return RequestException
      */
-    public static function wrapException(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \Exception $e)
+    public static function wrapException(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \Exception $e)
     {
-        return $e instanceof RequestException ? $e : new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException($e->getMessage(), $request, null, $e);
+        return $e instanceof RequestException ? $e : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException($e->getMessage(), $request, null, $e);
     }
     /**
      * Factory method to create a new exception with a normalized error message
@@ -48,7 +48,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Ex
      *
      * @return self
      */
-    public static function create(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $ctx = [])
+    public static function create(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $ctx = [])
     {
         if (!$response) {
             return new self('Error completing request', $request, null, $previous, $ctx);
@@ -56,10 +56,10 @@ class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Ex
         $level = (int) floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\ClientException::class;
+            $className = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ClientException::class;
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\ServerException::class;
+            $className = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ServerException::class;
         } else {
             $label = 'Unsuccessful request';
             $className = __CLASS__;
@@ -84,7 +84,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Ex
      *
      * @return string|null
      */
-    public static function getResponseBodySummary(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public static function getResponseBodySummary(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         $body = $response->getBody();
         if (!$body->isSeekable()) {

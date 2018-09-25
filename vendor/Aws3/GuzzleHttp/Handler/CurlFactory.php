@@ -1,18 +1,18 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\ConnectException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\FulfilledPromise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LazyOpenStream;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\TransferStats;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Creates curl resources from a request
  */
-class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlFactoryInterface
+class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactoryInterface
 {
     /** @var array */
     private $handles = [];
@@ -25,13 +25,13 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
     {
         $this->maxHandles = $maxHandles;
     }
-    public function create(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function create(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         if (isset($options['curl']['body_as_string'])) {
             $options['_body_as_string'] = $options['curl']['body_as_string'];
             unset($options['curl']['body_as_string']);
         }
-        $easy = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle();
+        $easy = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
         $conf = $this->getDefaultConf($easy);
@@ -48,7 +48,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         curl_setopt_array($easy->handle, $conf);
         return $easy;
     }
-    public function release(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
+    public function release(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
     {
         $resource = $easy->handle;
         unset($easy->handle);
@@ -77,7 +77,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
      *
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public static function finish(callable $handler, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlFactoryInterface $factory)
+    public static function finish(callable $handler, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactoryInterface $factory)
     {
         if (isset($easy->options['on_stats'])) {
             self::invokeStats($easy);
@@ -92,15 +92,15 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         if ($body->isSeekable()) {
             $body->rewind();
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\FulfilledPromise($easy->response);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise($easy->response);
     }
-    private static function invokeStats(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
+    private static function invokeStats(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
     {
         $curlStats = curl_getinfo($easy->handle);
-        $stats = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
+        $stats = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
         call_user_func($easy->options['on_stats'], $stats);
     }
-    private static function finishError(callable $handler, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlFactoryInterface $factory)
+    private static function finishError(callable $handler, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactoryInterface $factory)
     {
         // Get error information and release the handle to the factory.
         $ctx = ['errno' => $easy->errno, 'error' => curl_error($easy->handle)] + curl_getinfo($easy->handle);
@@ -111,20 +111,20 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         }
         return self::createRejection($easy, $ctx);
     }
-    private static function createRejection(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array $ctx)
+    private static function createRejection(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array $ctx)
     {
         static $connectionErrors = [CURLE_OPERATION_TIMEOUTED => true, CURLE_COULDNT_RESOLVE_HOST => true, CURLE_COULDNT_CONNECT => true, CURLE_SSL_CONNECT_ERROR => true, CURLE_GOT_NOTHING => true];
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for(new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
         }
         $message = sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see http://curl.haxx.se/libcurl/c/libcurl-errors.html');
         // Create a connection exception if it was a specific error code.
-        $error = isset($connectionErrors[$easy->errno]) ? new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\ConnectException($message, $easy->request, null, $ctx) : new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException($message, $easy->request, $easy->response, null, $ctx);
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($error);
+        $error = isset($connectionErrors[$easy->errno]) ? new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException($message, $easy->request, null, $ctx) : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException($message, $easy->request, $easy->response, null, $ctx);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($error);
     }
-    private function getDefaultConf(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
+    private function getDefaultConf(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
     {
         $conf = ['_headers' => $easy->request->getHeaders(), CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(), CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''), CURLOPT_RETURNTRANSFER => false, CURLOPT_HEADER => false, CURLOPT_CONNECTTIMEOUT => 150];
         if (defined('CURLOPT_PROTOCOLS')) {
@@ -140,7 +140,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         }
         return $conf;
     }
-    private function applyMethod(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
+    private function applyMethod(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
     {
         $body = $easy->request->getBody();
         $size = $body->getSize();
@@ -159,7 +159,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
             unset($conf[CURLOPT_WRITEFUNCTION], $conf[CURLOPT_READFUNCTION], $conf[CURLOPT_FILE], $conf[CURLOPT_INFILE]);
         }
     }
-    private function applyBody(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options, array &$conf)
+    private function applyBody(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, array &$conf)
     {
         $size = $request->hasHeader('Content-Length') ? (int) $request->getHeaderLine('Content-Length') : null;
         // Send the body as a string if the size is less than 1MB OR if the
@@ -192,7 +192,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
             $conf[CURLOPT_HTTPHEADER][] = 'Content-Type:';
         }
     }
-    private function applyHeaders(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
+    private function applyHeaders(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
@@ -226,7 +226,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
             }
         }
     }
-    private function applyHandlerOptions(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
+    private function applyHandlerOptions(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array &$conf)
     {
         $options = $easy->options;
         if (isset($options['verify'])) {
@@ -265,12 +265,12 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         if (isset($options['sink'])) {
             $sink = $options['sink'];
             if (!is_string($sink)) {
-                $sink = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($sink);
+                $sink = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($sink);
             } elseif (!is_dir(dirname($sink))) {
                 // Ensure that the directory exists before failing in curl.
                 throw new \RuntimeException(sprintf('Directory %s does not exist for sink value of %s', dirname($sink), $sink));
             } else {
-                $sink = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LazyOpenStream($sink, 'w+');
+                $sink = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($sink, 'w+');
             }
             $easy->sink = $sink;
             $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use($sink) {
@@ -279,7 +279,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         } else {
             // Use a default temp stream if no sink was set.
             $conf[CURLOPT_FILE] = fopen('php://temp', 'w+');
-            $easy->sink = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($conf[CURLOPT_FILE]);
+            $easy->sink = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($conf[CURLOPT_FILE]);
         }
         $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {
@@ -308,7 +308,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
                 $scheme = $easy->request->getUri()->getScheme();
                 if (isset($options['proxy'][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
-                    if (!isset($options['proxy']['no']) || !\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])) {
+                    if (!isset($options['proxy']['no']) || !\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }
                 }
@@ -352,7 +352,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
             };
         }
         if (!empty($options['debug'])) {
-            $conf[CURLOPT_STDERR] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\debug_resource($options['debug']);
+            $conf[CURLOPT_STDERR] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\debug_resource($options['debug']);
             $conf[CURLOPT_VERBOSE] = true;
         }
     }
@@ -365,7 +365,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
      * error, causing the request to be sent through curl_multi_info_read()
      * without an error status.
      */
-    private static function retryFailedRewind(callable $handler, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array $ctx)
+    private static function retryFailedRewind(callable $handler, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, array $ctx)
     {
         try {
             // Only rewind if the body has been read from.
@@ -388,7 +388,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Hand
         }
         return $handler($easy->request, $easy->options);
     }
-    private function createHeaderFn(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
+    private function createHeaderFn(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
     {
         if (isset($easy->options['on_headers'])) {
             $onHeaders = $easy->options['on_headers'];

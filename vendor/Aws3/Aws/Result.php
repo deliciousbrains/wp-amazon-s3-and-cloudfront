@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Env as JmesPath;
+use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 /**
  * AWS result.
  */
-class Result implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface
+class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface
 {
     use HasDataTrait;
     public function __construct(array $data = [])
@@ -23,7 +23,7 @@ class Result implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface
     }
     public function search($expression)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Env::search($expression, $this->toArray());
+        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search($expression, $this->toArray());
     }
     public function __toString()
     {

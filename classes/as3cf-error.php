@@ -30,7 +30,7 @@ class AS3CF_Error {
 	 * @param string $plugin_prefix
 	 */
 	public static function log( $message, $plugin_prefix = '' ) {
-		$prefix = 'WPOS3';
+		$prefix = 'AS3CF';
 		if ( '' !== $plugin_prefix ) {
 			$prefix .= '_' . $plugin_prefix;
 		}

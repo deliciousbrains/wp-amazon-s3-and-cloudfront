@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message;
 
 /**
  * Value object representing a file uploaded through an HTTP request.

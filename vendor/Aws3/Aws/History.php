@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 /**
  * Represents a history container that is required when using the history
  * middleware.
@@ -81,7 +81,7 @@ class History implements \Countable, \IteratorAggregate
      *
      * @return string Returns the ticket used to finish the entry.
      */
-    public function start(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $req)
+    public function start(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req)
     {
         $ticket = uniqid();
         $this->entries[$ticket] = ['command' => $cmd, 'request' => $req, 'result' => null, 'exception' => null];

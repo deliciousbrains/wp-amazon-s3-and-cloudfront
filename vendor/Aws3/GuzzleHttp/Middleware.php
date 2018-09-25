@@ -1,14 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJarInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Log\LoggerInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Log\LogLevel;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJarInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Log\LoggerInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Log\LogLevel;
 /**
  * Functions used to create and wrap handlers with handler middleware.
  */
@@ -53,12 +53,12 @@ final class Middleware
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
-                return $handler($request, $options)->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response) use($request, $handler) {
+                return $handler($request, $options)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response) use($request, $handler) {
                     $code = $response->getStatusCode();
                     if ($code < 400) {
                         return $response;
                     }
-                    throw \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException::create($request, $response);
+                    throw \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException::create($request, $response);
                 });
             };
         };
@@ -83,7 +83,7 @@ final class Middleware
                     return $value;
                 }, function ($reason) use($request, &$container, $options) {
                     $container[] = ['request' => $request, 'response' => null, 'error' => $reason, 'options' => $options];
-                    return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($reason);
+                    return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
                 });
             };
         };
@@ -124,7 +124,7 @@ final class Middleware
     public static function redirect()
     {
         return function (callable $handler) {
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RedirectMiddleware($handler);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RedirectMiddleware($handler);
         };
     }
     /**
@@ -145,7 +145,7 @@ final class Middleware
     public static function retry(callable $decider, callable $delay = null)
     {
         return function (callable $handler) use($decider, $delay) {
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RetryMiddleware($decider, $handler, $delay);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RetryMiddleware($decider, $handler, $delay);
         };
     }
     /**
@@ -158,7 +158,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Log\LoggerInterface $logger, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\MessageFormatter $formatter, $logLevel = \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Log\LogLevel::INFO)
+    public static function log(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Log\LoggerInterface $logger, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\MessageFormatter $formatter, $logLevel = \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Log\LogLevel::INFO)
     {
         return function (callable $handler) use($logger, $formatter, $logLevel) {
             return function ($request, array $options) use($handler, $logger, $formatter, $logLevel) {
@@ -170,7 +170,7 @@ final class Middleware
                     $response = $reason instanceof RequestException ? $reason->getResponse() : null;
                     $message = $formatter->format($request, $response, $reason);
                     $logger->notice($message);
-                    return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($reason);
+                    return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
                 });
             };
         };
@@ -184,7 +184,7 @@ final class Middleware
     public static function prepareBody()
     {
         return function (callable $handler) {
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\PrepareBodyMiddleware($handler);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\PrepareBodyMiddleware($handler);
         };
     }
     /**

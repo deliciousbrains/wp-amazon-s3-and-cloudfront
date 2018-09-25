@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 /**
  * Efficiently deletes many objects from a single Amazon S3 bucket using an
  * iterator that yields keys. Deletes are made using the DeleteObjects API
@@ -34,7 +34,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
  *
  * @link http://docs.aws.amazon.com/AmazonS3/latest/API/multiobjectdeleteapi.html
  */
-class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
     private $bucket;
     /** @var AwsClientInterface */
@@ -58,11 +58,11 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
      *
      * @return BatchDelete
      */
-    public static function fromListObjects(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, array $listObjectsParams, array $options = [])
+    public static function fromListObjects(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, array $listObjectsParams, array $options = [])
     {
         $iter = $client->getPaginator('ListObjects', $listObjectsParams);
         $bucket = $listObjectsParams['Bucket'];
-        $fn = function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\BatchDelete $that) use($iter) {
+        $fn = function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete $that) use($iter) {
             return $iter->each(function ($result) use($that) {
                 $promises = [];
                 if (is_array($result['Contents'])) {
@@ -72,7 +72,7 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
                         }
                     }
                 }
-                return $promises ? \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\all($promises) : null;
+                return $promises ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\all($promises) : null;
             });
         };
         return new self($client, $bucket, $fn, $options);
@@ -87,10 +87,10 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
      *
      * @return BatchDelete
      */
-    public static function fromIterator(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, $bucket, \Iterator $iter, array $options = [])
+    public static function fromIterator(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $bucket, \Iterator $iter, array $options = [])
     {
-        $fn = function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\BatchDelete $that) use($iter) {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () use($that, $iter) {
+        $fn = function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete $that) use($iter) {
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () use($that, $iter) {
                 foreach ($iter as $obj) {
                     if ($promise = $that->enqueue($obj)) {
                         (yield $promise);
@@ -124,7 +124,7 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
      *
      * @throws \InvalidArgumentException if the provided batch_size is <= 0
      */
-    private function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, $bucket, callable $promiseFn, array $options = [])
+    private function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $bucket, callable $promiseFn, array $options = [])
     {
         $this->client = $client;
         $this->bucket = $bucket;
@@ -163,7 +163,7 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
         }
         return $this->client->executeAsync($command)->then(function ($result) {
             if (!empty($result['Errors'])) {
-                throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException($result['Deleted'] ?: [], $result['Errors']);
+                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException($result['Deleted'] ?: [], $result['Errors']);
             }
             return $result;
         });
@@ -184,10 +184,10 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
         };
         // When done, ensure cleanup and that any remaining are processed.
         return $promise->then(function () use($cleanup) {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($this->flushQueue())->then($cleanup);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($this->flushQueue())->then($cleanup);
         }, function ($reason) use($cleanup) {
             $cleanup();
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($reason);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
         });
     }
 }

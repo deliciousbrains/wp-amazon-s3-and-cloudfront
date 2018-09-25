@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 /**
  * "Waiters" are associated with an AWS resource (e.g., EC2 instance), and poll
  * that resource and until it is in a particular state.
@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
  * The configuration for the waiter must include information about the operation
  * and the conditions for wait completion.
  */
-class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
     /** @var AwsClientInterface Client used to execute each attempt. */
     private $client;
@@ -47,7 +47,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
      *
      * @throws \InvalidArgumentException if the configuration is incomplete.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, $name, array $args = [], array $config = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $name, array $args = [], array $config = [])
     {
         $this->client = $client;
         $this->name = $name;
@@ -65,7 +65,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
     }
     public function promise()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () {
             $name = $this->config['operation'];
             for ($state = 'retry', $attempt = 1; $state === 'retry'; $attempt++) {
                 // Execute the operation.
@@ -88,10 +88,10 @@ class Waiter implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\P
                     if ($result instanceof \Exception) {
                         $msg .= ' Reason: ' . $result->getMessage();
                     }
-                    (yield new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException($msg)));
+                    (yield new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException($msg)));
                 } elseif ($state === 'retry' && $attempt >= $this->config['maxAttempts']) {
                     $state = 'failed';
-                    (yield new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException("The {$this->name} waiter failed after attempt #{$attempt}.")));
+                    (yield new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException("The {$this->name} waiter failed after attempt #{$attempt}.")));
                 }
             }
         });

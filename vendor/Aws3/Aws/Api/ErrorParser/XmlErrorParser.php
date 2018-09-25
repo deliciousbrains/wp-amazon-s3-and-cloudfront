@@ -1,16 +1,16 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ErrorParser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser\PayloadParserTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Parses XML errors.
  */
 class XmlErrorParser
 {
     use PayloadParserTrait;
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         $code = (string) $response->getStatusCode();
         $data = ['type' => $code[0] == '4' ? 'client' : 'server', 'request_id' => null, 'code' => null, 'message' => null, 'parsed' => null];
@@ -22,7 +22,7 @@ class XmlErrorParser
         }
         return $data;
     }
-    private function parseHeaders(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response, array &$data)
+    private function parseHeaders(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$data)
     {
         if ($response->getStatusCode() == '404') {
             $data['code'] = 'NotFound';

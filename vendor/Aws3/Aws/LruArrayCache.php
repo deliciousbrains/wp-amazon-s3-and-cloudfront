@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Simple in-memory LRU cache that limits the number of cached entries.
@@ -12,7 +12,7 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
  * cache, if the number of cached items exceeds the allowed number, the first
  * N number of items are removed from the array.
  */
-class LruArrayCache implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface, \Countable
+class LruArrayCache implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, \Countable
 {
     /** @var int */
     private $maxItems;

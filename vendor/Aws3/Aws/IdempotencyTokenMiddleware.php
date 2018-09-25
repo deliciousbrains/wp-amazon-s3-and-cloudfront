@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * @internal Middleware that auto fills parameters with `idempotencyToken` trait
  */
@@ -34,19 +34,19 @@ class IdempotencyTokenMiddleware
      *
      * @return callable
      */
-    public static function wrap(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service $service, callable $bytesGenerator = null)
+    public static function wrap(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service, callable $bytesGenerator = null)
     {
         return function (callable $handler) use($service, $bytesGenerator) {
             return new self($handler, $service, $bytesGenerator);
         };
     }
-    public function __construct(callable $nextHandler, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service $service, callable $bytesGenerator = null)
+    public function __construct(callable $nextHandler, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service, callable $bytesGenerator = null)
     {
         $this->bytesGenerator = $bytesGenerator ?: $this->findCompatibleRandomSource();
         $this->service = $service;
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request = null)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null)
     {
         $handler = $this->nextHandler;
         if ($this->bytesGenerator) {

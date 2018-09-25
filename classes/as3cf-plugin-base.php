@@ -5,7 +5,11 @@ abstract class AS3CF_Plugin_Base {
 	const DBRAINS_URL = 'https://deliciousbrains.com';
 
 	const SETTINGS_KEY = '';
-	const SETTINGS_CONSTANT = '';
+
+	/**
+	 * @var array
+	 */
+	protected static $settings_constants = array();
 
 	protected static $plugin_page = 'amazon-s3-and-cloudfront';
 	protected $default_tab = '';
@@ -117,6 +121,15 @@ abstract class AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * Get the constant used to define the settings.
+	 *
+	 * @return string|false Constant name if defined, otherwise false
+	 */
+	public static function settings_constant() {
+		return AS3CF_Utils::get_first_defined_constant( static::$settings_constants );
+	}
+
+	/**
 	 * Get all settings that have been defined via constant for the plugin
 	 *
 	 * @param bool $force
@@ -124,7 +137,7 @@ abstract class AS3CF_Plugin_Base {
 	 * @return array
 	 */
 	function get_defined_settings( $force = false ) {
-		if ( ! defined( static::SETTINGS_CONSTANT ) ) {
+		if ( ! static::settings_constant() ) {
 			$this->defined_settings = array();
 
 			return $this->defined_settings;
@@ -132,7 +145,7 @@ abstract class AS3CF_Plugin_Base {
 
 		if ( is_null( $this->defined_settings ) || $force ) {
 			$this->defined_settings = array();
-			$unserialized           = maybe_unserialize( constant( static::SETTINGS_CONSTANT ) );
+			$unserialized           = maybe_unserialize( constant( static::settings_constant() ) );
 			$unserialized           = is_array( $unserialized ) ? $unserialized : array();
 
 			foreach ( $unserialized as $key => $value ) {
@@ -157,7 +170,7 @@ abstract class AS3CF_Plugin_Base {
 
 			// Normalize the defined settings before saving, so we can detect when a real change happens.
 			ksort( $this->defined_settings );
-			update_site_option( 'as3cf_constant_' . static::SETTINGS_CONSTANT, $this->defined_settings );
+			update_site_option( 'as3cf_constant_' . static::settings_constant(), $this->defined_settings );
 		}
 
 		return $this->defined_settings;
@@ -167,15 +180,15 @@ abstract class AS3CF_Plugin_Base {
 	 * Subscribe to changes of the site option used to store the constant-defined settings.
 	 */
 	protected function listen_for_settings_constant_changes() {
-		if ( ! has_action( 'update_site_option_' . 'as3cf_constant_' . static::SETTINGS_CONSTANT, array(
-			$this,
-			'settings_constant_changed',
-		) ) ) {
-			add_action( 'add_site_option_' . 'as3cf_constant_' . static::SETTINGS_CONSTANT, array(
+		if ( false !== static::settings_constant() && ! has_action( 'update_site_option_' . 'as3cf_constant_' . static::settings_constant(), array(
+				$this,
+				'settings_constant_changed',
+			) ) ) {
+			add_action( 'add_site_option_' . 'as3cf_constant_' . static::settings_constant(), array(
 				$this,
 				'settings_constant_added',
 			), 10, 3 );
-			add_action( 'update_site_option_' . 'as3cf_constant_' . static::SETTINGS_CONSTANT, array(
+			add_action( 'update_site_option_' . 'as3cf_constant_' . static::settings_constant(), array(
 				$this,
 				'settings_constant_changed',
 			), 10, 4 );
@@ -203,6 +216,10 @@ abstract class AS3CF_Plugin_Base {
 	 * @param int    $network_id   ID of the network.
 	 */
 	public function settings_constant_changed( $option, $new_settings, $old_settings, $network_id ) {
+		if ( ! static::settings_constant() ) {
+			return;
+		}
+
 		$old_settings = $old_settings ?: array();
 
 		foreach ( $this->get_settings_whitelist() as $setting ) {
@@ -217,7 +234,7 @@ abstract class AS3CF_Plugin_Base {
 				 * @param mixed  $old_value
 				 * @param string $setting
 				 */
-				do_action( 'as3cf_constant_' . static::SETTINGS_CONSTANT . '_changed_' . $setting, $new_value, $old_value, $setting );
+				do_action( 'as3cf_constant_' . static::settings_constant() . '_changed_' . $setting, $new_value, $old_value, $setting );
 
 				/**
 				 * Generic hook for setting change.
@@ -226,7 +243,7 @@ abstract class AS3CF_Plugin_Base {
 				 * @param mixed  $old_value
 				 * @param string $setting
 				 */
-				do_action( 'as3cf_constant_' . static::SETTINGS_CONSTANT . '_changed', $new_value, $old_value, $setting );
+				do_action( 'as3cf_constant_' . static::settings_constant() . '_changed', $new_value, $old_value, $setting );
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
-class PermanentRedirectException extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\S3Exception
+class PermanentRedirectException extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception
 {
 }

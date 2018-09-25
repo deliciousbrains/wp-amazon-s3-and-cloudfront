@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Used to update the host used for S3 requests in the case of using a
  * "bucket endpoint" or CNAME bucket.
@@ -31,7 +31,7 @@ class BucketEndpointMiddleware
     {
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         $nextHandler = $this->nextHandler;
         $bucket = $command['Bucket'];
@@ -48,7 +48,7 @@ class BucketEndpointMiddleware
         }
         return $path ?: '/';
     }
-    private function modifyRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    private function modifyRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -56,7 +56,7 @@ class BucketEndpointMiddleware
         $path = $this->removeBucketFromPath($path, $bucket);
         // Modify the Key to make sure the key is encoded, but slashes are not.
         if ($command['Key']) {
-            $path = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client::encodeKey(rawurldecode($path));
+            $path = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::encodeKey(rawurldecode($path));
         }
         return $request->withUri($uri->withPath($path));
     }

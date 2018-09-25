@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use LogicException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\CipherMethod;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
 /**
  * @internal Represents a stream of data to be decrypted with passed cipher.
  */
-class AesDecryptingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AesStreamInterface
+class AesDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterface
 {
     const BLOCK_SIZE = 16;
     // 128 bits
@@ -35,7 +35,7 @@ class AesDecryptingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Cry
      * @param string $key
      * @param CipherMethod $cipherMethod
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $cipherText, $key, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\CipherMethod $cipherMethod)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $key, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod $cipherMethod)
     {
         $this->stream = $cipherText;
         $this->key = $key;

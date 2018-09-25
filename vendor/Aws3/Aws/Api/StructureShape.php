@@ -1,17 +1,17 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Represents a structure shape and resolve member shape references.
  */
-class StructureShape extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape
+class StructureShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
 {
     /**
      * @var Shape[]
      */
     private $members;
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
     {
         $definition['type'] = 'structure';
         if (!isset($definition['members'])) {

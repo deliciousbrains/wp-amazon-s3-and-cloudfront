@@ -4,7 +4,6 @@
 
 <?php $this->render_view( 'settings/media' ) ?>
 <?php $this->render_view( 'settings/addons' ) ?>
-<?php $this->render_view( 'settings/settings' ) ?>
 <?php $this->render_view( 'settings/support' ) ?>
 
 <?php do_action( 'as3cf_after_settings' ); ?>

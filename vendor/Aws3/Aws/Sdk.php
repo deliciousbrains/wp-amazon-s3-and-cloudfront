@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Builds AWS clients based on configuration settings.
@@ -339,7 +339,7 @@ class Sdk
         $service = manifest($name);
         $namespace = $service['namespace'];
         // Instantiate the client class.
-        $client = "DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\{$namespace}\\{$namespace}Client";
+        $client = "DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\{$namespace}\\{$namespace}Client";
         return new $client($this->mergeArgs($namespace, $service, $args));
     }
     public function createMultiRegionClient($name, array $args = [])
@@ -347,8 +347,8 @@ class Sdk
         // Get information about the service from the manifest file.
         $service = manifest($name);
         $namespace = $service['namespace'];
-        $klass = "DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\{$namespace}\\{$namespace}MultiRegionClient";
-        $klass = class_exists($klass) ? $klass : 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\MultiRegionClient';
+        $klass = "DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\{$namespace}\\{$namespace}MultiRegionClient";
+        $klass = class_exists($klass) ? $klass : 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\MultiRegionClient';
         return new $klass($this->mergeArgs($namespace, $service, $args));
     }
     private function mergeArgs($namespace, array $manifest, array $args = [])

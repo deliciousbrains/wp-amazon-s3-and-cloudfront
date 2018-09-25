@@ -1,14 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\LruArrayCache;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiRegionClient as BaseClient;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception\PermanentRedirectException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MultiRegionClient as BaseClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\PermanentRedirectException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 /**
  * **Amazon Simple Storage Service** multi-region client.
  *
@@ -167,7 +167,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
  * @method \Aws\Result uploadPartCopy(array $args = [])
  * @method \GuzzleHttp\Promise\Promise uploadPartCopyAsync(array $args = [])
  */
-class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiRegionClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface
+class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface
 {
     use S3ClientTrait;
     /** @var CacheInterface */
@@ -180,8 +180,8 @@ class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiR
             return end($availableRegions);
         }];
         unset($args['region']);
-        return $args + ['bucket_region_cache' => ['type' => 'config', 'valid' => [\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface::class], 'doc' => 'Cache of regions in which given buckets are located.', 'default' => function () {
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\LruArrayCache();
+        return $args + ['bucket_region_cache' => ['type' => 'config', 'valid' => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface::class], 'doc' => 'Cache of regions in which given buckets are located.', 'default' => function () {
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache();
         }], 'region' => $regionDef];
     }
     public function __construct(array $args)
@@ -193,12 +193,12 @@ class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiR
     private function determineRegionMiddleware()
     {
         return function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command) use($handler) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command) use($handler) {
                 $cacheKey = $this->getCacheKey($command['Bucket']);
                 if (empty($command['@region']) && ($region = $this->cache->get($cacheKey))) {
                     $command['@region'] = $region;
                 }
-                return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () use($handler, $command, $cacheKey) {
+                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () use($handler, $command, $cacheKey) {
                     try {
                         (yield $handler($command));
                     } catch (PermanentRedirectException $e) {
@@ -233,7 +233,7 @@ class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiR
             };
         };
     }
-    public function createPresignedRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $expires)
+    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires)
     {
         if (empty($command['Bucket'])) {
             throw new \InvalidArgumentException('The S3\\MultiRegionClient' . ' cannot create presigned requests for commands without a' . ' specified bucket.');
@@ -252,7 +252,7 @@ class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\MultiR
     {
         $cacheKey = $this->getCacheKey($bucketName);
         if ($cached = $this->cache->get($cacheKey)) {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($cached);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($cached);
         }
         /** @var S3ClientInterface $regionalClient */
         $regionalClient = $this->getClientFromPool();

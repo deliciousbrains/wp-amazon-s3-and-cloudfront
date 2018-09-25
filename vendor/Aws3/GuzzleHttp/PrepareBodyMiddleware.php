@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Prepares requests that contain a body, adding the Content-Length,
  * Content-Type, and Expect headers.
@@ -26,7 +26,7 @@ class PrepareBodyMiddleware
      *
      * @return PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         $fn = $this->nextHandler;
         // Don't do anything if the request has no body.
@@ -37,7 +37,7 @@ class PrepareBodyMiddleware
         // Add a default content-type if possible.
         if (!$request->hasHeader('Content-Type')) {
             if ($uri = $request->getBody()->getMetadata('uri')) {
-                if ($type = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($uri)) {
+                if ($type = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($uri)) {
                     $modify['set_headers']['Content-Type'] = $type;
                 }
             }
@@ -53,9 +53,9 @@ class PrepareBodyMiddleware
         }
         // Add the expect header if needed.
         $this->addExpectHeader($request, $options, $modify);
-        return $fn(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify), $options);
+        return $fn(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify), $options);
     }
-    private function addExpectHeader(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options, array &$modify)
+    private function addExpectHeader(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, array &$modify)
     {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {

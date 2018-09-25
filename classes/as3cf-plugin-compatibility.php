@@ -9,7 +9,7 @@
  * @since       0.8.3
  */
 
-use DeliciousBrains\WP_Offload_S3\Providers\Provider;
+use DeliciousBrains\WP_Offload_Media\Providers\Provider;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
@@ -128,18 +128,18 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $url
 	 * @param string $file
 	 * @param int    $attachment_id
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 *
 	 * @return string
 	 */
-	function legacy_copy_back_to_local( $url, $file, $attachment_id, $s3_object ) {
-		$copy_back_to_local = apply_filters( 'as3cf_get_attached_file_copy_back_to_local', false, $file, $attachment_id, $s3_object );
+	function legacy_copy_back_to_local( $url, $file, $attachment_id, $provider_object ) {
+		$copy_back_to_local = apply_filters( 'as3cf_get_attached_file_copy_back_to_local', false, $file, $attachment_id, $provider_object );
 		if ( false === $copy_back_to_local ) {
 			// Not copying back file
 			return $url;
 		}
 
-		if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+		if ( ( $file = $this->copy_provider_file_to_server( $provider_object, $file ) ) ) {
 			// Return the file if successfully downloaded from S3
 			return $file;
 		};
@@ -188,11 +188,11 @@ class AS3CF_Plugin_Compatibility {
 	 * @param bool    $copy_back_to_local
 	 * @param string  $file
 	 * @param integer $attachment_id
-	 * @param array   $s3_object
+	 * @param array   $provider_object
 	 *
 	 * @return bool
 	 */
-	public function prevent_copy_back_to_local_after_remove( $copy_back_to_local, $file, $attachment_id, $s3_object ) {
+	public function prevent_copy_back_to_local_after_remove( $copy_back_to_local, $file, $attachment_id, $provider_object ) {
 		if ( $copy_back_to_local && in_array( $file, $this->removed_files ) ) {
 			$copy_back_to_local = false;
 		}
@@ -257,20 +257,20 @@ class AS3CF_Plugin_Compatibility {
 	/**
 	 * Generic method for copying back an S3 file to the server on a specific AJAX action
 	 *
-	 * @param string $action_key Action that must be in process
-	 * @param bool   $ajax       Must the process be an AJAX one?
-	 * @param string $url        S3 URL
-	 * @param string $file       Local file path of image
-	 * @param array  $s3_object  S3 meta data
+	 * @param string $action_key      Action that must be in process
+	 * @param bool   $ajax            Must the process be an AJAX one?
+	 * @param string $url             S3 URL
+	 * @param string $file            Local file path of image
+	 * @param array  $provider_object S3 meta data
 	 *
 	 * @return string
 	 */
-	function copy_image_to_server_on_action( $action_key, $ajax, $url, $file, $s3_object ) {
+	function copy_image_to_server_on_action( $action_key, $ajax, $url, $file, $provider_object ) {
 		if ( false === $this->maybe_process_on_action( $action_key, $ajax ) ) {
 			return $url;
 		}
 
-		if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+		if ( ( $file = $this->copy_provider_file_to_server( $provider_object, $file ) ) ) {
 			// Return the file if successfully downloaded from S3
 			return $file;
 		};
@@ -316,14 +316,14 @@ class AS3CF_Plugin_Compatibility {
 			return $pre;
 		}
 
-		$s3object = $this->as3cf->get_attachment_s3_info( $post_id );
-		$this->remove_edited_image_files( $post_id, $s3object );
+		$provider_object = $this->as3cf->get_attachment_provider_info( $post_id );
+		$this->remove_edited_image_files( $post_id, $provider_object );
 
 		// Update object key with original filename
-		$restored_filename = wp_basename( $data['file'] );
-		$old_filename      = wp_basename( $s3object['key'] );
-		$s3object['key']   = str_replace( $old_filename, $restored_filename, $s3object['key'] );
-		update_post_meta( $post_id, 'amazonS3_info', $s3object );
+		$restored_filename      = wp_basename( $data['file'] );
+		$old_filename           = wp_basename( $provider_object['key'] );
+		$provider_object['key'] = str_replace( $old_filename, $restored_filename, $provider_object['key'] );
+		update_post_meta( $post_id, 'amazonS3_info', $provider_object );
 
 		return true;
 	}
@@ -332,18 +332,18 @@ class AS3CF_Plugin_Compatibility {
 	 * Remove edited image files from S3.
 	 *
 	 * @param int   $attachment_id
-	 * @param array $s3object
+	 * @param array $provider_object
 	 */
-	protected function remove_edited_image_files( $attachment_id, $s3object ) {
-		$bucket = $s3object['bucket'];
-		$region = $this->as3cf->get_s3object_region( $s3object );
-		$keys   = AS3CF_Utils::get_attachment_edited_keys( $attachment_id, $s3object );
+	protected function remove_edited_image_files( $attachment_id, $provider_object ) {
+		$bucket = $provider_object['bucket'];
+		$region = $this->as3cf->get_provider_object_region( $provider_object );
+		$keys   = AS3CF_Utils::get_attachment_edited_keys( $attachment_id, $provider_object );
 
 		if ( empty( $keys ) ) {
 			return;
 		}
 
-		$this->as3cf->delete_s3_objects( $region, $bucket, $keys );
+		$this->as3cf->delete_objects( $region, $bucket, $keys );
 	}
 
 	/**
@@ -353,11 +353,11 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $url
 	 * @param string $file
 	 * @param int    $attachment_id
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 *
 	 * @return string
 	 */
-	function image_editor_download_file( $url, $file, $attachment_id, $s3_object ) {
+	function image_editor_download_file( $url, $file, $attachment_id, $provider_object ) {
 		if ( ! $this->is_ajax() ) {
 			return $url;
 		}
@@ -370,17 +370,17 @@ class AS3CF_Plugin_Compatibility {
 			$backup_sizes      = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 			$original_filename = $backup_sizes['full-orig']['file'];
 
-			$orig_s3        = $s3_object;
-			$orig_s3['key'] = dirname( $s3_object['key'] ) . '/' . $original_filename;
-			$orig_file      = dirname( $file ) . '/' . $original_filename;
+			$orig_provider        = $provider_object;
+			$orig_provider['key'] = dirname( $provider_object['key'] ) . '/' . $original_filename;
+			$orig_file            = dirname( $file ) . '/' . $original_filename;
 
 			// Copy the original file back to the server for the restore process
-			$this->copy_s3_file_to_server( $orig_s3, $orig_file );
+			$this->copy_provider_file_to_server( $orig_provider, $orig_file );
 
 			// Copy the edited file back to the server as well, it will be cleaned up later
-			if ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) {
+			if ( $provider_file = $this->copy_provider_file_to_server( $provider_object, $file ) ) {
 				// Return the file if successfully downloaded from S3
-				return $s3_file;
+				return $provider_file;
 			};
 		}
 
@@ -390,9 +390,9 @@ class AS3CF_Plugin_Compatibility {
 			foreach ( debug_backtrace() as $caller ) {
 				if ( isset( $caller['function'] ) && '_load_image_to_edit_path' == $caller['function'] ) {
 					// check this has been called by '_load_image_to_edit_path' so as only to copy back once
-					if ( $s3_file = $this->copy_s3_file_to_server( $s3_object, $file ) ) {
+					if ( $provider_file = $this->copy_provider_file_to_server( $provider_object, $file ) ) {
 						// Return the file if successfully downloaded from S3
-						return $s3_file;
+						return $provider_file;
 					};
 				}
 			}
@@ -452,11 +452,11 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $url
 	 * @param string $file
 	 * @param int    $attachment_id
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 *
 	 * @return string
 	 */
-	public function customizer_crop_download_file( $url, $file, $attachment_id, $s3_object ) {
+	public function customizer_crop_download_file( $url, $file, $attachment_id, $provider_object ) {
 		if ( false === $this->is_customizer_crop_action() ) {
 			return $url;
 		}
@@ -465,7 +465,7 @@ class AS3CF_Plugin_Compatibility {
 			return $url;
 		}
 
-		if ( ( $file = $this->copy_s3_file_to_server( $s3_object, $file ) ) ) {
+		if ( ( $file = $this->copy_provider_file_to_server( $provider_object, $file ) ) ) {
 			// Return the file if successfully downloaded from S3
 			return $file;
 		};
@@ -551,41 +551,41 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $url
 	 * @param string $file
 	 * @param int    $attachment_id
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 *
 	 * @return string
 	 */
-	function regenerate_thumbnails_download_file( $url, $file, $attachment_id, $s3_object ) {
-		return $this->copy_image_to_server_on_action( 'regeneratethumbnail', true, $url, $file, $s3_object );
+	function regenerate_thumbnails_download_file( $url, $file, $attachment_id, $provider_object ) {
+		return $this->copy_image_to_server_on_action( 'regeneratethumbnail', true, $url, $file, $provider_object );
 	}
 
 	/**
 	 * Download a file from S3 if the file does not exist locally and places it where
 	 * the attachment's file should be.
 	 *
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 * @param string $file
 	 *
 	 * @return string|bool File if downloaded, false on failure
 	 */
-	public function copy_s3_file_to_server( $s3_object, $file ) {
+	public function copy_provider_file_to_server( $provider_object, $file ) {
 		// Make sure the directory exists
 		$dir = dirname( $file );
 		if ( ! wp_mkdir_p( $dir ) ) {
 			$error_message = sprintf( __( 'The local directory %s does not exist and could not be created.', 'amazon-s3-and-cloudfront' ), $dir );
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'amazon-s3-and-cloudfront' ), $s3_object['key'], $error_message ) );
+			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $provider_object['key'], $error_message ) );
 
 			return false;
 		}
 
 		try {
-			$this->as3cf->get_s3client( $s3_object['region'], true )->get_object( array(
-				'Bucket' => $s3_object['bucket'],
-				'Key'    => $s3_object['key'],
+			$this->as3cf->get_provider_client( $provider_object['region'], true )->get_object( array(
+				'Bucket' => $provider_object['bucket'],
+				'Key'    => $provider_object['key'],
 				'SaveAs' => $file,
 			) );
 		} catch ( Exception $e ) {
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'amazon-s3-and-cloudfront' ), $s3_object['key'], $e->getMessage() ) );
+			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $provider_object['key'], $e->getMessage() ) );
 
 			return false;
 		}
@@ -599,6 +599,7 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $region
 	 *
 	 * @return Provider|null
+	 * @throws Exception
 	 */
 	protected function register_stream_wrapper( $region ) {
 		$stored_region = ( '' === $region ) ? $this->as3cf->get_default_region() : $region;
@@ -607,7 +608,7 @@ class AS3CF_Plugin_Compatibility {
 			return self::$stream_wrappers[ $stored_region ];
 		}
 
-		$client = $this->as3cf->get_s3client( $region, true );
+		$client = $this->as3cf->get_provider_client( $region, true );
 
 
 		if ( ! empty( $client ) && $client->register_stream_wrapper( $region ) ) {
@@ -626,21 +627,22 @@ class AS3CF_Plugin_Compatibility {
 	 * @param string $url
 	 * @param string $file
 	 * @param int    $attachment_id
-	 * @param array  $s3_object
+	 * @param array  $provider_object
 	 *
 	 * @return string
+	 * @throws Exception
 	 */
-	public function get_stream_wrapper_file( $url, $file, $attachment_id, $s3_object ) {
+	public function get_stream_wrapper_file( $url, $file, $attachment_id, $provider_object ) {
 		if ( $url === $file ) {
 			// Abort if an earlier hook to get the file has been called and it has been copied back.
 			return $file;
 		}
 
 		// Make sure the region stream wrapper is registered.
-		$client = $this->register_stream_wrapper( $s3_object['region'] );
+		$client = $this->register_stream_wrapper( $provider_object['region'] );
 
 		if ( ! empty( $client ) ) {
-			return $client->prepare_stream_wrapper_file( $s3_object['region'], $s3_object['bucket'], $s3_object['key'] );
+			return $client->prepare_stream_wrapper_file( $provider_object['region'], $provider_object['bucket'], $provider_object['key'] );
 		}
 
 		return $url;
@@ -756,14 +758,14 @@ class AS3CF_Plugin_Compatibility {
 			return $image_meta;
 		}
 
-		if ( ! ( $s3object = $this->as3cf->is_attachment_served_by_s3( $attachment_id ) ) ) {
+		if ( ! ( $provider_object = $this->as3cf->is_attachment_served_by_provider( $attachment_id ) ) ) {
 			// Attachment not uploaded to S3, abort
 			return $image_meta;
 		}
 
 		$image_basename = wp_basename( $image_meta['file'] );
 
-		if ( false === strpos( $s3object['key'], $image_basename ) ) {
+		if ( false === strpos( $provider_object['key'], $image_basename ) ) {
 			// Not the correct attachment, abort
 			return $image_meta;
 		}
@@ -802,22 +804,22 @@ class AS3CF_Plugin_Compatibility {
 			return $sources;
 		}
 
-		if ( ! ( $s3object = $this->as3cf->is_attachment_served_by_s3( $attachment_id ) ) ) {
+		if ( ! ( $provider_object = $this->as3cf->is_attachment_served_by_provider( $attachment_id ) ) ) {
 			// Attachment not uploaded to S3, abort
 			return $sources;
 		}
 
 		foreach ( $sources as $width => $source ) {
-			$filename = wp_basename( $source['url'] );
-			$size     = $this->find_image_size_from_width( $image_meta['sizes'], $width, $filename );
-			$s3_url   = $this->as3cf->get_attachment_s3_url( $attachment_id, $s3object, null, $size, $image_meta );
+			$filename     = wp_basename( $source['url'] );
+			$size         = $this->find_image_size_from_width( $image_meta['sizes'], $width, $filename );
+			$provider_url = $this->as3cf->get_attachment_provider_url( $attachment_id, $provider_object, null, $size, $image_meta );
 
-			if ( false === $s3_url || is_wp_error( $s3_url ) ) {
+			if ( false === $provider_url || is_wp_error( $provider_url ) ) {
 				// Skip URLs not offloaded to S3
 				continue;
 			}
 
-			$sources[ $width ]['url'] = $s3_url;
+			$sources[ $width ]['url'] = $provider_url;
 		}
 
 		return $sources;
@@ -875,10 +877,10 @@ class AS3CF_Plugin_Compatibility {
 
 		if ( version_compare( PHP_VERSION, '5.5', '<' ) ) {
 			$message = sprintf(
-				__( '<strong>Warning:</strong> This site is using PHP %1$s, in a future update WP Offload S3 will require PHP %2$s or later. %3$s', 'amazon-s3-and-cloudfront' ),
+				__( '<strong>Warning:</strong> This site is using PHP %1$s, in a future update WP Offload Media will require PHP %2$s or later. %3$s', 'amazon-s3-and-cloudfront' ),
 				PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION,
 				'5.5',
-				$this->as3cf->more_info_link( '/wp-offload-s3/doc/php-version-requirements/', 'upgrade-php-version' )
+				$this->as3cf->more_info_link( '/wp-offload-media/doc/php-version-requirements/', 'upgrade-php-version' )
 			);
 
 			// Show notice to user if not already dismissed.

@@ -1,24 +1,24 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\HashingStream;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\PhpHash;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AbstractCryptoClient;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\EncryptionTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\DecryptionTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MaterialsProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\Cipher\CipherBuilderTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\PhpHash;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AbstractCryptoClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\EncryptionTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\DecryptionTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherBuilderTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 /**
  * Provides a wrapper for an S3Client that supplies functionality to encrypt
  * data on putObject[Async] calls and decrypt data on getObject[Async] calls.
  */
-class S3EncryptionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AbstractCryptoClient
+class S3EncryptionClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AbstractCryptoClient
 {
     use EncryptionTrait, DecryptionTrait, CipherBuilderTrait, CryptoParamsTrait;
     private $client;
@@ -31,14 +31,14 @@ class S3EncryptionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\
      *                                           default when using instruction
      *                                           files for metadata storage.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client $client, $instructionFileSuffix = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client $client, $instructionFileSuffix = null)
     {
         $this->client = $client;
         $this->instructionFileSuffix = $instructionFileSuffix;
     }
     private static function getDefaultStrategy()
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy();
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy();
     }
     /**
      * Encrypts the data in the 'Body' field of $args and promises to upload it
@@ -84,10 +84,10 @@ class S3EncryptionClient extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\
         unset($args['@InstructionFileSuffix']);
         $strategy = $this->getMetadataStrategy($args, $instructionFileSuffix);
         unset($args['@MetadataStrategy']);
-        $envelope = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope();
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($this->encrypt(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($args['Body']), $args['@CipherOptions'] ?: [], $provider, $envelope))->then(function ($encryptedBodyStream) use($args) {
-            $hash = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\PhpHash('sha256');
-            $hashingEncryptedBodyStream = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HashingStream($encryptedBodyStream, $hash, self::getContentShaDecorator($args));
+        $envelope = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope();
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($this->encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($args['Body']), $args['@CipherOptions'] ?: [], $provider, $envelope))->then(function ($encryptedBodyStream) use($args) {
+            $hash = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\PhpHash('sha256');
+            $hashingEncryptedBodyStream = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashingStream($encryptedBodyStream, $hash, self::getContentShaDecorator($args));
             return [$hashingEncryptedBodyStream, $args];
         })->then(function ($putObjectContents) use($strategy, $envelope) {
             list($bodyStream, $args) = $putObjectContents;

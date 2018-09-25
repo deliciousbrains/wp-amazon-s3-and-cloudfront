@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
 use Aws;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 /**
  * Credential providers are functions that accept no arguments and return a
  * promise that is fulfilled with an {@see \Aws\Credentials\CredentialsInterface}
@@ -75,9 +75,9 @@ class CredentialProvider
      *
      * @return callable
      */
-    public static function fromCredentials(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $creds)
+    public static function fromCredentials(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $creds)
     {
-        $promise = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($creds);
+        $promise = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($creds);
         return function () use($promise) {
             return $promise;
         };
@@ -129,7 +129,7 @@ class CredentialProvider
                 $result = $provider();
             }
             // Return credentials that could expire and refresh when needed.
-            return $result->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $creds) use($provider, &$isConstant, &$result) {
+            return $result->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $creds) use($provider, &$isConstant, &$result) {
                 // Determine if these are constant credentials.
                 if (!$creds->getExpiration()) {
                     $isConstant = true;
@@ -157,15 +157,15 @@ class CredentialProvider
      *
      * @return callable
      */
-    public static function cache(callable $provider, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface $cache, $cacheKey = null)
+    public static function cache(callable $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface $cache, $cacheKey = null)
     {
         $cacheKey = $cacheKey ?: 'aws_cached_credentials';
         return function () use($provider, $cache, $cacheKey) {
             $found = $cache->get($cacheKey);
             if ($found instanceof CredentialsInterface && !$found->isExpired()) {
-                return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($found);
+                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($found);
             }
-            return $provider()->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface $creds) use($cache, $cacheKey) {
+            return $provider()->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $creds) use($cache, $cacheKey) {
                 $cache->set($cacheKey, $creds, null === $creds->getExpiration() ? 0 : $creds->getExpiration() - time());
                 return $creds;
             });
@@ -184,7 +184,7 @@ class CredentialProvider
             $key = getenv(self::ENV_KEY);
             $secret = getenv(self::ENV_SECRET);
             if ($key && $secret) {
-                return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials($key, $secret, getenv(self::ENV_SESSION) ?: NULL));
+                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials($key, $secret, getenv(self::ENV_SESSION) ?: NULL));
             }
             return self::reject('Could not find environment variable ' . 'credentials in ' . self::ENV_KEY . '/' . self::ENV_SECRET);
         };
@@ -200,7 +200,7 @@ class CredentialProvider
      */
     public static function instanceProfile(array $config = [])
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\InstanceProfileProvider($config);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\InstanceProfileProvider($config);
     }
     /**
      * Credential provider that creates credentials using
@@ -214,7 +214,7 @@ class CredentialProvider
      */
     public static function ecsCredentials(array $config = [])
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\EcsCredentialProvider($config);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\EcsCredentialProvider($config);
     }
     /**
      * Credential provider that creates credentials using assume role
@@ -225,7 +225,7 @@ class CredentialProvider
      */
     public static function assumeRole(array $config = [])
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\AssumeRoleCredentialProvider($config);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\AssumeRoleCredentialProvider($config);
     }
     /**
      * Credentials provider that creates credentials using an ini file stored
@@ -259,7 +259,7 @@ class CredentialProvider
             if (empty($data[$profile]['aws_session_token'])) {
                 $data[$profile]['aws_session_token'] = isset($data[$profile]['aws_security_token']) ? $data[$profile]['aws_security_token'] : null;
             }
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials($data[$profile]['aws_access_key_id'], $data[$profile]['aws_secret_access_key'], $data[$profile]['aws_session_token']));
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials($data[$profile]['aws_access_key_id'], $data[$profile]['aws_secret_access_key'], $data[$profile]['aws_session_token']));
         };
     }
     /**
@@ -287,7 +287,7 @@ class CredentialProvider
      */
     private static function remoteCredentialProviders(array $config = [])
     {
-        if (!empty(getenv(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\EcsCredentialProvider::ENV_URI))) {
+        if (!empty(getenv(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\EcsCredentialProvider::ENV_URI))) {
             $providers['ecs'] = self::ecsCredentials($config);
         }
         $providers['instance'] = self::instanceProfile($config);
@@ -316,6 +316,6 @@ class CredentialProvider
     }
     private static function reject($msg)
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException($msg));
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException($msg));
     }
 }

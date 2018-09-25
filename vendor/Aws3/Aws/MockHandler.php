@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Returns promises that are rejected or fulfilled using a queue of
  * Aws\ResultInterface and Aws\Exception\AwsException objects.
@@ -48,7 +48,7 @@ class MockHandler implements \Countable
             }
         }
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         if (!$this->queue) {
             $last = $this->lastCommand ? ' The last command sent was ' . $this->lastCommand->getName() . '.' : '';
@@ -61,7 +61,7 @@ class MockHandler implements \Countable
             $result = $result($command, $request);
         }
         if ($result instanceof \Exception) {
-            $result = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise($result);
+            $result = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($result);
         } else {
             // Add an effective URI and statusCode if not present.
             $meta = $result['@metadata'];
@@ -72,7 +72,7 @@ class MockHandler implements \Countable
                 $meta['statusCode'] = 200;
             }
             $result['@metadata'] = $meta;
-            $result = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($result);
+            $result = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($result);
         }
         $result->then($this->onFulfilled, $this->onRejected);
         return $result;

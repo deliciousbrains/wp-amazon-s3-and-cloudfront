@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: WP Offload S3 Lite
+Plugin Name: WP Offload Media Lite
 Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
-Description: Automatically copies media uploads to Amazon S3 for storage and delivery. Optionally configure Amazon CloudFront for even faster delivery.
+Description: Automatically copies media uploads to Amazon S3 or DigitalOcean Spaces for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery.
 Author: Delicious Brains
-Version: 1.4.3
+Version: 2.0
 Author URI: https://deliciousbrains.com/
 Network: True
 Text Domain: amazon-s3-and-cloudfront
@@ -26,7 +26,7 @@ Domain Path: /languages/
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '1.4.3';
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '2.0';
 
 require_once dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
 
@@ -34,7 +34,7 @@ add_action( 'activated_plugin', array( 'AS3CF_Compatibility_Check', 'deactivate_
 
 global $as3cf_compat_check;
 $as3cf_compat_check = new AS3CF_Compatibility_Check(
-	'WP Offload S3 Lite',
+	'WP Offload Media Lite',
 	'amazon-s3-and-cloudfront',
 	__FILE__
 );
@@ -62,7 +62,7 @@ function as3cf_init() {
 	$abspath = dirname( __FILE__ );
 
 	// Autoloader.
-	require_once $abspath . '/wp-offload-s3-autoloader.php';
+	require_once $abspath . '/wp-offload-media-autoloader.php';
 
 	require_once $abspath . '/include/functions.php';
 	require_once $abspath . '/classes/as3cf-utils.php';
@@ -75,7 +75,7 @@ function as3cf_init() {
 	require_once $abspath . '/classes/as3cf-plugin-compatibility.php';
 	require_once $abspath . '/classes/amazon-s3-and-cloudfront.php';
 
-	new WP_Offload_S3_Autoloader( 'WP_Offload_S3', $abspath );
+	new WP_Offload_Media_Autoloader( 'WP_Offload_Media', $abspath );
 
 	$as3cf = new Amazon_S3_And_CloudFront( __FILE__ );
 

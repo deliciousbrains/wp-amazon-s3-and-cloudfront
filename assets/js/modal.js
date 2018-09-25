@@ -140,6 +140,10 @@ var as3cfModal = (function( $ ) {
 		} );
 
 		$( 'body' ).on( 'click', '#as3cf-overlay, .close-as3cf-modal', function( e ) {
+			if ( 'A' === e.target.tagName ) {
+				return;
+			}
+
 			e.preventDefault();
 
 			// Don't allow children to bubble up click event

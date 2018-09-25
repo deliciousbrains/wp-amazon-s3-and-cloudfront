@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Represents a promise that iterates over many promises and invokes
  * side-effect functions in the process.
  */
-class EachPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+class EachPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
     private $pending = [];
     /** @var \Iterator */
@@ -74,7 +74,7 @@ class EachPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
     private function createPromise()
     {
         $this->mutex = false;
-        $this->aggregate = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise(function () {
+        $this->aggregate = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise(function () {
             reset($this->pending);
             if (empty($this->pending) && !$this->iterable->valid()) {
                 $this->aggregate->resolve(null);
@@ -85,7 +85,7 @@ class EachPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
             while ($promise = current($this->pending)) {
                 next($this->pending);
                 $promise->wait();
-                if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
+                if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
                     return;
                 }
             }
@@ -166,7 +166,7 @@ class EachPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Prom
     private function step($idx)
     {
         // If the promise was already resolved, then ignore this step.
-        if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
+        if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
             return;
         }
         unset($this->pending[$idx]);

@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Sts\StsClient;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\StsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 /**
  * Credential provider that provides credentials via assuming a role
  * More Information, see: http://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sts-2011-06-15.html#assumerole
@@ -44,10 +44,10 @@ class AssumeRoleCredentialProvider
     public function __invoke()
     {
         $client = $this->client;
-        return $client->assumeRoleAsync($this->assumeRoleParams)->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result $result) {
+        return $client->assumeRoleAsync($this->assumeRoleParams)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) {
             return $this->client->createCredentials($result);
         })->otherwise(function (\RuntimeException $exception) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException("Error in retrieving assume role credentials.", 0, $exception);
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException("Error in retrieving assume role credentials.", 0, $exception);
         });
     }
 }

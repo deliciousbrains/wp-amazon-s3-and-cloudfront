@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Provides CLI debugging information for the AST and Compiler runtimes.
@@ -15,8 +15,8 @@ class DebugRuntime
     {
         $this->runtime = $runtime;
         $this->out = $output ?: STDOUT;
-        $this->lexer = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Lexer();
-        $this->parser = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Parser($this->lexer);
+        $this->lexer = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Lexer();
+        $this->parser = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser($this->lexer);
     }
     public function __invoke($expression, $data)
     {
@@ -43,7 +43,7 @@ class DebugRuntime
     }
     private function dumpTokens($expression)
     {
-        $lexer = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Lexer();
+        $lexer = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Lexer();
         fwrite($this->out, "Tokens\n======\n\n");
         $tokens = $lexer->tokenize($expression);
         foreach ($tokens as $t) {
@@ -53,7 +53,7 @@ class DebugRuntime
     }
     private function dumpAst($expression)
     {
-        $parser = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Parser();
+        $parser = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser();
         $ast = $parser->parse($expression);
         fwrite($this->out, "AST\n========\n\n");
         fwrite($this->out, json_encode($ast, JSON_PRETTY_PRINT) . "\n");

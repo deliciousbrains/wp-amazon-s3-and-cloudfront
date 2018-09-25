@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Kms\KmsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient;
 /**
  * Uses KMS to supply materials for encrypting and decrypting data.
  */
-class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MaterialsProvider
+class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider
 {
     private $kmsClient;
     private $kmsKeyId;
@@ -16,21 +16,21 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypt
      * @param string $kmsKeyId The private KMS key id to be used for encrypting
      *                         and decrypting keys.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Kms\KmsClient $kmsClient, $kmsKeyId = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient $kmsClient, $kmsKeyId = null)
     {
         $this->kmsClient = $kmsClient;
         $this->kmsKeyId = $kmsKeyId;
     }
-    public function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
+    public function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
     {
-        if (empty($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
+        if (empty($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
             throw new \RuntimeException('Not able to detect kms_cmk_id from an' . ' empty materials description.');
         }
-        $materialsDescription = json_decode($envelope[\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true);
+        $materialsDescription = json_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true);
         if (empty($materialsDescription['kms_cmk_id'])) {
             throw new \RuntimeException('Not able to detect kms_cmk_id from kms' . ' materials description.');
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\KmsMaterialsProvider($this->kmsClient, $materialsDescription['kms_cmk_id']);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\KmsMaterialsProvider($this->kmsClient, $materialsDescription['kms_cmk_id']);
     }
     /**
      * The KMS key id for use in matching this Provider to its keys,

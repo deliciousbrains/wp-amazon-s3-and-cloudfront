@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\MessageInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Formats log messages using variable substitutions for requests, responses,
  * and other transactional data.
@@ -60,7 +60,7 @@ class MessageFormatter
      *
      * @return string
      */
-    public function format(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $error = null)
+    public function format(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $error = null)
     {
         $cache = [];
         return preg_replace_callback('/{\\s*([A-Za-z_\\-\\.0-9]+)\\s*}/', function (array $matches) use($request, $response, $error, &$cache) {
@@ -70,10 +70,10 @@ class MessageFormatter
             $result = '';
             switch ($matches[1]) {
                 case 'request':
-                    $result = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\str($request);
+                    $result = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\str($request);
                     break;
                 case 'response':
-                    $result = $response ? \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\str($response) : '';
+                    $result = $response ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\str($response) : '';
                     break;
                 case 'req_headers':
                     $result = trim($request->getMethod() . ' ' . $request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . "\r\n" . $this->headers($request);
@@ -140,7 +140,7 @@ class MessageFormatter
             return $result;
         }, $this->template);
     }
-    private function headers(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\MessageInterface $message)
+    private function headers(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface $message)
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {

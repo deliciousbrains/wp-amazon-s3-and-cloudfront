@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 /**
  * Iterator that yields each page of results of a pageable operation.
  */
@@ -28,7 +28,7 @@ class ResultPaginator implements \Iterator
      * @param array              $args
      * @param array              $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, $operation, array $args, array $config)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $operation, array $args, array $config)
     {
         $this->client = $client;
         $this->operation = $operation;
@@ -56,7 +56,7 @@ class ResultPaginator implements \Iterator
      */
     public function each(callable $handleResult)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () use($handleResult) {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () use($handleResult) {
             $nextToken = null;
             do {
                 $command = $this->createNextCommand($this->args, $nextToken);
@@ -64,7 +64,7 @@ class ResultPaginator implements \Iterator
                 $nextToken = $this->determineNextToken($result);
                 $retVal = $handleResult($result);
                 if ($retVal !== null) {
-                    (yield \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($retVal));
+                    (yield \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($retVal));
                 }
             } while ($nextToken);
         });
@@ -80,7 +80,7 @@ class ResultPaginator implements \Iterator
     public function search($expression)
     {
         // Apply JMESPath expression on each result, but as a flat sequence.
-        return flatmap($this, function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result $result) use($expression) {
+        return flatmap($this, function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) use($expression) {
             return (array) $result->search($expression);
         });
     }
@@ -122,7 +122,7 @@ class ResultPaginator implements \Iterator
     {
         return $this->client->getCommand($this->operation, array_merge($args, $nextToken ?: []));
     }
-    private function determineNextToken(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result $result)
+    private function determineNextToken(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result)
     {
         if (!$this->config['output_token']) {
             return null;

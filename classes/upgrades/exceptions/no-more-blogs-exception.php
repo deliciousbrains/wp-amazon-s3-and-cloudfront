@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions;
 
 class No_More_Blogs_Exception extends \Exception {
 

@@ -3,7 +3,7 @@
 
 	<p><?php printf( __( 'You may ask the WordPress community for help by posting to the <a href="%s">WordPress.org support forum</a>. Response time can range from a few days to a few weeks and will likely be from a non-developer.', 'amazon-s3-and-cloudfront'), 'https://wordpress.org/plugins/amazon-s3-and-cloudfront/' ); ?></p>
 
-	<?php $url = $this->dbrains_url( '/wp-offload-s3/', array(
+	<?php $url = $this->dbrains_url( '/wp-offload-media/', array(
 		'utm_campaign' => 'WP+Offload+S3',
 		'utm_content'  => 'support+tab',
 	) ); ?>

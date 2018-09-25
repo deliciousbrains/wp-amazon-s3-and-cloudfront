@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * PSR-7 request implementation.
  */
-class Request implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface
+class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface
 {
     use MessageTrait;
     /** @var string */
@@ -28,7 +28,7 @@ class Request implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Re
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1')
     {
         if (!$uri instanceof UriInterface) {
-            $uri = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri($uri);
+            $uri = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($uri);
         }
         $this->method = strtoupper($method);
         $this->uri = $uri;
@@ -78,7 +78,7 @@ class Request implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Re
     {
         return $this->uri;
     }
-    public function withUri(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface $uri, $preserveHost = false)
+    public function withUri(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri, $preserveHost = false)
     {
         if ($uri === $this->uri) {
             return $this;

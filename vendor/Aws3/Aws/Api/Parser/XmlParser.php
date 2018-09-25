@@ -1,18 +1,18 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ListShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 /**
  * @internal Implements standard XML parsing for REST-XML and Query protocols.
  */
 class XmlParser
 {
-    public function parse(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $shape, \SimpleXMLElement $value)
+    public function parse(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $shape, \SimpleXMLElement $value)
     {
         return $this->dispatch($shape, $value);
     }
@@ -25,7 +25,7 @@ class XmlParser
         }
         return (string) $value;
     }
-    private function parse_structure(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $shape, \SimpleXMLElement $value)
+    private function parse_structure(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $shape, \SimpleXMLElement $value)
     {
         $target = [];
         foreach ($shape->getMembers() as $name => $member) {
@@ -37,7 +37,7 @@ class XmlParser
         }
         return $target;
     }
-    private function memberKey(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $name)
+    private function memberKey(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $name)
     {
         if (null !== $shape['locationName']) {
             return $shape['locationName'];
@@ -47,7 +47,7 @@ class XmlParser
         }
         return $name;
     }
-    private function parse_list(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ListShape $shape, \SimpleXMLElement $value)
+    private function parse_list(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape $shape, \SimpleXMLElement $value)
     {
         $target = [];
         $member = $shape->getMember();
@@ -59,7 +59,7 @@ class XmlParser
         }
         return $target;
     }
-    private function parse_map(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape $shape, \SimpleXMLElement $value)
+    private function parse_map(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape $shape, \SimpleXMLElement $value)
     {
         $target = [];
         if (!$shape['flattened']) {
@@ -76,24 +76,24 @@ class XmlParser
         }
         return $target;
     }
-    private function parse_blob(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function parse_blob(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         return base64_decode((string) $value);
     }
-    private function parse_float(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function parse_float(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         return (double) (string) $value;
     }
-    private function parse_integer(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function parse_integer(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         return (int) (string) $value;
     }
-    private function parse_boolean(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function parse_boolean(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         return $value == 'true';
     }
-    private function parse_timestamp(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function parse_timestamp(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult($value);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult($value);
     }
 }

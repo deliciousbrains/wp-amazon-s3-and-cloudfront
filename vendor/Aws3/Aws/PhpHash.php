@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Incremental hashing using PHP's hash functions.
  */
-class PhpHash implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HashInterface
+class PhpHash implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashInterface
 {
     /** @var resource|\HashContext */
     private $context;

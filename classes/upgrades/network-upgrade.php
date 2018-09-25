@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use Amazon_S3_And_CloudFront;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 interface MetadataStrategyInterface
 {
@@ -15,7 +15,7 @@ interface MetadataStrategyInterface
      *
      * @return array Updated arguments for PutObject.
      */
-    public function save(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $args);
+    public function save(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $args);
     /**
      * Generates a MetadataEnvelope according to the specific strategy using the
      * passed arguments.

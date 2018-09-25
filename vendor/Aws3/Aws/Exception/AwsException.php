@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 /**
  * Represents an AWS exception that is thrown when a command fails.
  */
@@ -28,7 +28,7 @@ class AwsException extends \RuntimeException
      * @param array            $context Exception context
      * @param \Exception       $previous  Previous exception (if any)
      */
-    public function __construct($message, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, array $context = [], \Exception $previous = null)
+    public function __construct($message, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, array $context = [], \Exception $previous = null)
     {
         $this->command = $command;
         $this->response = isset($context['response']) ? $context['response'] : null;

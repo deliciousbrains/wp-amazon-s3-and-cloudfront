@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
 class MultipartUploadException extends \RuntimeException
 {
     /** @var UploadState State of the erroneous transfer */
@@ -11,7 +11,7 @@ class MultipartUploadException extends \RuntimeException
      * @param UploadState      $state Upload state at time of the exception.
      * @param \Exception|array $prev  Exception being thrown.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState $state, $prev = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState $state, $prev = null)
     {
         $msg = 'An exception occurred while performing a multipart upload';
         if (is_array($prev)) {

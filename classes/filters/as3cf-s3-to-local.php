@@ -16,7 +16,8 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		// Posts
 		add_filter( 'content_save_pre', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_save_pre', array( $this, 'filter_post' ) );
-		add_filter( 'as3cf_filter_post_s3_to_local', array( $this, 'filter_post' ) );
+		add_filter( 'as3cf_filter_post_s3_to_local', array( $this, 'filter_post' ) ); // Backwards compatibility
+		add_filter( 'as3cf_filter_post_provider_to_local', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_update_callback', array( $this, 'filter_widget_save' ), 10, 4 );
 	}

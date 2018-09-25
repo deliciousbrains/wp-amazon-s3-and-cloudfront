@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Dispatches to named JMESPath functions using a single function that has the
@@ -158,7 +158,7 @@ class FnDispatcher
     {
         $this->validate('sort', $args, [['array']]);
         $valid = ['string', 'number'];
-        return \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::stableSort($args[0], function ($a, $b) use($valid) {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::stableSort($args[0], function ($a, $b) use($valid) {
             $this->validateSeq('sort:0', $valid, $a, $b);
             return strnatcmp($a, $b);
         });
@@ -168,7 +168,7 @@ class FnDispatcher
         $this->validate('sort_by', $args, [['array'], ['expression']]);
         $expr = $args[1];
         $valid = ['string', 'number'];
-        return \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::stableSort($args[0], function ($a, $b) use($expr, $valid) {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::stableSort($args[0], function ($a, $b) use($expr, $valid) {
             $va = $expr($a);
             $vb = $expr($b);
             $this->validateSeq('sort_by:0', $valid, $va, $vb);
@@ -184,7 +184,7 @@ class FnDispatcher
     private function fn_type(array $args)
     {
         $this->validateArity('type', count($args), 1);
-        return \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($args[0]);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($args[0]);
     }
     private function fn_to_string(array $args)
     {
@@ -201,7 +201,7 @@ class FnDispatcher
     {
         $this->validateArity('to_number', count($args), 1);
         $value = $args[0];
-        $type = \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($value);
+        $type = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($value);
         if ($type == 'number') {
             return $value;
         } elseif ($type == 'string' && is_numeric($value)) {
@@ -225,7 +225,7 @@ class FnDispatcher
     private function fn_to_array(array $args)
     {
         $this->validate('to_array', $args, [['any']]);
-        return \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::isArray($args[0]) ? $args[0] : [$args[0]];
+        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::isArray($args[0]) ? $args[0] : [$args[0]];
     }
     private function fn_map(array $args)
     {
@@ -264,10 +264,10 @@ class FnDispatcher
     }
     private function validateType($from, $value, array $types)
     {
-        if ($types[0] == 'any' || in_array(\DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($value), $types) || $value === [] && in_array('object', $types)) {
+        if ($types[0] == 'any' || in_array(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($value), $types) || $value === [] && in_array('object', $types)) {
             return;
         }
-        $msg = 'must be one of the following types: ' . implode(', ', $types) . '. ' . \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($value) . ' found';
+        $msg = 'must be one of the following types: ' . implode(', ', $types) . '. ' . \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($value) . ' found';
         $this->typeError($from, $msg);
     }
     /**
@@ -281,8 +281,8 @@ class FnDispatcher
      */
     private function validateSeq($from, array $types, $a, $b)
     {
-        $ta = \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($a);
-        $tb = \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Utils::type($b);
+        $ta = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($a);
+        $tb = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::type($b);
         if ($ta !== $tb) {
             $msg = "encountered a type mismatch in sequence: {$ta}, {$tb}";
             $this->typeError($from, $msg);

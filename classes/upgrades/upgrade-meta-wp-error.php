@@ -9,7 +9,7 @@
  * @since       0.9.5
  */
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
 use Exception;
@@ -57,9 +57,9 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 	 * @return bool
 	 */
 	protected function upgrade_item( $attachment ) {
-		$s3object = unserialize( $attachment->s3object );
-		if ( false === $s3object ) {
-			AS3CF_Error::log( 'Failed to unserialize S3 meta for attachment ' . $attachment->ID . ': ' . $attachment->s3object );
+		$provider_object = unserialize( $attachment->provider_object );
+		if ( false === $provider_object ) {
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
 			$this->error_count++;
 
 			return false;
@@ -72,13 +72,13 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 			// regenerate the attachment metadata
 			try {
 				$args = array(
-					'Bucket' => $s3object['bucket'],
-					'Key'    => $s3object['key'],
+					'Bucket' => $provider_object['bucket'],
+					'Key'    => $provider_object['key'],
 					'SaveAs' => $file,
 				);
-				$this->as3cf->get_s3client( $s3object['region'], true )->get_object( $args );
+				$this->as3cf->get_provider_client( $provider_object['region'], true )->get_object( $args );
 			} catch ( Exception $e ) {
-				AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from S3: %s', 'amazon-s3-and-cloudfront' ), $s3object['key'], $e->getMessage() ) );
+				AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $provider_object['key'], $e->getMessage() ) );
 
 				return false;
 			}
@@ -143,7 +143,7 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 			return $wpdb->get_var( $sql );
 		}
 
-		$sql = "SELECT pm1.`post_id` as `ID`, pm1.`meta_value` AS 's3object'" . $sql;
+		$sql = "SELECT pm1.`post_id` as `ID`, pm1.`meta_value` AS 'provider_object'" . $sql;
 
 		if ( $limit && $limit > 0 ) {
 			$sql .= sprintf( ' LIMIT %d', (int) $limit );

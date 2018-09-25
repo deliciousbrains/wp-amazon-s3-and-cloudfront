@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\AbstractUploadManager;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-class MultipartCopy extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\AbstractUploadManager
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager
 {
     use MultipartUploadingTrait;
     /** @var string */
@@ -52,7 +52,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\Ab
      *                                  (in the form /<bucket>/<key>).
      * @param array             $config Configuration used to perform the upload.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
     {
         $this->source = '/' . ltrim($source, '/');
         parent::__construct($client, array_change_key_case($config) + ['source_metadata' => null]);
@@ -100,7 +100,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\Ab
         $data['CopySourceRange'] = "bytes={$startByte}-{$endByte}";
         return $data;
     }
-    protected function extractETag(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface $result)
+    protected function extractETag(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result)
     {
         return $result->search('CopyPartResult.ETag');
     }
@@ -129,7 +129,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\Ab
         if (strpos($key, '?')) {
             list($key, $query) = explode('?', $key, 2);
             $headParams['Key'] = $key;
-            $query = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\parse_query($query, false);
+            $query = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\parse_query($query, false);
             if (isset($query['versionId'])) {
                 $headParams['VersionId'] = $query['versionId'];
             }

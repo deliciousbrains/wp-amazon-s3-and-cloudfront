@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState;
-class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\MultipartUploadException
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
+class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException
 {
     /** @var string Bucket of the transfer object */
     private $bucket;
@@ -21,7 +21,7 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws
      *                                for a specific Multipart error being thrown in
      *                                the MultipartUpload process.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState $state, $prev = null)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState $state, $prev = null)
     {
         if (is_array($prev) && ($error = $prev[key($prev)])) {
             $this->collectPathInfo($error->getCommand());
@@ -65,7 +65,7 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws
      *
      * @param CommandInterface $cmd
      */
-    private function collectPathInfo(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $cmd)
+    private function collectPathInfo(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd)
     {
         if (empty($this->bucket) && isset($cmd['Bucket'])) {
             $this->bucket = $cmd['Bucket'];

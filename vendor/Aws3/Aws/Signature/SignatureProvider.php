@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\UnresolvedSignatureException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedSignatureException;
 /**
  * Signature providers.
  *
@@ -57,7 +57,7 @@ class SignatureProvider
         if ($result instanceof SignatureInterface) {
             return $result;
         }
-        throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\UnresolvedSignatureException("Unable to resolve a signature for {$version}/{$service}/{$region}.\n" . "Valid signature versions include v4 and anonymous.");
+        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedSignatureException("Unable to resolve a signature for {$version}/{$service}/{$region}.\n" . "Valid signature versions include v4 and anonymous.");
     }
     /**
      * Default SDK signature provider.
@@ -104,11 +104,11 @@ class SignatureProvider
             switch ($version) {
                 case 's3v4':
                 case 'v4':
-                    return $service === 's3' ? new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\S3SignatureV4($service, $region) : new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureV4($service, $region);
+                    return $service === 's3' ? new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\S3SignatureV4($service, $region) : new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4($service, $region);
                 case 'v4-unsigned-body':
-                    return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureV4($service, $region, ['unsigned-body' => 'true']);
+                    return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4($service, $region, ['unsigned-body' => 'true']);
                 case 'anonymous':
-                    return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\AnonymousSignature();
+                    return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\AnonymousSignature();
                 default:
                     return null;
             }

@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
 /**
  * @internal Implements standard JSON parsing.
  */
 class JsonParser
 {
-    public function parse(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    public function parse(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         if ($value === null) {
             return $value;
@@ -42,7 +42,7 @@ class JsonParser
                 // The Unix epoch (or Unix time or POSIX time or Unix
                 // timestamp) is the number of seconds that have elapsed since
                 // January 1, 1970 (midnight UTC/GMT).
-                return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DateTimeResult::fromEpoch($value);
+                return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromEpoch($value);
             case 'blob':
                 return base64_decode($value);
             default:

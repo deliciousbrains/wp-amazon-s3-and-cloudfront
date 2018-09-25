@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Response;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Response;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Represents a cURL easy handle and the data it populates.
  *
@@ -41,8 +41,8 @@ final class EasyHandle
         }
         // HTTP-version SP status-code SP reason-phrase
         $startLine = explode(' ', array_shift($this->headers), 3);
-        $headers = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\headers_from_lines($this->headers);
-        $normalizedKeys = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\normalize_header_keys($headers);
+        $headers = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\headers_from_lines($this->headers);
+        $normalizedKeys = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\normalize_header_keys($headers);
         if (!empty($this->options['decode_content']) && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
@@ -57,7 +57,7 @@ final class EasyHandle
             }
         }
         // Attach a response to the easy handle with the parsed headers.
-        $this->response = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Response($startLine[1], $headers, $this->sink, substr($startLine[0], 5), isset($startLine[2]) ? (string) $startLine[2] : null);
+        $this->response = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Response($startLine[1], $headers, $this->sink, substr($startLine[0], 5), isset($startLine[2]) ? (string) $startLine[2] : null);
     }
     public function __get($name)
     {

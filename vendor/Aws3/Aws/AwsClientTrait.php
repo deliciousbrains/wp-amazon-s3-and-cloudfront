@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 /**
  * A trait providing generic functionality for interacting with Amazon Web
  * Services. This is meant to be used in classes implementing
@@ -13,7 +13,7 @@ trait AwsClientTrait
     public function getPaginator($name, array $args = [])
     {
         $config = $this->getApi()->getPaginatorConfig($name);
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultPaginator($this, $name, $args, $config);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultPaginator($this, $name, $args, $config);
     }
     public function getIterator($name, array $args = [])
     {
@@ -36,13 +36,13 @@ trait AwsClientTrait
     {
         $config = isset($args['@waiter']) ? $args['@waiter'] : [];
         $config += $this->getApi()->getWaiterConfig($name);
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Waiter($this, $name, $args, $config);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Waiter($this, $name, $args, $config);
     }
-    public function execute(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    public function execute(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         return $this->executeAsync($command)->wait();
     }
-    public function executeAsync(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    public function executeAsync(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         $handler = $command->getHandlerList()->resolve();
         return $handler($command);

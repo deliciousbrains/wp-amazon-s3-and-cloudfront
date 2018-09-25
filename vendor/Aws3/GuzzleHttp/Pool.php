@@ -1,10 +1,10 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\EachPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise;
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
  *
@@ -16,7 +16,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\EachPromise;
  * "request_options" array that should be merged on top of any existing
  * options, and the function MUST then return a wait-able promise.
  */
-class Pool implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+class Pool implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
     /** @var EachPromise */
     private $each;
@@ -30,7 +30,7 @@ class Pool implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Pro
      *     - fulfilled: (callable) Function to invoke when a request completes.
      *     - rejected: (callable) Function to invoke when a request is rejected.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $config = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $config = [])
     {
         // Backwards compatibility.
         if (isset($config['pool_size'])) {
@@ -44,7 +44,7 @@ class Pool implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Pro
         } else {
             $opts = [];
         }
-        $iterable = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\iter_for($requests);
+        $iterable = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\iter_for($requests);
         $requests = function () use($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
@@ -56,7 +56,7 @@ class Pool implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Pro
                 }
             }
         };
-        $this->each = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\EachPromise($requests(), $config);
+        $this->each = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($requests(), $config);
     }
     public function promise()
     {
@@ -79,7 +79,7 @@ class Pool implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Pro
      *               in the same order that the requests were sent.
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $options = [])
+    public static function batch(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $options = [])
     {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);

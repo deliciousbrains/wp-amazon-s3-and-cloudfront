@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface as Client;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface as Stream;
-abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\AbstractUploadManager
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
+abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager
 {
     /** @var Stream Source of the data to be uploaded. */
     protected $source;
@@ -15,7 +15,7 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\
      * @param mixed  $source
      * @param array  $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, $source, array $config = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $source, array $config = [])
     {
         $this->source = $this->determineSource($source);
         parent::__construct($client, $config);
@@ -28,10 +28,10 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\
      *
      * @return Psr7\LimitStream
      */
-    protected function limitPartStream(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream)
+    protected function limitPartStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
     {
         // Limit what is read from the stream to the part size.
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LimitStream($stream, $this->state->getPartSize(), $this->source->tell());
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($stream, $this->state->getPartSize(), $this->source->tell());
     }
     protected function getUploadCommands(callable $resultHandler)
     {
@@ -94,10 +94,10 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\
     {
         // Use the contents of a file as the data source.
         if (is_string($source)) {
-            $source = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\try_fopen($source, 'r');
+            $source = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\try_fopen($source, 'r');
         }
         // Create a source stream.
-        $stream = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($source);
+        $stream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($source);
         if (!$stream->isReadable()) {
             throw new \InvalidArgumentException('Source stream must be readable.');
         }

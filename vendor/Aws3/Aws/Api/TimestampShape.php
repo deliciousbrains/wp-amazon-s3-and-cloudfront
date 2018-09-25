@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Represents a timestamp shape.
  */
-class TimestampShape extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape
+class TimestampShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
 {
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
     {
         $definition['type'] = 'timestamp';
         parent::__construct($definition, $shapeMap);

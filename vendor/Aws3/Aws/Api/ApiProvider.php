@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\UnresolvedApiException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException;
 /**
  * API providers.
  *
@@ -72,7 +72,7 @@ class ApiProvider
         } else {
             $msg = "You must specify a service name to retrieve its API data.";
         }
-        throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\UnresolvedApiException($msg);
+        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException($msg);
     }
     /**
      * Default SDK API provider.
@@ -83,7 +83,7 @@ class ApiProvider
      */
     public static function defaultProvider()
     {
-        return new self(__DIR__ . '/../data', \DeliciousBrains\WP_Offload_S3\Aws3\Aws\manifest());
+        return new self(__DIR__ . '/../data', \DeliciousBrains\WP_Offload_Media\Aws3\Aws\manifest());
     }
     /**
      * Loads API data after resolving the version to the latest, compatible,
@@ -174,7 +174,7 @@ class ApiProvider
         $version = $this->manifest[$service]['versions'][$version];
         $path = "{$this->modelsDir}/{$service}/{$version}/{$type}.json";
         try {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\load_compiled_json($path);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json($path);
         } catch (\InvalidArgumentException $e) {
             return null;
         }

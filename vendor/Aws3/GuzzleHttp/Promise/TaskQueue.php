@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * A task queue that executes tasks in a FIFO order.
@@ -11,7 +11,7 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
  *
  *     GuzzleHttp\Promise\queue()->run();
  */
-class TaskQueue implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\TaskQueueInterface
+class TaskQueue implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\TaskQueueInterface
 {
     private $enableShutdown = true;
     private $queue = [];

@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * A promise that has been rejected.
@@ -8,7 +8,7 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onRejected callback
  * immediately and ignore other callbacks.
  */
-class RejectedPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface
+class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
 {
     private $reason;
     public function __construct($reason)
@@ -26,7 +26,7 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\
         }
         $queue = queue();
         $reason = $this->reason;
-        $p = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $p = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
         $queue->add(static function () use($p, $reason, $onRejected) {
             if ($p->getState() === self::PENDING) {
                 try {

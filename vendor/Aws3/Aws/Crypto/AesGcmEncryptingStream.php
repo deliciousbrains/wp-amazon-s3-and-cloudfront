@@ -1,15 +1,15 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use RuntimeException;
 /**
  * @internal Represents a stream of data to be gcm encrypted.
  */
-class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\AesStreamInterface
+class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterface
 {
     use StreamDecoratorTrait;
     private $aad;
@@ -27,7 +27,7 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\
      * @param int $tagLength
      * @param int $keySize
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $plaintext, $key, $initializationVector, $aad = '', $tagLength = 16, $keySize = 256)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $plaintext, $key, $initializationVector, $aad = '', $tagLength = 16, $keySize = 256)
     {
         if (version_compare(PHP_VERSION, '7.1', '<')) {
             throw new \RuntimeException('AES-GCM decryption is only supported in PHP 7.1 or greater');
@@ -53,7 +53,7 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\
     }
     public function createStream()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for(openssl_encrypt((string) $this->plaintext, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad, $this->tagLength));
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(openssl_encrypt((string) $this->plaintext, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad, $this->tagLength));
     }
     /**
      * @return string

@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Used to update the URL used for S3 requests to support:
  * S3 Accelerate, S3 DualStack or Both. It will build to
@@ -55,7 +55,7 @@ class S3EndpointMiddleware
         $this->region = (string) $region;
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         switch ($this->endpointPatternDecider($command, $request)) {
             case self::HOST_STYLE:
@@ -77,11 +77,11 @@ class S3EndpointMiddleware
         $nextHandler = $this->nextHandler;
         return $nextHandler($command, $request);
     }
-    private static function isRequestHostStyleCompatible(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    private static function isRequestHostStyleCompatible(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client::isBucketDnsCompatible($command['Bucket']) && ($request->getUri()->getScheme() === 'http' || strpos($command['Bucket'], '.') === false);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::isBucketDnsCompatible($command['Bucket']) && ($request->getUri()->getScheme() === 'http' || strpos($command['Bucket'], '.') === false);
     }
-    private function endpointPatternDecider(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function endpointPatternDecider(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         $accelerate = isset($command['@use_accelerate_endpoint']) ? $command['@use_accelerate_endpoint'] : $this->accelerateByDefault;
         $dualStack = isset($command['@use_dual_stack_endpoint']) ? $command['@use_dual_stack_endpoint'] : $this->dualStackByDefault;
@@ -102,11 +102,11 @@ class S3EndpointMiddleware
         }
         return self::PATH_STYLE;
     }
-    private function canAccelerate(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    private function canAccelerate(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
-        return empty(self::$exclusions[$command->getName()]) && \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3Client::isBucketDnsCompatible($command['Bucket']);
+        return empty(self::$exclusions[$command->getName()]) && \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::isBucketDnsCompatible($command['Bucket']);
     }
-    private function getBucketStyleHost(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $host)
+    private function getBucketStyleHost(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $host)
     {
         // For operations on the base host (e.g. ListBuckets)
         if (!isset($command['Bucket'])) {
@@ -114,13 +114,13 @@ class S3EndpointMiddleware
         }
         return "{$command['Bucket']}.{$host}";
     }
-    private function applyHostStyleEndpoint(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function applyHostStyleEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         $uri = $request->getUri();
         $request = $request->withUri($uri->withHost($this->getBucketStyleHost($command, $uri->getHost()))->withPath($this->getBucketlessPath($uri->getPath(), $command)));
         return $request;
     }
-    private function applyDualStackEndpoint(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function applyDualStackEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         $request = $request->withUri($request->getUri()->withHost($this->getDualStackHost()));
         if (empty($command['@use_path_style_endpoint']) && !$this->pathStyleByDefault && self::isRequestHostStyleCompatible($command, $request)) {
@@ -132,16 +132,16 @@ class S3EndpointMiddleware
     {
         return "s3.dualstack.{$this->region}.amazonaws.com";
     }
-    private function applyAccelerateEndpoint(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, $pattern)
+    private function applyAccelerateEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, $pattern)
     {
         $request = $request->withUri($request->getUri()->withHost($this->getAccelerateHost($command, $pattern))->withPath($this->getBucketlessPath($request->getUri()->getPath(), $command)));
         return $request;
     }
-    private function getAccelerateHost(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $pattern)
+    private function getAccelerateHost(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $pattern)
     {
         return "{$command['Bucket']}.{$pattern}.amazonaws.com";
     }
-    private function getBucketlessPath($path, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command)
+    private function getBucketlessPath($path, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
     {
         $pattern = '/^\\/' . preg_quote($command['Bucket'], '/') . '/';
         return preg_replace($pattern, '', $path) ?: '/';

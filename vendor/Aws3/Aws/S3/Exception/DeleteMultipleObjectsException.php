@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
 /**
  * Exception thrown when errors occur while deleting objects using a

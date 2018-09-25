@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlHandler;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlMultiHandler;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\Proxy;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\StreamHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlMultiHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\Proxy;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\StreamHandler;
 /**
  * Expands a URI template
  *
@@ -23,7 +23,7 @@ function uri_template($template, array $variables)
     }
     static $uriTemplate;
     if (!$uriTemplate) {
-        $uriTemplate = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\UriTemplate();
+        $uriTemplate = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\UriTemplate();
     }
     return $uriTemplate->expand($template, $variables);
 }
@@ -93,14 +93,14 @@ function choose_handler()
 {
     $handler = null;
     if (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
-        $handler = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\Proxy::wrapSync(new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlMultiHandler(), new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlHandler());
+        $handler = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\Proxy::wrapSync(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlMultiHandler(), new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlHandler());
     } elseif (function_exists('curl_exec')) {
-        $handler = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlHandler();
+        $handler = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlHandler();
     } elseif (function_exists('curl_multi_exec')) {
-        $handler = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlMultiHandler();
+        $handler = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlMultiHandler();
     }
     if (ini_get('allow_url_fopen')) {
-        $handler = $handler ? \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\Proxy::wrapStreaming($handler, new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\StreamHandler()) : new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\StreamHandler();
+        $handler = $handler ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\Proxy::wrapStreaming($handler, new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\StreamHandler()) : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\StreamHandler();
     } elseif (!$handler) {
         throw new \RuntimeException('GuzzleHttp requires cURL, the ' . 'allow_url_fopen ini setting, or a custom HTTP handler.');
     }
@@ -115,7 +115,7 @@ function default_user_agent()
 {
     static $defaultAgent = '';
     if (!$defaultAgent) {
-        $defaultAgent = 'GuzzleHttp/' . \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Client::VERSION;
+        $defaultAgent = 'GuzzleHttp/' . \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client::VERSION;
         if (extension_loaded('curl') && function_exists('curl_version')) {
             $defaultAgent .= ' curl/' . \curl_version()['version'];
         }

@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Cache\CacheItemPoolInterface;
-class PsrCacheAdapter implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Cache\CacheItemPoolInterface;
+class PsrCacheAdapter implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface
 {
     /** @var CacheItemPoolInterface */
     private $pool;
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Cache\CacheItemPoolInterface $pool)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Cache\CacheItemPoolInterface $pool)
     {
         $this->pool = $pool;
     }

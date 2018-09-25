@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\MessageInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ServerRequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ServerRequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * Returns the string representation of an HTTP message.
  *
@@ -15,7 +15,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
  *
  * @return string
  */
-function str(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\MessageInterface $message)
+function str(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface $message)
 {
     if ($message instanceof RequestInterface) {
         $msg = trim($message->getMethod() . ' ' . $message->getRequestTarget()) . ' HTTP/' . $message->getProtocolVersion();
@@ -49,7 +49,7 @@ function uri_for($uri)
     if ($uri instanceof UriInterface) {
         return $uri;
     } elseif (is_string($uri)) {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri($uri);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($uri);
     }
     throw new \InvalidArgumentException('URI must be a string or UriInterface');
 }
@@ -74,16 +74,16 @@ function stream_for($resource = '', array $options = [])
             fwrite($stream, $resource);
             fseek($stream, 0);
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream($stream, $options);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($stream, $options);
     }
     switch (gettype($resource)) {
         case 'resource':
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream($resource, $options);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($resource, $options);
         case 'object':
             if ($resource instanceof StreamInterface) {
                 return $resource;
             } elseif ($resource instanceof \Iterator) {
-                return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\PumpStream(function () use($resource) {
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\PumpStream(function () use($resource) {
                     if (!$resource->valid()) {
                         return false;
                     }
@@ -96,10 +96,10 @@ function stream_for($resource = '', array $options = [])
             }
             break;
         case 'NULL':
-            return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'), $options);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'), $options);
     }
     if (is_callable($resource)) {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\PumpStream($resource, $options);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\PumpStream($resource, $options);
     }
     throw new \InvalidArgumentException('Invalid resource type: ' . gettype($resource));
 }
@@ -179,7 +179,7 @@ function normalize_header($header)
  *
  * @return RequestInterface
  */
-function modify_request(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $changes)
+function modify_request(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $changes)
 {
     if (!$changes) {
         return $request;
@@ -212,9 +212,9 @@ function modify_request(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Req
         $uri = $uri->withQuery($changes['query']);
     }
     if ($request instanceof ServerRequestInterface) {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\ServerRequest(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion(), $request->getServerParams());
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\ServerRequest(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion(), $request->getServerParams());
     }
-    return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion());
+    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion());
 }
 /**
  * Attempts to rewind a message body and throws an exception on failure.
@@ -226,7 +226,7 @@ function modify_request(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Req
  *
  * @throws \RuntimeException
  */
-function rewind_body(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\MessageInterface $message)
+function rewind_body(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface $message)
 {
     $body = $message->getBody();
     if ($body->tell()) {
@@ -269,7 +269,7 @@ function try_fopen($filename, $mode)
  * @return string
  * @throws \RuntimeException on error.
  */
-function copy_to_string(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLen = -1)
+function copy_to_string(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLen = -1)
 {
     $buffer = '';
     if ($maxLen === -1) {
@@ -306,7 +306,7 @@ function copy_to_string(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Str
  *
  * @throws \RuntimeException on error.
  */
-function copy_to_stream(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $source, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $dest, $maxLen = -1)
+function copy_to_stream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $source, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $dest, $maxLen = -1)
 {
     $bufferSize = 8192;
     if ($maxLen === -1) {
@@ -338,7 +338,7 @@ function copy_to_stream(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\Str
  * @return string Returns the hash of the stream
  * @throws \RuntimeException on error.
  */
-function hash(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, $algo, $rawOutput = false)
+function hash(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $algo, $rawOutput = false)
 {
     $pos = $stream->tell();
     if ($pos > 0) {
@@ -360,7 +360,7 @@ function hash(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterfa
  *
  * @return string|bool
  */
-function readline(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLength = null)
+function readline(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLength = null)
 {
     $buffer = '';
     $size = 0;
@@ -393,7 +393,7 @@ function parse_request($message)
     }
     $parts = explode(' ', $data['start-line'], 3);
     $version = isset($parts[2]) ? explode('/', $parts[2])[1] : '1.1';
-    $request = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request($parts[0], $matches[1] === '/' ? _parse_request_uri($parts[1], $data['headers']) : $parts[1], $data['headers'], $data['body'], $version);
+    $request = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request($parts[0], $matches[1] === '/' ? _parse_request_uri($parts[1], $data['headers']) : $parts[1], $data['headers'], $data['body'], $version);
     return $matches[1] === '/' ? $request : $request->withRequestTarget($parts[1]);
 }
 /**
@@ -413,7 +413,7 @@ function parse_response($message)
         throw new \InvalidArgumentException('Invalid response string');
     }
     $parts = explode(' ', $data['start-line'], 3);
-    return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Response($parts[1], $data['headers'], $data['body'], explode('/', $parts[0])[1], isset($parts[2]) ? $parts[2] : null);
+    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Response($parts[1], $data['headers'], $data['body'], explode('/', $parts[0])[1], isset($parts[2]) ? $parts[2] : null);
 }
 /**
  * Parse a query string into an associative array.

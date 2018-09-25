@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ServerRequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UploadedFileInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ServerRequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UploadedFileInterface;
 /**
  * Server-side HTTP request
  *
@@ -21,7 +21,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UploadedFileInterface;
  * implemented such that they retain the internal state of the current
  * message and return a new instance that contains the changed state.
  */
-class ServerRequest extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ServerRequestInterface
+class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ServerRequestInterface
 {
     /**
      * @var array
@@ -98,7 +98,7 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\
         if (is_array($value['tmp_name'])) {
             return self::normalizeNestedFileSpec($value);
         }
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
     }
     /**
      * Normalize an array of file specifications.
@@ -133,9 +133,9 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\
         $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
         $headers = function_exists('getallheaders') ? getallheaders() : [];
         $uri = self::getUriFromGlobals();
-        $body = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\LazyOpenStream('php://input', 'r+');
+        $body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream('php://input', 'r+');
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
-        $serverRequest = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
+        $serverRequest = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
         return $serverRequest->withCookieParams($_COOKIE)->withQueryParams($_GET)->withParsedBody($_POST)->withUploadedFiles(self::normalizeFiles($_FILES));
     }
     /**
@@ -145,7 +145,7 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\
      */
     public static function getUriFromGlobals()
     {
-        $uri = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Uri('');
+        $uri = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri('');
         $uri = $uri->withScheme(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
         $hasPort = false;
         if (isset($_SERVER['HTTP_HOST'])) {

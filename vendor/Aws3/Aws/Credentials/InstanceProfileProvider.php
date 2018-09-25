@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * Credential provider that provides credentials from the EC2 metadata server.
  */
@@ -31,7 +31,7 @@ class InstanceProfileProvider
     {
         $this->timeout = isset($config['timeout']) ? $config['timeout'] : 1.0;
         $this->profile = isset($config['profile']) ? $config['profile'] : null;
-        $this->client = isset($config['client']) ? $config['client'] : \DeliciousBrains\WP_Offload_S3\Aws3\Aws\default_http_handler();
+        $this->client = isset($config['client']) ? $config['client'] : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_http_handler();
     }
     /**
      * Loads instance profile credentials.
@@ -40,13 +40,13 @@ class InstanceProfileProvider
      */
     public function __invoke()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () {
             if (!$this->profile) {
                 $this->profile = (yield $this->request(self::CRED_PATH));
             }
             $json = (yield $this->request(self::CRED_PATH . $this->profile));
             $result = $this->decodeResult($json);
-            (yield new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials($result['AccessKeyId'], $result['SecretAccessKey'], $result['Token'], strtotime($result['Expiration'])));
+            (yield new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials($result['AccessKeyId'], $result['SecretAccessKey'], $result['Token'], strtotime($result['Expiration'])));
         });
     }
     /**
@@ -58,16 +58,16 @@ class InstanceProfileProvider
     {
         $disabled = getenv(self::ENV_DISABLE) ?: false;
         if (strcasecmp($disabled, 'true') === 0) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException($this->createErrorMessage('EC2 metadata server access disabled'));
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException($this->createErrorMessage('EC2 metadata server access disabled'));
         }
         $fn = $this->client;
-        $request = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request('GET', self::SERVER_URI . $url);
-        return $fn($request, ['timeout' => $this->timeout])->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface $response) {
+        $request = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request('GET', self::SERVER_URI . $url);
+        return $fn($request, ['timeout' => $this->timeout])->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response) {
             return (string) $response->getBody();
         })->otherwise(function (array $reason) {
             $reason = $reason['exception'];
             $msg = $reason->getMessage();
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException($this->createErrorMessage($msg));
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException($this->createErrorMessage($msg));
         });
     }
     private function createErrorMessage($previous)
@@ -78,7 +78,7 @@ class InstanceProfileProvider
     {
         $result = json_decode($response, true);
         if ($result['Code'] !== 'Success') {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\CredentialsException('Unexpected instance profile ' . 'response code: ' . $result['Code']);
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException('Unexpected instance profile ' . 'response code: ' . $result['Code']);
         }
         return $result;
     }

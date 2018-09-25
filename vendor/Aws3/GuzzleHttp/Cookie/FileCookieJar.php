@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
 
 /**
  * Persists non-session cookies using a JSON formatted file
  */
-class FileCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar
+class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar
 {
     /** @var string filename */
     private $filename;
@@ -46,11 +46,11 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cooki
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if (\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
+            if (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }
-        $jsonStr = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\json_encode($json);
+        $jsonStr = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\json_encode($json);
         if (false === file_put_contents($filename, $jsonStr)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
@@ -71,10 +71,10 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cooki
         } elseif ($json === '') {
             return;
         }
-        $data = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\json_decode($json, true);
+        $data = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\json_decode($json, true);
         if (is_array($data)) {
             foreach (json_decode($json, true) as $cookie) {
-                $this->setCookie(new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\SetCookie($cookie));
+                $this->setCookie(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie($cookie));
             }
         } elseif (strlen($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");

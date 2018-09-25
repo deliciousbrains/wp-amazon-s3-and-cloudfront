@@ -1,14 +1,14 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
 use ArrayAccess;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\HasDataTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
 use InvalidArgumentException as Iae;
 /**
  * Default implementation of an AWS partition.
  */
-final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionInterface
+final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionInterface
 {
     use HasDataTrait;
     /**

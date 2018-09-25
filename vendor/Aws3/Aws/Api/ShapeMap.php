@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Builds shape based on shape references.
@@ -48,7 +48,7 @@ class ShapeMap
         $definition = $shapeRef + $this->definitions[$shape];
         $definition['name'] = $definition['shape'];
         unset($definition['shape']);
-        $result = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape::create($definition, $this);
+        $result = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape::create($definition, $this);
         if ($isSimple) {
             $this->simple[$shape] = $result;
         }

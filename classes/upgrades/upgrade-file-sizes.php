@@ -9,7 +9,7 @@
  * @since       0.9.3
  */
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
 use Exception;
@@ -56,15 +56,15 @@ class Upgrade_File_Sizes extends Upgrade {
 	 * @return bool
 	 */
 	protected function upgrade_item( $attachment ) {
-		$s3object = unserialize( $attachment->s3object );
-		if ( false === $s3object ) {
-			AS3CF_Error::log( 'Failed to unserialize S3 meta for attachment ' . $attachment->ID . ': ' . $attachment->s3object );
+		$provider_object = unserialize( $attachment->provider_object );
+		if ( false === $provider_object ) {
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 
-		$region = $this->as3cf->get_s3object_region( $s3object );
+		$region = $this->as3cf->get_provider_object_region( $provider_object );
 		if ( is_wp_error( $region ) ) {
 			AS3CF_Error::log( 'Failed to get the region for the bucket of the attachment ' . $attachment->ID );
 			$this->error_count++;
@@ -72,25 +72,25 @@ class Upgrade_File_Sizes extends Upgrade {
 			return false;
 		}
 
-		$s3client  = $this->as3cf->get_s3client( $region, true );
-		$main_file = $s3object['key'];
+		$provider_client = $this->as3cf->get_provider_client( $region, true );
+		$main_file       = $provider_object['key'];
 
 		$ext    = pathinfo( $main_file, PATHINFO_EXTENSION );
-		$prefix = trailingslashit( dirname( $s3object['key'] ) );
+		$prefix = trailingslashit( dirname( $provider_object['key'] ) );
 
 		// Used to search S3 for all files related to an attachment
 		$search_prefix = $prefix . wp_basename( $main_file, ".$ext" );
 
 		$args = array(
-			'Bucket' => $s3object['bucket'],
+			'Bucket' => $provider_object['bucket'],
 			'Prefix' => $search_prefix,
 		);
 
 		try {
 			// List objects for the attachment
-			$result = $s3client->list_objects( $args );
+			$result = $provider_client->list_objects( $args );
 		} catch ( Exception $e ) {
-			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $attachment->ID . ' from S3: ' . $e->getMessage() );
+			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $attachment->ID . ' in bucket: ' . $e->getMessage() );
 			$this->error_count++;
 
 			return false;
@@ -145,7 +145,7 @@ class Upgrade_File_Sizes extends Upgrade {
 	 * @return array
 	 */
 	protected function get_items_to_process( $prefix, $limit, $offset = false ) {
-		$all_attachments = $this->get_s3_attachments( $prefix, $limit );
+		$all_attachments = $this->get_provider_attachments( $prefix, $limit );
 		$attachments     = array();
 
 		foreach ( $all_attachments as $attachment ) {
@@ -166,10 +166,10 @@ class Upgrade_File_Sizes extends Upgrade {
 	 *
 	 * @return mixed
 	 */
-	protected function get_s3_attachments( $prefix, $limit = null ) {
+	protected function get_provider_attachments( $prefix, $limit = null ) {
 		global $wpdb;
 
-		$sql = "SELECT pm1.`post_id` as `ID`, pm1.`meta_value` AS 's3object'
+		$sql = "SELECT pm1.`post_id` as `ID`, pm1.`meta_value` AS 'provider_object'
 				FROM `{$prefix}postmeta` pm1
 					LEFT OUTER JOIN `{$prefix}postmeta` pm2
 					ON pm1.`post_id` = pm2.`post_id`

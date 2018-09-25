@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Get the global task queue used for promise resolution.
@@ -19,13 +19,13 @@ namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
  *
  * @return TaskQueueInterface
  */
-function queue(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\TaskQueueInterface $assign = null)
+function queue(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\TaskQueueInterface $assign = null)
 {
     static $queue;
     if ($assign) {
         $queue = $assign;
     } elseif (!$queue) {
-        $queue = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\TaskQueue();
+        $queue = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\TaskQueue();
     }
     return $queue;
 }
@@ -40,7 +40,7 @@ function queue(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\TaskQueueI
 function task(callable $task)
 {
     $queue = queue();
-    $promise = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
+    $promise = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
     $queue->add(function () use($task, $promise) {
         try {
             $promise->resolve($task());
@@ -68,11 +68,11 @@ function promise_for($value)
     if (method_exists($value, 'then')) {
         $wfn = method_exists($value, 'wait') ? [$value, 'wait'] : null;
         $cfn = method_exists($value, 'cancel') ? [$value, 'cancel'] : null;
-        $promise = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise($wfn, $cfn);
+        $promise = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise($wfn, $cfn);
         $value->then([$promise, 'resolve'], [$promise, 'reject']);
         return $promise;
     }
-    return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\FulfilledPromise($value);
+    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise($value);
 }
 /**
  * Creates a rejected promise for a reason if the reason is not a promise. If
@@ -87,7 +87,7 @@ function rejection_for($reason)
     if ($reason instanceof PromiseInterface) {
         return $reason;
     }
-    return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectedPromise($reason);
+    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($reason);
 }
 /**
  * Create an exception for a rejected promise value.
@@ -98,7 +98,7 @@ function rejection_for($reason)
  */
 function exception_for($reason)
 {
-    return $reason instanceof \Exception || $reason instanceof \Throwable ? $reason : new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\RejectionException($reason);
+    return $reason instanceof \Exception || $reason instanceof \Throwable ? $reason : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectionException($reason);
 }
 /**
  * Returns an iterator for the given value.
@@ -131,16 +131,16 @@ function iter_for($value)
  *
  * @return array
  */
-function inspect(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
+function inspect(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
 {
     try {
-        return ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED, 'value' => $promise->wait()];
+        return ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED, 'value' => $promise->wait()];
     } catch (RejectionException $e) {
-        return ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e->getReason()];
+        return ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e->getReason()];
     } catch (\Throwable $e) {
-        return ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e];
+        return ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e];
     } catch (\Exception $e) {
-        return ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e];
+        return ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $e];
     }
 }
 /**
@@ -200,7 +200,7 @@ function all($promises)
     $results = [];
     return each($promises, function ($value, $idx) use(&$results) {
         $results[$idx] = $value;
-    }, function ($reason, $idx, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promise $aggregate) {
+    }, function ($reason, $idx, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise $aggregate) {
         $aggregate->reject($reason);
     })->then(function () use(&$results) {
         ksort($results);
@@ -227,8 +227,8 @@ function some($count, $promises)
 {
     $results = [];
     $rejections = [];
-    return each($promises, function ($value, $idx, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $p) use(&$results, $count) {
-        if ($p->getState() !== \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
+    return each($promises, function ($value, $idx, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $p) use(&$results, $count) {
+        if ($p->getState() !== \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING) {
             return;
         }
         $results[$idx] = $value;
@@ -239,7 +239,7 @@ function some($count, $promises)
         $rejections[] = $reason;
     })->then(function () use(&$results, &$rejections, $count) {
         if (count($results) !== $count) {
-            throw new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\AggregateException('Not enough promises to fulfill count', $rejections);
+            throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\AggregateException('Not enough promises to fulfill count', $rejections);
         }
         ksort($results);
         return array_values($results);
@@ -274,9 +274,9 @@ function settle($promises)
 {
     $results = [];
     return each($promises, function ($value, $idx) use(&$results) {
-        $results[$idx] = ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED, 'value' => $value];
+        $results[$idx] = ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED, 'value' => $value];
     }, function ($reason, $idx) use(&$results) {
-        $results[$idx] = ['state' => \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $reason];
+        $results[$idx] = ['state' => \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED, 'reason' => $reason];
     })->then(function () use(&$results) {
         ksort($results);
         return $results;
@@ -303,7 +303,7 @@ function settle($promises)
  */
 function each($iterable, callable $onFulfilled = null, callable $onRejected = null)
 {
-    return (new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
+    return (new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
 }
 /**
  * Like each, but only allows a certain number of outstanding promises at any
@@ -322,7 +322,7 @@ function each($iterable, callable $onFulfilled = null, callable $onRejected = nu
  */
 function each_limit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null)
 {
-    return (new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
+    return (new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
 }
 /**
  * Like each_limit, but ensures that no promise in the given $iterable argument
@@ -337,7 +337,7 @@ function each_limit($iterable, $concurrency, callable $onFulfilled = null, calla
  */
 function each_limit_all($iterable, $concurrency, callable $onFulfilled = null)
 {
-    return each_limit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $aggregate) {
+    return each_limit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $aggregate) {
         $aggregate->reject($reason);
     });
 }
@@ -348,9 +348,9 @@ function each_limit_all($iterable, $concurrency, callable $onFulfilled = null)
  *
  * @return bool
  */
-function is_fulfilled(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_fulfilled(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return $promise->getState() === \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED;
+    return $promise->getState() === \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::FULFILLED;
 }
 /**
  * Returns true if a promise is rejected.
@@ -359,9 +359,9 @@ function is_fulfilled(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Pro
  *
  * @return bool
  */
-function is_rejected(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_rejected(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return $promise->getState() === \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED;
+    return $promise->getState() === \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::REJECTED;
 }
 /**
  * Returns true if a promise is fulfilled or rejected.
@@ -370,9 +370,9 @@ function is_rejected(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Prom
  *
  * @return bool
  */
-function is_settled(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_settled(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return $promise->getState() !== \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING;
+    return $promise->getState() !== \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface::PENDING;
 }
 /**
  * @see Coroutine
@@ -383,5 +383,5 @@ function is_settled(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Promi
  */
 function coroutine(callable $generatorFn)
 {
-    return new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\Coroutine($generatorFn);
+    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Coroutine($generatorFn);
 }

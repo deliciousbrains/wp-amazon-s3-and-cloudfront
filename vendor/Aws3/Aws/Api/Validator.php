@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 use Aws;
 /**
@@ -32,7 +32,7 @@ class Validator
      *
      * @throws \InvalidArgumentException if the input is invalid.
      */
-    public function validate($name, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, array $input)
+    public function validate($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, array $input)
     {
         $this->dispatch($shape, $input);
         if ($this->errors) {
@@ -41,7 +41,7 @@ class Validator
             throw new \InvalidArgumentException($message);
         }
     }
-    private function dispatch(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function dispatch(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         static $methods = ['structure' => 'check_structure', 'list' => 'check_list', 'map' => 'check_map', 'blob' => 'check_blob', 'boolean' => 'check_boolean', 'integer' => 'check_numeric', 'float' => 'check_numeric', 'long' => 'check_numeric', 'string' => 'check_string', 'byte' => 'check_string', 'char' => 'check_string'];
         $type = $shape->getType();
@@ -49,7 +49,7 @@ class Validator
             $this->{$methods[$type]}($shape, $value);
         }
     }
-    private function check_structure(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\StructureShape $shape, $value)
+    private function check_structure(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $shape, $value)
     {
         if (!$this->checkAssociativeArray($value)) {
             return;
@@ -71,10 +71,10 @@ class Validator
             }
         }
     }
-    private function check_list(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ListShape $shape, $value)
+    private function check_list(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape $shape, $value)
     {
         if (!is_array($value)) {
-            $this->addError('must be an array. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+            $this->addError('must be an array. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             return;
         }
         $this->validateRange($shape, count($value), "list element count");
@@ -85,7 +85,7 @@ class Validator
             array_pop($this->path);
         }
     }
-    private function check_map(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\MapShape $shape, $value)
+    private function check_map(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape $shape, $value)
     {
         if (!$this->checkAssociativeArray($value)) {
             return;
@@ -97,40 +97,40 @@ class Validator
             array_pop($this->path);
         }
     }
-    private function check_blob(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function check_blob(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         static $valid = ['string' => true, 'integer' => true, 'double' => true, 'resource' => true];
         $type = gettype($value);
         if (!isset($valid[$type])) {
             if ($type != 'object' || !method_exists($value, '__toString')) {
-                $this->addError('must be an fopen resource, a ' . 'DeliciousBrains\\WP_Offload_S3\\Aws3\\GuzzleHttp\\Stream\\StreamInterface object, or something ' . 'that can be cast to a string. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+                $this->addError('must be an fopen resource, a ' . 'DeliciousBrains\\WP_Offload_Media\\Aws3\\GuzzleHttp\\Stream\\StreamInterface object, or something ' . 'that can be cast to a string. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             }
         }
     }
-    private function check_numeric(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function check_numeric(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         if (!is_numeric($value)) {
-            $this->addError('must be numeric. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+            $this->addError('must be numeric. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             return;
         }
         $this->validateRange($shape, $value, "numeric value");
     }
-    private function check_boolean(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function check_boolean(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         if (!is_bool($value)) {
-            $this->addError('must be a boolean. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+            $this->addError('must be a boolean. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
         }
     }
-    private function check_string(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $value)
+    private function check_string(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
         if ($shape['jsonvalue']) {
             if (!self::canJsonEncode($value)) {
-                $this->addError('must be a value encodable with \'json_encode\'.' . ' Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+                $this->addError('must be a value encodable with \'json_encode\'.' . ' Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             }
             return;
         }
         if (!$this->checkCanString($value)) {
-            $this->addError('must be a string or an object that implements ' . '__toString(). Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+            $this->addError('must be a string or an object that implements ' . '__toString(). Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             return;
         }
         $this->validateRange($shape, strlen($value), "string length");
@@ -141,7 +141,7 @@ class Validator
             }
         }
     }
-    private function validateRange(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Shape $shape, $length, $descriptor)
+    private function validateRange(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $length, $descriptor)
     {
         if ($this->constraints['min']) {
             $min = $shape['min'];
@@ -165,7 +165,7 @@ class Validator
     private function checkAssociativeArray($value)
     {
         if (!is_array($value) || isset($value[0])) {
-            $this->addError('must be an associative array. Found ' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\describe_type($value));
+            $this->addError('must be an associative array. Found ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\describe_type($value));
             return false;
         }
         return true;

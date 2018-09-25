@@ -1,12 +1,12 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 interface S3ClientInterface extends AwsClientInterface
 {
     /**
@@ -22,7 +22,7 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * @return RequestInterface
      */
-    public function createPresignedRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $expires);
+    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires);
     /**
      * Returns the URL to an object identified by its bucket and key.
      *

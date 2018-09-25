@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 abstract class MaterialsProvider
 {
@@ -30,7 +30,7 @@ abstract class MaterialsProvider
      *
      * @internal
      */
-    public abstract function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    public abstract function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
     /**
      * Returns the material description for this Provider so it can be verified
      * by encryption mechanisms.

@@ -9,12 +9,12 @@
  * @since       0.6.2
  */
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use Amazon_S3_And_CloudFront;
-use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\No_More_Blogs_Exception;
-use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
-use DeliciousBrains\WP_Offload_S3\Upgrades\Exceptions\Too_Many_Errors_Exception;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\No_More_Blogs_Exception;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Too_Many_Errors_Exception;
 use WP_Error;
 
 /**
@@ -437,7 +437,7 @@ abstract class Upgrade {
 	 * @return string
 	 */
 	protected function get_running_message() {
-		return sprintf( __( '<strong>Running %1$s Update%2$s</strong> &mdash; We&#8217;re going through all the Media Library items uploaded to S3 %3$s This will be done quietly in the background, processing a small batch of Media Library items every %4$d minutes. There should be no noticeable impact on your server&#8217;s performance.', 'amazon-s3-and-cloudfront' ),
+		return sprintf( __( '<strong>Running %1$s Update%2$s</strong> &mdash; We&#8217;re going through all the offloaded Media Library items %3$s This will be done quietly in the background, processing a small batch of Media Library items every %4$d minutes. There should be no noticeable impact on your server&#8217;s performance.', 'amazon-s3-and-cloudfront' ),
 			ucwords( $this->upgrade_type ),
 			$this->get_progress_text(),
 			$this->running_update_text,
@@ -464,7 +464,7 @@ abstract class Upgrade {
 	 * @return string
 	 */
 	protected function get_error_message() {
-		return sprintf( __( '<strong>Error Updating %1$s</strong> &mdash; We ran into some errors attempting to update the %2$s for all your Media Library items that have been uploaded to S3. Please check your error log for details. (#%3$d)', 'amazon-s3-and-cloudfront' ),
+		return sprintf( __( '<strong>Error Updating %1$s</strong> &mdash; We ran into some errors attempting to update the %2$s for all your Media Library items that have been offloaded. Please check your error log for details. (#%3$d)', 'amazon-s3-and-cloudfront' ),
 			ucwords( $this->upgrade_type ),
 			$this->upgrade_type,
 			$this->upgrade_id

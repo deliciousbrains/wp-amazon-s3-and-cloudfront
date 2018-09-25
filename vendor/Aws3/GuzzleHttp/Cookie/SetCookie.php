@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
 
 /**
  * Set-Cookie object

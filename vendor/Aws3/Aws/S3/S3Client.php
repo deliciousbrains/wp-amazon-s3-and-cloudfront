@@ -1,21 +1,21 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DocModel;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ClientResolver;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Command;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\RetryMiddleware;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Exception\RequestException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Client used to interact with **Amazon Simple Storage Service (Amazon S3)**.
  *
@@ -174,7 +174,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
  * @method \Aws\Result uploadPartCopy(array $args = [])
  * @method \GuzzleHttp\Promise\Promise uploadPartCopyAsync(array $args = [])
  */
-class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3ClientInterface
+class S3Client extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface
 {
     use S3ClientTrait;
     public static function getArguments()
@@ -219,18 +219,18 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
     {
         parent::__construct($args);
         $stack = $this->getHandlerList();
-        $stack->appendInit(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\SSECMiddleware::wrap($this->getEndpoint()->getScheme()), 's3.ssec');
-        $stack->appendBuild(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\ApplyChecksumMiddleware::wrap(), 's3.checksum');
-        $stack->appendBuild(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::contentType(['PutObject', 'UploadPart']), 's3.content_type');
+        $stack->appendInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\SSECMiddleware::wrap($this->getEndpoint()->getScheme()), 's3.ssec');
+        $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ApplyChecksumMiddleware::wrap(), 's3.checksum');
+        $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::contentType(['PutObject', 'UploadPart']), 's3.content_type');
         // Use the bucket style middleware when using a "bucket_endpoint" (for cnames)
         if ($this->getConfig('bucket_endpoint')) {
-            $stack->appendBuild(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\BucketEndpointMiddleware::wrap(), 's3.bucket_endpoint');
+            $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BucketEndpointMiddleware::wrap(), 's3.bucket_endpoint');
         } else {
-            $stack->appendBuild(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\S3EndpointMiddleware::wrap($this->getRegion(), ['dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint')]), 's3.endpoint_middleware');
+            $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3EndpointMiddleware::wrap($this->getRegion(), ['dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint')]), 's3.endpoint_middleware');
         }
-        $stack->appendSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\PutObjectUrlMiddleware::wrap(), 's3.put_object_url');
-        $stack->appendSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\PermanentRedirectMiddleware::wrap(), 's3.permanent_redirect');
-        $stack->appendInit(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::sourceFile($this->getApi()), 's3.source_file');
+        $stack->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\PutObjectUrlMiddleware::wrap(), 's3.put_object_url');
+        $stack->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\PermanentRedirectMiddleware::wrap(), 's3.permanent_redirect');
+        $stack->appendInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::sourceFile($this->getApi()), 's3.source_file');
         $stack->appendInit($this->getSaveAsParameter(), 's3.save_as');
         $stack->appendInit($this->getLocationConstraintMiddleware(), 's3.location');
         $stack->appendInit($this->getEncodingTypeMiddleware(), 's3.auto_encode');
@@ -252,18 +252,18 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
         $bucketLen = strlen($bucket);
         return $bucketLen >= 3 && $bucketLen <= 63 && !filter_var($bucket, FILTER_VALIDATE_IP) && preg_match('/^[a-z0-9]([a-z0-9\\-\\.]*[a-z0-9])?$/', $bucket);
     }
-    public function createPresignedRequest(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, $expires)
+    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires)
     {
         $command = clone $command;
         $command->getHandlerList()->remove('signer');
         /** @var \Aws\Signature\SignatureInterface $signer */
         $signer = call_user_func($this->getSignatureProvider(), $this->getConfig('signature_version'), $this->getConfig('signing_name'), $this->getConfig('signing_region'));
-        return $signer->presign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\serialize($command), $this->getCredentials()->wait(), $expires);
+        return $signer->presign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($command), $this->getCredentials()->wait(), $expires);
     }
     public function getObjectUrl($bucket, $key)
     {
         $command = $this->getCommand('GetObject', ['Bucket' => $bucket, 'Key' => $key]);
-        return (string) \DeliciousBrains\WP_Offload_S3\Aws3\Aws\serialize($command)->getUri();
+        return (string) \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($command)->getUri();
     }
     /**
      * Raw URL encode a key and allow for '/' characters
@@ -285,7 +285,7 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
     {
         $region = $this->getRegion();
         return static function (callable $handler) use($region) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Command $command, $request = null) use($handler, $region) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command, $request = null) use($handler, $region) {
                 if ($command->getName() === 'CreateBucket') {
                     $locationConstraint = isset($command['CreateBucketConfiguration']['LocationConstraint']) ? $command['CreateBucketConfiguration']['LocationConstraint'] : null;
                     if ($locationConstraint === 'us-east-1') {
@@ -306,7 +306,7 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
     private function getSaveAsParameter()
     {
         return static function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Command $command, $request = null) use($handler) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command, $request = null) use($handler) {
                 if ($command->getName() === 'GetObject' && isset($command['SaveAs'])) {
                     $command['@http']['sink'] = $command['SaveAs'];
                     unset($command['SaveAs']);
@@ -324,7 +324,7 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
     private function getHeadObjectMiddleware()
     {
         return static function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler) {
                 if ($command->getName() === 'HeadObject' && !isset($command['@http']['decode_content'])) {
                     $command['@http']['decode_content'] = false;
                 }
@@ -341,13 +341,13 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
     private function getEncodingTypeMiddleware()
     {
         return static function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Command $command, $request = null) use($handler) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command, $request = null) use($handler) {
                 $autoSet = false;
                 if ($command->getName() === 'ListObjects' && empty($command['EncodingType'])) {
                     $command['EncodingType'] = 'url';
                     $autoSet = true;
                 }
-                return $handler($command, $request)->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface $result) use($autoSet) {
+                return $handler($command, $request)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result) use($autoSet) {
                     if ($result['EncodingType'] === 'url' && $autoSet) {
                         static $topLevel = ['Delimiter', 'Marker', 'NextMarker', 'Prefix'];
                         static $nested = [['Contents', 'Key'], ['CommonPrefixes', 'Prefix']];
@@ -372,12 +372,12 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
         };
     }
     /** @internal */
-    public static function _applyRetryConfig($value, $_, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _applyRetryConfig($value, $_, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if (!$value) {
             return;
         }
-        $decider = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\RetryMiddleware::createDefaultDecider($value);
+        $decider = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::createDefaultDecider($value);
         $decider = function ($retries, $command, $request, $result, $error) use($decider, $value) {
             $maxRetries = null !== $command['@retries'] ? $command['@retries'] : $value;
             if ($decider($retries, $command, $request, $result, $error)) {
@@ -396,14 +396,14 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
             }
             return false;
         };
-        $delay = [\DeliciousBrains\WP_Offload_S3\Aws3\Aws\RetryMiddleware::class, 'exponentialDelay'];
-        $list->appendSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::retry($decider, $delay), 'retry');
+        $delay = [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::class, 'exponentialDelay'];
+        $list->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::retry($decider, $delay), 'retry');
     }
     /** @internal */
-    public static function _applyApiProvider($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _applyApiProvider($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
-        \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ClientResolver::_apply_api_provider($value, $args, $list);
-        $args['parser'] = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\GetBucketLocationParser(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\AmbiguousSuccessParser(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\S3\RetryableMalformedResponseParser($args['parser'], $args['exception_class']), $args['error_parser'], $args['exception_class']));
+        \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver::_apply_api_provider($value, $args, $list);
+        $args['parser'] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\GetBucketLocationParser(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\AmbiguousSuccessParser(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RetryableMalformedResponseParser($args['parser'], $args['exception_class']), $args['error_parser'], $args['exception_class']));
     }
     /**
      * @internal
@@ -445,6 +445,6 @@ class S3Client extends \DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClient impleme
         $api['shapes']['BucketLocationConstraint']['enum'] = ["ap-northeast-1", "ap-southeast-2", "ap-southeast-1", "cn-north-1", "eu-central-1", "eu-west-1", "us-east-1", "us-west-1", "us-west-2", "sa-east-1"];
         // Add a note that the ContentMD5 is optional.
         $docs['shapes']['ContentMD5']['append'] = '<div class="alert alert-info">The value will be computed on ' . 'your behalf.</div>';
-        return [new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service($api, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider::defaultProvider()), new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\DocModel($docs)];
+        return [new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service($api, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::defaultProvider()), new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel($docs)];
     }
 }

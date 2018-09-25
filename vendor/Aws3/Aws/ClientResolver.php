@@ -1,18 +1,18 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Validator;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionEndpointProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\EndpointProvider;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\EndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider;
 use InvalidArgumentException as IAE;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * @internal Resolves a hash of client arguments to construct a client.
  */
@@ -22,7 +22,7 @@ class ClientResolver
     private $argDefinitions;
     /** @var array Map of types to a corresponding function */
     private static $typeMap = ['resource' => 'is_resource', 'callable' => 'is_callable', 'int' => 'is_int', 'bool' => 'is_bool', 'string' => 'is_string', 'object' => 'is_object', 'array' => 'is_array'];
-    private static $defaultArgs = ['service' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'Name of the service to utilize. This value will be supplied by default when using one of the SDK clients (e.g., Aws\\S3\\S3Client).', 'required' => true, 'internal' => true], 'exception_class' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'Exception class to create when an error occurs.', 'default' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Exception\\AwsException', 'internal' => true], 'scheme' => ['type' => 'value', 'valid' => ['string'], 'default' => 'https', 'doc' => 'URI scheme to use when connecting connect. The SDK will utilize "https" endpoints (i.e., utilize SSL/TLS connections) by default. You can attempt to connect to a service over an unencrypted "http" endpoint by setting ``scheme`` to "http".'], 'endpoint' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'The full URI of the webservice. This is only required when connecting to a custom endpoint (e.g., a local version of S3).', 'fn' => [__CLASS__, '_apply_endpoint']], 'region' => ['type' => 'value', 'valid' => ['string'], 'required' => [__CLASS__, '_missing_region'], 'doc' => 'Region to connect to. See http://docs.aws.amazon.com/general/latest/gr/rande.html for a list of available regions.'], 'version' => ['type' => 'value', 'valid' => ['string'], 'required' => [__CLASS__, '_missing_version'], 'doc' => 'The version of the webservice to utilize (e.g., 2006-03-01).'], 'signature_provider' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'A callable that accepts a signature version name (e.g., "v4"), a service name, and region, and  returns a SignatureInterface object or null. This provider is used to create signers utilized by the client. See Aws\\Signature\\SignatureProvider for a list of built-in providers', 'default' => [__CLASS__, '_default_signature_provider']], 'api_provider' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'An optional PHP callable that accepts a type, service, and version argument, and returns an array of corresponding configuration data. The type value can be one of api, waiter, or paginator.', 'fn' => [__CLASS__, '_apply_api_provider'], 'default' => [\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider::class, 'defaultProvider']], 'endpoint_provider' => ['type' => 'value', 'valid' => ['callable'], 'fn' => [__CLASS__, '_apply_endpoint_provider'], 'doc' => 'An optional PHP callable that accepts a hash of options including a "service" and "region" key and returns NULL or a hash of endpoint data, of which the "endpoint" key is required. See Aws\\Endpoint\\EndpointProvider for a list of built-in providers.', 'default' => [__CLASS__, '_default_endpoint_provider']], 'serializer' => ['default' => [__CLASS__, '_default_serializer'], 'fn' => [__CLASS__, '_apply_serializer'], 'internal' => true, 'type' => 'value', 'valid' => ['callable']], 'signature_version' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom signature version to use with a service (e.g., v4). Note that per/operation signature version MAY override this requested signature version.', 'default' => [__CLASS__, '_default_signature_version']], 'signing_name' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom service name to be used when calculating a request signature.', 'default' => [__CLASS__, '_default_signing_name']], 'signing_region' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom region name to be used when calculating a request signature.', 'default' => [__CLASS__, '_default_signing_region']], 'profile' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'Allows you to specify which profile to use when credentials are created from the AWS credentials file in your HOME directory. This setting overrides the AWS_PROFILE environment variable. Note: Specifying "profile" will cause the "credentials" key to be ignored.', 'fn' => [__CLASS__, '_apply_profile']], 'credentials' => ['type' => 'value', 'valid' => [\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialsInterface::class, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CacheInterface::class, 'array', 'bool', 'callable'], 'doc' => 'Specifies the credentials used to sign requests. Provide an Aws\\Credentials\\CredentialsInterface object, an associative array of "key", "secret", and an optional "token" key, `false` to use null credentials, or a callable credentials provider used to create credentials or return null. See Aws\\Credentials\\CredentialProvider for a list of built-in credentials providers. If no credentials are provided, the SDK will attempt to load them from the environment.', 'fn' => [__CLASS__, '_apply_credentials'], 'default' => [\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::class, 'defaultProvider']], 'stats' => ['type' => 'value', 'valid' => ['bool', 'array'], 'default' => false, 'doc' => 'Set to true to gather transfer statistics on requests sent. Alternatively, you can provide an associative array with the following keys: retries: (bool) Set to false to disable reporting on retries attempted; http: (bool) Set to true to enable collecting statistics from lower level HTTP adapters (e.g., values returned in GuzzleHttp\\TransferStats). HTTP handlers must support an http_stats_receiver option for this to have an effect; timer: (bool) Set to true to enable a command timer that reports the total wall clock time spent on an operation in seconds.', 'fn' => [__CLASS__, '_apply_stats']], 'retries' => ['type' => 'value', 'valid' => ['int'], 'doc' => 'Configures the maximum number of allowed retries for a client (pass 0 to disable retries). ', 'fn' => [__CLASS__, '_apply_retries'], 'default' => 3], 'validate' => ['type' => 'value', 'valid' => ['bool', 'array'], 'default' => true, 'doc' => 'Set to false to disable client-side parameter validation. Set to true to utilize default validation constraints. Set to an associative array of validation options to enable specific validation constraints.', 'fn' => [__CLASS__, '_apply_validate']], 'debug' => ['type' => 'value', 'valid' => ['bool', 'array'], 'doc' => 'Set to true to display debug information when sending requests. Alternatively, you can provide an associative array with the following keys: logfn: (callable) Function that is invoked with log messages; stream_size: (int) When the size of a stream is greater than this number, the stream data will not be logged (set to "0" to not log any stream data); scrub_auth: (bool) Set to false to disable the scrubbing of auth data from the logged messages; http: (bool) Set to false to disable the "debug" feature of lower level HTTP adapters (e.g., verbose curl output).', 'fn' => [__CLASS__, '_apply_debug']], 'http' => ['type' => 'value', 'valid' => ['array'], 'default' => [], 'doc' => 'Set to an array of SDK request options to apply to each request (e.g., proxy, verify, etc.).'], 'http_handler' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'An HTTP handler is a function that accepts a PSR-7 request object and returns a promise that is fulfilled with a PSR-7 response object or rejected with an array of exception data. NOTE: This option supersedes any provided "handler" option.', 'fn' => [__CLASS__, '_apply_http_handler']], 'handler' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'A handler that accepts a command object, request object and returns a promise that is fulfilled with an Aws\\ResultInterface object or rejected with an Aws\\Exception\\AwsException. A handler does not accept a next handler as it is terminal and expected to fulfill a command. If no handler is provided, a default Guzzle handler will be utilized.', 'fn' => [__CLASS__, '_apply_handler'], 'default' => [__CLASS__, '_default_handler']], 'ua_append' => ['type' => 'value', 'valid' => ['string', 'array'], 'doc' => 'Provide a string or array of strings to send in the User-Agent header.', 'fn' => [__CLASS__, '_apply_user_agent'], 'default' => []], 'idempotency_auto_fill' => ['type' => 'value', 'valid' => ['bool', 'callable'], 'doc' => 'Set to false to disable SDK to populate parameters that enabled \'idempotencyToken\' trait with a random UUID v4 value on your behalf. Using default value \'true\' still allows parameter value to be overwritten when provided. Note: auto-fill only works when cryptographically secure random bytes generator functions(random_bytes, openssl_random_pseudo_bytes or mcrypt_create_iv) can be found. You may also provide a callable source of random bytes.', 'default' => true, 'fn' => [__CLASS__, '_apply_idempotency_auto_fill']]];
+    private static $defaultArgs = ['service' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'Name of the service to utilize. This value will be supplied by default when using one of the SDK clients (e.g., Aws\\S3\\S3Client).', 'required' => true, 'internal' => true], 'exception_class' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'Exception class to create when an error occurs.', 'default' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Exception\\AwsException', 'internal' => true], 'scheme' => ['type' => 'value', 'valid' => ['string'], 'default' => 'https', 'doc' => 'URI scheme to use when connecting connect. The SDK will utilize "https" endpoints (i.e., utilize SSL/TLS connections) by default. You can attempt to connect to a service over an unencrypted "http" endpoint by setting ``scheme`` to "http".'], 'endpoint' => ['type' => 'value', 'valid' => ['string'], 'doc' => 'The full URI of the webservice. This is only required when connecting to a custom endpoint (e.g., a local version of S3).', 'fn' => [__CLASS__, '_apply_endpoint']], 'region' => ['type' => 'value', 'valid' => ['string'], 'required' => [__CLASS__, '_missing_region'], 'doc' => 'Region to connect to. See http://docs.aws.amazon.com/general/latest/gr/rande.html for a list of available regions.'], 'version' => ['type' => 'value', 'valid' => ['string'], 'required' => [__CLASS__, '_missing_version'], 'doc' => 'The version of the webservice to utilize (e.g., 2006-03-01).'], 'signature_provider' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'A callable that accepts a signature version name (e.g., "v4"), a service name, and region, and  returns a SignatureInterface object or null. This provider is used to create signers utilized by the client. See Aws\\Signature\\SignatureProvider for a list of built-in providers', 'default' => [__CLASS__, '_default_signature_provider']], 'api_provider' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'An optional PHP callable that accepts a type, service, and version argument, and returns an array of corresponding configuration data. The type value can be one of api, waiter, or paginator.', 'fn' => [__CLASS__, '_apply_api_provider'], 'default' => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::class, 'defaultProvider']], 'endpoint_provider' => ['type' => 'value', 'valid' => ['callable'], 'fn' => [__CLASS__, '_apply_endpoint_provider'], 'doc' => 'An optional PHP callable that accepts a hash of options including a "service" and "region" key and returns NULL or a hash of endpoint data, of which the "endpoint" key is required. See Aws\\Endpoint\\EndpointProvider for a list of built-in providers.', 'default' => [__CLASS__, '_default_endpoint_provider']], 'serializer' => ['default' => [__CLASS__, '_default_serializer'], 'fn' => [__CLASS__, '_apply_serializer'], 'internal' => true, 'type' => 'value', 'valid' => ['callable']], 'signature_version' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom signature version to use with a service (e.g., v4). Note that per/operation signature version MAY override this requested signature version.', 'default' => [__CLASS__, '_default_signature_version']], 'signing_name' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom service name to be used when calculating a request signature.', 'default' => [__CLASS__, '_default_signing_name']], 'signing_region' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'A string representing a custom region name to be used when calculating a request signature.', 'default' => [__CLASS__, '_default_signing_region']], 'profile' => ['type' => 'config', 'valid' => ['string'], 'doc' => 'Allows you to specify which profile to use when credentials are created from the AWS credentials file in your HOME directory. This setting overrides the AWS_PROFILE environment variable. Note: Specifying "profile" will cause the "credentials" key to be ignored.', 'fn' => [__CLASS__, '_apply_profile']], 'credentials' => ['type' => 'value', 'valid' => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface::class, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface::class, 'array', 'bool', 'callable'], 'doc' => 'Specifies the credentials used to sign requests. Provide an Aws\\Credentials\\CredentialsInterface object, an associative array of "key", "secret", and an optional "token" key, `false` to use null credentials, or a callable credentials provider used to create credentials or return null. See Aws\\Credentials\\CredentialProvider for a list of built-in credentials providers. If no credentials are provided, the SDK will attempt to load them from the environment.', 'fn' => [__CLASS__, '_apply_credentials'], 'default' => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::class, 'defaultProvider']], 'stats' => ['type' => 'value', 'valid' => ['bool', 'array'], 'default' => false, 'doc' => 'Set to true to gather transfer statistics on requests sent. Alternatively, you can provide an associative array with the following keys: retries: (bool) Set to false to disable reporting on retries attempted; http: (bool) Set to true to enable collecting statistics from lower level HTTP adapters (e.g., values returned in GuzzleHttp\\TransferStats). HTTP handlers must support an http_stats_receiver option for this to have an effect; timer: (bool) Set to true to enable a command timer that reports the total wall clock time spent on an operation in seconds.', 'fn' => [__CLASS__, '_apply_stats']], 'retries' => ['type' => 'value', 'valid' => ['int'], 'doc' => 'Configures the maximum number of allowed retries for a client (pass 0 to disable retries). ', 'fn' => [__CLASS__, '_apply_retries'], 'default' => 3], 'validate' => ['type' => 'value', 'valid' => ['bool', 'array'], 'default' => true, 'doc' => 'Set to false to disable client-side parameter validation. Set to true to utilize default validation constraints. Set to an associative array of validation options to enable specific validation constraints.', 'fn' => [__CLASS__, '_apply_validate']], 'debug' => ['type' => 'value', 'valid' => ['bool', 'array'], 'doc' => 'Set to true to display debug information when sending requests. Alternatively, you can provide an associative array with the following keys: logfn: (callable) Function that is invoked with log messages; stream_size: (int) When the size of a stream is greater than this number, the stream data will not be logged (set to "0" to not log any stream data); scrub_auth: (bool) Set to false to disable the scrubbing of auth data from the logged messages; http: (bool) Set to false to disable the "debug" feature of lower level HTTP adapters (e.g., verbose curl output).', 'fn' => [__CLASS__, '_apply_debug']], 'http' => ['type' => 'value', 'valid' => ['array'], 'default' => [], 'doc' => 'Set to an array of SDK request options to apply to each request (e.g., proxy, verify, etc.).'], 'http_handler' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'An HTTP handler is a function that accepts a PSR-7 request object and returns a promise that is fulfilled with a PSR-7 response object or rejected with an array of exception data. NOTE: This option supersedes any provided "handler" option.', 'fn' => [__CLASS__, '_apply_http_handler']], 'handler' => ['type' => 'value', 'valid' => ['callable'], 'doc' => 'A handler that accepts a command object, request object and returns a promise that is fulfilled with an Aws\\ResultInterface object or rejected with an Aws\\Exception\\AwsException. A handler does not accept a next handler as it is terminal and expected to fulfill a command. If no handler is provided, a default Guzzle handler will be utilized.', 'fn' => [__CLASS__, '_apply_handler'], 'default' => [__CLASS__, '_default_handler']], 'ua_append' => ['type' => 'value', 'valid' => ['string', 'array'], 'doc' => 'Provide a string or array of strings to send in the User-Agent header.', 'fn' => [__CLASS__, '_apply_user_agent'], 'default' => []], 'idempotency_auto_fill' => ['type' => 'value', 'valid' => ['bool', 'callable'], 'doc' => 'Set to false to disable SDK to populate parameters that enabled \'idempotencyToken\' trait with a random UUID v4 value on your behalf. Using default value \'true\' still allows parameter value to be overwritten when provided. Note: auto-fill only works when cryptographically secure random bytes generator functions(random_bytes, openssl_random_pseudo_bytes or mcrypt_create_iv) can be found. You may also provide a callable source of random bytes.', 'default' => true, 'fn' => [__CLASS__, '_apply_idempotency_auto_fill']]];
     /**
      * Gets an array of default client arguments, each argument containing a
      * hash of the following:
@@ -73,7 +73,7 @@ class ClientResolver
      * @throws \InvalidArgumentException
      * @see Aws\AwsClient::__construct for a list of available options.
      */
-    public function resolve(array $args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public function resolve(array $args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         $args['config'] = [];
         foreach ($this->argDefinitions as $key => $a) {
@@ -179,11 +179,11 @@ class ClientResolver
         $msg .= implode("\n\n", $missing);
         throw new \InvalidArgumentException($msg);
     }
-    public static function _apply_retries($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_retries($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if ($value) {
-            $decider = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\RetryMiddleware::createDefaultDecider($value);
-            $list->appendSign(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::retry($decider, null, $args['stats']['retries']), 'retry');
+            $decider = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::createDefaultDecider($value);
+            $list->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::retry($decider, null, $args['stats']['retries']), 'retry');
         }
     }
     public static function _apply_credentials($value, array &$args)
@@ -192,34 +192,34 @@ class ClientResolver
             return;
         }
         if ($value instanceof CredentialsInterface) {
-            $args['credentials'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::fromCredentials($value);
+            $args['credentials'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::fromCredentials($value);
         } elseif (is_array($value) && isset($value['key']) && isset($value['secret'])) {
-            $args['credentials'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::fromCredentials(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials($value['key'], $value['secret'], isset($value['token']) ? $value['token'] : null, isset($value['expires']) ? $value['expires'] : null));
+            $args['credentials'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::fromCredentials(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials($value['key'], $value['secret'], isset($value['token']) ? $value['token'] : null, isset($value['expires']) ? $value['expires'] : null));
         } elseif ($value === false) {
-            $args['credentials'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::fromCredentials(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\Credentials('', ''));
+            $args['credentials'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::fromCredentials(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials('', ''));
             $args['config']['signature_version'] = 'anonymous';
         } elseif ($value instanceof CacheInterface) {
-            $args['credentials'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::defaultProvider($args);
+            $args['credentials'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::defaultProvider($args);
         } else {
-            throw new \InvalidArgumentException('Credentials must be an instance of ' . 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Credentials\\CredentialsInterface, an associative ' . 'array that contains "key", "secret", and an optional "token" ' . 'key-value pairs, a credentials provider function, or false.');
+            throw new \InvalidArgumentException('Credentials must be an instance of ' . 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Credentials\\CredentialsInterface, an associative ' . 'array that contains "key", "secret", and an optional "token" ' . 'key-value pairs, a credentials provider function, or false.');
         }
     }
     public static function _apply_api_provider(callable $value, array &$args)
     {
-        $api = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider::resolve($value, 'api', $args['service'], $args['version']), $value);
+        $api = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::resolve($value, 'api', $args['service'], $args['version']), $value);
         if (empty($args['config']['signing_name']) && isset($api['metadata']['signingName'])) {
             $args['config']['signing_name'] = $api['metadata']['signingName'];
         }
         $args['api'] = $api;
-        $args['parser'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service::createParser($api);
-        $args['error_parser'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service::createErrorParser($api->getProtocol());
+        $args['parser'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service::createParser($api);
+        $args['error_parser'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service::createErrorParser($api->getProtocol());
     }
     public static function _apply_endpoint_provider(callable $value, array &$args)
     {
         if (!isset($args['endpoint'])) {
             $endpointPrefix = isset($args['api']['metadata']['endpointPrefix']) ? $args['api']['metadata']['endpointPrefix'] : $args['service'];
             // Invoke the endpoint provider and throw if it does not resolve.
-            $result = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\EndpointProvider::resolve($value, ['service' => $endpointPrefix, 'region' => $args['region'], 'scheme' => $args['scheme']]);
+            $result = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\EndpointProvider::resolve($value, ['service' => $endpointPrefix, 'region' => $args['region'], 'scheme' => $args['scheme']]);
             $args['endpoint'] = $result['endpoint'];
             if (empty($args['config']['signature_version']) && isset($result['signatureVersion'])) {
                 $args['config']['signature_version'] = $result['signatureVersion'];
@@ -232,17 +232,17 @@ class ClientResolver
             }
         }
     }
-    public static function _apply_serializer($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_serializer($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
-        $list->prependBuild(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::requestBuilder($value), 'builder');
+        $list->prependBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::requestBuilder($value), 'builder');
     }
-    public static function _apply_debug($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_debug($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if ($value !== false) {
-            $list->interpose(new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\TraceMiddleware($value === true ? [] : $value));
+            $list->interpose(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\TraceMiddleware($value === true ? [] : $value));
         }
     }
-    public static function _apply_stats($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_stats($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         // Create an array of stat collectors that are disabled (set to false)
         // by default. If the user has passed in true, enable all stat
@@ -250,34 +250,34 @@ class ClientResolver
         $defaults = array_fill_keys(['http', 'retries', 'timer'], $value === true);
         $args['stats'] = is_array($value) ? array_replace($defaults, $value) : $defaults;
         if ($args['stats']['timer']) {
-            $list->prependInit(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::timer(), 'timer');
+            $list->prependInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::timer(), 'timer');
         }
     }
     public static function _apply_profile($_, array &$args)
     {
-        $args['credentials'] = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Credentials\CredentialProvider::ini($args['profile']);
+        $args['credentials'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider::ini($args['profile']);
     }
-    public static function _apply_validate($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_validate($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if ($value === false) {
             return;
         }
-        $validator = $value === true ? new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Validator() : new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Validator($value);
-        $list->appendValidate(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Middleware::validation($args['api'], $validator), 'validation');
+        $validator = $value === true ? new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator() : new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator($value);
+        $list->appendValidate(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::validation($args['api'], $validator), 'validation');
     }
-    public static function _apply_handler($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_handler($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         $list->setHandler($value);
     }
     public static function _default_handler(array &$args)
     {
-        return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\WrappedHttpHandler(default_http_handler(), $args['parser'], $args['error_parser'], $args['exception_class'], $args['stats']['http']);
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\WrappedHttpHandler(default_http_handler(), $args['parser'], $args['error_parser'], $args['exception_class'], $args['stats']['http']);
     }
-    public static function _apply_http_handler($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_http_handler($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
-        $args['handler'] = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\WrappedHttpHandler($value, $args['parser'], $args['error_parser'], $args['exception_class'], $args['stats']['http']);
+        $args['handler'] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\WrappedHttpHandler($value, $args['parser'], $args['error_parser'], $args['exception_class'], $args['stats']['http']);
     }
-    public static function _apply_user_agent($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_user_agent($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if (!is_array($value)) {
             $value = [$value];
@@ -286,15 +286,15 @@ class ClientResolver
         if (defined('HHVM_VERSION')) {
             array_unshift($value, 'HHVM/' . HHVM_VERSION);
         }
-        array_unshift($value, 'aws-sdk-php/' . \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Sdk::VERSION);
+        array_unshift($value, 'aws-sdk-php/' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sdk::VERSION);
         $args['ua_append'] = $value;
         $list->appendBuild(static function (callable $handler) use($value) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request) use($handler, $value) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request) use($handler, $value) {
                 return $handler($command, $request->withHeader('User-Agent', implode(' ', array_merge($value, $request->getHeader('User-Agent')))));
             };
         });
     }
-    public static function _apply_endpoint($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_endpoint($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         $parts = parse_url($value);
         if (empty($parts['scheme']) || empty($parts['host'])) {
@@ -302,7 +302,7 @@ class ClientResolver
         }
         $args['endpoint'] = $value;
     }
-    public static function _apply_idempotency_auto_fill($value, array &$args, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list)
+    public static function _apply_idempotency_auto_fill($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         $enabled = false;
         $generator = null;
@@ -313,27 +313,27 @@ class ClientResolver
             $generator = $value;
         }
         if ($enabled) {
-            $list->prependInit(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\IdempotencyTokenMiddleware::wrap($args['api'], $generator), 'idempotency_auto_fill');
+            $list->prependInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\IdempotencyTokenMiddleware::wrap($args['api'], $generator), 'idempotency_auto_fill');
         }
     }
     public static function _default_endpoint_provider(array $args)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider()->getPartition($args['region'], $args['service']);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider()->getPartition($args['region'], $args['service']);
     }
     public static function _default_serializer(array $args)
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\Service::createSerializer($args['api'], $args['endpoint']);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service::createSerializer($args['api'], $args['endpoint']);
     }
     public static function _default_signature_provider()
     {
-        return \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Signature\SignatureProvider::defaultProvider();
+        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider::defaultProvider();
     }
     public static function _default_signature_version(array &$args)
     {
         if (isset($args['config']['signature_version'])) {
             return $args['config']['signature_version'];
         }
-        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
+        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
         return isset($args['__partition_result']['signatureVersion']) ? $args['__partition_result']['signatureVersion'] : $args['api']->getSignatureVersion();
     }
     public static function _default_signing_name(array &$args)
@@ -341,7 +341,7 @@ class ClientResolver
         if (isset($args['config']['signing_name'])) {
             return $args['config']['signing_name'];
         }
-        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
+        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
         if (isset($args['__partition_result']['signingName'])) {
             return $args['__partition_result']['signingName'];
         }
@@ -355,13 +355,13 @@ class ClientResolver
         if (isset($args['config']['signing_region'])) {
             return $args['config']['signing_region'];
         }
-        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
+        $args['__partition_result'] = isset($args['__partition_result']) ? isset($args['__partition_result']) : call_user_func(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider(), ['service' => $args['service'], 'region' => $args['region']]);
         return isset($args['__partition_result']['signingRegion']) ? $args['__partition_result']['signingRegion'] : $args['region'];
     }
     public static function _missing_version(array $args)
     {
         $service = isset($args['service']) ? $args['service'] : '';
-        $versions = \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Api\ApiProvider::defaultProvider()->getVersions($service);
+        $versions = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::defaultProvider()->getVersions($service);
         $versions = implode("\n", array_map(function ($v) {
             return "* \"{$v}\"";
         }, $versions)) ?: '* (none found)';

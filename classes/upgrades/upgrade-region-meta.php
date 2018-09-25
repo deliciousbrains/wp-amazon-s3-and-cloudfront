@@ -9,7 +9,7 @@
  * @since       0.6.2
  */
 
-namespace DeliciousBrains\WP_Offload_S3\Upgrades;
+namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
 
@@ -43,7 +43,7 @@ class Upgrade_Region_Meta extends Upgrade {
 	 * @return string
 	 */
 	protected function get_running_update_text() {
-		return __( 'and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper S3 region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>.', 'amazon-s3-and-cloudfront' );
+		return __( 'and updating the metadata with the bucket region it is served from. This will allow us to serve your files from the proper region subdomain <span style="white-space:nowrap;">(e.g. s3-us-west-2.amazonaws.com)</span>.', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**
@@ -54,15 +54,15 @@ class Upgrade_Region_Meta extends Upgrade {
 	 * @return bool
 	 */
 	protected function upgrade_item( $attachment ) {
-		$s3object = unserialize( $attachment->s3object );
-		if ( false === $s3object ) {
-			AS3CF_Error::log( 'Failed to unserialize S3 meta for attachment ' . $attachment->ID . ': ' . $attachment->s3object );
+		$provider_object = unserialize( $attachment->provider_object );
+		if ( false === $provider_object ) {
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 		// retrieve region and update the attachment metadata
-		$region = $this->as3cf->get_s3object_region( $s3object, $attachment->ID );
+		$region = $this->as3cf->get_provider_object_region( $provider_object, $attachment->ID );
 		if ( is_wp_error( $region ) ) {
 			AS3CF_Error::log( 'Error updating region: ' . $region->get_error_message() );
 			$this->error_count++;
@@ -133,7 +133,7 @@ class Upgrade_Region_Meta extends Upgrade {
 			return $wpdb->get_var( $sql );
 		}
 
-		$sql = "SELECT `post_id` as `ID`, `meta_value` AS 's3object'" . $sql;
+		$sql = "SELECT `post_id` as `ID`, `meta_value` AS 'provider_object'" . $sql;
 
 		if ( $limit && $limit > 0 ) {
 			$sql .= sprintf( ' LIMIT %d', (int) $limit );

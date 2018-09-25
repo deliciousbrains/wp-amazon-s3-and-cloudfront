@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Compiles JMESPath expressions to PHP source code and executes it.
@@ -23,16 +23,16 @@ class CompilerRuntime
      * @param Parser $parser JMESPath parser to utilize
      * @throws \RuntimeException if the cache directory cannot be created
      */
-    public function __construct($dir = null, \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Parser $parser = null)
+    public function __construct($dir = null, \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser $parser = null)
     {
-        $this->parser = $parser ?: new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\Parser();
-        $this->compiler = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\TreeCompiler();
+        $this->parser = $parser ?: new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser();
+        $this->compiler = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\TreeCompiler();
         $dir = $dir ?: sys_get_temp_dir();
         if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
             throw new \RuntimeException("Unable to create cache directory: {$dir}");
         }
         $this->cacheDir = realpath($dir);
-        $this->interpreter = new \DeliciousBrains\WP_Offload_S3\Aws3\JmesPath\TreeInterpreter();
+        $this->interpreter = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\TreeInterpreter();
     }
     /**
      * Returns data from the provided input that matches a given JMESPath

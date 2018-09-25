@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Stream that when read returns bytes for a streaming multipart or
  * multipart/form-data stream.
  */
-class MultipartStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class MultipartStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     use StreamDecoratorTrait;
     private $boundary;
@@ -57,7 +57,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Me
      */
     protected function createStream(array $elements)
     {
-        $stream = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\AppendStream();
+        $stream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\AppendStream();
         foreach ($elements as $element) {
             $this->addElement($stream, $element);
         }
@@ -65,7 +65,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Me
         $stream->addStream(stream_for("--{$this->boundary}--\r\n"));
         return $stream;
     }
-    private function addElement(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\AppendStream $stream, array $element)
+    private function addElement(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\AppendStream $stream, array $element)
     {
         foreach (['contents', 'name'] as $key) {
             if (!array_key_exists($key, $element)) {
@@ -87,7 +87,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Me
     /**
      * @return array
      */
-    private function createElement($name, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface $stream, $filename, array $headers)
+    private function createElement($name, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $filename, array $headers)
     {
         // Set a default content-disposition header if one was no provided
         $disposition = $this->getHeader($headers, 'content-disposition');

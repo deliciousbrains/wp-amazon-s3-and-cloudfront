@@ -1,9 +1,9 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * HTTP handler that uses cURL easy handles as a transport layer.
  *
@@ -24,9 +24,9 @@ class CurlHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlFactory(3);
+        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactory(3);
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
@@ -34,6 +34,6 @@ class CurlHandler
         $easy = $this->factory->create($request, $options);
         curl_exec($easy->handle);
         $easy->errno = curl_errno($easy->handle);
-        return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Handler\CurlFactory::finish($this, $easy, $this->factory);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactory::finish($this, $easy, $this->factory);
     }
 }

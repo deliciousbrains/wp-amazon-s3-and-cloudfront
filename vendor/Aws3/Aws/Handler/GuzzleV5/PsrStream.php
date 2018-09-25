@@ -1,21 +1,21 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Handler\GuzzleV5;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV5;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Stream\StreamDecoratorTrait;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Stream\StreamInterface as GuzzleStreamInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface as Psr7StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\StreamInterface as GuzzleStreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Psr7StreamInterface;
 /**
  * Adapts a Guzzle 5 Stream to a PSR-7 Stream.
  *
  * @codeCoverageIgnore
  */
-class PsrStream implements \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\StreamInterface
+class PsrStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
 {
     use StreamDecoratorTrait;
     /** @var GuzzleStreamInterface */
     private $stream;
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Stream\StreamInterface $stream)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\StreamInterface $stream)
     {
         $this->stream = $stream;
     }

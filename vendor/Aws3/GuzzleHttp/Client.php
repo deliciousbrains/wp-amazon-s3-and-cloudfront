@@ -1,13 +1,13 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\UriInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * @method ResponseInterface get(string|UriInterface $uri, array $options = [])
  * @method ResponseInterface head(string|UriInterface $uri, array $options = [])
@@ -22,7 +22,7 @@ use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\ResponseInterface;
  * @method Promise\PromiseInterface patchAsync(string|UriInterface $uri, array $options = [])
  * @method Promise\PromiseInterface deleteAsync(string|UriInterface $uri, array $options = [])
  */
-class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInterface
+class Client implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface
 {
     /** @var array Default request options */
     private $config;
@@ -61,13 +61,13 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
     public function __construct(array $config = [])
     {
         if (!isset($config['handler'])) {
-            $config['handler'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\HandlerStack::create();
+            $config['handler'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\HandlerStack::create();
         } elseif (!is_callable($config['handler'])) {
             throw new \InvalidArgumentException('handler must be a callable');
         }
         // Convert the base_uri to a UriInterface
         if (isset($config['base_uri'])) {
-            $config['base_uri'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\uri_for($config['base_uri']);
+            $config['base_uri'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($config['base_uri']);
         }
         $this->configureDefaults($config);
     }
@@ -80,15 +80,15 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
         $opts = isset($args[1]) ? $args[1] : [];
         return substr($method, -5) === 'Async' ? $this->requestAsync(substr($method, 0, -5), $uri, $opts) : $this->request($method, $uri, $opts);
     }
-    public function sendAsync(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
+    public function sendAsync(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
         $options = $this->prepareDefaults($options);
         return $this->transfer($request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader('Host')), $options);
     }
-    public function send(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
+    public function send(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
     {
-        $options[\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS] = true;
+        $options[\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS] = true;
         return $this->sendAsync($request, $options)->wait();
     }
     public function requestAsync($method, $uri = '', array $options = [])
@@ -103,14 +103,14 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
         if (is_array($body)) {
             $this->invalidBody();
         }
-        $request = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\Request($method, $uri, $headers, $body, $version);
+        $request = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
         return $this->transfer($request, $options);
     }
     public function request($method, $uri = '', array $options = [])
     {
-        $options[\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS] = true;
+        $options[\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
     }
     public function getConfig($option = null)
@@ -120,9 +120,9 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
     private function buildUri($uri, array $config)
     {
         // for BC we accept null which would otherwise fail in uri_for
-        $uri = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\uri_for($uri === null ? '' : $uri);
+        $uri = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($uri === null ? '' : $uri);
         if (isset($config['base_uri'])) {
-            $uri = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\UriResolver::resolve(\DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\uri_for($config['base_uri']), $uri);
+            $uri = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver::resolve(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($config['base_uri']), $uri);
         }
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
     }
@@ -150,7 +150,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
         }
         $this->config = $config + $defaults;
         if (!empty($config['cookies']) && $config['cookies'] === true) {
-            $this->config['cookies'] = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Cookie\CookieJar();
+            $this->config['cookies'] = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar();
         }
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
@@ -212,7 +212,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
      *
      * @return Promise\PromiseInterface
      */
-    private function transfer(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    private function transfer(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
     {
         // save_to -> sink
         if (isset($options['save_to'])) {
@@ -227,9 +227,9 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
         $request = $this->applyOptions($request, $options);
         $handler = $options['handler'];
         try {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\promise_for($handler($request, $options));
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($handler($request, $options));
         } catch (\Exception $e) {
-            return \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\rejection_for($e);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($e);
         }
     }
     /**
@@ -240,7 +240,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
      *
      * @return RequestInterface
      */
-    private function applyOptions(\DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request, array &$options)
+    private function applyOptions(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array &$options)
     {
         $modify = ['set_headers' => []];
         if (isset($options['headers'])) {
@@ -254,30 +254,30 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
             $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
+            $options['_conditional'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
         if (isset($options['multipart'])) {
-            $options['body'] = new \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\MultipartStream($options['multipart']);
+            $options['body'] = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
         }
         if (isset($options['json'])) {
-            $options['body'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\json_encode($options['json']);
+            $options['body'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\json_encode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
+            $options['_conditional'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/json';
         }
         if (!empty($options['decode_content']) && $options['decode_content'] !== true) {
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Accept-Encoding'], $options['_conditional']);
+            $options['_conditional'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Accept-Encoding'], $options['_conditional']);
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
         if (isset($options['body'])) {
             if (is_array($options['body'])) {
                 $this->invalidBody();
             }
-            $modify['body'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\stream_for($options['body']);
+            $modify['body'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($options['body']);
             unset($options['body']);
         }
         if (!empty($options['auth']) && is_array($options['auth'])) {
@@ -286,7 +286,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
             switch ($type) {
                 case 'basic':
                     // Ensure that we don't have the header in different case and set the new value.
-                    $modify['set_headers'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Authorization'], $modify['set_headers']);
+                    $modify['set_headers'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Authorization'], $modify['set_headers']);
                     $modify['set_headers']['Authorization'] = 'Basic ' . base64_encode("{$value[0]}:{$value[1]}");
                     break;
                 case 'digest':
@@ -318,11 +318,11 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
                 throw new \InvalidArgumentException('sink must not be a boolean');
             }
         }
-        $request = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify);
+        $request = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify);
         if ($request->getBody() instanceof Psr7\MultipartStream) {
             // Use a multipart/form-data POST if a Content-Type is not set.
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
+            $options['_conditional'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary=' . $request->getBody()->getBoundary();
         }
         // Merge in conditional headers if they are not present.
@@ -334,7 +334,7 @@ class Client implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\ClientInt
                     $modify['set_headers'][$k] = $v;
                 }
             }
-            $request = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify);
+            $request = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify);
             // Don't pass this internal value along to middleware/handlers.
             unset($options['_conditional']);
         }

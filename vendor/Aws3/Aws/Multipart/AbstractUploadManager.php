@@ -1,28 +1,28 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface as Client;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandPool;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\MultipartUploadException;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result;
-use DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException as IAE;
-use DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Encapsulates the execution of a multipart upload to S3 or Glacier.
  *
  * @internal
  */
-abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\PromisorInterface
+abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
 {
     const DEFAULT_CONCURRENCY = 5;
     /** @var array Default values for base multipart configuration */
-    private static $defaultConfig = ['part_size' => null, 'state' => null, 'concurrency' => self::DEFAULT_CONCURRENCY, 'prepare_data_source' => null, 'before_initiate' => null, 'before_upload' => null, 'before_complete' => null, 'exception_class' => 'DeliciousBrains\\WP_Offload_S3\\Aws3\\Aws\\Exception\\MultipartUploadException'];
+    private static $defaultConfig = ['part_size' => null, 'state' => null, 'concurrency' => self::DEFAULT_CONCURRENCY, 'prepare_data_source' => null, 'before_initiate' => null, 'before_upload' => null, 'before_complete' => null, 'exception_class' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Exception\\MultipartUploadException'];
     /** @var Client Client used for the upload. */
     protected $client;
     /** @var array Configuration used to perform the upload. */
@@ -37,7 +37,7 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
      * @param Client $client
      * @param array  $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\AwsClientInterface $client, array $config = [])
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, array $config = [])
     {
         $this->client = $client;
         $this->info = $this->loadUploadWorkflowInfo();
@@ -74,7 +74,7 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
         if ($this->promise) {
             return $this->promise;
         }
-        return $this->promise = \DeliciousBrains\WP_Offload_S3\Aws3\GuzzleHttp\Promise\coroutine(function () {
+        return $this->promise = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () {
             // Initiate the upload.
             if ($this->state->isCompleted()) {
                 throw new \LogicException('This multipart upload has already ' . 'been completed or aborted.');
@@ -86,12 +86,12 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
                 }
                 $result = (yield $this->execCommand('initiate', $this->getInitiateParams()));
                 $this->state->setUploadId($this->info['id']['upload_id'], $result[$this->info['id']['upload_id']]);
-                $this->state->setStatus(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState::INITIATED);
+                $this->state->setStatus(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState::INITIATED);
             }
             // Create a command pool from a generator that yields UploadPart
             // commands for each upload part.
             $resultHandler = $this->getResultHandler($errors);
-            $commands = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandPool($this->client, $this->getUploadCommands($resultHandler), ['concurrency' => $this->config['concurrency'], 'before' => $this->config['before_upload']]);
+            $commands = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool($this->client, $this->getUploadCommands($resultHandler), ['concurrency' => $this->config['concurrency'], 'before' => $this->config['before_upload']]);
             // Execute the pool of commands concurrently, and process errors.
             (yield $commands->promise());
             if ($errors) {
@@ -99,7 +99,7 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
             }
             // Complete the multipart upload.
             (yield $this->execCommand('complete', $this->getCompleteParams()));
-            $this->state->setStatus(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState::COMPLETED);
+            $this->state->setStatus(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState::COMPLETED);
         })->otherwise(function (\Exception $e) {
             // Throw errors from the operations as a specific Multipart error.
             if ($e instanceof AwsException) {
@@ -139,7 +139,7 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
      * @param CommandInterface $command
      * @param ResultInterface  $result
      */
-    protected abstract function handleResult(\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface $result);
+    protected abstract function handleResult(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result);
     /**
      * Gets the service-specific parameters used to initiate the upload.
      *
@@ -174,7 +174,7 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
             }
             $id[$param] = $this->config[$key];
         }
-        $state = new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Multipart\UploadState($id);
+        $state = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState($id);
         $state->setPartSize($this->determinePartSize());
         return $state;
     }
@@ -213,13 +213,13 @@ abstract class AbstractUploadManager implements \DeliciousBrains\WP_Offload_S3\A
     protected function getResultHandler(&$errors = [])
     {
         return function (callable $handler) use(&$errors) {
-            return function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_S3\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, &$errors) {
-                return $handler($command, $request)->then(function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\ResultInterface $result) use($command) {
+            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, &$errors) {
+                return $handler($command, $request)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result) use($command) {
                     $this->handleResult($command, $result);
                     return $result;
-                }, function (\DeliciousBrains\WP_Offload_S3\Aws3\Aws\Exception\AwsException $e) use(&$errors) {
+                }, function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException $e) use(&$errors) {
                     $errors[$e->getCommand()[$this->info['part_num']]] = $e;
-                    return new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\Result();
+                    return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result();
                 });
             };
         };

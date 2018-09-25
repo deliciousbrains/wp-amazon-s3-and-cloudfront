@@ -1,11 +1,11 @@
 <?php
 
-namespace DeliciousBrains\WP_Offload_S3\Aws3\Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * AWS command object.
  */
-class Command implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterface
+class Command implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface
 {
     use HasDataTrait;
     /** @var string */
@@ -21,11 +21,11 @@ class Command implements \DeliciousBrains\WP_Offload_S3\Aws3\Aws\CommandInterfac
      * @param array       $args           Arguments to pass to the command
      * @param HandlerList $list           Handler list
      */
-    public function __construct($name, array $args = [], \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList $list = null)
+    public function __construct($name, array $args = [], \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list = null)
     {
         $this->name = $name;
         $this->data = $args;
-        $this->handlerList = $list ?: new \DeliciousBrains\WP_Offload_S3\Aws3\Aws\HandlerList();
+        $this->handlerList = $list ?: new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList();
         if (!isset($this->data['@http'])) {
             $this->data['@http'] = [];
         }
