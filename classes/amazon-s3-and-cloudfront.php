@@ -1801,7 +1801,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$prefix .= AS3CF_Utils::trailingslash_prefix( $this->get_object_version_string() );
 		}
 
-		return $prefix;
+		return apply_filters( 'as3cf_upload_file_prefix', $prefix );
 	}
 
 	/**
