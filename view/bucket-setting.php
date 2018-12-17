@@ -16,7 +16,7 @@ $tr_class        = ( isset( $tr_class ) ) ? $tr_class : '';
 		<?php if ( defined( $constant_bucket ) || false !== $this->get_defined_setting( 'bucket', false ) ) {
 			echo '<span class="as3cf-defined-in-config">' . __( 'defined in wp-config.php', 'amazon-s3-and-cloudfront' ) . '</span>';
 		} elseif ( ! $needs_keys ) { ?>
-			<a href="#" id="<?php echo $prefix; ?>-change-bucket" class="as3cf-change-bucket" data-as3cf-modal=".as3cf-bucket-container"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
+			<a href="<?php echo $this->get_plugin_page_url( array( 'action' => 'change-bucket' ) ); ?>" id="<?php echo $prefix; ?>-change-bucket" class="as3cf-change-bucket"><?php _e( 'Change', 'amazon-s3-and-cloudfront' ); ?></a>
 		<?php } ?>
 
 		<p id="<?php echo $prefix; ?>-active-region" class="as3cf-active-region" title="<?php _e( 'The region that the bucket is in.', 'amazon-s3-and-cloudfront' ); ?>">

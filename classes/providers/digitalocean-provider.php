@@ -46,6 +46,13 @@ class DigitalOcean_Provider extends AWS_Provider {
 	protected static $provider_service_name = '';
 
 	/**
+	 * The slug for the service's quick start guide doc.
+	 *
+	 * @var string
+	 */
+	protected static $provider_service_quick_start_slug = 'digitalocean-spaces-quick-start-guide';
+
+	/**
 	 * @var array
 	 */
 	protected static $access_key_id_constants = array(

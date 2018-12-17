@@ -2,7 +2,6 @@
 
 	var savedSettings = {};
 	var bucketNamePattern = /[^a-z0-9.-]/;
-	var refreshBucketListOnLoad = false;
 
 	var $body = $( 'body' );
 	var $tabs = $( '.as3cf-tab' );
@@ -173,6 +172,9 @@
 
 			$bucketList.html( '<li class="loading">' + $bucketList.data( 'working' ) + '</li>' );
 
+			// Stop accidental submit while reloading list.
+			this.disabledButtons();
+
 			var data = {
 				action: as3cfModal.prefix + '-get-buckets',
 				_nonce: window[ as3cfModal.prefix.replace( /-/g, '_' ) ].nonces.get_buckets
@@ -199,7 +201,7 @@
 					if ( 'undefined' !== typeof data[ 'success' ] ) {
 						$( '.as3cf-bucket-error' ).hide();
 
-						if ( 0 === data['buckets'].length ) {
+						if ( 0 === data[ 'buckets' ].length ) {
 							$bucketList.html( '<li class="loading">' + $bucketList.data( 'nothing-found' ) + '</li>' );
 						} else {
 							$( data[ 'buckets' ] ).each( function( idx, bucket ) {
@@ -208,6 +210,7 @@
 							} );
 
 							that.scrollToSelected();
+							that.disabledButtons();
 						}
 					} else {
 						that.showError( as3cf.strings.get_buckets_error, data[ 'error' ], 'as3cf-bucket-select' );
@@ -232,189 +235,44 @@
 		},
 
 		/**
-		 * Reset bucket modal
-		 */
-		resetModal: function() {
-			var $bucketContainer = $( '.as3cf-bucket-container.' + as3cfModal.prefix );
-
-			if ( false === $activeTab.hasClass( 'as3cf-has-bucket' ) || 'manual' === $( '#' + as3cfModal.prefix + '-bucket-select' ).val() ) {
-				$bucketContainer.find( '.as3cf-bucket-manual' ).show().siblings().hide();
-				$bucketContainer.find( '.bucket-actions.manual' ).show().siblings( '.bucket-actions' ).hide();
-			} else {
-				$bucketContainer.find( '.as3cf-bucket-select' ).show().siblings().hide();
-				$bucketContainer.find( '.bucket-actions.select' ).show().siblings( '.bucket-actions' ).hide();
-
-				this.loadList( refreshBucketListOnLoad );
-
-				refreshBucketListOnLoad = false;
-			}
-
-			$bucketContainer.find( '.as3cf-bucket-error' ).hide();
-
-			// Reset manual select value
-			var bucket = $( '#' + as3cfModal.prefix + '-bucket' ).val();
-			$bucketContainer.find( '.as3cf-bucket-manual .as3cf-bucket-name' ).val( bucket );
-
-			// Unlock setting the bucket
-			this.bucketSelectLock = false;
-		},
-
-		/**
-		 * Save manual bucket
-		 */
-		saveManual: function() {
-			var $manualBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-manual-save-bucket-form' );
-			var $manualBucketRegion = $manualBucketForm.find( '.bucket-manual-region' );
-			var $manualBucketInput = $manualBucketForm.find( '.as3cf-bucket-name' );
-			var $manualBucketButton = $manualBucketForm.find( 'button[type=submit]' );
-			var bucketName = $manualBucketInput.val();
-			var originalBucketText = $manualBucketButton.first().text();
-
-			if ( bucketName === $( '#' + as3cfModal.prefix + '-active-bucket' ).text() ) {
-				$( '.as3cf-bucket-error' ).hide();
-				$activeTab.addClass( 'as3cf-has-bucket' );
-				as3cfModal.close();
-				return;
-			}
-			$( '.as3cf-bucket-error' ).hide();
-			$manualBucketButton.text( $manualBucketButton.data( 'working' ) );
-			$manualBucketButton.prop( 'disabled', true );
-
-			var data = {
-				action: as3cfModal.prefix + '-manual-save-bucket',
-				bucket_name: bucketName,
-				_nonce: window[ as3cfModal.prefix.replace( /-/g, '_' ) ].nonces.manual_bucket
-			};
-
-			if ( $manualBucketRegion.val() ) {
-				data[ 'region' ] = $manualBucketRegion.val();
-			}
-
-			var that = this;
-
-			$.ajax( {
-				url: ajaxurl,
-				type: 'POST',
-				dataType: 'JSON',
-				data: data,
-				error: function( jqXHR, textStatus, errorThrown ) {
-					$manualBucketButton.text( originalBucketText );
-					that.showError( as3cf.strings.save_bucket_error, errorThrown, 'as3cf-bucket-manual' );
-				},
-				success: function( data, textStatus, jqXHR ) {
-					$manualBucketButton.text( originalBucketText );
-					$manualBucketButton.prop( 'disabled', false );
-					if ( 'undefined' !== typeof data[ 'success' ] ) {
-						that.set( bucketName, data[ 'region' ], data['region_name'], data[ 'can_write' ] );
-						$( '#' + as3cfModal.prefix + '-bucket-select' ).val( 'manual' );
-						$( '.as3cf-bucket-list a' ).removeClass( 'selected' ).filter( '[data-bucket="' + bucketName + '"]' ).addClass( 'selected' );
-
-						// Make sure the bucket list will refresh the next time the modal loads
-						refreshBucketListOnLoad = true;
-
-						as3cf.showSettingsSavedNotice();
-					} else {
-						that.showError( as3cf.strings.save_bucket_error, data[ 'error' ], 'as3cf-bucket-manual' );
-					}
-				}
-			} );
-		},
-
-		/**
-		 * Save select bucket
+		 * Set the selected bucket in list.
 		 *
 		 * @param {object} $link
 		 */
-		saveSelected: function( $link ) {
-			if ( this.bucketSelectLock ) {
-
-				// Bail if a bucket has already been clicked
-				return;
-			}
-
-			// Lock the bucket selection
-			this.bucketSelectLock = true;
-
-			var $selectBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-select' );
-			var $selectBucketRegion = $selectBucketForm.find( '.bucket-select-region' );
-			var $bucketList = $selectBucketForm.find( '.as3cf-bucket-list' );
-
-			if ( $link.hasClass( 'selected' ) ) {
-				$activeTab.addClass( 'as3cf-has-bucket' );
-				as3cfModal.close();
-				return;
-			}
-
-			var previousBucket = $selectBucketForm.find( '.as3cf-bucket-list a.selected' ).data( 'bucket' );
-
+		setSelected: function( $link ) {
 			$( '.as3cf-bucket-list a' ).removeClass( 'selected' );
 			$link.addClass( 'selected' );
-
-			$bucketList.addClass( 'saving' );
-			$link.find( '.spinner' ).show().css( 'visibility', 'visible' );
-			var bucketName = $link.data( 'bucket' );
-
-			var data = {
-				action: as3cfModal.prefix + '-save-bucket',
-				bucket_name: bucketName,
-				_nonce: window[ as3cfModal.prefix.replace( /-/g, '_' ) ].nonces.save_bucket
-			};
-
-			if ( $selectBucketRegion.val() ) {
-				data[ 'region' ] = $selectBucketRegion.val();
-			}
-
-			var that = this;
-
-			$.ajax( {
-				url: ajaxurl,
-				type: 'POST',
-				dataType: 'JSON',
-				data: data,
-				error: function( jqXHR, textStatus, errorThrown ) {
-					$bucketList.removeClass( 'saving' );
-					that.showError( as3cf.strings.save_bucket_error, errorThrown, 'as3cf-bucket-select' );
-					$( '.as3cf-bucket-list a' ).removeClass( 'selected' );
-					$( '.as3cf-bucket-list a[data-bucket="' + previousBucket + '"]' ).addClass( 'selected' );
-				},
-				success: function( data, textStatus, jqXHR ) {
-					$link.find( '.spinner' ).hide().css( 'visibility', 'hidden' );
-					$bucketList.removeClass( 'saving' );
-					if ( 'undefined' !== typeof data[ 'success' ] ) {
-						that.set( bucketName, data[ 'region' ], data['region_name'], data[ 'can_write' ] );
-						$( '#' + as3cfModal.prefix + '-bucket-select' ).val( '' );
-
-						as3cf.showSettingsSavedNotice();
-					} else {
-						that.showError( as3cf.strings.save_bucket_error, data[ 'error' ], 'as3cf-bucket-select' );
-						$( '.as3cf-bucket-list a' ).removeClass( 'selected' );
-						$( '.as3cf-bucket-list a[data-bucket="' + previousBucket + '"]' ).addClass( 'selected' );
-					}
-				}
-			} );
+			$( '#' + as3cfModal.prefix + '-bucket-select-name' ).val( $link.data( 'bucket' ) );
 		},
 
 		/**
 		 * Disable bucket buttons
 		 */
 		disabledButtons: function() {
-			if ( 0 === $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-create-bucket-form' ).length ) {
+			var $createBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-create' );
+			var $manualBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-manual' );
+			var $selectBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-select' );
+
+			if ( 0 === $createBucketForm.length && 0 === $manualBucketForm.length && 0 === $selectBucketForm.length ) {
 				return;
 			}
 
-			var $createBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-create-bucket-form' );
-			var $manualBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-manual-save-bucket-form' );
-
-			if ( $createBucketForm.find( '.as3cf-bucket-name' ).val().length < 3 ) {
-				$createBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
-			} else {
+			if ( 0 < $createBucketForm.length && this.isValidName( $createBucketForm.find( '.as3cf-bucket-name' ).val() ) ) {
 				$createBucketForm.find( 'button[type=submit]' ).prop( 'disabled', false );
+			} else {
+				$createBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
 			}
 
-			if ( $manualBucketForm.find( '.as3cf-bucket-name' ).val().length < 3 ) {
-				$manualBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
-			} else {
+			if ( 0 < $manualBucketForm.length && this.isValidName( $manualBucketForm.find( '.as3cf-bucket-name' ).val() ) ) {
 				$manualBucketForm.find( 'button[type=submit]' ).prop( 'disabled', false );
+			} else {
+				$manualBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
+			}
+
+			if ( 0 < $selectBucketForm.length && 1 === $selectBucketForm.find( '.as3cf-bucket-list a.selected' ).length ) {
+				$selectBucketForm.find( 'button[type=submit]' ).prop( 'disabled', false );
+			} else {
+				$selectBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
 			}
 		},
 
@@ -441,127 +299,6 @@
 
 			// Unlock setting the bucket
 			this.bucketSelectLock = false;
-		},
-
-		/**
-		 * Set the selected bucket in the UI
-		 *
-		 * @param {string} bucket
-		 * @param {string} region
-		 * @param {string} region_name
-		 * @param {boolean} canWrite
-		 */
-		set: function( bucket, region, region_name, canWrite ) {
-			var $manualBucket = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-manual' );
-			var $selectBucket = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-select' );
-			var $createBucket = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-create' );
-			var $activeRegion = $( '#' + as3cfModal.prefix + '-active-region' );
-			var $activeBucket = $( '#' + as3cfModal.prefix + '-active-bucket' );
-
-			if ( 'as3cf' === as3cfModal.prefix && 0 === $activeBucket.text().trim().length ) {
-
-				// First time bucket select - enable main options by default
-				setCheckbox( 'as3cf-copy-to-s3-wrap' );
-				setCheckbox( 'as3cf-serve-from-s3-wrap' );
-
-				// Update the saved settings string so we don't trigger the navigation alert
-				var id = $activeTab.attr( 'id' );
-				savedSettings[ id ] = serializedForm( id );
-			}
-
-			// Remove previous permission errors
-			$( '.as3cf-error.fatal' ).hide();
-
-			$activeBucket.text( bucket );
-			$manualBucket.find( '.as3cf-bucket-name' ).val( bucket );
-			$( '#' + as3cfModal.prefix + '-bucket' ).val( bucket );
-
-			$activeRegion.text( region_name );
-			$manualBucket.find( '.bucket-manual-region' ).val( region );
-			$selectBucket.find( '.bucket-select-region' ).val( region );
-			$createBucket.find( '.bucket-create-region' ).val( region );
-			$( '#' + as3cfModal.prefix + '-region' ).val( region );
-
-			$( '.updated' ).not( '.as3cf-notice' ).show();
-
-			$activeTab.addClass( 'as3cf-has-bucket' );
-
-			// Check permission on bucket
-			$activeTab.find( '.as3cf-can-write-error' ).toggle( ! canWrite );
-			$activeTab.find( '.as3cf-bucket-error' ).hide();
-
-			if ( 'as3cf' === as3cfModal.prefix ) {
-				generateUrlPreview();
-			}
-
-			setBucketLink();
-
-			as3cfModal.close( function() {
-				$activeTab.trigger( 'bucket-change', [ canWrite ] );
-
-				// Unlock setting the bucket
-				as3cf.buckets.bucketSelectLock = false;
-			} );
-		},
-
-		/**
-		 * Save create bucket
-		 */
-		create: function() {
-			var $createBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-create-bucket-form' );
-			var $createBucketInput = $createBucketForm.find( '.as3cf-bucket-name' );
-			var $createBucketRegion = $createBucketForm.find( '.bucket-create-region' );
-			var $createBucketButton = $createBucketForm.find( 'button[type=submit]' );
-
-			var bucketName = $createBucketInput.val();
-			var origButtonText = $createBucketButton.text();
-
-			$( '.as3cf-bucket-error' ).hide();
-			$createBucketButton.text( $createBucketButton.data( 'working' ) );
-			$createBucketButton.prop( 'disabled', true );
-
-			var data = {
-				action: as3cfModal.prefix + '-create-bucket',
-				bucket_name: bucketName,
-				_nonce: window[ as3cfModal.prefix.replace( /-/g, '_' ) ].nonces.create_bucket
-			};
-
-			if ( $createBucketRegion.val() ) {
-				data[ 'region' ] = $createBucketRegion.val();
-			}
-
-			var that = this;
-
-			$.ajax( {
-				url: ajaxurl,
-				type: 'POST',
-				dataType: 'JSON',
-				data: data,
-				error: function( jqXHR, textStatus, errorThrown ) {
-					$createBucketButton.text( origButtonText );
-					that.showError( as3cf.strings.create_bucket_error, errorThrown, 'as3cf-bucket-create' );
-				},
-				success: function( data, textStatus, jqXHR ) {
-					$createBucketButton.text( origButtonText );
-					$createBucketButton.prop( 'disabled', false );
-					if ( 'undefined' !== typeof data[ 'success' ] ) {
-						that.set( bucketName, data[ 'region' ], data['region_name'], data[ 'can_write' ] );
-
-						// Tidy up create bucket form
-						$( '.as3cf-bucket-select-region' ).hide();
-						$( '.as3cf-bucket-select-region' ).prop( 'selected', false );
-						$createBucketInput.val( '' );
-						$createBucketButton.prop( 'disabled', true );
-
-						// Make sure the bucket list will refresh the next time the modal loads
-						refreshBucketListOnLoad = true;
-
-						as3cf.showSettingsSavedNotice();
-					} else {
-						that.showError( as3cf.strings.create_bucket_error, data[ 'error' ], 'as3cf-bucket-create' );
-					}
-				}
-			} );
 		},
 
 		/**
@@ -658,6 +395,39 @@
 		$( '#' + as3cfModal.prefix + '-view-bucket' ).attr( 'href', url );
 	}
 
+	/*
+	 * Toggle the lost files notice
+	 */
+	function toggleLostFilesNotice() {
+		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) && $( '#as3cf-serve-from-s3' ).is( ':not(:checked)' ) ) {
+			$( '#as3cf-lost-files-notice' ).show();
+		} else {
+			$( '#as3cf-lost-files-notice' ).hide();
+		}
+	}
+
+	/*
+	 * Toggle the remove local files notice
+	 */
+	function toggleRemoveLocalNotice() {
+		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) ) {
+			$( '#as3cf-remove-local-notice' ).show();
+		} else {
+			$( '#as3cf-remove-local-notice' ).hide();
+		}
+	}
+
+	/*
+	 * Toggle the seo friendly url notice.
+	 */
+	function toggleSEOFriendlyURLNotice( seo_friendly ) {
+		if ( true !== seo_friendly ) {
+			$( '#as3cf-seo-friendly-url-notice' ).show();
+		} else {
+			$( '#as3cf-seo-friendly-url-notice' ).hide();
+		}
+	}
+
 	/**
 	 * Generate URL preview
 	 */
@@ -695,39 +465,6 @@
 				}
 			}
 		} );
-	}
-
-	/*
-	 * Toggle the lost files notice
-	 */
-	function toggleLostFilesNotice() {
-		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) && $( '#as3cf-serve-from-s3' ).is( ':not(:checked)' ) ) {
-			$( '#as3cf-lost-files-notice' ).show();
-		} else {
-			$( '#as3cf-lost-files-notice' ).hide();
-		}
-	}
-
-	/*
-	 * Toggle the remove local files notice
-	 */
-	function toggleRemoveLocalNotice() {
-		if ( $( '#as3cf-remove-local-file' ).is( ':checked' ) ) {
-			$( '#as3cf-remove-local-notice' ).show();
-		} else {
-			$( '#as3cf-remove-local-notice' ).hide();
-		}
-	}
-
-	/*
-	 * Toggle the seo friendly url notice.
-	 */
-	function toggleSEOFriendlyURLNotice( seo_friendly ) {
-		if ( true !== seo_friendly ) {
-			$( '#as3cf-seo-friendly-url-notice' ).show();
-		} else {
-			$( '#as3cf-seo-friendly-url-notice' ).hide();
-		}
 	}
 
 	/**
@@ -870,38 +607,8 @@
 		// Move bucket errors
 		$( '#tab-media > .as3cf-bucket-error' ).detach().insertAfter( '.as3cf-bucket-container h3' );
 
-		// Action click handlers
-		$body.on( 'click', '.bucket-action-manual', function( e ) {
-			e.preventDefault();
-			$( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-manual' ).show().siblings().hide();
-		} );
-		$body.on( 'click', '.bucket-action-browse', function( e ) {
-			e.preventDefault();
-			$( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-select' ).show().siblings().hide();
-			as3cf.buckets.loadList( refreshBucketListOnLoad );
-			refreshBucketListOnLoad = false;
-		} );
-		$body.on( 'click', '.bucket-action-create', function( e ) {
-			e.preventDefault();
-
-			// Reset create bucket modal
-			$( '.as3cf-bucket-name' ).val( '' );
-			$( '.as3cf-invalid-bucket-name' ).html( '' );
-
-			$( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-create' ).show().siblings().hide();
-		} );
-		$body.on( 'click', '.bucket-action-cancel', function( e ) {
-			e.preventDefault();
-			as3cf.buckets.resetModal();
-		} );
-		$body.on( 'click', '.bucket-action-save', function( e ) {
-			e.preventDefault();
-			as3cf.buckets.saveManual();
-		} );
-		$body.on( 'click', '.as3cf-create-bucket-form button[type="submit"]', function( e ) {
-			e.preventDefault();
-			as3cf.buckets.create();
-		} );
+		// Enable/disable change bucket's save buttons.
+		as3cf.buckets.disabledButtons();
 
 		// Bucket list refresh handler
 		$body.on( 'click', '.bucket-action-refresh', function( e ) {
@@ -915,10 +622,16 @@
 			as3cf.buckets.loadList( true );
 		} );
 
+		// If select bucket form is available on load, populate its list.
+		if ( 0 < $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-bucket-select' ).length ) {
+			as3cf.buckets.loadList( true );
+		}
+
 		// Bucket list click handler
 		$body.on( 'click', '.as3cf-bucket-list a', function( e ) {
 			e.preventDefault();
-			as3cf.buckets.saveSelected( $( this ) );
+			as3cf.buckets.setSelected( $( this ) );
+			as3cf.buckets.disabledButtons();
 		} );
 
 		// External links click handler
@@ -929,45 +642,25 @@
 			return false;
 		} );
 
-		// Modal open
-		$body.on( 'as3cf-modal-open', function( e, target ) {
-			if ( '.as3cf-bucket-container.' + as3cfModal.prefix === target ) {
-
-				// Reset modal
-				as3cf.buckets.resetModal();
-
-				// Change manual title text
-				var title = $( '.as3cf-bucket-manual h3' ).data( 'modal-title' );
-				$( '.as3cf-bucket-manual h3' ).text( title );
-
-				// Hide buttons
-				as3cf.buckets.disabledButtons();
-			}
-		} );
-
-		as3cf.buckets.disabledButtons();
-
 		// Validate bucket name on create
-		$body.on( 'input keyup', '.as3cf-create-bucket-form .as3cf-bucket-name', function( e ) {
+		$body.on( 'input keyup', '.as3cf-bucket-create .as3cf-bucket-name', function( e ) {
 			var bucketName = $( this ).val();
-			var $createBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-create-bucket-form' );
-
-			if ( as3cf.buckets.isValidName( bucketName ) ) {
-				$createBucketForm.find( 'button[type=submit]' ).prop( 'disabled', false );
-			} else {
-				$createBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
-			}
 			as3cf.buckets.updateNameNotice( bucketName );
+			as3cf.buckets.disabledButtons();
 		} );
 
-		// Check bucket name length on manual
-		$body.on( 'input keyup', '.as3cf-manual-save-bucket-form .as3cf-bucket-name', function( e ) {
-			var $manualBucketForm = $( '.as3cf-bucket-container.' + as3cfModal.prefix + ' .as3cf-manual-save-bucket-form' );
+		$body.on( 'input keyup', '.as3cf-bucket-manual .as3cf-bucket-name', function( e ) {
+			var bucketName = $( this ).val();
+			as3cf.buckets.updateNameNotice( bucketName );
+			as3cf.buckets.disabledButtons();
+		} );
 
-			if ( $manualBucketForm.find( '.as3cf-bucket-name' ).val().length < as3cf.buckets.validLength ) {
-				$manualBucketForm.find( 'button[type=submit]' ).prop( 'disabled', true );
-			} else {
-				$manualBucketForm.find( 'button[type=submit]' ).prop( 'disabled', false );
+		// Don't allow 'enter' key to submit form on text input settings
+		$( '.as3cf-bucket-container input[type="text"]' ).keypress( function( event ) {
+			if ( 13 === event.which ) {
+				event.preventDefault();
+
+				return false;
 			}
 		} );
 	} );

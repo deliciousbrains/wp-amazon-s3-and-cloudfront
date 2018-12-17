@@ -61,6 +61,13 @@ abstract class Provider {
 	protected static $provider_service_name = '';
 
 	/**
+	 * The slug for the service's quick start guide doc.
+	 *
+	 * @var string
+	 */
+	protected static $provider_service_quick_start_slug = 'quick-start-guide';
+
+	/**
 	 * @var string
 	 */
 	protected static $access_key_id_setting_name = 'access-key-id';
@@ -164,6 +171,15 @@ abstract class Provider {
 		}
 
 		return static::$provider_name . ' ' . static::$service_name;
+	}
+
+	/**
+	 * Returns the slug for the service's quick start guide doc.
+	 *
+	 * @return string
+	 */
+	public static function get_provider_service_quick_start_slug() {
+		return static::$provider_service_quick_start_slug;
 	}
 
 	/**

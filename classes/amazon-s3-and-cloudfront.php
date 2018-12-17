@@ -106,7 +106,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		'WPOS3_SETTINGS',
 	);
 
-	const LATEST_UPGRADE_ROUTINE = 6;
+	const LATEST_UPGRADE_ROUTINE = 7;
 
 	/**
 	 * @param string      $plugin_file_path
@@ -171,9 +171,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		// UI AJAX
 		add_action( 'wp_ajax_as3cf-get-buckets', array( $this, 'ajax_get_buckets' ) );
-		add_action( 'wp_ajax_as3cf-save-bucket', array( $this, 'ajax_save_bucket' ) );
-		add_action( 'wp_ajax_as3cf-create-bucket', array( $this, 'ajax_create_bucket' ) );
-		add_action( 'wp_ajax_as3cf-manual-save-bucket', array( $this, 'ajax_save_bucket' ) );
 		add_action( 'wp_ajax_as3cf-get-url-preview', array( $this, 'ajax_get_url_preview' ) );
 		add_action( 'wp_ajax_as3cf_get_attachment_provider_details', array( $this, 'ajax_get_attachment_provider_details' ) );
 		add_action( 'wp_ajax_as3cf-get-diagnostic-info', array( $this, 'ajax_get_diagnostic_info' ) );
@@ -2382,74 +2379,46 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Returns cleaned up region name or kills ajax request if missing.
+	 * Returns cleaned up region name to be used while setting bucket or returns false if missing.
 	 *
-	 * @param bool $region_required
+	 * @param string $region
+	 * @param bool   $region_required
 	 *
-	 * @return string
+	 * @return string|bool
 	 */
-	function ajax_check_region( $region_required = false ) {
-		$region = '';
-
-		// Are we defining the region or specifying via the form?
+	function check_region( $region = '', $region_required = false ) {
+		// If defined, just use.
 		if ( defined( 'AS3CF_REGION' ) ) {
-			$region = AS3CF_REGION;
-		} elseif ( false !== $this->get_defined_setting( 'region', false ) ) {
-			$region = $this->get_defined_setting( 'region' );
-		} elseif (
-			( ! isset( $_POST['region'] ) || ! ( $region = sanitize_text_field( $_POST['region'] ) ) ) &&
-			$region_required // It's very important that this test is after the above inline assign!
-		) { // input var okay
-			$out = array( 'error' => __( 'No region provided.', 'amazon-s3-and-cloudfront' ) );
+			return AS3CF_REGION;
+		}
 
-			$this->end_ajax( $out );
+		// If defined in settings define, just use.
+		if ( false !== $this->get_defined_setting( 'region', false ) ) {
+			return $this->get_defined_setting( 'region' );
+		}
+
+		if ( ! empty( $region ) ) {
+			$region = sanitize_text_field( $region );
+		}
+
+		if ( $region_required && empty( $region ) ) {
+			return false;
 		}
 
 		return $region;
 	}
 
 	/**
-	 * Returns cleaned up bucket name or kills ajax request if missing.
+	 * Returns cleaned up bucket name or returns false if missing.
 	 *
-	 * @return string
-	 */
-	function ajax_check_bucket() {
-		if ( ! isset( $_POST['bucket_name'] ) || ! ( $bucket = sanitize_text_field( $_POST['bucket_name'] ) ) ) { // input var okay
-			$out = array( 'error' => __( 'No bucket name provided.', 'amazon-s3-and-cloudfront' ) );
-
-			$this->end_ajax( $out );
-		}
-
-		return strtolower( $bucket );
-	}
-
-	/**
-	 * Handler for AJAX callback to create a bucket in provider
+	 * @param string $bucket
 	 *
-	 * @throws Exception
+	 * @return string|bool
 	 */
-	function ajax_create_bucket() {
-		$this->verify_ajax_request();
+	function check_bucket( $bucket ) {
+		$bucket = sanitize_text_field( $bucket );
 
-		$region = $this->ajax_check_region( true );
-		$bucket = $this->ajax_check_bucket();
-
-		$result = $this->create_bucket( $bucket, $region );
-
-		if ( is_wp_error( $result ) ) {
-			$out = $this->prepare_bucket_error( $result, false );
-
-			$this->end_ajax( $out );
-		}
-
-		// check if we were previously selecting a bucket manually via the input
-		$previous_manual_bucket_select = $this->get_setting( 'manual_bucket', false );
-
-		$args = array(
-			'_nonce' => wp_create_nonce( 'as3cf-create-bucket' ),
-		);
-
-		$this->save_bucket_for_ajax( $bucket, $previous_manual_bucket_select, $region, $args );
+		return empty( $bucket ) ? false : strtolower( $bucket );
 	}
 
 	/**
@@ -2482,75 +2451,19 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Handler for AJAX callback to save the selection of a bucket
-	 *
-	 * @throws Exception
-	 */
-	function ajax_save_bucket() {
-		$this->verify_ajax_request();
-
-		$region = $this->ajax_check_region( $this->get_provider()->region_required() );
-		$bucket = $this->ajax_check_bucket();
-
-		$manual = false;
-		// are we inputting the bucket manually?
-		if ( isset( $_POST['action'] ) && false !== strpos( $_POST['action'], 'manual-save-bucket' ) ) {
-			$manual = true;
-		}
-
-		$this->save_bucket_for_ajax( $bucket, $manual, $region );
-	}
-
-	/**
-	 * Wrapper method for saving a bucket when creating or selecting
-	 *
-	 * @param string      $bucket
-	 * @param bool|false  $manual_select
-	 * @param null|string $region
-	 * @param array       $defaults
-	 *
-	 * @throws Exception
-	 */
-	function save_bucket_for_ajax( $bucket, $manual_select = false, $region = null, $defaults = array() ) {
-		$region = $this->save_bucket( $bucket, $manual_select, $region );
-
-		if ( ! is_wp_error( $region ) ) {
-			$out = array(
-				'success'     => '1',
-				'region'      => $region,
-				'region_name' => $this->get_provider()->get_region_name( $region ),
-			);
-
-			$out = wp_parse_args( $out, $defaults );
-
-			$can_write = $this->check_write_permission( $bucket, $region );
-
-			if ( is_wp_error( $can_write ) ) {
-				$out = $this->prepare_bucket_error( $can_write );
-			} else {
-				$out['can_write'] = $can_write;
-			}
-		} else {
-			$out = $this->prepare_bucket_error( $region );
-		}
-
-		$this->end_ajax( $out );
-	}
-
-	/**
 	 * Prepare the bucket error before returning to JS
 	 *
 	 * @param WP_Error $object
 	 * @param bool     $single Are we dealing with a single bucket?
 	 *
-	 * @return array
+	 * @return string
 	 */
 	function prepare_bucket_error( $object, $single = true ) {
 		if ( 'Access Denied' === $object->get_error_message() ) {
 			// If the bucket error is access denied, show our notice message
-			$out = array( 'error' => $this->get_access_denied_notice_message( $single ) );
+			$out = $this->get_access_denied_notice_message( $single );
 		} else {
-			$out = array( 'error' => $object->get_error_message() );
+			$out = $object->get_error_message();
 		}
 
 		return $out;
@@ -2577,7 +2490,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @param bool        $manual if we are entering the bucket via the manual input form
 	 * @param null|string $region
 	 *
-	 * @return string|bool region on success
+	 * @return string|bool|WP_Error region on success
 	 */
 	function save_bucket( $bucket_name, $manual = false, $region = null ) {
 		if ( $bucket_name ) {
@@ -2780,12 +2693,15 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	function ajax_get_buckets() {
 		$this->verify_ajax_request();
 
-		$region = $this->ajax_check_region( $this->get_provider()->region_required() );
+		$region = empty( $_POST['region'] ) ? '' : $_POST['region'];
+		$region = $this->check_region( $region, $this->get_provider()->region_required() );
 
 		$result = $this->get_buckets( $region );
 
 		if ( is_wp_error( $result ) ) {
-			$out = $this->prepare_bucket_error( $result, false );
+			$out = array(
+				'error' => $this->prepare_bucket_error( $result, false ),
+			);
 		} else {
 			$out = array(
 				'success' => '1',
@@ -2829,6 +2745,11 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		if ( is_null( $bucket ) ) {
+			// If changing provider or bucket don't bother to test saved bucket permissions.
+			if ( ! empty( $_GET['action'] ) && in_array( $_GET['action'], array( 'change-provider', 'change-bucket' ) ) ) {
+				return false;
+			}
+
 			if ( ! ( $bucket = $this->get_setting( 'bucket' ) ) ) {
 				// if no bucket set then no need check
 				return true;
@@ -2868,16 +2789,22 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 	/**
 	 * Render error messages in a view for bucket permission and access issues
+	 *
+	 * @return bool
+	 * @throws Exception
 	 */
 	function render_bucket_permission_errors() {
 		$can_write = $this->check_write_permission();
 		// catch any checking issues
 		if ( is_wp_error( $can_write ) ) {
 			$this->render_view( 'error-fatal', array( 'message' => $can_write->get_error_message() ) );
-			$can_write = true;
+			$can_write = false;
+		} else {
+			// display a error message if the user does not have write permission to S3 bucket
+			$this->render_view( 'error-access', array( 'can_write' => $can_write ) );
 		}
-		// display a error message if the user does not have write permission to S3 bucket
-		$this->render_view( 'error-access', array( 'can_write' => $can_write ) );
+
+		return $can_write;
 	}
 
 	/**
@@ -2996,6 +2923,19 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * Get the blacklisted settings for monitoring changes in defines.
+	 * These settings will not be saved in the database.
+	 *
+	 * @return array
+	 */
+	function get_monitored_settings_blacklist() {
+		return array(
+			'access-key-id',
+			'secret-access-key',
+		);
+	}
+
+	/**
 	 * List of settings that should skip full sanitize.
 	 *
 	 * @return array
@@ -3007,7 +2947,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	/**
 	 * Handle the saving of the settings page
 	 */
-	function handle_post_request() {
+	public function handle_post_request() {
 		if ( empty( $_POST['plugin'] ) || $this->get_plugin_slug() != sanitize_key( $_POST['plugin'] ) ) { // input var okay
 			return;
 		}
@@ -3020,9 +2960,176 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			die( __( "Cheatin' eh?", 'amazon-s3-and-cloudfront' ) );
 		}
 
+		if ( $this->get_provider()->needs_access_keys() || ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] ) ) {
+			// Changing Provider currently doesn't need anything special over saving settings,
+			// but if not already set needs to be handled rather than change-bucket raising its hand.
+			$changed_keys = $this->handle_save_settings();
+		} elseif ( empty( $this->get_setting( 'bucket' ) ) || ( ! empty( $_GET['action'] ) && 'change-bucket' === $_GET['action'] ) ) {
+			$changed_keys = $this->handle_change_bucket();
+		} elseif ( ! empty( $_GET['action'] ) ) {
+			$changed_keys = apply_filters( 'as3cf_handle_post_request', array() );
+		} else {
+			$changed_keys = $this->handle_save_settings();
+		}
+
+		// If the changes can't be saved, stay on same page.
+		// An admin notice should be created with the error message.
+		if ( false === $changed_keys ) {
+			return;
+		}
+
+		// No failures, so let's make things super green.
+		$url_args = array( 'updated' => '1' );
+
+		if ( ! empty( $changed_keys ) ) {
+			$action = null;
+
+			foreach ( $changed_keys as $key ) {
+				// If anything about the Provider has changed then we need to verify the bucket selection.
+				// Otherwise we can let the filter decide whether there is an action to take.
+				// Last implementer will win, but the above handlers take care of grouping things appropriately.
+				if ( in_array( $key, array( 'provider', 'access-key-id', 'secret-access-key' ) ) && ! $this->get_defined_setting( 'bucket', false ) ) {
+					$action = 'change-bucket';
+					break;
+				} else {
+					$action = apply_filters( 'as3cf_action_for_changed_settings_key', $action, $key );
+				}
+			}
+		}
+
+		// Stash which step we're on in possibly multi-step config.
+		$prev_action = ! empty( $_GET['action'] ) ? $_GET['action'] : null;
+
+		// Depending on the step we're on, we may need another step if not already determined by newly saved settings.
+		if ( empty( $action ) && ! empty( $prev_action ) ) {
+			// After change-provider we always want the user to confirm the bucket is still ok.
+			// This gets round the change-provider => change-bucket => "back" problem.
+			// but then no change in provider settings problem.
+			if ( 'change-provider' === $prev_action && ! $this->get_defined_setting( 'bucket', false ) ) {
+				$action = 'change-bucket';
+			}
+		}
+
+		if ( ! empty( $action ) ) {
+			$url_args['action'] = $action;
+		}
+
+		if ( ! empty( $prev_action ) ) {
+			$url_args['prev_action'] = $prev_action;
+		}
+
+		$url = $this->get_plugin_page_url( $url_args );
+		wp_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Handle saving change in bucket as submitted by user, whether create, enter or select.
+	 *
+	 * @return array|bool
+	 * @throws Exception
+	 */
+	private function handle_change_bucket() {
+		// Quick check that bucket name actually given.
+		$bucket = empty( $_POST['bucket_name'] ) ? false : $_POST['bucket_name'];
+
+		if ( false === $bucket ) {
+			$this->notices->add_notice( __( 'No bucket name provided.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+			return false;
+		}
+
+		// Check and set bucket.
+		$bucket = $this->check_bucket( $bucket );
+
+		if ( false === $bucket ) {
+			$this->notices->add_notice( __( 'No bucket name not valid.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+			return false;
+		}
+
+		$bucket_mode = empty( $_GET['bucket_mode'] ) ? 'manual' : $_GET['bucket_mode'];
+
+		// Check and set region.
+		$region          = empty( $_POST['region_name'] ) ? '' : $_POST['region_name'];
+		$region_required = 'create' === $bucket_mode ? true : $this->get_provider()->region_required();
+		$region          = $this->check_region( $region, $region_required );
+
+		if ( false === $region ) {
+			$this->notices->add_notice( __( 'No region provided.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+			return false;
+		}
+
+		// Are we creating a bucket?
+		if ( 'create' === $bucket_mode ) {
+			$result = $this->create_bucket( $bucket, $region );
+
+			if ( is_wp_error( $result ) ) {
+				$this->notices->add_notice( $this->prepare_bucket_error( $result, false ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+				return false;
+			}
+
+			// Check if we were previously selecting a bucket manually via the input.
+			$manual_select = $this->get_setting( 'manual_bucket', false );
+
+			$args = array(
+				'_nonce' => wp_create_nonce( 'as3cf-create-bucket' ),
+			);
+		} elseif ( 'manual' === $bucket_mode ) {
+			$manual_select = true;
+		} else {
+			$manual_select = false;
+		}
+
+		// Stash the current bucket and region before they change.
+		$old_bucket = $this->get_setting( 'bucket', false );
+		$old_region = $this->get_setting( 'region', '' );
+
+		// Set bucket.
+		$region = $this->save_bucket( $bucket, $manual_select, $region );
+
+		if ( is_wp_error( $region ) ) {
+			$this->notices->add_notice( $this->prepare_bucket_error( $region, false ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+			return false;
+		}
+
+		$can_write = $this->check_write_permission( $bucket, $region );
+
+		if ( is_wp_error( $can_write ) ) {
+			$this->notices->add_notice( $this->prepare_bucket_error( $can_write, false ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+			return false;
+		}
+
+		// Tell the parent handler whether the bucket or region have changed.
+		$changed_keys = array();
+
+		if ( ! $old_bucket || $bucket !== $old_bucket ) {
+			$changed_keys[] = 'bucket';
+		}
+
+		if ( $region !== $old_region ) {
+			$changed_keys[] = 'region';
+		}
+
+		return $changed_keys;
+	}
+
+	/**
+	 * Handle saving settings submitted by user.
+	 *
+	 * @return array
+	 */
+	private function handle_save_settings() {
+		$changed_keys = array();
+
 		do_action( 'as3cf_pre_save_settings' );
 
-		$post_vars = $this->get_settings_whitelist();
+		$post_vars    = $this->get_settings_whitelist();
+		$old_settings = $this->get_settings();
 
 		foreach ( $post_vars as $var ) {
 			// Special case for when Secret Access Key is not changed.
@@ -3039,13 +3146,16 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$value = $this->sanitize_setting( $var, $_POST[ $var ] );
 
 			$this->set_setting( $var, $value );
+
+			// Some setting changes might have knock-on effects that require confirmation of secondary settings.
+			if ( isset( $old_settings[ $var ] ) && $old_settings[ $var ] !== $value ) {
+				$changed_keys[] = $var;
+			}
 		}
 
 		$this->save_settings();
 
-		$url = $this->get_plugin_page_url( array( 'updated' => '1' ) );
-		wp_redirect( $url );
-		exit;
+		return $changed_keys;
 	}
 
 	/**
@@ -3340,7 +3450,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			} elseif ( isset( $_wp_additional_image_sizes[ $size ] ) ) {
 				$size_details .= $size . ' (' . $_wp_additional_image_sizes[ $size ]['width'] . 'x' . $_wp_additional_image_sizes[ $size ]['height'] . ')' . "\r\n";
 			}
-
 		}
 
 		return $size_details;
@@ -4429,7 +4538,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Handle retieving the S3 details for attachment modals.
+	 * Handle retrieving the provider details for attachment modals.
 	 */
 	public function ajax_get_attachment_provider_details() {
 		if ( ! isset( $_POST['id'] ) ) {
@@ -4724,7 +4833,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @return array Attachment's cleaned up metadata.
 	 */
 	public function maybe_cleanup_filesize_metadata( $post_id, $data, $update_metadata = true ) {
-		if ( ! is_int( $post_id ) || empty( $post_id ) || empty( $data ) ) {
+		if ( ! is_int( $post_id ) || empty( $post_id ) || empty( $data ) || ! is_array( $data ) ) {
 			return $data;
 		}
 

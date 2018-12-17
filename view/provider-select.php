@@ -10,7 +10,7 @@ $providers              = $this->get_provider_classes();
 
 <div class="as3cf-content as3cf-provider-select">
 	<?php
-	if ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] ) {
+	if ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] && $this->get_setting( 'bucket' ) && ! empty( $can_write ) ) {
 		echo '<a href="' . $this->get_plugin_page_url() . '">' . __( '&laquo;&nbsp;Back', 'amazon-s3-and-cloudfront' ) . '</a>';
 	}
 	?>
@@ -20,6 +20,7 @@ $providers              = $this->get_provider_classes();
 		<?php
 		/* @var \DeliciousBrains\WP_Offload_Media\Providers\Provider $provider_class */
 		foreach ( $providers as $provider_key => $provider_class ) {
+			/* @var \DeliciousBrains\WP_Offload_Media\Providers\Provider $provider */
 			$provider                = new $provider_class( $this );
 			$provider_selected       = $provider_key === $current_provider->get_provider_key_name();
 			$provider_selected_class = $provider_selected ? ' as3cf-provider-selected' : '';
@@ -65,6 +66,8 @@ $providers              = $this->get_provider_classes();
 					$db_authmethod_attr = $provider_selected ? ' checked="checked"' : '';
 					break;
 			}
+
+			$provider_service_quick_start_slug = $provider_class::get_provider_service_quick_start_slug();
 			?>
 			<tr class="as3cf-provider-title as3cf-provider-<?php echo $provider_key; ?><?php echo $provider_selected_class; ?>">
 				<td>
@@ -101,7 +104,9 @@ $providers              = $this->get_provider_classes();
 								<input type="radio" name="authmethod" id="as3cf-provider-<?php echo $provider_key; ?>-define" value="define"<?php echo $provider_selected ? '' : ' disabled="disabled"';
 								echo $define_authmethod_attr; ?>>
 							</th>
-							<td><label for="as3cf-provider-<?php echo $provider_key; ?>-define"><?php _e( 'Define access keys in wp-config.php', 'amazon-s3-and-cloudfront' ) ?></label></td>
+							<td>
+								<label for="as3cf-provider-<?php echo $provider_key; ?>-define"><?php _e( 'Define access keys in wp-config.php', 'amazon-s3-and-cloudfront' ) ?></label>
+							</td>
 						</tr>
 						<tr class="asc3f-provider-authmethod-content" data-provider-authmethod="define"<?php echo 'define' !== $selected_authmethod ? ' style="display: none"' : ''; ?>>
 							<td></td>
@@ -116,7 +121,7 @@ $providers              = $this->get_provider_classes();
 									$multiple_defined_keys_glue = _x( ' & ', 'joins multiple define keys in notice', 'amazon-s3-and-cloudfront' );
 									$defined_constants_str      = join( $multiple_defined_keys_glue, $defined_constants );
 									printf( $remove_defines_msg, $defined_constants_str );
-									echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/quick-start-guide/#save-access-keys' );
+									echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 
 									if ( $provider_selected && ! $provider->are_access_keys_set() ) {
 										?>
@@ -129,7 +134,7 @@ $providers              = $this->get_provider_classes();
 									}
 								} else {
 									_e( 'Copy the following snippet <strong>near the top</strong> of your wp-config.php and replace the stars with the keys.', 'amazon-s3-and-cloudfront' );
-									echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/quick-start-guide/#save-access-keys' );
+									echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 									?>
 									<textarea rows="5" class="as3cf-define-snippet code clear" readonly>
 define( 'AS3CF_SETTINGS', serialize( array(
@@ -153,18 +158,19 @@ define( 'AS3CF_SETTINGS', serialize( array(
 									<input type="radio" name="authmethod" id="as3cf-provider-<?php echo $provider_key; ?>-server-role" value="server-role"<?php echo $provider_selected ? '' : ' disabled="disabled"';
 									echo $server_role_authmethod_attr; ?>>
 								</th>
-								<td><label for="as3cf-provider-<?php echo $provider_key; ?>-server-role"><?php _e( 'My server is on Amazon EC2 and I\'d like to use IAM Roles', 'amazon-s3-and-cloudfront' ) ?></label></td>
+								<td>
+									<label for="as3cf-provider-<?php echo $provider_key; ?>-server-role"><?php _e( 'My server is on Amazon EC2 and I\'d like to use IAM Roles', 'amazon-s3-and-cloudfront' ) ?></label>
+								</td>
 							</tr>
 							<tr class="asc3f-provider-authmethod-content" data-provider-authmethod="server-role"<?php echo 'server-role' !== $selected_authmethod ? ' style="display: none"' : ''; ?>>
 								<td></td>
 								<td>
 									<?php if ( $provider_class::use_server_roles() ) {
 										printf( __( 'You\'ve defined the \'%1$s\' constant in your wp-config.php. To select a different option here, simply comment out or remove the define in your wp-config.php.' ), $use_server_role_constant );
-										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/quick-start-guide/#save-access-keys' );
-
+										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 									} else {
 										_e( 'If you host your WordPress site on an Amazon EC2 instance you should make use of IAM Roles. To tell WP Offload Media you\'re using IAM Roles, copy the following snippet <strong>near the top</strong> of your wp-config.php.', 'amazon-s3-and-cloudfront' );
-										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/quick-start-guide/#save-access-keys' );
+										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 										?>
 										<textarea rows="1" class="as3cf-define-snippet code clear" readonly>
 define( 'AS3CF_AWS_USE_EC2_IAM_ROLE', true );
@@ -184,14 +190,16 @@ define( 'AS3CF_AWS_USE_EC2_IAM_ROLE', true );
 								<input type="radio" name="authmethod" id="as3cf-provider-<?php echo $provider_key; ?>-db" value="db"<?php echo $provider_selected ? '' : ' disabled="disabled"';
 								echo $db_authmethod_attr; ?>>
 							</th>
-							<td><label for="as3cf-provider-<?php echo $provider_key; ?>-db"><?php _e( 'I understand the risks but I\'d like to store access keys in the database anyway (not recommended)', 'amazon-s3-and-cloudfront' ) ?></label></td>
+							<td>
+								<label for="as3cf-provider-<?php echo $provider_key; ?>-db"><?php _e( 'I understand the risks but I\'d like to store access keys in the database anyway (not recommended)', 'amazon-s3-and-cloudfront' ) ?></label>
+							</td>
 						</tr>
 						<tr class="asc3f-provider-authmethod-content" data-provider-authmethod="db"<?php echo 'db' !== $selected_authmethod ? ' style="display: none"' : ''; ?>>
 							<td></td>
 							<td>
 								<?php
 								_e( 'Storing your access keys in the database is less secure than the options above, but if you\'re ok with that, go ahead and enter your keys in the form below.', 'amazon-s3-and-cloudfront' );
-								echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/quick-start-guide/#save-access-keys' );
+								echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 								?>
 								<table class="form-table as3cf-access-keys">
 									<tr valign="top">
@@ -231,4 +239,7 @@ define( 'AS3CF_AWS_USE_EC2_IAM_ROLE', true );
 			</tr>
 		<?php } // Providers ?>
 	</table>
+	<p>
+		<button type="submit" class="button button-primary"><?php echo empty( $this->get_defined_setting( 'bucket', false ) ) ? __( 'Next', 'amazon-s3-and-cloudfront' ) : __( 'Save Changes', 'amazon-s3-and-cloudfront' ); ?></button>
+	</p>
 </div>

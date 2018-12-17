@@ -1,15 +1,17 @@
-=== WP Offload Media Lite ===
+=== WP Offload Media Lite for Amazon S3 and DigitalOcean Spaces ===
 Contributors: bradt, deliciousbrains, ianmjones
 Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.7
-Tested up to: 4.9
+Tested up to: 5.0
 Requires PHP: 5.5
-Stable tag: 2.0
+Stable tag: 2.0.1
 License: GPLv3
 
 Copies files to Amazon S3 or DigitalOcean Spaces as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
 
 == Description ==
+
+FORMERLY WP OFFLOAD S3 LITE
 
 https://www.youtube.com/watch?v=_PVybEGaRXc
 
@@ -18,6 +20,10 @@ This plugin automatically copies images, videos, documents, and any other media 
 Uploading files *directly* to your Amazon S3 or DigitalOcean Spaces account is not currently supported by this plugin. They are uploaded to your server first, then copied to the bucket. There is an option to automatically remove the files from your server once they are copied to the bucket however.
 
 If you're adding this plugin to a site that's been around for a while, your existing media files will not be copied to or served from Amazon S3 or DigitalOcean Spaces. Only newly uploaded files will be copied to and served from the bucket. The pro upgrade has an upload tool to handle existing media files.
+
+**Image Optimization**
+
+Although WP Offload Media doesn't include image optimization features, we work closely with the author of [EWWW Image Optimizer](https://wordpress.org/plugins/ewww-image-optimizer/) to ensure they always work well together. Not only do we recommend EWWW Image Optimizer but we officially support its integration with WP Offload Media.
 
 **PRO Upgrade with Email Support and More Features**
 
@@ -34,10 +40,6 @@ The video below runs through the pro upgrade features...
 
 https://www.youtube.com/watch?v=55xNGnbJ_CY
 
-*This plugin has been completely rewritten, but was originally a fork of
-[Amazon S3 for WordPress with CloudFront](http://wordpress.org/extend/plugins/tantan-s3-cloudfront/)
-which is a fork of [Amazon S3 for WordPress](http://wordpress.org/extend/plugins/tantan-s3/), also known as tantan-s3.*
-
 == Installation ==
 
 1. Install this plugin using WordPress' built-in installer
@@ -52,10 +54,16 @@ Check out the [Quick Start Guide](https://deliciousbrains.com/wp-offload-media/d
 
 You can see the minimum requirements [here](https://deliciousbrains.com/wp-offload-media/pricing/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=requirements#requirements).
 
+= Do you offer email support? =
+
+If you upgrade to the pro version of [WP Offload Media](https://deliciousbrains.com/wp-offload-media/upgrade/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting), we will gladly provide you with email support. We take pride in delivering exceptional customer support. We do not provide email support for the free version.
+
 == Screenshots ==
 
-1. Choosing/creating a bucket
-2. Settings screen
+1. Select Cloud Storage Provider
+2. Select or Create Bucket
+3. Settings Screen
+3. Custom Domain Used With CDN
 
 == Upgrade Notice ==
 
@@ -70,9 +78,18 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
+= WP Offload Media Lite 2.0.1 - 2018-12-17 =
+* Improvement: Streamlined UI for setting Storage Provider and Bucket
+* Bug fix: On/Off switches in settings look reversed
+* Bug fix: Latest upgrade routine runs on fresh install
+* Bug fix: Defined settings still found in database
+* Bug fix: More Info links in Storage Provider settings incorrect
+* Tested: WordPress 5.0
+
 = WP Offload Media Lite 2.0 - 2018-09-24 =
-* New: Plugin renamed to "WP Offload Media Lite"
-* New: DigitalOcean Spaces support
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-supports-digitalocean-spaces/)
+* New: DigitalOcean Spaces is now supported
+* New: Plugin name updated from WP Offload S3 Lite to WP Offload Media Lite
 * Improvement: More logical UI layout and better description of each setting
 
 = WP Offload S3 Lite 1.4.3 - 2018-08-02 =
