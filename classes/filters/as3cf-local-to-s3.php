@@ -18,6 +18,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		add_filter( 'content_pagination', array( $this, 'filter_content_pagination' ) );
 		add_filter( 'the_content', array( $this, 'filter_post' ), 100 );
 		add_filter( 'the_excerpt', array( $this, 'filter_post' ), 100 );
+		add_filter( 'rss_enclosure', array( $this, 'filter_post' ), 100);
 		add_filter( 'content_edit_pre', array( $this, 'filter_post' ) );
 		add_filter( 'excerpt_edit_pre', array( $this, 'filter_post' ) );
 		add_filter( 'as3cf_filter_post_local_to_s3', array( $this, 'filter_post' ) ); // Backwards compatibility
