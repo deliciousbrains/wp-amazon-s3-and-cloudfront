@@ -51,6 +51,9 @@ class JsonBody
                         $data[$valueShape['locationName'] ?: $k] = $this->format($valueShape, $v);
                     }
                 }
+                if (empty($data)) {
+                    return new \stdClass();
+                }
                 return $data;
             case 'list':
                 $items = $shape->getMember();
@@ -70,7 +73,8 @@ class JsonBody
             case 'blob':
                 return base64_encode($value);
             case 'timestamp':
-                return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'unixTimestamp');
+                $timestampFormat = !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : 'unixTimestamp';
+                return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
             default:
                 return $value;
         }

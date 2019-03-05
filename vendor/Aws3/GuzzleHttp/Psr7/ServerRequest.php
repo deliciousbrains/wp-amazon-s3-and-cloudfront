@@ -131,12 +131,23 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Ps
     public static function fromGlobals()
     {
         $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        $headers = function_exists('getallheaders') ? getallheaders() : [];
+        $headers = getallheaders();
         $uri = self::getUriFromGlobals();
         $body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream('php://input', 'r+');
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
         $serverRequest = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
         return $serverRequest->withCookieParams($_COOKIE)->withQueryParams($_GET)->withParsedBody($_POST)->withUploadedFiles(self::normalizeFiles($_FILES));
+    }
+    private static function extractHostAndPortFromAuthority($authority)
+    {
+        $uri = 'http://' . $authority;
+        $parts = parse_url($uri);
+        if (false === $parts) {
+            return [null, null];
+        }
+        $host = isset($parts['host']) ? $parts['host'] : null;
+        $port = isset($parts['port']) ? $parts['port'] : null;
+        return [$host, $port];
     }
     /**
      * Get a Uri populated with values from $_SERVER.
@@ -149,11 +160,13 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Ps
         $uri = $uri->withScheme(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
         $hasPort = false;
         if (isset($_SERVER['HTTP_HOST'])) {
-            $hostHeaderParts = explode(':', $_SERVER['HTTP_HOST']);
-            $uri = $uri->withHost($hostHeaderParts[0]);
-            if (isset($hostHeaderParts[1])) {
+            list($host, $port) = self::extractHostAndPortFromAuthority($_SERVER['HTTP_HOST']);
+            if ($host !== null) {
+                $uri = $uri->withHost($host);
+            }
+            if ($port !== null) {
                 $hasPort = true;
-                $uri = $uri->withPort($hostHeaderParts[1]);
+                $uri = $uri->withPort($port);
             }
         } elseif (isset($_SERVER['SERVER_NAME'])) {
             $uri = $uri->withHost($_SERVER['SERVER_NAME']);
@@ -165,7 +178,7 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Ps
         }
         $hasQuery = false;
         if (isset($_SERVER['REQUEST_URI'])) {
-            $requestUriParts = explode('?', $_SERVER['REQUEST_URI']);
+            $requestUriParts = explode('?', $_SERVER['REQUEST_URI'], 2);
             $uri = $uri->withPath($requestUriParts[0]);
             if (isset($requestUriParts[1])) {
                 $hasQuery = true;

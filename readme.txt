@@ -1,13 +1,13 @@
 === WP Offload Media Lite for Amazon S3 and DigitalOcean Spaces ===
 Contributors: bradt, deliciousbrains, ianmjones
-Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, mirror, admin, media, cdn, cloudfront
+Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.7
-Tested up to: 5.0
+Tested up to: 5.1
 Requires PHP: 5.5
-Stable tag: 2.0.1
+Stable tag: 2.1
 License: GPLv3
 
-Copies files to Amazon S3 or DigitalOcean Spaces as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
+Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
 
 == Description ==
 
@@ -15,11 +15,11 @@ FORMERLY WP OFFLOAD S3 LITE
 
 https://www.youtube.com/watch?v=_PVybEGaRXc
 
-This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon S3](http://aws.amazon.com/s3/) or [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/). It then automatically replaces the URL to each media file with their respective Amazon S3 or DigitalOcean Spaces URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/) or another CDN with or without a custom domain, that URL instead. Image thumbnails are also copied to the bucket and delivered through the correct remote URL.
+This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon S3](http://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) or [Google Cloud Storage](https://cloud.google.com/storage/). It then automatically replaces the URL to each media file with their respective Amazon S3, DigitalOcean Spaces or Google Cloud Storage URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/) or another CDN with or without a custom domain, that URL instead. Image thumbnails are also copied to the bucket and delivered through the correct remote URL.
 
-Uploading files *directly* to your Amazon S3 or DigitalOcean Spaces account is not currently supported by this plugin. They are uploaded to your server first, then copied to the bucket. There is an option to automatically remove the files from your server once they are copied to the bucket however.
+Uploading files *directly* to your Amazon S3, DigitalOcean Spaces or Google Cloud Storage account is not currently supported by this plugin. They are uploaded to your server first, then copied to the bucket. There is an option to automatically remove the files from your server once they are copied to the bucket however.
 
-If you're adding this plugin to a site that's been around for a while, your existing media files will not be copied to or served from Amazon S3 or DigitalOcean Spaces. Only newly uploaded files will be copied to and served from the bucket. The pro upgrade has an upload tool to handle existing media files.
+If you're adding this plugin to a site that's been around for a while, your existing media files will not be copied to or served from Amazon S3, DigitalOcean Spaces or Google Cloud Storage. Only newly uploaded files will be copied to and served from the bucket. [The pro upgrade](https://deliciousbrains.com/wp-offload-media/upgrade/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting) has an upload tool to handle existing media files.
 
 **Image Optimization**
 
@@ -27,7 +27,7 @@ Although WP Offload Media doesn't include image optimization features, we work c
 
 **PRO Upgrade with Email Support and More Features**
 
-* Upload existing Media Library to Amazon S3 or DigitalOcean Spaces
+* Upload existing Media Library to Amazon S3, DigitalOcean Spaces or Google Cloud Storage
 * Control offloaded files from the Media Library
 * [Assets Pull addon](https://deliciousbrains.com/wp-offload-media/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=assets%2Baddon#addons) - Serve your CSS, JS and fonts via CloudFront or another CDN
 * [WooCommerce integration](https://deliciousbrains.com/wp-offload-media/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting&utm_content=woocommerce%2Baddon#integrations)
@@ -38,7 +38,7 @@ Although WP Offload Media doesn't include image optimization features, we work c
 
 The video below runs through the pro upgrade features...
 
-https://www.youtube.com/watch?v=55xNGnbJ_CY
+https://www.youtube.com/watch?v=I-wTMXMeFu4
 
 == Installation ==
 
@@ -78,6 +78,16 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
 
+= WP Offload Media Lite 2.1 - 2019-03-05 =
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-1-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: Google Cloud Storage is now supported
+* Improvement: AWS PHP SDK updated
+* Improvement: Diagnostic Info shows more complete settings information
+* Bug fix: Year/Month path prefix incorrectly set in bucket for non-image media files
+* Bug fix: PHP Fatal error: Class 'XMLWriter' not found
+* Bug fix: PHP Fatal error: Uncaught Error: Call to undefined method ...\Aws3\Aws\S3\Exception\S3Exception::search() in .../classes/providers/aws-provider.php:439
+* Bug fix: PHP Warning: filesize(): stat failed for [file-path] in classes/amazon-s3-and-cloudfront.php on line 1309
+
 = WP Offload Media Lite 2.0.1 - 2018-12-17 =
 * Improvement: Streamlined UI for setting Storage Provider and Bucket
 * Bug fix: On/Off switches in settings look reversed
@@ -87,7 +97,7 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 * Tested: WordPress 5.0
 
 = WP Offload Media Lite 2.0 - 2018-09-24 =
-* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-supports-digitalocean-spaces/)
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-s3-is-now-wp-offload-media-and-adds-support-for-digitalocean-spaces/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
 * New: DigitalOcean Spaces is now supported
 * New: Plugin name updated from WP Offload S3 Lite to WP Offload Media Lite
 * Improvement: More logical UI layout and better description of each setting

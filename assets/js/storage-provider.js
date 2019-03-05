@@ -1,4 +1,4 @@
-( function( $ ) {
+(function( $ ) {
 	var $body = $( 'body' );
 
 	var as3cf = as3cf || {};
@@ -25,10 +25,12 @@
 			$( element ).hide();
 			$( element ).removeClass( 'as3cf-provider-selected' );
 			$( element ).find( 'input' ).prop( 'disabled', true );
+			$( element ).find( 'textarea.as3cf-large-input' ).prop( 'disabled', true );
 		},
 
 		enableContent: function( element ) {
 			$( element ).find( 'input:not( [data-as3cf-disabled="true"] )' ).prop( 'disabled', false );
+			$( element ).find( 'textarea.as3cf-large-input' ).prop( 'disabled', false );
 			$( element ).addClass( 'as3cf-provider-selected' );
 			$( element ).show( 'fast', function() {
 				as3cf.storageProvider.setSelectedAuthMethod( this );
@@ -42,7 +44,7 @@
 			var checkedCount = $( element ).find( 'input[name="authmethod"]:checked' ).length;
 
 			if ( 1 !== checkedCount ) {
-				$( element ).find( 'input[name="authmethod"]' ).first().prop( 'checked', true ).change();
+				$( element ).find( 'input[name="authmethod"]:not( [data-as3cf-disabled="true"] )' ).first().prop( 'checked', true ).change();
 			}
 		},
 
@@ -82,4 +84,4 @@
 		} );
 	} );
 
-} )( jQuery );
+})( jQuery );

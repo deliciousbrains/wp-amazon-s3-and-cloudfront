@@ -139,7 +139,7 @@ class AWS_Provider extends Provider {
 	/**
 	 * @var string
 	 */
-	protected $console_url_param = '&prefix=';
+	protected $console_url_prefix_param = '&prefix=';
 
 	const API_VERSION = '2006-03-01';
 	const SIGNATURE_VERSION = 'v4';
@@ -265,7 +265,7 @@ class AWS_Provider extends Provider {
 	/**
 	 * Check whether bucket exists.
 	 *
-	 * @param $bucket
+	 * @param string $bucket
 	 *
 	 * @return bool
 	 */
@@ -301,9 +301,9 @@ class AWS_Provider extends Provider {
 	/**
 	 * Check whether key exists in bucket.
 	 *
-	 * @param       $bucket
-	 * @param       $key
-	 * @param array $options
+	 * @param string $bucket
+	 * @param string $key
+	 * @param array  $options
 	 *
 	 * @return bool
 	 */
@@ -343,10 +343,10 @@ class AWS_Provider extends Provider {
 	/**
 	 * Get object's URL.
 	 *
-	 * @param       $bucket
-	 * @param       $key
-	 * @param       $expires
-	 * @param array $args
+	 * @param string $bucket
+	 * @param string $key
+	 * @param int    $expires
+	 * @param array  $args
 	 *
 	 * @return string
 	 */
@@ -359,7 +359,7 @@ class AWS_Provider extends Provider {
 
 		$command = $this->s3_client->getCommand( 'GetObject', $commandArgs );
 
-		if ( empty( $expires ) ) {
+		if ( empty( $expires ) || ! is_int( $expires ) || $expires < 0 ) {
 			return (string) \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize( $command )->getUri();
 		} else {
 			return (string) $this->s3_client->createPresignedRequest( $command, $expires )->getUri();
@@ -436,10 +436,17 @@ class AWS_Provider extends Provider {
 
 		/* @var ResultInterface $result */
 		foreach ( $results as $attachment_id => $result ) {
-			$found_keys = $result->search( 'Contents[].Key' );
+			if ( is_a( $result, 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface' ) ) {
+				$found_keys = $result->search( 'Contents[].Key' );
 
-			if ( ! empty( $found_keys ) ) {
-				$keys[ $attachment_id ] = $found_keys;
+				if ( ! empty( $found_keys ) ) {
+					$keys[ $attachment_id ] = $found_keys;
+				}
+			} elseif ( is_a( $result, 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception' ) ) {
+				/* @var S3Exception $result */
+				\AS3CF_Error::log( __FUNCTION__ . ' - ' . $result->getAwsErrorMessage() . ' - Attachment ID: ' . $attachment_id );
+			} else {
+				\AS3CF_Error::log( __FUNCTION__ . ' - Unrecognised class returned from CommandPool::batch - Attachment ID: ' . $attachment_id );
 			}
 		}
 
@@ -524,7 +531,7 @@ class AWS_Provider extends Provider {
 				'Bucket' => $bucket,
 				'Key'    => $key,
 				'Body'   => $file_contents,
-				'ACL'    => 'public-read',
+				'ACL'    => self::DEFAULT_ACL,
 			) );
 
 			// delete it straight away if created
@@ -536,7 +543,7 @@ class AWS_Provider extends Provider {
 			return true;
 		} catch ( \Exception $e ) {
 			// If we encounter an error that isn't access denied, throw that error.
-			if ( ! $e instanceof S3Exception || 'AccessDenied' !== $e->getAwsErrorCode() ) {
+			if ( ! $e instanceof S3Exception || ! in_array( $e->getAwsErrorCode(), array( 'AccessDenied', 'NoSuchBucket' ) ) ) {
 				return $e->getMessage();
 			}
 		}
@@ -598,5 +605,17 @@ class AWS_Provider extends Provider {
 		}
 
 		return $domain;
+	}
+
+	/**
+	 * Get the suffix param to append to the link to the bucket on the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 *
+	 * @return string
+	 */
+	protected function get_console_url_suffix_param( $bucket = '', $prefix = '' ) {
+		return '';
 	}
 }

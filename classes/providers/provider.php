@@ -78,6 +78,18 @@ abstract class Provider {
 	protected static $secret_access_key_setting_name = 'secret-access-key';
 
 	/**
+	 * @var string
+	 */
+	protected static $key_file_setting_name = 'key-file';
+
+	/**
+	 * @var string
+	 */
+	protected static $key_file_path_setting_name = 'key-file-path';
+
+	/**
+	 * If left empty, access keys not allowed.
+	 *
 	 * @var array
 	 */
 	protected static $access_key_id_constants = array();
@@ -93,6 +105,13 @@ abstract class Provider {
 	 * @var array
 	 */
 	protected static $use_server_roles_constants = array();
+
+	/**
+	 * If left empty, key file not allowed.
+	 *
+	 * @var array
+	 */
+	protected static $key_file_path_constants = array();
 
 	/**
 	 * @var array
@@ -122,7 +141,7 @@ abstract class Provider {
 	/**
 	 * @var string
 	 */
-	protected $console_url_param = '';
+	protected $console_url_prefix_param = '';
 
 	/**
 	 * Provider constructor.
@@ -183,6 +202,15 @@ abstract class Provider {
 	}
 
 	/**
+	 * Is the provider able to use access keys?
+	 *
+	 * @return bool
+	 */
+	public static function use_access_keys_allowed() {
+		return ! empty( static::$access_key_id_constants );
+	}
+
+	/**
 	 * Whether or not access keys are needed.
 	 *
 	 * Keys are needed if we are not using server roles or not defined/set yet.
@@ -191,6 +219,10 @@ abstract class Provider {
 	 */
 	public function needs_access_keys() {
 		if ( static::use_server_roles() ) {
+			return false;
+		}
+
+		if ( static::use_key_file() ) {
 			return false;
 		}
 
@@ -250,22 +282,6 @@ abstract class Provider {
 	}
 
 	/**
-	 * Allows the provider's client factory to use server roles instead of key/secret for credentials.
-	 * http://docs.aws.amazon.com/aws-sdk-php/guide/latest/credentials.html#instance-profile-credentials
-	 *
-	 * @return bool
-	 */
-	public static function use_server_roles() {
-		if ( ! static::use_server_roles_allowed() ) {
-			return false;
-		}
-
-		$constant = static::use_server_role_constant();
-
-		return $constant && constant( $constant );
-	}
-
-	/**
 	 * Get the constant used to define the access key id.
 	 *
 	 * @return string|false Constant name if defined, otherwise false
@@ -275,7 +291,7 @@ abstract class Provider {
 	}
 
 	/**
-	 * Get the constant used to define the aws secret access key.
+	 * Get the constant used to define the secret access key.
 	 *
 	 * @return string|false Constant name if defined, otherwise false
 	 */
@@ -293,12 +309,125 @@ abstract class Provider {
 	}
 
 	/**
+	 * If server roles allowed, returns first (preferred) constant that should be defined, otherwise blank.
+	 *
+	 * @return string
+	 */
+	public static function preferred_use_server_role_constant() {
+		if ( static::use_server_roles_allowed() ) {
+			return static::$use_server_roles_constants[0];
+		} else {
+			return '';
+		}
+	}
+
+	/**
+	 * Allows the provider's client factory to use server roles instead of key/secret for credentials.
+	 *
+	 * @see http://docs.aws.amazon.com/aws-sdk-php/guide/latest/credentials.html#instance-profile-credentials
+	 *
+	 * @return bool
+	 */
+	public static function use_server_roles() {
+		if ( ! static::use_server_roles_allowed() ) {
+			return false;
+		}
+
+		$constant = static::use_server_role_constant();
+
+		return $constant && constant( $constant );
+	}
+
+	/**
 	 * Get the constant used to enable the use of EC2 IAM roles.
 	 *
 	 * @return string|false Constant name if defined, otherwise false
 	 */
 	public static function use_server_role_constant() {
 		return AS3CF_Utils::get_first_defined_constant( static::$use_server_roles_constants );
+	}
+
+	/**
+	 * Is the provider able to use a key file?
+	 *
+	 * @return bool
+	 */
+	public static function use_key_file_allowed() {
+		return ! empty( static::$key_file_path_constants );
+	}
+
+	/**
+	 * If key file allowed, returns first (preferred) constant that should be defined, otherwise blank.
+	 *
+	 * @return string
+	 */
+	public static function preferred_key_file_path_constant() {
+		if ( static::use_key_file_allowed() ) {
+			return static::$key_file_path_constants[0];
+		} else {
+			return '';
+		}
+	}
+
+	/**
+	 * Check if either key file path or key file set.
+	 *
+	 * @return bool
+	 */
+	public function use_key_file() {
+		if ( ! static::use_key_file_allowed() ) {
+			return false;
+		}
+
+		return $this->get_key_file_path() || $this->get_key_file();
+	}
+
+	/**
+	 * Get the key file contents from settings.
+	 *
+	 * @return array|bool
+	 */
+	public function get_key_file() {
+		$key_file = $this->as3cf->get_core_setting( static::$key_file_setting_name, false );
+
+		return $key_file;
+	}
+
+	/**
+	 * Get the key file path from a constant or the settings.
+	 *
+	 * Falls back to settings if constant is not defined.
+	 *
+	 * @return string|bool
+	 */
+	public function get_key_file_path() {
+		if ( static::is_key_file_path_constant_defined() ) {
+			$constant = static::key_file_path_constant();
+
+			return $constant ? constant( $constant ) : false;
+		}
+
+		return $this->as3cf->get_core_setting( static::$key_file_path_setting_name, false );
+	}
+
+	/**
+	 * Check if key file path constant is defined, for speed, does not check validity of file path.
+	 *
+	 * @return bool
+	 */
+	public static function is_key_file_path_constant_defined() {
+		$constant = static::key_file_path_constant();
+
+		return $constant && constant( $constant );
+	}
+
+	/**
+	 * Get the constant used to define the key file path.
+	 *
+	 * @return string|false Constant name if defined, otherwise false
+	 */
+	public static function key_file_path_constant() {
+		return AS3CF_Utils::get_first_defined_constant( static::$key_file_path_constants );
 	}
 
 	/**
@@ -366,6 +495,17 @@ abstract class Provider {
 	}
 
 	/**
+	 * Is given region key valid for provider?
+	 *
+	 * @param string $region
+	 *
+	 * @return bool
+	 */
+	public function is_region_valid( $region ) {
+		return in_array( trim( $region ), array_keys( $this->get_regions() ) );
+	}
+
+	/**
 	 * Instantiate a new service client for the provider.
 	 *
 	 * @param array $args Options for required region/endpoint
@@ -378,13 +518,29 @@ abstract class Provider {
 		}
 
 		if ( is_null( $this->client ) ) {
+			// There's no extra client authentication config required when using server roles.
 			if ( ! static::use_server_roles() ) {
-				$args = array_merge( array(
-					'credentials' => array(
-						'key'    => $this->get_access_key_id(),
-						'secret' => $this->get_secret_access_key(),
-					),
-				), $args );
+				// Some providers can supply Key File contents or Key File Path.
+				if ( static::use_key_file() ) {
+					// Key File contents take precedence over Key File Path.
+					if ( static::get_key_file() ) {
+						$args = array_merge( array(
+							'keyFile' => static::get_key_file(),
+						), $args );
+					} else {
+						$args = array_merge( array(
+							'keyFilePath' => static::get_key_file_path(),
+						), $args );
+					}
+				} else {
+					// Fall back is Access Keys.
+					$args = array_merge( array(
+						'credentials' => array(
+							'key'    => $this->get_access_key_id(),
+							'secret' => $this->get_secret_access_key(),
+						),
+					), $args );
+				}
 			}
 
 			// Add credentials and given args to default client args and then let user override.
@@ -534,10 +690,12 @@ abstract class Provider {
 	 */
 	public function get_console_url( $bucket = '', $prefix = '' ) {
 		if ( '' !== $prefix ) {
-			$prefix = $this->get_console_url_param() . urlencode( apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_value', $prefix ) );
+			$prefix = $this->get_console_url_prefix_param() . apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_value', $prefix );
 		}
 
-		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url', $this->console_url ) . $bucket . $prefix;
+		$suffix = apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_suffix_param', $this->get_console_url_suffix_param( $bucket, $prefix ) );
+
+		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url', $this->console_url ) . $bucket . $prefix . $suffix;
 	}
 
 	/**
@@ -545,8 +703,8 @@ abstract class Provider {
 	 *
 	 * @return string
 	 */
-	public function get_console_url_param() {
-		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_param', $this->console_url_param );
+	public function get_console_url_prefix_param() {
+		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_param', $this->console_url_prefix_param );
 	}
 
 	/**
@@ -610,7 +768,7 @@ abstract class Provider {
 	/**
 	 * Check whether bucket exists.
 	 *
-	 * @param $bucket
+	 * @param string $bucket
 	 *
 	 * @return bool
 	 */
@@ -637,9 +795,9 @@ abstract class Provider {
 	/**
 	 * Check whether key exists in bucket.
 	 *
-	 * @param       $bucket
-	 * @param       $key
-	 * @param array $options
+	 * @param string $bucket
+	 * @param string $key
+	 * @param array  $options
 	 *
 	 * @return bool
 	 */
@@ -671,10 +829,10 @@ abstract class Provider {
 	/**
 	 * Get object's URL.
 	 *
-	 * @param       $bucket
-	 * @param       $key
-	 * @param       $expires
-	 * @param array $args
+	 * @param string $bucket
+	 * @param string $key
+	 * @param int    $expires
+	 * @param array  $args
 	 *
 	 * @return string
 	 */
@@ -787,4 +945,14 @@ abstract class Provider {
 	 * @return string
 	 */
 	abstract protected function url_domain( $domain, $bucket, $region = '', $expires = null, $args = array(), $preview = false );
+
+	/**
+	 * Get the suffix param to append to the link to the bucket on the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 *
+	 * @return string
+	 */
+	abstract protected function get_console_url_suffix_param( $bucket = '', $prefix = '' );
 }

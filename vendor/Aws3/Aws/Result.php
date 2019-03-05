@@ -6,9 +6,10 @@ use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 /**
  * AWS result.
  */
-class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface
+class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
 {
     use HasDataTrait;
+    use HasMonitoringEventsTrait;
     public function __construct(array $data = [])
     {
         $this->data = $data;

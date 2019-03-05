@@ -127,7 +127,8 @@ class XmlBody
     private function add_timestamp(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape $shape, $name, $value, \XMLWriter $xml)
     {
         $this->startElement($shape, $name, $xml);
-        $xml->writeRaw(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'iso8601'));
+        $timestampFormat = !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : 'iso8601';
+        $xml->writeRaw(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat));
         $xml->endElement();
     }
     private function add_boolean(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $name, $value, \XMLWriter $xml)

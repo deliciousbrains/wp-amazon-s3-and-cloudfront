@@ -15,6 +15,10 @@ if ( ! empty( $_GET['prev_action'] ) ) {
 	$mode_args['prev_action'] = $_GET['prev_action'];
 }
 
+if ( ! empty( $_GET['orig_provider'] ) ) {
+	$mode_args['orig_provider'] = $_GET['orig_provider'];
+}
+
 $manual_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'bucket_mode' => 'manual' ) ) );
 $select_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'bucket_mode' => 'select' ) ) );
 $create_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'bucket_mode' => 'create' ) ) );
@@ -26,6 +30,10 @@ $create_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'buck
 		$back_args = $this->get_setting( 'bucket' ) ? array() : array( 'action' => 'change-provider' );
 		if ( empty( $back_args['action'] ) && ! empty( $_GET['prev_action'] ) ) {
 			$back_args['action'] = $_GET['prev_action'];
+
+			if ( ! empty( $_GET['orig_provider'] ) ) {
+				$back_args['orig_provider'] = $_GET['orig_provider'];
+			}
 		}
 		echo '<a href="' . $this->get_plugin_page_url( $back_args ) . '">' . __( '&laquo;&nbsp;Back', 'amazon-s3-and-cloudfront' ) . '</a>';
 	}
@@ -156,7 +164,9 @@ $create_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'buck
 					</td>
 					<td>
 						<?php
-						if ( ! defined( 'AS3CF_REGION' ) && false === $this->get_defined_setting( 'region', false ) ) { ?>
+						if ( ! defined( 'AS3CF_REGION' ) && false === $this->get_defined_setting( 'region', false ) ) {
+							$selected_region = $provider->is_region_valid( $selected_region ) ? $selected_region : $provider->get_default_region();
+							?>
 							<select id="<?php echo $prefix; ?>-bucket-create-region" class="bucket-create-region" name="region_name">
 								<?php foreach ( $provider_regions as $value => $label ) {
 									$selected = ( $value === $selected_region ) ? ' selected="selected"' : '';

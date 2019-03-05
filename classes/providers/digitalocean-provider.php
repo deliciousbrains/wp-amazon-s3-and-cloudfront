@@ -104,7 +104,7 @@ class DigitalOcean_Provider extends AWS_Provider {
 	/**
 	 * @var string
 	 */
-	protected $console_url_param = '?path=';
+	protected $console_url_prefix_param = '?path=';
 
 	/**
 	 * @var array

@@ -15,12 +15,24 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
     use SignatureTrait;
     const ISO8601_BASIC = 'Ymd\\THis\\Z';
     const UNSIGNED_PAYLOAD = 'UNSIGNED-PAYLOAD';
+    const AMZ_CONTENT_SHA256_HEADER = 'X-Amz-Content-Sha256';
     /** @var string */
     private $service;
     /** @var string */
     private $region;
     /** @var bool */
     private $unsigned;
+    /**
+     * The following headers are not signed because signing these headers
+     * would potentially cause a signature mismatch when sending a request
+     * through a proxy or if modified at the HTTP client level.
+     *
+     * @return array
+     */
+    private function getHeaderBlacklist()
+    {
+        return ['cache-control' => true, 'content-type' => true, 'content-length' => true, 'expect' => true, 'max-forwards' => true, 'pragma' => true, 'range' => true, 'te' => true, 'if-match' => true, 'if-none-match' => true, 'if-modified-since' => true, 'if-unmodified-since' => true, 'if-range' => true, 'accept' => true, 'authorization' => true, 'proxy-authorization' => true, 'from' => true, 'referer' => true, 'user-agent' => true, 'x-amzn-trace-id' => true, 'aws-sdk-invocation-id' => true, 'aws-sdk-retry' => true];
+    }
     /**
      * @param string $service Service name to use when signing
      * @param string $region  Region name to use when signing
@@ -46,7 +58,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
         $cs = $this->createScope($sdt, $this->region, $this->service);
         $payload = $this->getPayload($request);
         if ($payload == self::UNSIGNED_PAYLOAD) {
-            $parsed['headers']['X-Amz-Content-Sha256'] = [$payload];
+            $parsed['headers'][self::AMZ_CONTENT_SHA256_HEADER] = [$payload];
         }
         $context = $this->createContext($parsed, $payload);
         $toSign = $this->createStringToSign($ldt, $cs, $context['creq']);
@@ -54,6 +66,25 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
         $signature = hash_hmac('sha256', $toSign, $signingKey);
         $parsed['headers']['Authorization'] = ["AWS4-HMAC-SHA256 " . "Credential={$credentials->getAccessKeyId()}/{$cs}, " . "SignedHeaders={$context['headers']}, Signature={$signature}"];
         return $this->buildRequest($parsed);
+    }
+    /**
+     * Get the headers that were used to pre-sign the request.
+     * Used for the X-Amz-SignedHeaders header.
+     *
+     * @param array $headers
+     * @return array
+     */
+    private function getPresignHeaders(array $headers)
+    {
+        $presignHeaders = [];
+        $blacklist = $this->getHeaderBlacklist();
+        foreach ($headers as $name => $value) {
+            $lName = strtolower($name);
+            if (!isset($blacklist[$lName]) && $name !== self::AMZ_CONTENT_SHA256_HEADER) {
+                $presignHeaders[] = $lName;
+            }
+        }
+        return $presignHeaders;
     }
     public function presign(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials, $expires, array $options = [])
     {
@@ -65,10 +96,13 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
         $shortDate = substr($httpDate, 0, 8);
         $scope = $this->createScope($shortDate, $this->region, $this->service);
         $credential = $credentials->getAccessKeyId() . '/' . $scope;
+        if ($credentials->getSecurityToken()) {
+            unset($parsed['headers']['X-Amz-Security-Token']);
+        }
         $parsed['query']['X-Amz-Algorithm'] = 'AWS4-HMAC-SHA256';
         $parsed['query']['X-Amz-Credential'] = $credential;
         $parsed['query']['X-Amz-Date'] = gmdate('Ymd\\THis\\Z', $startTimestamp);
-        $parsed['query']['X-Amz-SignedHeaders'] = 'host';
+        $parsed['query']['X-Amz-SignedHeaders'] = implode(';', $this->getPresignHeaders($parsed['headers']));
         $parsed['query']['X-Amz-Expires'] = $this->convertExpires($expiresTimestamp, $startTimestamp);
         $context = $this->createContext($parsed, $payload);
         $stringToSign = $this->createStringToSign($httpDate, $scope, $context['creq']);
@@ -106,9 +140,9 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
             return self::UNSIGNED_PAYLOAD;
         }
         // Calculate the request signature payload
-        if ($request->hasHeader('X-Amz-Content-Sha256')) {
+        if ($request->hasHeader(self::AMZ_CONTENT_SHA256_HEADER)) {
             // Handle streaming operations (e.g. Glacier.UploadArchive)
-            return $request->getHeaderLine('X-Amz-Content-Sha256');
+            return $request->getHeaderLine(self::AMZ_CONTENT_SHA256_HEADER);
         }
         if (!$request->getBody()->isSeekable()) {
             throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException('sha256');
@@ -149,10 +183,7 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
      */
     private function createContext(array $parsedRequest, $payload)
     {
-        // The following headers are not signed because signing these headers
-        // would potentially cause a signature mismatch when sending a request
-        // through a proxy or if modified at the HTTP client level.
-        static $blacklist = ['cache-control' => true, 'content-type' => true, 'content-length' => true, 'expect' => true, 'max-forwards' => true, 'pragma' => true, 'range' => true, 'te' => true, 'if-match' => true, 'if-none-match' => true, 'if-modified-since' => true, 'if-unmodified-since' => true, 'if-range' => true, 'accept' => true, 'authorization' => true, 'proxy-authorization' => true, 'from' => true, 'referer' => true, 'user-agent' => true, 'x-amzn-trace-id' => true];
+        $blacklist = $this->getHeaderBlacklist();
         // Normalize the path as required by SigV4
         $canon = $parsedRequest['method'] . "\n" . $this->createCanonicalizedPath($parsedRequest['path']) . "\n" . $this->getCanonicalizedQuery($parsedRequest['query']) . "\n";
         // Case-insensitively aggregate all of the headers.
@@ -224,7 +255,8 @@ class SignatureV4 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signatur
             if (substr($lname, 0, 5) == 'x-amz') {
                 $parsedRequest['query'][$name] = $header;
             }
-            if ($lname !== 'host') {
+            $blacklist = $this->getHeaderBlacklist();
+            if (isset($blacklist[$lname]) || $lname === strtolower(self::AMZ_CONTENT_SHA256_HEADER)) {
                 unset($parsedRequest['headers'][$name]);
             }
         }

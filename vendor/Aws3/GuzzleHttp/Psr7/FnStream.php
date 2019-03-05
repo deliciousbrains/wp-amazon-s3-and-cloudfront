@@ -44,6 +44,14 @@ class FnStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Messag
         }
     }
     /**
+     * An unserialize would allow the __destruct to run when the unserialized value goes out of scope.
+     * @throws \LogicException
+     */
+    public function __wakeup()
+    {
+        throw new \LogicException('FnStream should never be unserialized');
+    }
+    /**
      * Adds custom functionality to an underlying stream by intercepting
      * specific method calls.
      *

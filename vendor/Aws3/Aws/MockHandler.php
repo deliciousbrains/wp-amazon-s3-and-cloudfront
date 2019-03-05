@@ -48,6 +48,19 @@ class MockHandler implements \Countable
             }
         }
     }
+    /**
+     * Adds one or more \Exception or \Throwable to the queue
+     */
+    public function appendException()
+    {
+        foreach (func_get_args() as $value) {
+            if ($value instanceof \Exception || $value instanceof \Throwable) {
+                $this->queue[] = $value;
+            } else {
+                throw new \InvalidArgumentException('Expected an \\Exception or \\Throwable.');
+            }
+        }
+    }
     public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
     {
         if (!$this->queue) {

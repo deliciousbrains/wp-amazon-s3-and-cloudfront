@@ -2,6 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
@@ -9,8 +12,9 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 /**
  * Represents an AWS exception that is thrown when a command fails.
  */
-class AwsException extends \RuntimeException
+class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface
 {
+    use HasMonitoringEventsTrait;
     /** @var ResponseInterface */
     private $response;
     private $request;
@@ -22,6 +26,7 @@ class AwsException extends \RuntimeException
     private $connectionError;
     private $transferInfo;
     private $errorMessage;
+    private $maxRetriesExceeded;
     /**
      * @param string           $message Exception message
      * @param CommandInterface $command
@@ -40,6 +45,8 @@ class AwsException extends \RuntimeException
         $this->result = isset($context['result']) ? $context['result'] : null;
         $this->transferInfo = isset($context['transfer_stats']) ? $context['transfer_stats'] : [];
         $this->errorMessage = isset($context['message']) ? $context['message'] : null;
+        $this->monitoringEvents = [];
+        $this->maxRetriesExceeded = false;
         parent::__construct($message, 0, $previous);
     }
     public function __toString()
@@ -171,5 +178,21 @@ class AwsException extends \RuntimeException
     public function setTransferInfo(array $info)
     {
         $this->transferInfo = $info;
+    }
+    /**
+     * Returns whether the max number of retries is exceeded.
+     *
+     * @return bool
+     */
+    public function isMaxRetriesExceeded()
+    {
+        return $this->maxRetriesExceeded;
+    }
+    /**
+     * Sets the flag for max number of retries exceeded.
+     */
+    public function setMaxRetriesExceeded()
+    {
+        $this->maxRetriesExceeded = true;
     }
 }

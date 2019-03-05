@@ -3,16 +3,16 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * @internal Decorates a parser for the S3 service to correctly handle the
  *           GetBucketLocation operation.
  */
 class GetBucketLocationParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
-    /** @var callable */
-    private $parser;
     /**
      * @param callable $parser Parser to wrap.
      */
@@ -32,5 +32,9 @@ class GetBucketLocationParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws
             $result['LocationConstraint'] = $location;
         }
         return $result;
+    }
+    public function parseMemberFromStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, $response)
+    {
+        return $this->parser->parseMemberFromStream($stream, $member, $response);
     }
 }

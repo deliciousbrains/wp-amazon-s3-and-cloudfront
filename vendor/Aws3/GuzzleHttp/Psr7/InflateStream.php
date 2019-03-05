@@ -26,7 +26,7 @@ class InflateStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\M
         $stream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($stream, -1, 10 + $filenameHeaderLength);
         $resource = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamWrapper::getResource($stream);
         stream_filter_append($resource, 'zlib.inflate', STREAM_FILTER_READ);
-        $this->stream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($resource);
+        $this->stream = $stream->isSeekable() ? new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($resource) : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\NoSeekStream(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($resource));
     }
     /**
      * @param StreamInterface $stream

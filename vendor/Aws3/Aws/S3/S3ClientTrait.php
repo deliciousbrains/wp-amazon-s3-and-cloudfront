@@ -10,6 +10,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * A trait providing S3-specific functionality. This is meant to be used in
  * classes implementing \Aws\S3\S3ClientInterface
@@ -140,7 +141,7 @@ trait S3ClientTrait
                 throw $e;
             }
             if ($e->getAwsErrorCode() === 'AuthorizationHeaderMalformed') {
-                $region = $this->determineBucketRegionFromExceptionBody($response->getBody());
+                $region = $this->determineBucketRegionFromExceptionBody($response);
                 if (!empty($region)) {
                     return $region;
                 }
@@ -149,10 +150,10 @@ trait S3ClientTrait
             return $response->getHeaderLine('x-amz-bucket-region');
         });
     }
-    private function determineBucketRegionFromExceptionBody($responseBody)
+    private function determineBucketRegionFromExceptionBody(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
     {
         try {
-            $element = $this->parseXml($responseBody);
+            $element = $this->parseXml($response->getBody(), $response);
             if (!empty($element->Region)) {
                 return (string) $element->Region;
             }

@@ -2,9 +2,12 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
-class MultipartUploadException extends \RuntimeException
+class MultipartUploadException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
 {
+    use HasMonitoringEventsTrait;
     /** @var UploadState State of the erroneous transfer */
     private $state;
     /**

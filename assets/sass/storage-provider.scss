@@ -1,5 +1,6 @@
-$aws_orange: #f7a80d;
-$do_blue: #0080ff;
+$aws_background: #f7a80d;
+$do_background: #0080ff;
+$gcp_background: #ffffff;
 
 .as3cf-provider-select {
 	h3 {
@@ -48,13 +49,25 @@ $do_blue: #0080ff;
 
 		&.as3cf-provider-aws {
 			.as3cf-provider-logo {
-				background-color: $aws_orange;
+				background-color: $aws_background;
+				border: 1px solid $aws_background;
 			}
 		}
 
 		&.as3cf-provider-do {
 			.as3cf-provider-logo {
-				background-color: $do_blue;
+				background-color: $do_background;
+				border: 1px solid $do_background;
+			}
+		}
+
+		&.as3cf-provider-gcp {
+			.as3cf-provider-logo {
+				background-color: $gcp_background;
+				border-top: 1px solid #ea4335;
+				border-right: 1px solid #4285f4;
+				border-bottom: 1px solid #34a853;
+				border-left: 1px solid #fbbc05;
 			}
 		}
 	}
@@ -87,13 +100,19 @@ $do_blue: #0080ff;
 				padding-top: 0;
 			}
 
-			textarea.as3cf-define-snippet.code {
+			textarea {
+				margin-top: 10px;
+			}
+
+			textarea.clear {
 				width: 100%;
+			}
+
+			textarea.as3cf-define-snippet.code {
 				white-space: pre;
 				overflow: hidden;
 				font-size: 11px;
 				padding: 10px;
-				margin-top: 10px;
 			}
 
 			table.as3cf-access-keys {

@@ -9,9 +9,10 @@ $provider_name       = empty( $provider_object['provider'] ) ? '' : $this->get_p
 $is_current_provider = ! empty( $provider_object['provider'] ) && $this->get_provider()->get_provider_key_name() === $provider_object['provider'] ? true : false;
 $provider_class      = $is_current_provider ? '' : ' error';
 
-$is_removable    = $is_current_provider && in_array( 'remove', $available_actions );
-$is_copyable     = $local_file_exists && in_array( 'copy', $available_actions ) && ( $is_current_provider || empty( $provider_object ) );
-$is_downloadable = ! $local_file_exists && in_array( 'download', $available_actions ) && $is_current_provider;
+$is_removable       = $is_current_provider && in_array( 'remove', $available_actions );
+$is_copyable        = $local_file_exists && in_array( 'copy', $available_actions ) && ( $is_current_provider || empty( $provider_object ) );
+$is_downloadable    = ! $local_file_exists && in_array( 'download', $available_actions ) && $is_current_provider;
+$is_local_removable = $is_current_provider && $local_file_exists && in_array( 'remove_local', $available_actions );
 ?>
 <div class="s3-details">
 	<?php if ( ! $provider_object ) : ?>
@@ -51,11 +52,19 @@ $is_downloadable = ! $local_file_exists && in_array( 'download', $available_acti
 				</a>
 			</div>
 		<?php endif; ?>
+		<?php if ( $is_local_removable ) : ?>
+			<div class="misc-pub-section">
+				<div class="not-copied"><?php _e( 'File exists on server', 'amazon-s3-and-cloudfront' ); ?></div>
+				<a id="as3cf-remove-local-action" href="<?php echo $this->get_media_action_url( 'remove_local', $post->ID, $sendback ); ?>">
+					<?php echo $this->get_media_action_strings( 'remove_local' ); ?>
+				</a>
+			</div>
+		<?php endif; ?>
 	<?php endif; ?>
 	<div class="clear"></div>
 </div>
 
-<?php if ( $is_removable || $is_copyable ) : ?>
+<?php if ( $is_removable || $is_copyable || $is_local_removable ) : ?>
 	<div class="s3-actions">
 		<?php if ( $is_removable ) : ?>
 			<div class="remove-action">

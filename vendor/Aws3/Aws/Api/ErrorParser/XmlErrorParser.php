@@ -16,7 +16,7 @@ class XmlErrorParser
         $data = ['type' => $code[0] == '4' ? 'client' : 'server', 'request_id' => null, 'code' => null, 'message' => null, 'parsed' => null];
         $body = $response->getBody();
         if ($body->getSize() > 0) {
-            $this->parseBody($this->parseXml($body), $data);
+            $this->parseBody($this->parseXml($body, $response), $data);
         } else {
             $this->parseHeaders($response, $data);
         }

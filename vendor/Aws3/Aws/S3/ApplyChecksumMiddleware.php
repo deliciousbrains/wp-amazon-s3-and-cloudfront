@@ -14,7 +14,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  */
 class ApplyChecksumMiddleware
 {
-    private static $md5 = ['DeleteObjects', 'PutBucketCors', 'PutBucketLifecycle', 'PutBucketLifecycleConfiguration', 'PutBucketPolicy', 'PutBucketTagging', 'PutBucketReplication'];
+    private static $md5 = ['DeleteObjects', 'PutBucketCors', 'PutBucketLifecycle', 'PutBucketLifecycleConfiguration', 'PutBucketPolicy', 'PutBucketTagging', 'PutBucketReplication', 'PutObjectLegalHold', 'PutObjectRetention', 'PutObjectLockConfiguration'];
     private static $sha256 = ['PutObject', 'UploadPart'];
     private $nextHandler;
     /**

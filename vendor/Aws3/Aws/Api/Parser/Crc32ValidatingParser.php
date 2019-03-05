@@ -2,17 +2,17 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 /**
  * @internal Decorates a parser and validates the x-amz-crc32 header.
  */
 class Crc32ValidatingParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
-    /** @var callable */
-    private $parser;
     /**
      * @param callable $parser Parser to wrap.
      */
@@ -30,5 +30,9 @@ class Crc32ValidatingParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
         }
         $fn = $this->parser;
         return $fn($command, $response);
+    }
+    public function parseMemberFromStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, $response)
+    {
+        return $this->parser->parseMemberFromStream($stream, $member, $response);
     }
 }

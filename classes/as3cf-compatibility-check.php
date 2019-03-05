@@ -620,6 +620,14 @@ if ( ! class_exists( 'AS3CF_Compatibility_Check' ) ) {
 				$errors[] = __( 'a PHP version less than 5.5', 'amazon-s3-and-cloudfront' );
 			}
 
+			if ( ! class_exists( 'SimpleXMLElement' ) ) {
+				$errors[] = __( 'no SimpleXML PHP module', 'amazon-s3-and-cloudfront' );
+			}
+
+			if ( ! class_exists( 'XMLWriter' ) ) {
+				$errors[] = __( 'no XMLWriter PHP module', 'amazon-s3-and-cloudfront' );
+			}
+
 			if ( ! function_exists( 'curl_version' ) ) {
 				$errors[] = __( 'no PHP cURL library activated', 'amazon-s3-and-cloudfront' );
 
@@ -665,7 +673,7 @@ if ( ! class_exists( 'AS3CF_Compatibility_Check' ) ) {
 				return '';
 			}
 
-			$msg = __( 'The official Amazon&nbsp;Web&nbsp;Services SDK requires PHP 5.5+ and cURL 7.16.2+ compiled with OpenSSL and zlib. Your server currently has', 'amazon-s3-and-cloudfront' );
+			$msg = __( 'The official Amazon&nbsp;Web&nbsp;Services SDK requires PHP 5.5+ with SimpleXML and XMLWriter modules, and cURL 7.16.2+ compiled with OpenSSL and zlib. Your server currently has', 'amazon-s3-and-cloudfront' );
 
 			if ( count( $errors ) > 1 ) {
 				$last_one = ' and ' . array_pop( $errors );

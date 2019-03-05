@@ -141,6 +141,10 @@ class CredentialProvider
                 }
                 // Refresh the result and forward the promise.
                 return $result = $provider();
+            })->otherwise(function ($reason) use(&$result) {
+                // Cleanup rejected promise.
+                $result = null;
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($reason);
             });
         };
     }
@@ -246,7 +250,7 @@ class CredentialProvider
             if (!is_readable($filename)) {
                 return self::reject("Cannot read credentials from {$filename}");
             }
-            $data = parse_ini_file($filename, true);
+            $data = parse_ini_file($filename, true, INI_SCANNER_RAW);
             if ($data === false) {
                 return self::reject("Invalid credentials file: {$filename}");
             }

@@ -178,12 +178,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
             return false;
         }
         $actuals = $result->search($acceptor['argument']) ?: [];
-        foreach ($actuals as $actual) {
-            if ($actual == $acceptor['expected']) {
-                return true;
-            }
-        }
-        return false;
+        return in_array($acceptor['expected'], $actuals);
     }
     /**
      * @param Result $result   Result or exception.

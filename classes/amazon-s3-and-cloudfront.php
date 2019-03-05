@@ -2,6 +2,7 @@
 
 use DeliciousBrains\WP_Offload_Media\Providers\AWS_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\DigitalOcean_Provider;
+use DeliciousBrains\WP_Offload_Media\Providers\GCP_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Null_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Provider;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Content_Replace_URLs;
@@ -138,6 +139,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		static::$provider_classes = array(
 			AWS_Provider::get_provider_key_name()          => 'DeliciousBrains\WP_Offload_Media\Providers\AWS_Provider',
 			DigitalOcean_Provider::get_provider_key_name() => 'DeliciousBrains\WP_Offload_Media\Providers\DigitalOcean_Provider',
+			GCP_Provider::get_provider_key_name()          => 'DeliciousBrains\WP_Offload_Media\Providers\GCP_Provider',
 		);
 
 		$this->set_provider();
@@ -1127,13 +1129,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$region = isset( $old_provider_object['region'] ) ? $old_provider_object['region'] : '';
 		} else {
 			// derive prefix from various settings
-			if ( isset( $data['file'] ) ) {
-				$time = $this->get_folder_time_from_url( $data['file'] );
-			} else {
-				$time = $this->get_attachment_folder_time( $post_id );
-				$time = date( 'Y/m', $time );
-			}
-
+			$time   = $this->get_attachment_folder_year_month( $post_id, $data );
 			$prefix = $this->get_file_prefix( $time );
 
 			// use bucket from settings
@@ -1157,6 +1153,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			'Expires'      => date( 'D, d M Y H:i:s O', time() + 31536000 ),
 		);
 
+		// TODO: Remove GZIP functionality.
 		// Handle gzip on supported items
 		if ( $this->should_gzip_file( $file_path, $type ) && false !== ( $gzip_body = gzencode( file_get_contents( $file_path ) ) ) ) {
 			unset( $args['SourceFile'] );
@@ -1451,31 +1448,42 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Get the time of attachment upload.
+	 * Get the year/month string for attachment's upload.
 	 *
-	 * Use post datetime if attached.
+	 * Fall back to post date if attached, otherwise current date.
 	 *
-	 * @param int $post_id
+	 * @param int   $post_id Attachment's ID
+	 * @param array $data    Attachment's metadata
 	 *
-	 * @return int|string
+	 * @return string
 	 */
-	function get_attachment_folder_time( $post_id ) {
-		$time = current_time( 'timestamp' );
-
-		if ( ! ( $attach = get_post( $post_id ) ) ) {
-			return $time;
+	function get_attachment_folder_year_month( $post_id, $data = null ) {
+		if ( isset( $data['file'] ) ) {
+			$time = $this->get_folder_time_from_url( $data['file'] );
 		}
 
-		if ( ! $attach->post_parent ) {
-			return $time;
+		if ( empty( $time ) && ( $local_url = wp_get_attachment_url( $post_id ) ) ) {
+			$time = $this->get_folder_time_from_url( $local_url );
 		}
 
-		if ( ! ( $post = get_post( $attach->post_parent ) ) ) {
-			return $time;
-		}
+		if ( empty( $time ) ) {
+			$time = date( 'Y/m' );
 
-		if ( substr( $post->post_date_gmt, 0, 4 ) > 0 ) {
-			return strtotime( $post->post_date_gmt . ' +0000' );
+			if ( ! ( $attach = get_post( $post_id ) ) ) {
+				return $time;
+			}
+
+			if ( ! $attach->post_parent ) {
+				return $time;
+			}
+
+			if ( ! ( $post = get_post( $attach->post_parent ) ) ) {
+				return $time;
+			}
+
+			if ( substr( $post->post_date_gmt, 0, 4 ) > 0 ) {
+				return date( 'Y/m', strtotime( $post->post_date_gmt . ' +0000' ) );
+			}
 		}
 
 		return $time;
@@ -1903,8 +1911,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @return mixed|WP_Error
 	 */
 	public function get_attachment_provider_url( $post_id, $provider_object, $expires = null, $size = null, $meta = null, $headers = array() ) {
-		$scheme = $this->get_url_scheme();
-
 		// We don't use $this->get_provider_object_region() here because we don't want
 		// to make an AWS API call and slow down page loading
 		if ( isset( $provider_object['region'] ) && ( $this->get_provider()->region_required() || $this->get_provider()->get_default_region() !== $provider_object['region'] ) ) {
@@ -1945,8 +1951,16 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			}
 		}
 
+		$scheme   = $this->get_url_scheme();
+		$domain   = $this->get_provider()->get_url_domain( $provider_object['bucket'], $region, $expires );
+		$base_url = $scheme . '://' . $domain;
+
 		if ( ! is_null( $expires ) && $this->is_plugin_setup( true ) ) {
 			try {
+				if ( $this->get_provider()->get_domain() !== $domain ) {
+					$headers['BaseURL'] = $base_url;
+				}
+
 				$expires    = time() + apply_filters( 'as3cf_expires', $expires );
 				$secure_url = $this->get_provider_client( $region )
 				                   ->get_object_url( $provider_object['bucket'], $provider_object['key'], $expires, $headers );
@@ -1959,9 +1973,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		$provider_object['key'] = $this->maybe_update_cloudfront_path( $provider_object['key'] );
 
-		$domain_bucket = $this->get_provider()->get_url_domain( $provider_object['bucket'], $region, $expires );
-		$file          = $this->encode_filename_in_path( $provider_object['key'] );
-		$url           = $scheme . '://' . $domain_bucket . '/' . $file;
+		$file = $this->encode_filename_in_path( $provider_object['key'] );
+		$url  = $base_url . '/' . $file;
 
 		return apply_filters( 'as3cf_get_attachment_url', $url, $provider_object, $post_id, $expires, $headers );
 	}
@@ -2726,7 +2739,11 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			return new WP_Error( 'exception', $e->getMessage() );
 		}
 
-		return $result['Buckets'];
+		if ( empty( $result['Buckets'] ) ) {
+			return array();
+		} else {
+			return $result['Buckets'];
+		}
 	}
 
 	/**
@@ -2770,7 +2787,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		$key           = $this->get_file_prefix() . 'as3cf-permission-check.txt';
-		$file_contents = __( 'This is a test file to check if the user has write permission to S3. Delete me if found.', 'amazon-s3-and-cloudfront' );
+		$file_contents = __( 'This is a test file to check if the user has write permission to the bucket. Delete me if found.', 'amazon-s3-and-cloudfront' );
 
 		$can_write = $this->get_provider_client( $region, true )->can_write( $bucket, $key, $file_contents );
 
@@ -2857,7 +2874,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		wp_localize_script( 'as3cf-script',
 			'as3cf',
 			array(
-				'strings'                    => array(
+				'strings'                           => array(
 					'create_bucket_error'         => __( 'Error creating bucket', 'amazon-s3-and-cloudfront' ),
 					'create_bucket_name_short'    => __( 'Bucket name too short.', 'amazon-s3-and-cloudfront' ),
 					'create_bucket_name_long'     => __( 'Bucket name too long.', 'amazon-s3-and-cloudfront' ),
@@ -2872,7 +2889,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 					// Mimic WP Core's notice text, therefore no translation needed here.
 					'settings_saved'              => __( 'Settings saved.' ),
 				),
-				'nonces'                     => array(
+				'nonces'                            => array(
 					'create_bucket'       => wp_create_nonce( 'as3cf-create-bucket' ),
 					'manual_bucket'       => wp_create_nonce( 'as3cf-manual-save-bucket' ),
 					'get_buckets'         => wp_create_nonce( 'as3cf-get-buckets' ),
@@ -2882,9 +2899,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 					'aws_keys_set'        => wp_create_nonce( 'as3cf-aws-keys-set' ),
 					'aws_keys_remove'     => wp_create_nonce( 'as3cf-aws-keys-remove' ),
 				),
-				'is_pro'                     => $this->is_pro(),
-				'provider_console_url'       => $this->get_provider()->get_console_url(),
-				'provider_console_url_param' => $this->get_provider()->get_console_url_param(),
+				'is_pro'                            => $this->is_pro(),
+				'provider_console_url'              => $this->get_provider()->get_console_url(),
+				'provider_console_url_prefix_param' => $this->get_provider()->get_console_url_prefix_param(),
 			)
 		);
 
@@ -2905,6 +2922,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			'provider',
 			'access-key-id',
 			'secret-access-key',
+			'key-file-path',
+			'key-file',
 			'bucket',
 			'region',
 			'domain',
@@ -2941,7 +2960,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @return array
 	 */
 	function get_skip_sanitize_settings() {
-		return array();
+		return array( 'key-file' );
 	}
 
 	/**
@@ -2959,6 +2978,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), $this->get_settings_nonce_key() ) ) { // input var okay
 			die( __( "Cheatin' eh?", 'amazon-s3-and-cloudfront' ) );
 		}
+
+		// Keep track of original provider at start of settings change flow.
+		$orig_provider = empty( $_GET['orig_provider'] ) ? $this->get_setting( 'provider', false ) : $_GET['orig_provider'];
 
 		if ( $this->get_provider()->needs_access_keys() || ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] ) ) {
 			// Changing Provider currently doesn't need anything special over saving settings,
@@ -2988,7 +3010,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				// If anything about the Provider has changed then we need to verify the bucket selection.
 				// Otherwise we can let the filter decide whether there is an action to take.
 				// Last implementer will win, but the above handlers take care of grouping things appropriately.
-				if ( in_array( $key, array( 'provider', 'access-key-id', 'secret-access-key' ) ) && ! $this->get_defined_setting( 'bucket', false ) ) {
+				if ( in_array( $key, array( 'provider', 'access-key-id', 'secret-access-key', 'key-file' ) ) && ! $this->get_defined_setting( 'bucket', false ) ) {
 					$action = 'change-bucket';
 					break;
 				} else {
@@ -3012,10 +3034,14 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		if ( ! empty( $action ) ) {
 			$url_args['action'] = $action;
-		}
 
-		if ( ! empty( $prev_action ) ) {
-			$url_args['prev_action'] = $prev_action;
+			if ( ! empty( $prev_action ) ) {
+				$url_args['prev_action'] = $prev_action;
+			}
+
+			if ( ! empty( $orig_provider ) ) {
+				$url_args['orig_provider'] = $orig_provider;
+			}
 		}
 
 		$url = $this->get_plugin_page_url( $url_args );
@@ -3043,7 +3069,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$bucket = $this->check_bucket( $bucket );
 
 		if ( false === $bucket ) {
-			$this->notices->add_notice( __( 'No bucket name not valid.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+			$this->notices->add_notice( __( 'Bucket name not valid.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
 
 			return false;
 		}
@@ -3121,9 +3147,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	/**
 	 * Handle saving settings submitted by user.
 	 *
-	 * @return array
+	 * @return array|bool
 	 */
-	private function handle_save_settings() {
+	protected function handle_save_settings() {
 		$changed_keys = array();
 
 		do_action( 'as3cf_pre_save_settings' );
@@ -3144,6 +3170,23 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			}
 
 			$value = $this->sanitize_setting( $var, $_POST[ $var ] );
+
+			if ( 'key-file' === $var && is_string( $value ) && ! empty( $value ) ) {
+				$value = stripslashes( $value );
+
+				// Guard against empty JSON.
+				if ( '""' === $value ) {
+					continue;
+				}
+
+				$value = json_decode( $value, true );
+
+				if ( empty( $value ) ) {
+					$this->notices->add_notice( __( 'Key File not valid JSON.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media' ) );
+
+					return false;
+				}
+			}
 
 			$this->set_setting( $var, $value );
 
@@ -3357,6 +3400,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @param string $acl
 	 *
 	 * @return array|bool|WP_Error
+	 * @throws Exception
 	 */
 	public function set_attachment_acl_on_provider( $post_id, $provider_object, $acl ) {
 		// Return early if already set to the desired ACL
@@ -3465,6 +3509,10 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	function output_diagnostic_info( $escape = true ) {
 		global $table_prefix;
 		global $wpdb;
+
+		/*
+		 * WordPress & Server Environment
+		 */
 
 		$output = 'site_url(): ';
 		$output .= esc_html( site_url() );
@@ -3660,6 +3708,10 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 		$output .= "\r\n\r\n";
 
+		/*
+		 * Media
+		 */
+
 		$media_counts = $this->diagnostic_media_counts();
 
 		$output .= 'Media Files: ';
@@ -3681,6 +3733,10 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$output       .= $size_details;
 		$output       .= "\r\n";
 
+		/*
+		 * Defines
+		 */
+
 		$output .= 'WP_CONTENT_DIR: ';
 		$output .= esc_html( ( defined( 'WP_CONTENT_DIR' ) ) ? WP_CONTENT_DIR : 'Not defined' );
 		$output .= "\r\n";
@@ -3701,10 +3757,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$output .= esc_html( ( defined( 'WP_PLUGIN_URL' ) ) ? WP_PLUGIN_URL : 'Not defined' );
 		$output .= "\r\n\r\n";
 
-		$output .= 'AWS_USE_EC2_IAM_ROLE: ';
-		$output .= esc_html( ( defined( 'AWS_USE_EC2_IAM_ROLE' ) ) ? AWS_USE_EC2_IAM_ROLE : 'Not defined' );
-		$output .= "\r\n";
-
 		$output .= 'AS3CF_PROVIDER: ';
 		$output .= esc_html( ( defined( 'AS3CF_PROVIDER' ) ) ? AS3CF_PROVIDER : 'Not defined' );
 		$output .= "\r\n";
@@ -3715,24 +3767,34 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		$output .= 'AS3CF_REGION: ';
 		$output .= esc_html( ( defined( 'AS3CF_REGION' ) ) ? AS3CF_REGION : 'Not defined' );
+		$output .= "\r\n";
+
+		$output .= 'AS3CF_SETTINGS: ';
+
+		$settings_constant = $this::settings_constant();
+
+		if ( $settings_constant ) {
+			$output .= 'Defined';
+
+			if ( 'AS3CF_SETTINGS' !== $settings_constant ) {
+				$output .= ' (using ' . $settings_constant . ')';
+			}
+
+			$defined_settings = $this::get_defined_settings();
+			if ( empty( $defined_settings ) ) {
+				$output .= ' - *EMPTY*';
+			} else {
+				$output .= "\r\n";
+				$output .= 'AS3CF_SETTINGS Keys: ' . implode( ', ', array_keys( $defined_settings ) );
+			}
+		} else {
+			$output .= 'Not defined';
+		}
 		$output .= "\r\n\r\n";
 
-		$output .= 'Bucket: ';
-		$output .= $this->get_setting( 'bucket' );
-		$output .= "\r\n";
-		$output .= 'Region: ';
-		$region = $this->get_setting( 'region' );
-		if ( ! is_wp_error( $region ) ) {
-			$output .= $region;
-		}
-		$output .= "\r\n";
-		$output .= 'Copy Files to Bucket: ';
-		$output .= $this->on_off( 'copy-to-s3' );
-		$output .= "\r\n";
-		$output .= 'Rewrite File URLs: ';
-		$output .= $this->on_off( 'serve-from-s3' );
-		$output .= "\r\n";
-		$output .= "\r\n";
+		/*
+		 * Settings
+		 */
 
 		$output .= "Local URL:\r\n";
 		$output .= $this->get_local_url_preview( $escape );
@@ -3742,26 +3804,93 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$output .= "\r\n";
 		$output .= "\r\n";
 
-		$output .= 'Domain: ';
-		$output .= $this->get_setting( 'domain' );
+		$provider = $this->get_provider();
+
+		if ( empty( $provider ) ) {
+			$output .= 'Provider: Not configured';
+			$output .= "\r\n";
+		} else {
+			$output .= 'Provider: ' . $provider::get_provider_name();
+			$output .= "\r\n";
+
+			if ( $provider::use_server_roles_allowed() ) {
+				$output .= 'Use Server Role: ' . $this->on_off( $provider::use_server_roles() );
+			} else {
+				$output .= 'Use Server Role: N/A';
+			}
+			$output .= "\r\n";
+
+			if ( $provider::use_key_file_allowed() ) {
+				$output .= 'Key File Path: ';
+				$output .= empty( $provider->get_key_file_path() ) ? 'None' : esc_html( $provider->get_key_file_path() );
+				$output .= "\r\n";
+				$output .= 'Key File Path Define: ';
+				$output .= $provider::key_file_path_constant() ? $provider::key_file_path_constant() : 'Not defined';
+			} else {
+				$output .= 'Key File Path: N/A';
+			}
+			$output .= "\r\n";
+
+			if ( $provider::use_access_keys_allowed() ) {
+				$output .= 'Access Keys Set: ';
+				$output .= $provider->are_access_keys_set() ? 'Yes' : 'No';
+				$output .= "\r\n";
+				$output .= 'Access Key ID Define: ';
+				$output .= $provider::access_key_id_constant() ? $provider::access_key_id_constant() : 'Not defined';
+				$output .= "\r\n";
+				$output .= 'Secret Access Key Define: ';
+				$output .= $provider::secret_access_key_constant() ? $provider::secret_access_key_constant() : 'Not defined';
+			} else {
+				$output .= 'Access Keys Set: N/A';
+			}
+			$output .= "\r\n";
+		}
+		$output .= "\r\n";
+
+		$output .= 'Bucket: ';
+		$output .= esc_html( $this->get_setting( 'bucket' ) );
+		$output .= "\r\n";
+		$output .= 'Region: ';
+		$region = esc_html( $this->get_setting( 'region' ) );
+		if ( ! is_wp_error( $region ) ) {
+			$output .= $region;
+		}
+		$output .= "\r\n";
+		$output .= "\r\n";
+
+		$output .= 'Copy Files to Bucket: ';
+		$output .= $this->on_off( 'copy-to-s3' );
 		$output .= "\r\n";
 		$output .= 'Enable Path: ';
 		$output .= $this->on_off( 'enable-object-prefix' );
 		$output .= "\r\n";
 		$output .= 'Custom Path: ';
-		$output .= $this->get_setting( 'object-prefix' );
+		$output .= esc_html( $this->get_setting( 'object-prefix' ) );
 		$output .= "\r\n";
 		$output .= 'Use Year/Month: ';
 		$output .= $this->on_off( 'use-yearmonth-folders' );
 		$output .= "\r\n";
+		$output .= 'Object Versioning: ';
+		$output .= $this->on_off( 'object-versioning' );
+		$output .= "\r\n";
+		$output .= "\r\n";
+
+		$output .= 'Rewrite Media URLs: ';
+		$output .= $this->on_off( 'serve-from-s3' );
+		$output .= "\r\n";
+		$output .= 'Enable Custom Domain (CDN): ';
+		$output .= 'cloudfront' === $this->get_setting( 'domain' ) ? 'On' : 'Off';
+		$output .= "\r\n";
+		$output .= 'Custom Domain (CDN): ';
+		$output .= esc_html( $this->get_setting( 'cloudfront' ) );
+		$output .= "\r\n";
 		$output .= 'Force HTTPS: ';
 		$output .= $this->on_off( 'force-https' );
 		$output .= "\r\n";
+		$output .= "\r\n";
+
 		$output .= 'Remove Files From Server: ';
 		$output .= $this->on_off( 'remove-local-file' );
-		$output .= "\r\n";
-		$output .= 'Object Versioning: ';
-		$output .= $this->on_off( 'object-versioning' );
 		$output .= "\r\n\r\n";
 
 		$output = apply_filters( 'as3cf_diagnostic_info', $output );
@@ -3879,14 +4008,15 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	/**
 	 * Helper to remove the plugin directory from the plugin path
 	 *
-	 * @param string $path
+	 * @param string $path Absolute plugin file path
 	 *
 	 * @return string
 	 */
-	function remove_wp_plugin_dir( $path ) {
-		$plugin = str_replace( WP_PLUGIN_DIR, '', $path );
+	public function remove_wp_plugin_dir( $path ) {
+		$plugin_dir = trailingslashit( WP_PLUGIN_DIR );
+		$plugin     = str_replace( $plugin_dir, '', $path );
 
-		return substr( $plugin, 1 );
+		return $plugin;
 	}
 
 	/**
@@ -4057,9 +4187,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		$quick_start = sprintf( '<a class="js-link" href="%s">%s</a>', $url, __( 'Quick Start Guide', 'amazon-s3-and-cloudfront' ) );
 
-		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
 		if ( ! $single ) {
-			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided access keys for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
 		}
 
 		return $message;
@@ -4568,7 +4698,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 *
 	 * @return array
 	 */
-	function add_media_row_actions( $actions = array(), $post ) {
+	function add_media_row_actions( Array $actions, $post ) {
 		return $actions;
 	}
 

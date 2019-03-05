@@ -3,9 +3,11 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Converts errors returned with a status code of 200 to a retryable error type.
  *
@@ -14,8 +16,6 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
     private static $ambiguousSuccesses = ['UploadPartCopy' => true, 'CopyObject' => true, 'CompleteMultipartUpload' => true];
-    /** @var callable */
-    private $parser;
     /** @var callable */
     private $errorParser;
     /** @var string */
@@ -37,5 +37,9 @@ class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
         }
         $fn = $this->parser;
         return $fn($command, $response);
+    }
+    public function parseMemberFromStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, $response)
+    {
+        return $this->parser->parseMemberFromStream($stream, $member, $response);
     }
 }

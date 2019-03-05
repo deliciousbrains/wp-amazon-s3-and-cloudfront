@@ -2,12 +2,15 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 /**
  * Exception thrown when errors occur while deleting objects using a
  * {@see S3\BatchDelete} object.
  */
-class DeleteMultipleObjectsException extends \Exception
+class DeleteMultipleObjectsException extends \Exception implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
 {
+    use HasMonitoringEventsTrait;
     private $deleted = [];
     private $errors = [];
     /**

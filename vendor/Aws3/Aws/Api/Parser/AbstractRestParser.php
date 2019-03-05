@@ -53,13 +53,17 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
     private function extractPayload($payload, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $output, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
     {
         $member = $output->getMember($payload);
-        if ($member instanceof StructureShape) {
-            // Structure members parse top-level data into a specific key.
-            $result[$payload] = [];
-            $this->payload($response, $member, $result[$payload]);
+        if (!empty($member['eventstream'])) {
+            $result[$payload] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\EventParsingIterator($response->getBody(), $member, $this);
         } else {
-            // Streaming data is just the stream from the response body.
-            $result[$payload] = $response->getBody();
+            if ($member instanceof StructureShape) {
+                // Structure members parse top-level data into a specific key.
+                $result[$payload] = [];
+                $this->payload($response, $member, $result[$payload]);
+            } else {
+                // Streaming data is just the stream from the response body.
+                $result[$payload] = $response->getBody();
+            }
         }
     }
     /**
@@ -84,6 +88,9 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
                 break;
             case 'timestamp':
                 try {
+                    if (!empty($shape['timestampFormat']) && $shape['timestampFormat'] === 'unixTimestamp') {
+                        $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromEpoch($value);
+                    }
                     $value = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult($value);
                     break;
                 } catch (\Exception $e) {
@@ -93,7 +100,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
                 }
             case 'string':
                 if ($shape['jsonvalue']) {
-                    $value = $this->parseJson(base64_decode($value));
+                    $value = $this->parseJson(base64_decode($value), $response);
                 }
                 break;
         }

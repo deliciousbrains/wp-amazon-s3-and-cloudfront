@@ -36,6 +36,7 @@ class HandlerList implements \Countable
     const VALIDATE = 'validate';
     const BUILD = 'build';
     const SIGN = 'sign';
+    const ATTEMPT = 'attempt';
     /** @var callable */
     private $handler;
     /** @var array */
@@ -45,7 +46,7 @@ class HandlerList implements \Countable
     /** @var callable|null */
     private $interposeFn;
     /** @var array Steps (in reverse order) */
-    private $steps = [self::SIGN => [], self::BUILD => [], self::VALIDATE => [], self::INIT => []];
+    private $steps = [self::ATTEMPT => [], self::SIGN => [], self::BUILD => [], self::VALIDATE => [], self::INIT => []];
     /**
      * @param callable $handler HTTP handler.
      */
@@ -177,6 +178,26 @@ class HandlerList implements \Countable
         $this->add(self::SIGN, $name, $middleware, true);
     }
     /**
+     * Append a middleware to the attempt step.
+     *
+     * @param callable $middleware Middleware function to add.
+     * @param string   $name       Name of the middleware.
+     */
+    public function appendAttempt(callable $middleware, $name = null)
+    {
+        $this->add(self::ATTEMPT, $name, $middleware);
+    }
+    /**
+     * Prepend a middleware to the attempt step.
+     *
+     * @param callable $middleware Middleware function to add.
+     * @param string   $name       Name of the middleware.
+     */
+    public function prependAttempt(callable $middleware, $name = null)
+    {
+        $this->add(self::ATTEMPT, $name, $middleware, true);
+    }
+    /**
      * Add a middleware before the given middleware by name.
      *
      * @param string|callable $findName   Add before this
@@ -250,7 +271,7 @@ class HandlerList implements \Countable
     }
     public function count()
     {
-        return count($this->steps[self::INIT]) + count($this->steps[self::VALIDATE]) + count($this->steps[self::BUILD]) + count($this->steps[self::SIGN]);
+        return count($this->steps[self::INIT]) + count($this->steps[self::VALIDATE]) + count($this->steps[self::BUILD]) + count($this->steps[self::SIGN]) + count($this->steps[self::ATTEMPT]);
     }
     /**
      * Splices a function into the middleware list at a specific position.

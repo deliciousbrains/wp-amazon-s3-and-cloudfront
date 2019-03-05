@@ -34,7 +34,7 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
         $this->uri = $uri;
         $this->setHeaders($headers);
         $this->protocol = $version;
-        if (!$this->hasHeader('Host')) {
+        if (!isset($this->headerNames['host'])) {
             $this->updateHostFromUri();
         }
         if ($body !== '' && $body !== null) {
@@ -85,7 +85,7 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
         }
         $new = clone $this;
         $new->uri = $uri;
-        if (!$preserveHost) {
+        if (!$preserveHost || !isset($this->headerNames['host'])) {
             $new->updateHostFromUri();
         }
         return $new;

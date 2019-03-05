@@ -102,7 +102,8 @@ class QueryParamBuilder
     }
     protected function format_timestamp(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape $shape, $value, $prefix, array &$query)
     {
-        $query[$prefix] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'iso8601');
+        $timestampFormat = !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : 'iso8601';
+        $query[$prefix] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
     }
     protected function format_boolean(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value, $prefix, array &$query)
     {

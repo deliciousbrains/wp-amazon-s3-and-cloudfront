@@ -387,7 +387,7 @@
 		var prefix = $objectPrefix.val();
 
 		if ( '' !== prefix ) {
-			prefix = as3cf.provider_console_url_param + encodeURIComponent( prefix );
+			prefix = as3cf.provider_console_url_prefix_param + encodeURIComponent( prefix );
 		}
 
 		var url = as3cf.provider_console_url + bucket + prefix;

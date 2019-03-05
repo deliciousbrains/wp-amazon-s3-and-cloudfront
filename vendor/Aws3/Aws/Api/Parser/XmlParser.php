@@ -94,6 +94,9 @@ class XmlParser
     }
     private function parse_timestamp(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $value)
     {
+        if (!empty($shape['timestampFormat']) && $shape['timestampFormat'] === 'unixTimestamp') {
+            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromEpoch((string) $value);
+        }
         return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult($value);
     }
 }

@@ -25,6 +25,9 @@ class Response implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Messag
      */
     public function __construct($status = 200, array $headers = [], $body = null, $version = '1.1', $reason = null)
     {
+        if (filter_var($status, FILTER_VALIDATE_INT) === false) {
+            throw new \InvalidArgumentException('Status code must be an integer value.');
+        }
         $this->statusCode = (int) $status;
         if ($body !== '' && $body !== null) {
             $this->stream = stream_for($body);

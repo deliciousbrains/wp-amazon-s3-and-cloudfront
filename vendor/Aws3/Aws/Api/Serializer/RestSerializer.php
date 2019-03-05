@@ -97,8 +97,9 @@ abstract class RestSerializer
     }
     private function applyHeader($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, $value, array &$opts)
     {
-        if ($member->getType() == 'timestamp') {
-            $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, 'rfc822');
+        if ($member->getType() === 'timestamp') {
+            $timestampFormat = !empty($member['timestampFormat']) ? $member['timestampFormat'] : 'rfc822';
+            $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
         }
         if ($member['jsonvalue']) {
             $value = json_encode($value);
@@ -124,8 +125,12 @@ abstract class RestSerializer
         if ($member instanceof MapShape) {
             $opts['query'] = isset($opts['query']) && is_array($opts['query']) ? $opts['query'] + $value : $value;
         } elseif ($value !== null) {
-            if ($member->getType() === 'boolean') {
+            $type = $member->getType();
+            if ($type === 'boolean') {
                 $value = $value ? 'true' : 'false';
+            } elseif ($type === 'timestamp') {
+                $timestampFormat = !empty($member['timestampFormat']) ? $member['timestampFormat'] : 'iso8601';
+                $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
             }
             $opts['query'][$member['locationName'] ?: $name] = $value;
         }

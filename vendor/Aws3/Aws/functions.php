@@ -134,8 +134,9 @@ function or_chain()
  */
 function load_compiled_json($path)
 {
-    if ($compiled = @(include "{$path}.php")) {
-        return $compiled;
+    $compiledFilepath = "{$path}.php";
+    if (is_readable($compiledFilepath)) {
+        return include $compiledFilepath;
     }
     if (!file_exists($path)) {
         throw new \InvalidArgumentException(sprintf("File not found: %s", $path));
@@ -251,6 +252,22 @@ function default_http_handler()
     throw new \RuntimeException('Unknown Guzzle version: ' . $version);
 }
 /**
+ * Gets the default user agent string depending on the Guzzle version
+ *
+ * @return string
+ */
+function default_user_agent()
+{
+    $version = (string) \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION;
+    if ($version[0] === '5') {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client::getDefaultUserAgent();
+    }
+    if ($version[0] === '6') {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\default_user_agent();
+    }
+    throw new \RuntimeException('Unknown Guzzle version: ' . $version);
+}
+/**
  * Serialize a request for a command but do not send it.
  *
  * Returns a promise that is fulfilled with the serialized request.
@@ -314,4 +331,14 @@ function manifest($service = null)
         return manifest($aliases[$service]);
     }
     throw new \InvalidArgumentException("The service \"{$service}\" is not provided by the AWS SDK for PHP.");
+}
+/**
+ * Checks if supplied parameter is a valid hostname
+ *
+ * @param string $hostname
+ * @return bool
+ */
+function is_valid_hostname($hostname)
+{
+    return preg_match("/^([a-z\\d](-*[a-z\\d])*)(\\.([a-z\\d](-*[a-z\\d])*))*\\.?\$/i", $hostname) && preg_match("/^.{1,253}\$/", $hostname) && preg_match("/^[^\\.]{1,63}(\\.[^\\.]{0,63})*\$/", $hostname);
 }

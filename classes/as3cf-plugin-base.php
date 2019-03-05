@@ -127,6 +127,19 @@ abstract class AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * Returns first (preferred) settings constant that can be defined, otherwise blank.
+	 *
+	 * @return string
+	 */
+	public static function preferred_settings_constant() {
+		if ( ! empty( static::$settings_constants ) ) {
+			return static::$settings_constants[0];
+		} else {
+			return '';
+		}
+	}
+
+	/**
 	 * Get the constant used to define the settings.
 	 *
 	 * @return string|false Constant name if defined, otherwise false
@@ -309,16 +322,24 @@ abstract class AS3CF_Plugin_Base {
 	/**
 	 * Sanitize a setting value, maybe.
 	 *
-	 * @param $key
-	 * @param $value
+	 * @param string $key
+	 * @param mixed  $value
 	 *
-	 * @return string
+	 * @return mixed
 	 */
 	function sanitize_setting( $key, $value ) {
 		$skip_sanitize = $this->get_skip_sanitize_settings();
 
 		if ( in_array( $key, $skip_sanitize ) ) {
-			$value = wp_strip_all_tags( $value );
+			if ( is_array( $value ) ) {
+				$result = array();
+				foreach ( $value as $k => $v ) {
+					$result[ $k ] = wp_strip_all_tags( $v );
+				}
+				$value = $result;
+			} else {
+				$value = wp_strip_all_tags( $value );
+			}
 		} else {
 			$value = sanitize_text_field( $value );
 		}

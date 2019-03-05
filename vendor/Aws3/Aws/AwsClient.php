@@ -5,6 +5,9 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 /**
@@ -72,6 +75,11 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
      *   `http_stats_receiver` option for this to have an effect; timer: (bool)
      *   Set to true to enable a command timer that reports the total wall clock
      *   time spent on an operation in seconds.
+     * - disable_host_prefix_injection: (bool) Set to true to disable host prefix
+     *   injection logic for services that use it. This disables the entire
+     *   prefix injection, including the portions supplied by user-defined
+     *   parameters. Setting this flag will have no effect on services that do
+     *   not use host prefix injection.
      * - endpoint: (string) The full URI of the webservice. This is only
      *   required when connecting to a custom endpoint (e.g., a local version
      *   of S3).
@@ -154,6 +162,8 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
         $this->defaultRequestOptions = $config['http'];
         $this->addSignatureMiddleware();
         $this->addInvocationId();
+        $this->addClientSideMonitoring($args);
+        $this->addEndpointParameterMiddleware($args);
         if (isset($args['with_resolved'])) {
             $args['with_resolved']($config);
         }
@@ -227,6 +237,13 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
         $service = substr($klass, strrpos($klass, '\\') + 1, -6);
         return [strtolower($service), "DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\{$service}\\Exception\\{$service}Exception"];
     }
+    private function addEndpointParameterMiddleware($args)
+    {
+        if (empty($args['disable_host_prefix_injection'])) {
+            $list = $this->getHandlerList();
+            $list->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointParameterMiddleware::wrap($this->api), 'endpoint_parameter');
+        }
+    }
     private function addSignatureMiddleware()
     {
         $api = $this->getApi();
@@ -252,6 +269,13 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
     {
         // Add invocation id to each request
         $this->handlerList->prependSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::invocationId(), 'invocation-id');
+    }
+    private function addClientSideMonitoring($args)
+    {
+        $options = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::defaultProvider($args);
+        $this->handlerList->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware::wrap($this->credentialProvider, $options, $this->region, $this->getApi()->getServiceId()), 'ApiCallMonitoringMiddleware');
+        $callAttemptMiddleware = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware::wrap($this->credentialProvider, $options, $this->region, $this->getApi()->getServiceId());
+        $this->handlerList->appendAttempt($callAttemptMiddleware, 'ApiCallAttemptMonitoringMiddleware');
     }
     /**
      * Returns a service model and doc model with any necessary changes

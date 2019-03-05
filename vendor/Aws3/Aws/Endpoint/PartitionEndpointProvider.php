@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env;
 class PartitionEndpointProvider
 {
     /** @var Partition[] */
@@ -43,7 +44,7 @@ class PartitionEndpointProvider
      * the provided name can be found.
      *
      * @param string $name
-     * 
+     *
      * @return Partition|null
      */
     public function getPartitionByName($name)
@@ -62,6 +63,32 @@ class PartitionEndpointProvider
     public static function defaultProvider()
     {
         $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/../data/endpoints.json');
-        return new self($data['partitions']);
+        $prefixData = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/../data/endpoints_prefix_history.json');
+        $mergedData = self::mergePrefixData($data, $prefixData);
+        return new self($mergedData['partitions']);
+    }
+    /**
+     * Copy endpoint data for other prefixes used by a given service
+     *
+     * @param $data
+     * @param $prefixData
+     * @return array
+     */
+    public static function mergePrefixData($data, $prefixData)
+    {
+        $prefixGroups = $prefixData['prefix-groups'];
+        foreach ($data["partitions"] as $index => $partition) {
+            foreach ($prefixGroups as $current => $old) {
+                $serviceData = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.{$current}", $partition);
+                if (!empty($serviceData)) {
+                    foreach ($old as $prefix) {
+                        if (empty(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.{$prefix}", $partition))) {
+                            $data["partitions"][$index]["services"][$prefix] = $serviceData;
+                        }
+                    }
+                }
+            }
+        }
+        return $data;
     }
 }

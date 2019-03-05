@@ -2,6 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
-class UnresolvedApiException extends \RuntimeException
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+class UnresolvedApiException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
 {
+    use HasMonitoringEventsTrait;
 }
