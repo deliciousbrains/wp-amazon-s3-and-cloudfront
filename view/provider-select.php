@@ -9,11 +9,13 @@ $key_file_path_defined           = $this->get_defined_setting( 'key-file-path', 
 $key_file_defined                = $this->get_defined_setting( 'key-file', false );
 $key_file_path_settings_constant = ( $key_file_path_defined || $key_file_defined ) ? $this->settings_constant() : false;
 $providers                       = $this->get_provider_classes();
+$media_counts                    = $this->diagnostic_media_counts();
+$media_offloaded_string          = empty( $media_counts['s3'] ) ? '' : number_format( $media_counts['s3'] );
 ?>
 
 <div class="as3cf-content as3cf-provider-select">
 	<?php
-	if ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] && $this->get_setting( 'bucket' ) && ! empty( $can_write ) ) {
+	if ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] && $this->get_setting( 'bucket' ) ) {
 		echo '<a href="' . $this->get_plugin_page_url() . '">' . __( '&laquo;&nbsp;Back', 'amazon-s3-and-cloudfront' ) . '</a>';
 	}
 	?>
@@ -116,7 +118,24 @@ $providers                       = $this->get_provider_classes();
 				<td></td>
 				<td>
 					<table>
-						<?php
+						<?php if ( ! $provider_selected && ! empty( $media_offloaded_string ) ) { ?>
+							<tr>
+								<td colspan="2">
+									<?php
+									$message_string = sprintf( __( '<strong>Warning:</strong> You have %s offloaded Media Library items, you should remove them from the bucket before changing storage provider.', 'amazon-s3-and-cloudfront' ), $media_offloaded_string );
+									$message_string .= '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/how-to-change-storage-provider/#mixed-provider' );
+
+									$media_offloaded_notice = array(
+										'message' => $message_string,
+										'id'      => 'as3cf-media-offloaded-' . $provider_key,
+										'inline'  => true,
+										'type'    => 'notice-warning',
+									);
+									$this->render_view( 'notice', $media_offloaded_notice );
+									?>
+								</td>
+							</tr>
+						<?php }
 						if ( $provider_class::use_access_keys_allowed() ) {
 							?>
 							<!-- Defined Access Keys Begin -->

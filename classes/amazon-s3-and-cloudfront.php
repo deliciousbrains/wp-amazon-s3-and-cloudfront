@@ -188,8 +188,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		add_filter( 'wp_video_shortcode', array( $this, 'wp_media_shortcode' ), 100, 5 );
 
 		// Communication with provider, plugin needs to be setup
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
-		add_filter( 'wp_handle_sideload_prefilter', array( $this, 'wp_handle_upload_prefilter' ), 1 );
+		add_filter( 'wp_unique_filename', array( $this, 'wp_unique_filename' ), 10, 3 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 110, 2 );
 		add_filter( 'delete_attachment', array( $this, 'delete_attachment' ), 20 );
 		add_filter( 'update_attached_file', array( $this, 'update_attached_file' ), 100, 2 );
@@ -1431,17 +1430,17 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 *
 	 * @param string $url
 	 *
-	 * @return null|string
+	 * @return null|string YYYY/MM format.
 	 */
 	function get_folder_time_from_url( $url ) {
 		if ( ! is_string( $url ) ) {
 			return null;
 		}
 
-		preg_match( '@[0-9]{4}/[0-9]{2}@', $url, $matches );
+		preg_match( '@[0-9]{4}/[0-9]{2}/@', $url, $matches );
 
 		if ( isset( $matches[0] ) ) {
-			return $matches[0];
+			return untrailingslashit( $matches[0] );
 		}
 
 		return null;
@@ -1490,19 +1489,23 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Filter file details before upload.
+	 * Filters the result when generating a unique file name.
 	 *
-	 * @param array $file An array of data for a single file.
+	 * @param string $filename Unique file name.
+	 * @param string $ext      File extension, eg. ".png".
+	 * @param string $dir      Directory path.
 	 *
-	 * @return array $file The altered file array with AWS unique filename.
+	 * @return string
+	 * @since 4.5.0
+	 *
 	 */
-	public function wp_handle_upload_prefilter( $file ) {
+	public function wp_unique_filename( $filename, $ext, $dir ) {
 		// Get Post ID if uploaded in post screen.
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_VALIDATE_INT );
 
-		$file['name'] = $this->filter_unique_filename( $file['name'], $post_id );
+		$filename = $this->filter_unique_filename( $filename, $ext, $dir, $post_id );
 
-		return $file;
+		return $filename;
 	}
 
 	/**
@@ -1510,22 +1513,20 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * This only applies when the remove local file option is enabled.
 	 *
 	 * @param string $filename Unique file name.
+	 * @param string $ext      File extension, eg. ".png".
+	 * @param string $dir      Directory path.
 	 * @param int    $post_id  Attachment's parent Post ID.
 	 *
 	 * @return string
 	 */
-	public function filter_unique_filename( $filename, $post_id = null ) {
+	public function filter_unique_filename( $filename, $ext, $dir, $post_id = null ) {
 		if ( ! $this->get_setting( 'copy-to-s3' ) || ! $this->is_plugin_setup( true ) ) {
 			return $filename;
 		}
 
 		// sanitize the file name before we begin processing
 		$filename = sanitize_file_name( $filename );
-
-		// Get base filename without extension.
-		$ext  = pathinfo( $filename, PATHINFO_EXTENSION );
-		$ext  = $ext ? ".$ext" : '';
-		$name = wp_basename( $filename, $ext );
+		$name     = wp_basename( $filename, $ext );
 
 		// Edge case: if file is named '.ext', treat as an empty name.
 		if ( $name === $ext ) {
@@ -4276,14 +4277,17 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 *
 	 * @param string    $prefix
 	 * @param null|bool $uploaded_to_provider
-	 *      null  - All attachments
-	 *      true  - Attachments only uploaded to S3
-	 *      false - Attachments not uploaded to S3
+	 *                                  null  - All attachments
+	 *                                  true  - Attachments only uploaded to provider
+	 *                                  false - Attachments not uploaded to provider
+	 * @param bool      $skip_transient Whether to force database query and skip transient, default false
 	 *
 	 * @return int
 	 */
-	public function count_attachments( $prefix, $uploaded_to_provider = null ) {
+	public function count_attachments( $prefix, $uploaded_to_provider = null, $skip_transient = false ) {
 		global $wpdb;
+
+		$transient_key = 'as3cf_' . $prefix . '_media_count';
 
 		$sql = "SELECT COUNT(DISTINCT p.ID)
 				FROM `{$prefix}posts` p";
@@ -4297,11 +4301,19 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 			$operator = $uploaded_to_provider ? 'not ' : '';
 			$where    .= " AND pm.`post_id` is {$operator}null";
+
+			$transient_key .= ( $uploaded_to_provider ) ? '_offloaded' : 'not_offloaded';
 		}
 
 		$sql .= ' ' . $where;
 
-		return (int) $wpdb->get_var( $sql );
+		if ( true === $skip_transient || false === ( $count = get_site_transient( $transient_key ) ) ) {
+			$count = (int) $wpdb->get_var( $sql );
+
+			set_site_transient( $transient_key, $count, 2 * MINUTE_IN_SECONDS );
+		}
+
+		return $count;
 	}
 
 	/**
@@ -4789,9 +4801,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$siteurl = trailingslashit( get_option( 'siteurl' ) );
 
 		if ( is_multisite() && ! $this->is_current_blog( get_current_blog_id() ) && 0 !== strpos( $url, $siteurl ) ) {
-			// Replace network URL with subsite's URL.
-			$network_siteurl = trailingslashit( network_site_url() );
-			$url             = str_replace( $network_siteurl, $siteurl, $url );
+			// Replace original URL with subsite's current URL.
+			$orig_siteurl = trailingslashit( apply_filters( 'as3cf_get_orig_siteurl', network_site_url() ) );
+			$url          = str_replace( $orig_siteurl, $siteurl, $url );
 		}
 
 		return $url;

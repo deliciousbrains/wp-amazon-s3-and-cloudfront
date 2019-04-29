@@ -404,10 +404,63 @@ abstract class Provider {
 		if ( static::is_key_file_path_constant_defined() ) {
 			$constant = static::key_file_path_constant();
 
-			return $constant ? constant( $constant ) : false;
+			if ( $constant ) {
+				return $this->validate_key_file_path( constant( $constant ) );
+			} else {
+				// Constant defined but value is not a non-empty string.
+				return false;
+			}
 		}
 
-		return $this->as3cf->get_core_setting( static::$key_file_path_setting_name, false );
+		return $this->validate_key_file_path( $this->as3cf->get_core_setting( static::$key_file_path_setting_name, false ) );
+	}
+
+	/**
+	 * Validate a key file path to ensure it exists, is readable, and contains JSON.
+	 *
+	 * @param string $key_file_path
+	 *
+	 * @return bool|string
+	 */
+	public function validate_key_file_path( $key_file_path ) {
+		$notice_id = 'validate-key-file-path';
+		$this->as3cf->notices->remove_notice_by_id( $notice_id );
+
+		if ( empty( $key_file_path ) ) {
+			return false;
+		}
+
+		if ( ! file_exists( $key_file_path ) ) {
+			$this->as3cf->notices->add_notice( __( 'Given Key File Path is invalid or could not be accessed.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+
+			return false;
+		}
+
+		try {
+			$value = file_get_contents( $key_file_path );
+
+			// An exception isn't always thrown, so check value instead.
+			if ( empty( $value ) ) {
+				$this->as3cf->notices->add_notice( __( 'Could not read Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+
+				return false;
+			}
+		} catch ( \Exception $e ) {
+			$this->as3cf->notices->add_notice( __( 'Could not read Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+
+			return false;
+		}
+
+		$value = json_decode( $value, true );
+
+		if ( empty( $value ) ) {
+			$this->as3cf->notices->add_notice( __( 'Given Key File Path does not contain valid JSON.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+
+			return false;
+		}
+
+		// File exists and looks like JSON.
+		return $key_file_path;
 	}
 
 	/**

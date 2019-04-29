@@ -67,11 +67,15 @@ class AS3CF_Plugin_Compatibility {
 		/*
 		 * Responsive Images WP 4.4
 		 */
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'wp_calculate_image_srcset' ), 10, 5 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'wp_calculate_image_srcset_meta' ), 10, 4 );
 
 		// Maybe warn about PHP version if in admin screens.
 		add_action( 'admin_init', array( $this, 'maybe_warn_about_php_version' ) );
+
+		// WordPress MU Domain Mapping plugin compatibility.
+		add_filter( 'as3cf_get_orig_siteurl', array( $this, 'get_orig_siteurl' ) );
 
 		if ( $this->as3cf->is_plugin_setup( true ) ) {
 			$this->compatibility_init_if_setup();
@@ -610,7 +614,6 @@ class AS3CF_Plugin_Compatibility {
 
 		$client = $this->as3cf->get_provider_client( $region, true );
 
-
 		if ( ! empty( $client ) && $client->register_stream_wrapper( $region ) ) {
 			self::$stream_wrappers[ $stored_region ] = $client;
 
@@ -646,6 +649,40 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Fixes comparison of attachment metadata to already urlencoded content during 'the_content' filter.
+	 *
+	 * @param array $data
+	 * @param int   $attachment_id
+	 *
+	 * @return array
+	 */
+	public function wp_get_attachment_metadata( $data, $attachment_id ) {
+		global $wp_current_filter;
+
+		if (
+			is_array( $wp_current_filter ) &&
+			! empty( $wp_current_filter[0] ) &&
+			'the_content' === $wp_current_filter[0] &&
+			$this->as3cf->is_attachment_served_by_provider( $attachment_id )
+		) {
+			// Ensure each filename is encoded the same way as URL, slightly fixed up for wp_basename() manipulation compatibility.
+			if ( ! empty( $data['file'] ) ) {
+				$data['file'] = $this->as3cf->encode_filename_in_path( $data['file'] );
+			}
+
+			if ( ! empty( $data['sizes'] ) ) {
+				$data['sizes'] = array_map( function ( $size ) {
+					$size['file'] = $this->as3cf->encode_filename_in_path( $size['file'] );
+
+					return $size;
+				}, $data['sizes'] );
+			}
+		}
+
+		return $data;
 	}
 
 	/**
@@ -763,22 +800,22 @@ class AS3CF_Plugin_Compatibility {
 			return $image_meta;
 		}
 
-		$image_basename = wp_basename( $image_meta['file'] );
+		$image_basename = $this->as3cf->encode_filename_in_path( wp_basename( $image_meta['file'] ) );
 
-		if ( false === strpos( $provider_object['key'], $image_basename ) ) {
+		if ( false === strpos( $this->as3cf->encode_filename_in_path( $provider_object['key'] ), $image_basename ) ) {
 			// Not the correct attachment, abort
 			return $image_meta;
 		}
 
-		// Strip the meta file prefix so the just the filename will always match
+		// Strip the meta file prefix so that just the filename will always match
 		// the S3 URL regardless of different prefixes for the offloaded file.
 		// Also ensure filename is encoded the same way as URL.
-		$image_meta['file'] = rawurlencode( $image_basename );
+		$image_meta['file'] = $image_basename;
 
 		// Ensure each size filename is encoded the same way as URL.
 		if ( ! empty( $image_meta['sizes'] ) ) {
 			$image_meta['sizes'] = array_map( function ( $size ) {
-				$size['file'] = rawurlencode( $size['file'] );
+				$size['file'] = $this->as3cf->encode_filename_in_path( $size['file'] );
 
 				return $size;
 			}, $image_meta['sizes'] );
@@ -861,7 +898,7 @@ class AS3CF_Plugin_Compatibility {
 		// Get parent Post ID for cropped image.
 		$post_id = filter_input( INPUT_POST, 'id', FILTER_VALIDATE_INT );
 
-		$filename = $this->as3cf->filter_unique_filename( $filename, $post_id );
+		$filename = $this->as3cf->filter_unique_filename( $filename, $ext, $dir, $post_id );
 
 		return $filename;
 	}
@@ -936,5 +973,20 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		return $dispatch_result;
+	}
+
+	/**
+	 * Domain Mapping may have overridden the original siteurl that is needed for search/replace.
+	 *
+	 * @param string $siteurl
+	 *
+	 * @return mixed
+	 */
+	public function get_orig_siteurl( $siteurl ) {
+		if ( defined( 'DOMAIN_MAPPING' ) && function_exists( 'get_original_url' ) ) {
+			$siteurl = get_original_url( 'siteurl' );
+		}
+
+		return $siteurl;
 	}
 }

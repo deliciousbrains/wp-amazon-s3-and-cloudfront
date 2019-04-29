@@ -421,7 +421,15 @@ abstract class AS3CF_Filter {
 			$attachment_id = null;
 			$bare_url      = AS3CF_Utils::reduce_url( $url );
 
-			if ( isset( $cache[ $bare_url ] ) ) {
+			// If attachment ID recently or previously cached, skip full search.
+			if ( isset( $to_cache[ $bare_url ] ) ) {
+				$attachment_id = $to_cache[ $bare_url ];
+
+				if ( $this->is_failure( $attachment_id ) ) {
+					// Attachment ID failure, continue
+					continue;
+				}
+			} elseif ( isset( $cache[ $bare_url ] ) ) {
 				$attachment_id = $cache[ $bare_url ];
 
 				if ( $this->is_failure( $attachment_id ) ) {
@@ -493,7 +501,7 @@ abstract class AS3CF_Filter {
 			return false;
 		}
 
-		$base_url = AS3CF_Utils::reduce_url( $this->get_base_url( $attachment_id ) );
+		$base_url = $this->as3cf->encode_filename_in_path( AS3CF_Utils::reduce_url( $this->get_base_url( $attachment_id ) ) );
 		$basename = wp_basename( $base_url );
 
 		// Add full size URL
@@ -501,10 +509,10 @@ abstract class AS3CF_Filter {
 
 		// Add additional image size URLs
 		foreach ( $meta['sizes'] as $size ) {
-			$base_urls[] = str_replace( $basename, $size['file'], $base_url );
+			$base_urls[] = str_replace( $basename, $this->as3cf->encode_filename_in_path( $size['file'] ), $base_url );
 		}
 
-		$url = AS3CF_Utils::reduce_url( $url );
+		$url = $this->as3cf->encode_filename_in_path( AS3CF_Utils::reduce_url( $url ) );
 
 		if ( in_array( $url, $base_urls ) ) {
 			// Match found, return true
@@ -582,10 +590,10 @@ abstract class AS3CF_Filter {
 			return null;
 		}
 
-		$basename = wp_basename( $this->as3cf->maybe_remove_query_string( $url ) );
+		$basename = $this->as3cf->encode_filename_in_path( wp_basename( $this->as3cf->maybe_remove_query_string( $url ) ) );
 
 		foreach ( $meta['sizes'] as $size => $file ) {
-			if ( $basename === $file['file'] ) {
+			if ( $basename === $this->as3cf->encode_filename_in_path( $file['file'] ) ) {
 				return $size;
 			}
 		}
@@ -651,7 +659,7 @@ abstract class AS3CF_Filter {
 	/**
 	 * Get post cache
 	 *
-	 * @param null|int|WP_Post $post    Optional. Post ID or post object. Defaults to current post.
+	 * @param null|int|WP_Post $post Optional. Post ID or post object. Defaults to current post.
 	 *
 	 * @return array
 	 */
@@ -678,8 +686,8 @@ abstract class AS3CF_Filter {
 	/**
 	 * Set the cache for the given post.
 	 *
-	 * @param null|int|WP_Post $post    Optional. Post ID or post object. Defaults to current post.
-	 * @param $data
+	 * @param null|int|WP_Post $post Optional. Post ID or post object. Defaults to current post.
+	 * @param                  $data
 	 */
 	protected function set_post_cache( $post, $data ) {
 		$post_id = AS3CF_Utils::get_post_id( $post );
@@ -905,8 +913,8 @@ abstract class AS3CF_Filter {
 		}
 
 		if ( ! empty( $merge_cache ) ) {
-			$add_cache_keys  = array_map( 'AS3CF_Utils::reduce_url', array_keys( $merge_cache ) );
-			$merge_cache     = array_combine( $add_cache_keys, $merge_cache );
+			$add_cache_keys = array_map( 'AS3CF_Utils::reduce_url', array_keys( $merge_cache ) );
+			$merge_cache    = array_combine( $add_cache_keys, $merge_cache );
 		}
 
 		return array_merge( $existing_cache, $merge_cache );

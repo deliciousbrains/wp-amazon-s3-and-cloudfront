@@ -1,10 +1,10 @@
-# WP Offload Media Lite for Amazon S3 and DigitalOcean Spaces #
+# WP Offload Media Lite for Amazon S3, DigitalOcean Spaces, and Google Cloud Storage #
 **Contributors:** bradt, deliciousbrains, ianmjones  
 **Tags:** uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.7  
-**Tested up to:** 5.1  
+**Tested up to:** 5.2  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.1  
+**Stable tag:** 2.2-dev  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -61,16 +61,16 @@ If you upgrade to the pro version of [WP Offload Media](https://deliciousbrains.
 ## Screenshots ##
 
 ### 1. Select Cloud Storage Provider ###
-![Select Cloud Storage Provider](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3-and-digitalocean-spaces/assets/screenshot-1.png)
+![Select Cloud Storage Provider](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3,-digitalocean-spaces,-and-google-cloud-storage/assets/screenshot-1.png)
 
 ### 2. Select or Create Bucket ###
-![Select or Create Bucket](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3-and-digitalocean-spaces/assets/screenshot-2.png)
+![Select or Create Bucket](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3,-digitalocean-spaces,-and-google-cloud-storage/assets/screenshot-2.png)
 
 ### 3. Settings Screen ###
-![Settings Screen](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3-and-digitalocean-spaces/assets/screenshot-3.png)
+![Settings Screen](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3,-digitalocean-spaces,-and-google-cloud-storage/assets/screenshot-3.png)
 
 ### 4. Custom Domain Used With CDN ###
-![Custom Domain Used With CDN](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3-and-digitalocean-spaces/assets/screenshot-4.png)
+![Custom Domain Used With CDN](https://raw.githubusercontent.com/deliciousbrains/wp-wp-offload-media-lite-for-amazon-s3,-digitalocean-spaces,-and-google-cloud-storage/assets/screenshot-4.png)
 
 
 ## Upgrade Notice ##
@@ -85,6 +85,17 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.1.1 - 2019-04-29 ###
+* New: Multisite domain mapping via WordPress MU Domain Mapping plugin is now supported
+* Improvement: Local to Provider content filtering performance improvements
+* Improvement: Warning notice shown when changing storage provider and media already offloaded
+* Bug fix: Media title not retaining characters stripped from filename
+* Bug fix: Warning: is_readable(): open_basedir restriction in effect. File(~/.aws/config) is not within the allowed path(s)
+* Bug fix: Fatal error when GCS Key File not accessible
+* Bug fix: Non-image offloads on subsites with 4 digit IDs get duplicate subsite ID in bucket path
+* Bug fix: No srcset added to img tag if filename includes non-ASCII characters
+* Bug fix: Full size image URL saved to img tag src attribute when thumbnail picked if filename includes non-ASCII characters
 
 ### WP Offload Media Lite 2.1 - 2019-03-05 ###
 * [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-1-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
