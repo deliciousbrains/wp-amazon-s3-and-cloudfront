@@ -1,10 +1,10 @@
 # WP Offload Media Lite for Amazon S3, DigitalOcean Spaces, and Google Cloud Storage #
 **Contributors:** bradt, deliciousbrains, ianmjones  
 **Tags:** uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront  
-**Requires at least:** 4.7  
+**Requires at least:** 4.9  
 **Tested up to:** 5.2  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.2-dev  
+**Stable tag:** 2.2  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -85,6 +85,13 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.2 - 2019-06-10 ###
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-2-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: Use IAM Roles without having to update wp-config.php
+* New: Frankfurt (FRA1) region now supported on DigitalOcean Spaces
+* Improvement: WP dashboard performance
+* Bug fix: Uploaded media files with uppercase extensions get second extension added
 
 ### WP Offload Media Lite 2.1.1 - 2019-04-29 ###
 * New: Multisite domain mapping via WordPress MU Domain Mapping plugin is now supported

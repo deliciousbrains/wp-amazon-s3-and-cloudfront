@@ -1526,6 +1526,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		// sanitize the file name before we begin processing
 		$filename = sanitize_file_name( $filename );
+		$ext      = strtolower( $ext );
 		$name     = wp_basename( $filename, $ext );
 
 		// Edge case: if file is named '.ext', treat as an empty name.
@@ -1534,7 +1535,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		// Rebuild filename with lowercase extension as provider will have converted extension on upload.
-		$ext      = strtolower( $ext );
 		$filename = $name . $ext;
 		$time     = current_time( 'mysql' );
 
@@ -2925,6 +2925,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			'secret-access-key',
 			'key-file-path',
 			'key-file',
+			'use-server-roles',
 			'bucket',
 			'region',
 			'domain',
@@ -3011,7 +3012,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				// If anything about the Provider has changed then we need to verify the bucket selection.
 				// Otherwise we can let the filter decide whether there is an action to take.
 				// Last implementer will win, but the above handlers take care of grouping things appropriately.
-				if ( in_array( $key, array( 'provider', 'access-key-id', 'secret-access-key', 'key-file' ) ) && ! $this->get_defined_setting( 'bucket', false ) ) {
+				if ( in_array( $key, array( 'provider', 'access-key-id', 'secret-access-key', 'key-file', 'use-server-roles' ) ) && ! $this->get_defined_setting( 'bucket', false ) ) {
 					$action = 'change-bucket';
 					break;
 				} else {
@@ -3187,6 +3188,10 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 					return false;
 				}
+			}
+
+			if ( 'use-server-roles' === $var && 'server-role' !== $_POST['authmethod'] ) {
+				continue;
 			}
 
 			$this->set_setting( $var, $value );
@@ -3713,14 +3718,14 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		 * Media
 		 */
 
-		$media_counts = $this->diagnostic_media_counts();
+		$media_counts = $this->media_counts();
 
 		$output .= 'Media Files: ';
-		$output .= number_format_i18n( $media_counts['all'] );
+		$output .= number_format_i18n( $media_counts['total'] );
 		$output .= "\r\n";
 
 		$output .= 'Offloaded Media Files: ';
-		$output .= number_format_i18n( $media_counts['s3'] );
+		$output .= number_format_i18n( $media_counts['offloaded'] );
 		$output .= "\r\n";
 
 		$output .= 'Number of Image Sizes: ';
@@ -3815,9 +3820,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$output .= "\r\n";
 
 			if ( $provider::use_server_roles_allowed() ) {
-				$output .= 'Use Server Role: ' . $this->on_off( $provider::use_server_roles() );
+				$output .= 'Use Server Roles: ' . $this->on_off( $provider->use_server_roles() );
 			} else {
-				$output .= 'Use Server Role: N/A';
+				$output .= 'Use Server Roles: N/A';
 			}
 			$output .= "\r\n";
 
@@ -4273,70 +4278,80 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
-	 * Count attachments on a site
+	 * Count attachments on a site.
 	 *
-	 * @param string    $prefix
-	 * @param null|bool $uploaded_to_provider
-	 *                                  null  - All attachments
-	 *                                  true  - Attachments only uploaded to provider
-	 *                                  false - Attachments not uploaded to provider
-	 * @param bool      $skip_transient Whether to force database query and skip transient, default false
+	 * @param string $prefix
+	 * @param bool   $skip_transient Whether to force database query and skip transient, default false
+	 * @param bool   $force          Whether to force database query and skip static cache, implies $skip_transient, default false
 	 *
-	 * @return int
+	 * @return array Keys:
+	 *               total: Total media count for site (prefix)
+	 *               offloaded: Count of offloaded media for site (prefix)
+	 *               not_offloaded: Difference between total and offloaded
 	 */
-	public function count_attachments( $prefix, $uploaded_to_provider = null, $skip_transient = false ) {
+	public function count_attachments( $prefix, $skip_transient = false, $force = false ) {
 		global $wpdb;
 
-		$transient_key = 'as3cf_' . $prefix . '_media_count';
+		static $counts;
+		static $skips;
 
-		$sql = "SELECT COUNT(DISTINCT p.ID)
-				FROM `{$prefix}posts` p";
+		$transient_key = 'as3cf_' . $prefix . '_attachment_counts';
 
-		$where = "WHERE p.post_type = 'attachment'";
-
-		if ( ! is_null( $uploaded_to_provider ) && is_bool( $uploaded_to_provider ) ) {
-			$sql .= " LEFT OUTER JOIN `{$prefix}postmeta` pm
-					ON p.`ID` = pm.`post_id`
-					AND pm.`meta_key` = 'amazonS3_info'";
-
-			$operator = $uploaded_to_provider ? 'not ' : '';
-			$where    .= " AND pm.`post_id` is {$operator}null";
-
-			$transient_key .= ( $uploaded_to_provider ) ? '_offloaded' : 'not_offloaded';
+		// Been here, done it, won't do it again!
+		// Well, unless this is the first transient skip for the prefix, then we need to do it.
+		if ( ! $force && ! empty( $counts[ $transient_key ] ) && ( false === $skip_transient || ! empty( $skips[ $transient_key ] ) ) ) {
+			return $counts[ $transient_key ];
 		}
 
-		$sql .= ' ' . $where;
+		if ( $force || $skip_transient || false === ( $attachment_counts = get_site_transient( $transient_key ) ) ) {
+			$sql = "
+				SELECT COUNT(DISTINCT p.`ID`) total, COUNT(DISTINCT pm.`post_id`) offloaded
+				FROM `{$prefix}posts` p
+				LEFT OUTER JOIN `{$prefix}postmeta` pm ON p.`ID` = pm.`post_id` AND pm.`meta_key` = 'amazonS3_info'
+				WHERE p.`post_type` = 'attachment'
+			";
 
-		if ( true === $skip_transient || false === ( $count = get_site_transient( $transient_key ) ) ) {
-			$count = (int) $wpdb->get_var( $sql );
+			$attachment_counts = $wpdb->get_row( $sql, ARRAY_A );
 
-			set_site_transient( $transient_key, $count, 2 * MINUTE_IN_SECONDS );
+			$attachment_counts['not_offloaded'] = $attachment_counts['total'] - $attachment_counts['offloaded'];
+
+			set_site_transient( $transient_key, $attachment_counts, 2 * MINUTE_IN_SECONDS );
+
+			// One way or another we've skipped the transient.
+			$skips[ $transient_key ] = true;
 		}
 
-		return $count;
+		$counts[ $transient_key ] = $attachment_counts;
+
+		return $attachment_counts;
 	}
 
 	/**
-	 * Get the total attachment and total S3 attachment counts for the diagnostic log
+	 * Get the total attachment and total offloaded/not offloaded attachment counts
+	 *
+	 * @param bool $skip_transient Whether to force database query and skip transient, default false
+	 * @param bool $force          Whether to force database query and skip static cache, implies $skip_transient, default false
 	 *
 	 * @return array
 	 */
-	protected function diagnostic_media_counts() {
-		if ( false === ( $attachment_counts = get_site_transient( 'as3cf_attachment_counts' ) ) ) {
-			$table_prefixes     = $this->get_all_blog_table_prefixes();
-			$all_media          = 0;
-			$all_media_provider = 0;
+	public function media_counts( $skip_transient = false, $force = false ) {
+		if ( $skip_transient || false === ( $attachment_counts = get_site_transient( 'as3cf_attachment_counts' ) ) ) {
+			$table_prefixes = $this->get_all_blog_table_prefixes();
+			$total          = 0;
+			$offloaded      = 0;
+			$not_offloaded  = 0;
 
 			foreach ( $table_prefixes as $blog_id => $table_prefix ) {
-				$count              = $this->count_attachments( $table_prefix );
-				$all_media          += $count;
-				$provider_count     = $this->count_attachments( $table_prefix, true );
-				$all_media_provider += $provider_count;
+				$counts        = $this->count_attachments( $table_prefix, $skip_transient, $force );
+				$total         += $counts['total'];
+				$offloaded     += $counts['offloaded'];
+				$not_offloaded += $counts['not_offloaded'];
 			}
 
 			$attachment_counts = array(
-				'all' => $all_media,
-				's3'  => $all_media_provider,
+				'total'         => $total,
+				'offloaded'     => $offloaded,
+				'not_offloaded' => $not_offloaded,
 			);
 
 			set_site_transient( 'as3cf_attachment_counts', $attachment_counts, 2 * MINUTE_IN_SECONDS );

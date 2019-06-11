@@ -298,7 +298,6 @@ abstract class Upgrade {
 					break;
 				}
 			} while ( $blog_id = $this->next_blog_id() );
-
 		} catch ( No_More_Blogs_Exception $e ) {
 			/*
 			 * The upgrade is complete when there are no more blogs left to finish.
@@ -322,10 +321,10 @@ abstract class Upgrade {
 	/**
 	 * Upgrade the current blog.
 	 *
-	 * @throws Too_Many_Errors_Exception
+	 * @return bool true if all items for the blog were upgraded, otherwise false.
 	 * @throws Batch_Limits_Exceeded_Exception
 	 *
-	 * @return bool true if all items for the blog were upgraded, otherwise false.
+	 * @throws Too_Many_Errors_Exception
 	 */
 	protected function upgrade_blog() {
 		$total    = $this->count_items_to_process();
@@ -358,9 +357,9 @@ abstract class Upgrade {
 	/**
 	 * Get the next sequential blog ID if there is one.
 	 *
+	 * @return int
 	 * @throws No_More_Blogs_Exception
 	 *
-	 * @return int
 	 */
 	protected function next_blog_id() {
 		$blog_id = $this->blog_id ?: $this->last_blog_id;
@@ -371,7 +370,6 @@ abstract class Upgrade {
 			if ( $blog_id < 1 ) {
 				throw new No_More_Blogs_Exception;
 			}
-
 		} while ( ! $this->is_blog_processable( $blog_id ) );
 
 		return $blog_id;
@@ -505,16 +503,16 @@ abstract class Upgrade {
 		} else {
 			// Set up any per-site state
 			$this->switch_to_blog( get_current_blog_id() );
-			$total_items = $this->as3cf->count_attachments( $this->blog_prefix );
+			$counts = $this->as3cf->count_attachments( $this->blog_prefix );
 
 			// If there are no attachments, disable progress calculation
 			// and protect against division by zero.
-			if ( ! $total_items ) {
+			if ( ! $counts['total'] ) {
 				return false;
 			}
 
 			$remaining = $this->count_items_to_process();
-			$decimal   = ( $total_items - $remaining ) / $total_items;
+			$decimal   = ( $counts['total'] - $remaining ) / $counts['total'];
 		}
 
 		return round( $decimal * 100, 2 );

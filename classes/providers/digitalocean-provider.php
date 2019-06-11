@@ -79,6 +79,7 @@ class DigitalOcean_Provider extends AWS_Provider {
 		'ams3' => 'Amsterdam',
 		'sgp1' => 'Singapore',
 		'sfo2' => 'San Francisco',
+		'fra1' => 'Frankfurt',
 	);
 
 	/**

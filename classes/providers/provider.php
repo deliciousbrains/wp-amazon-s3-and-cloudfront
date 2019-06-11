@@ -80,6 +80,11 @@ abstract class Provider {
 	/**
 	 * @var string
 	 */
+	protected static $use_server_roles_setting_name = 'use-server-roles';
+
+	/**
+	 * @var string
+	 */
 	protected static $key_file_setting_name = 'key-file';
 
 	/**
@@ -218,7 +223,7 @@ abstract class Provider {
 	 * @return bool
 	 */
 	public function needs_access_keys() {
-		if ( static::use_server_roles() ) {
+		if ( $this->use_server_roles() ) {
 			return false;
 		}
 
@@ -313,7 +318,7 @@ abstract class Provider {
 	 *
 	 * @return string
 	 */
-	public static function preferred_use_server_role_constant() {
+	public static function preferred_use_server_roles_constant() {
 		if ( static::use_server_roles_allowed() ) {
 			return static::$use_server_roles_constants[0];
 		} else {
@@ -328,22 +333,26 @@ abstract class Provider {
 	 *
 	 * @return bool
 	 */
-	public static function use_server_roles() {
+	public function use_server_roles() {
 		if ( ! static::use_server_roles_allowed() ) {
 			return false;
 		}
 
-		$constant = static::use_server_role_constant();
+		if ( static::use_server_roles_constant() ) {
+			$constant = static::use_server_roles_constant();
 
-		return $constant && constant( $constant );
+			return $constant ? constant( $constant ) : false;
+		}
+
+		return $this->as3cf->get_core_setting( static::$use_server_roles_setting_name, false );
 	}
 
 	/**
-	 * Get the constant used to enable the use of EC2 IAM roles.
+	 * Get the constant used to enable the use of IAM roles.
 	 *
 	 * @return string|false Constant name if defined, otherwise false
 	 */
-	public static function use_server_role_constant() {
+	public static function use_server_roles_constant() {
 		return AS3CF_Utils::get_first_defined_constant( static::$use_server_roles_constants );
 	}
 
@@ -572,7 +581,7 @@ abstract class Provider {
 
 		if ( is_null( $this->client ) ) {
 			// There's no extra client authentication config required when using server roles.
-			if ( ! static::use_server_roles() ) {
+			if ( ! $this->use_server_roles() ) {
 				// Some providers can supply Key File contents or Key File Path.
 				if ( static::use_key_file() ) {
 					// Key File contents take precedence over Key File Path.

@@ -1,16 +1,18 @@
 <?php
 /* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
-$current_provider                = $this->get_provider();
-$provider_defined                = (bool) defined( 'AS3CF_PROVIDER' ) || $this->get_defined_setting( 'provider', false );
-$key_defined                     = $this->get_defined_setting( 'access-key-id', false );
-$secret_defined                  = $this->get_defined_setting( 'secret-access-key', false );
-$keys_settings_constant          = ( $key_defined || $secret_defined ) ? $this->settings_constant() : false;
-$key_file_path_defined           = $this->get_defined_setting( 'key-file-path', false );
-$key_file_defined                = $this->get_defined_setting( 'key-file', false );
-$key_file_path_settings_constant = ( $key_file_path_defined || $key_file_defined ) ? $this->settings_constant() : false;
-$providers                       = $this->get_provider_classes();
-$media_counts                    = $this->diagnostic_media_counts();
-$media_offloaded_string          = empty( $media_counts['s3'] ) ? '' : number_format( $media_counts['s3'] );
+$current_provider                   = $this->get_provider();
+$provider_defined                   = (bool) defined( 'AS3CF_PROVIDER' ) || $this->get_defined_setting( 'provider', false );
+$key_defined                        = $this->get_defined_setting( 'access-key-id', false );
+$secret_defined                     = $this->get_defined_setting( 'secret-access-key', false );
+$keys_settings_constant             = ( $key_defined || $secret_defined ) ? $this->settings_constant() : false;
+$key_file_path_defined              = $this->get_defined_setting( 'key-file-path', false );
+$key_file_defined                   = $this->get_defined_setting( 'key-file', false );
+$key_file_path_settings_constant    = ( $key_file_path_defined || $key_file_defined ) ? $this->settings_constant() : false;
+$use_server_roles_defined           = $this->get_defined_setting( 'use-server-roles', false );
+$use_server_roles_settings_constant = $use_server_roles_defined ? $this->settings_constant() : false;
+$providers                          = $this->get_provider_classes();
+$media_counts                       = $this->media_counts();
+$media_offloaded_string             = empty( $media_counts['offloaded'] ) ? '' : number_format( $media_counts['offloaded'] );
 ?>
 
 <div class="as3cf-content as3cf-provider-select">
@@ -50,6 +52,7 @@ $media_offloaded_string          = empty( $media_counts['s3'] ) ? '' : number_fo
 				foreach ( array( $key_file_path_constant, $key_file_path_settings_constant ) as $defined_constant ) {
 					if ( $defined_constant ) {
 						$defined_constants[] = $defined_constant;
+						break;
 					}
 				}
 			} else {
@@ -57,11 +60,22 @@ $media_offloaded_string          = empty( $media_counts['s3'] ) ? '' : number_fo
 				continue;
 			}
 
-			$use_server_role_constant = $provider_class::use_server_role_constant();
+			if ( $provider_class::use_server_roles_allowed() ) {
+				$use_server_roles_constant             = $provider_class::use_server_roles_constant();
+				$any_use_server_roles_constant_defined = (bool) $use_server_roles_constant || $use_server_roles_settings_constant;
+
+				$defined_use_server_roles_constants = array();
+				foreach ( array( $use_server_roles_constant, $use_server_roles_settings_constant ) as $defined_constant ) {
+					if ( $defined_constant ) {
+						$defined_use_server_roles_constants[] = $defined_constant;
+						break;
+					}
+				}
+			}
 
 			$selected_authmethod = 'define';
 
-			if ( ! $any_access_key_constant_defined && $provider_class::use_server_roles() ) {
+			if ( ! $any_access_key_constant_defined && $provider_selected && $current_provider->use_server_roles() ) {
 				$selected_authmethod = 'server-role';
 			} elseif ( ! $any_access_key_constant_defined && $provider_selected && ( $current_provider->are_access_keys_set() || $current_provider->get_key_file() ) ) {
 				$selected_authmethod = 'db';
@@ -79,8 +93,8 @@ $media_offloaded_string          = empty( $media_counts['s3'] ) ? '' : number_fo
 					break;
 				case 'server-role':
 					$server_role_authmethod_attr = $provider_selected ? ' checked="checked"' : '';
-					$define_authmethod_attr      = ' data-as3cf-disabled="true" disabled="disabled"';
-					$db_authmethod_attr          = ' data-as3cf-disabled="true" disabled="disabled"';
+					$define_authmethod_attr      = $any_use_server_roles_constant_defined ? ' data-as3cf-disabled="true" disabled="disabled"' : '';
+					$db_authmethod_attr          = $any_use_server_roles_constant_defined ? ' data-as3cf-disabled="true" disabled="disabled"' : '';
 					break;
 				case 'db':
 					$db_authmethod_attr = $provider_selected ? ' checked="checked"' : '';
@@ -248,16 +262,17 @@ define( '<?php echo $this::preferred_settings_constant(); ?>', serialize( array(
 							<tr class="asc3f-provider-authmethod-content" data-provider-authmethod="server-role"<?php echo 'server-role' !== $selected_authmethod ? ' style="display: none"' : ''; ?>>
 								<td></td>
 								<td>
-									<?php if ( $provider_class::use_server_roles() ) {
-										printf( __( 'You\'ve defined the \'%1$s\' constant in your wp-config.php. To select a different option here, simply comment out or remove the define in your wp-config.php.' ), $use_server_role_constant );
+									<?php if ( $any_use_server_roles_constant_defined ) {
+										$remove_defines_msg         = _x( 'You\'ve defined use of server roles in your wp-config.php. To select a different option here, simply comment out or remove the \'%1$s\' define in your wp-config.php.', 'Use Server Roles defined in single define.', 'amazon-s3-and-cloudfront' );
+										$multiple_defined_keys_glue = _x( ' & ', 'joins multiple define keys in notice', 'amazon-s3-and-cloudfront' );
+										$defined_constants_str      = join( $multiple_defined_keys_glue, $defined_use_server_roles_constants );
+										printf( $remove_defines_msg, $defined_constants_str );
 										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
 									} else {
-										printf( __( 'If you host your WordPress site on %s you should make use of IAM Roles. To tell WP Offload Media you\'re using IAM Roles, copy the following snippet <strong>near the top</strong> of your wp-config.php.', 'amazon-s3-and-cloudfront' ), $provider_class::get_provider_name() );
-										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#save-access-keys' );
+										printf( __( 'If you host your WordPress site on %s, choose this option and make use of IAM Roles.', 'amazon-s3-and-cloudfront' ), $provider_class::get_provider_name() );
+										echo '&nbsp;' . $this->more_info_link( '/wp-offload-media/doc/' . $provider_service_quick_start_slug . '/#iam-roles' );
 										?>
-										<textarea rows="1" class="as3cf-define-snippet code clear" readonly>
-define( '<?php echo $provider_class::preferred_use_server_role_constant(); ?>', true );
-				</textarea>
+										<input type="hidden" name="use-server-roles" value="1"<?php echo $provider_selected ? '' : ' disabled="disabled"'; ?>/>
 										<?php
 									}
 									?>
