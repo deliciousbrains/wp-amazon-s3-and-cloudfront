@@ -283,8 +283,11 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 					$attachment_id                  = (int) $postmeta->post_id;
 					$full_url                       = $paths[ $postmeta->meta_value ];
 					$this->query_cache[ $full_url ] = $attachment_id;
-					foreach ( $full_urls[ $full_url ] as $url ) {
-						$results[ $url ] = $attachment_id;
+
+					if ( isset( $full_urls[ $full_url ] ) ) {
+						foreach ( $full_urls[ $full_url ] as $url ) {
+							$results[ $url ] = $attachment_id;
+						}
 					}
 					unset( $full_urls[ $full_url ] );
 				}
