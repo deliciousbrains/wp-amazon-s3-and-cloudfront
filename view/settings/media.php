@@ -243,7 +243,10 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 						$this->render_view( 'notice', $lost_files_args );
 
 						$remove_local_link = $this->more_info_link( '/wp-offload-media/doc/compatibility-with-other-plugins/', 'error-media+remove+files+from+server' );
-						$remove_local_msg  = apply_filters( 'as3cf_remove_local_notice', sprintf( __( '<strong>Warning</strong> &mdash; Some plugins depend on the file being present on the local server and may not work when the file is removed. %s', 'amazon-s3-and-cloudfront' ), $remove_local_link ) );
+						$remove_local_msg  = sprintf( __( '<strong>Warning</strong> &mdash; Some plugins depend on the file being present on the local server and may not work when the file is removed. %s', 'amazon-s3-and-cloudfront' ), $remove_local_link );
+						$remove_local_msg  .= "<br/><br />";
+						$remove_local_msg  .= __( 'If you have a backup system in place (as you should) that backs up your site files, media, and database, your media will no longer be backed up as it will no longer be present on the filesystem.', 'amazon-s3-and-cloudfront' );
+						$remove_local_msg  = apply_filters( 'as3cf_remove_local_notice', $remove_local_msg );
 						$remove_local_args = array(
 							'message' => $remove_local_msg,
 							'id'      => 'as3cf-remove-local-notice',

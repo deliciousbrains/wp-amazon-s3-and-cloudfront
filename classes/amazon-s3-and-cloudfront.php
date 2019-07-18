@@ -133,8 +133,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @throws Exception
 	 */
 	function init( $plugin_file_path ) {
-		$this->plugin_title      = __( 'Offload Media', 'amazon-s3-and-cloudfront' );
-		$this->plugin_menu_title = __( 'Offload Media', 'amazon-s3-and-cloudfront' );
+		$this->plugin_title      = __( 'Offload Media Lite', 'amazon-s3-and-cloudfront' );
+		$this->plugin_menu_title = __( 'Offload Media Lite', 'amazon-s3-and-cloudfront' );
 
 		static::$provider_classes = array(
 			AWS_Provider::get_provider_key_name()          => 'DeliciousBrains\WP_Offload_Media\Providers\AWS_Provider',
@@ -231,9 +231,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$provider = $this->get_core_setting( 'provider', static::$default_provider );
 		}
 
-		if ( empty( $provider ) ) {
-			$wibble = $provider;
-		}
 		if ( is_string( $provider ) ) {
 			$provider = new self::$provider_classes[ $provider ]( $this );
 		}
@@ -298,6 +295,15 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 */
 	function get_plugin_page_title() {
 		return apply_filters( 'as3cf_settings_page_title', $this->plugin_title );
+	}
+
+	/**
+	 * Get the plugin title to be used in admin menu
+	 *
+	 * @return string
+	 */
+	function get_plugin_menu_title() {
+		return apply_filters( 'as3cf_settings_menu_title', $this->plugin_menu_title );
 	}
 
 	/**
@@ -2548,7 +2554,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$this->hook_suffix = add_submenu_page(
 			$this->get_plugin_pagenow(),
 			$this->get_plugin_page_title(),
-			$this->plugin_menu_title,
+			$this->get_plugin_menu_title(),
 			'manage_options',
 			$this->plugin_slug,
 			array( $this, 'render_page' )
@@ -2567,7 +2573,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	public function aws_admin_menu( $aws ) {
 		$aws->add_page(
 			$this->get_plugin_page_title(),
-			$this->plugin_menu_title,
+			$this->get_plugin_menu_title(),
 			'manage_options',
 			$this->plugin_slug,
 			array( $this, 'render_page' )

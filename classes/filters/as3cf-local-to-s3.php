@@ -274,19 +274,24 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 				SELECT post_id, meta_value FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wp_attached_file'
 				AND meta_value IN ( " . implode( ',', array_unique( $meta_values ) ) . " )
+				ORDER BY post_id
  		    ";
 
 			$query_results = $wpdb->get_results( $sql );
 
 			if ( ! empty( $query_results ) ) {
 				foreach ( $query_results as $postmeta ) {
-					$attachment_id                  = (int) $postmeta->post_id;
-					$full_url                       = $paths[ $postmeta->meta_value ];
-					$this->query_cache[ $full_url ] = $attachment_id;
-					foreach ( $full_urls[ $full_url ] as $url ) {
-						$results[ $url ] = $attachment_id;
+					$full_url = $paths[ $postmeta->meta_value ];
+
+					if ( ! empty( $full_urls[ $full_url ] ) ) {
+						$attachment_id                  = (int) $postmeta->post_id;
+						$this->query_cache[ $full_url ] = $attachment_id;
+
+						foreach ( $full_urls[ $full_url ] as $url ) {
+							$results[ $url ] = $attachment_id;
+						}
+						unset( $full_urls[ $full_url ] );
 					}
-					unset( $full_urls[ $full_url ] );
 				}
 			}
 
