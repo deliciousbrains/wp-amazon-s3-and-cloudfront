@@ -62,13 +62,6 @@ $gcp_background: #ffffff;
 			}
 		}
 
-		&.as3cf-provider-linode {
-			.as3cf-provider-logo {
-				background-color: $linode_background;
-				border: 1px solid $linode_background;
-			}
-		}
-
 		&.as3cf-provider-gcp {
 			.as3cf-provider-logo {
 				background-color: $gcp_background;
@@ -76,6 +69,12 @@ $gcp_background: #ffffff;
 				border-right: 1px solid #4285f4;
 				border-bottom: 1px solid #34a853;
 				border-left: 1px solid #fbbc05;
+			}
+		}
+		&.as3cf-provider-linode {
+			.as3cf-provider-logo {
+				background-color: $linode_background;
+				border: 1px solid $linode_background;
 			}
 		}
 	}
