@@ -2,7 +2,6 @@
 
 use DeliciousBrains\WP_Offload_Media\Providers\AWS_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\DigitalOcean_Provider;
-use DeliciousBrains\WP_Offload_Media\Providers\Linode_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\GCP_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Linode_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Null_Provider;
