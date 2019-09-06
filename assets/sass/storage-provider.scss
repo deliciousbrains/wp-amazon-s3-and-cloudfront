@@ -1,5 +1,6 @@
 $aws_background: #f7a80d;
 $do_background: #0080ff;
+$linode_background: #0080ff;
 $gcp_background: #ffffff;
 
 .as3cf-provider-select {
@@ -58,6 +59,13 @@ $gcp_background: #ffffff;
 			.as3cf-provider-logo {
 				background-color: $do_background;
 				border: 1px solid $do_background;
+			}
+		}
+
+		&.as3cf-provider-linode {
+			.as3cf-provider-logo {
+				background-color: $linode_background;
+				border: 1px solid $linode_background;
 			}
 		}
 
