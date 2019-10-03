@@ -85,8 +85,10 @@ class AWS_S3_Stream_Wrapper extends StreamWrapper {
 		$options = stream_context_get_options( $context );
 
 		// Set the ACL as public by default
-		$options[ static::$wrapper ]['ACL'] = AWS_Provider::DEFAULT_ACL;
-
+		$acl = AWS_Provider::DEFAULT_ACL;
+		$acl = apply_filters( 'as3cf_stream_acl', $acl, $options );
+		$options[ static::$wrapper ]['ACL'] = $acl;
+		
 		$options = apply_filters( 'wpos3_stream_flush_params', $options ); // Backwards compatibility
 		$options = apply_filters( 'as3cf_stream_flush_params', $options );
 

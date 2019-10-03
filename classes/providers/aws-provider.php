@@ -539,12 +539,15 @@ class AWS_Provider extends Provider {
 	 */
 	public function can_write( $bucket, $key, $file_contents ) {
 		try {
+			$acl = self::DEFAULT_ACL;
+			$acl = apply_filters( 'as3cf_can_write_acl', $acl );
+			
 			// Attempt to create the test file.
 			$this->upload_object( array(
 				'Bucket' => $bucket,
 				'Key'    => $key,
 				'Body'   => $file_contents,
-				'ACL'    => self::DEFAULT_ACL,
+				'ACL'    => $acl,
 			) );
 
 			// delete it straight away if created
