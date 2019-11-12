@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use Amazon_S3_And_CloudFront;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\No_More_Blogs_Exception;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Too_Many_Errors_Exception;
@@ -84,7 +85,7 @@ abstract class Upgrade {
 	/**
 	 * @var string
 	 */
-	protected $lock_key = 'as3cf_upgrade_lock';
+	public static $lock_key = 'as3cf_upgrade_lock';
 
 	/**
 	 * @var int Time limit in seconds.
@@ -208,6 +209,9 @@ abstract class Upgrade {
 			if ( $this->is_running() ) {
 				// Make sure cron job is persisted in case it has dropped
 				$this->schedule();
+			} else {
+				// Refresh the lock to stop anything from interfering while paused.
+				$this->lock_upgrade();
 			}
 
 			return false;
@@ -412,7 +416,7 @@ abstract class Upgrade {
 				break;
 			case self::STATUS_ERROR:
 				$msg         = $this->get_error_message();
-				$action_text = __( 'Try Run It Again', 'amazon-s3-and-cloudfront' );
+				$action_text = __( 'Try To Run It Again', 'amazon-s3-and-cloudfront' );
 				$msg_type    = 'error';
 				break;
 			default:
@@ -503,7 +507,7 @@ abstract class Upgrade {
 		} else {
 			// Set up any per-site state
 			$this->switch_to_blog( get_current_blog_id() );
-			$counts = $this->as3cf->count_attachments( $this->blog_prefix );
+			$counts = Media_Library_Item::count_attachments();
 
 			// If there are no attachments, disable progress calculation
 			// and protect against division by zero.
@@ -565,8 +569,7 @@ abstract class Upgrade {
 	 * Restart upgrade
 	 */
 	protected function action_restart_update() {
-		$this->schedule();
-		$this->change_status_request( self::STATUS_RUNNING );
+		$this->init();
 	}
 
 	/**
@@ -646,7 +649,7 @@ abstract class Upgrade {
 	 * @return array
 	 */
 	protected function get_session() {
-		return get_site_option( 'update_' . $this->upgrade_name . '_session', array() );
+		return get_site_option( 'as3cf_update_' . $this->upgrade_name . '_session', array() );
 	}
 
 	/**
@@ -655,7 +658,7 @@ abstract class Upgrade {
 	 * @param array $session session data to store
 	 */
 	protected function save_session( $session ) {
-		update_site_option( 'update_' . $this->upgrade_name . '_session', $session );
+		update_site_option( 'as3cf_update_' . $this->upgrade_name . '_session', $session );
 	}
 
 	/**
@@ -663,7 +666,7 @@ abstract class Upgrade {
 	 *
 	 */
 	protected function clear_session() {
-		delete_site_option( 'update_' . $this->upgrade_name . '_session' );
+		delete_site_option( 'as3cf_update_' . $this->upgrade_name . '_session' );
 	}
 
 	/**
@@ -703,7 +706,7 @@ abstract class Upgrade {
 	 * Lock upgrade.
 	 */
 	protected function lock_upgrade() {
-		set_site_transient( $this->lock_key, $this->upgrade_id, MINUTE_IN_SECONDS * 3 );
+		set_site_transient( static::$lock_key, $this->upgrade_id, MINUTE_IN_SECONDS * 3 );
 	}
 
 	/**
@@ -712,7 +715,7 @@ abstract class Upgrade {
 	 * Voids the lock after 1 second rather than deleting to avoid a race condition.
 	 */
 	protected function unlock_upgrade() {
-		set_site_transient( $this->lock_key, $this->upgrade_id, 1 );
+		set_site_transient( static::$lock_key, $this->upgrade_id, 1 );
 	}
 
 	/**
@@ -720,8 +723,8 @@ abstract class Upgrade {
 	 *
 	 * @return bool
 	 */
-	protected function is_locked() {
-		return false !== get_site_transient( $this->lock_key );
+	public static function is_locked() {
+		return false !== get_site_transient( static::$lock_key );
 	}
 
 	/**

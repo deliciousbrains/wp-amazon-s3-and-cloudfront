@@ -9,6 +9,8 @@
  */
 
 // Exit if accessed directly
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -98,9 +100,9 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Parses a URL into its components. Compatible with PHP < 5.4.7.
 		 *
-		 * @param  string $url       The URL to parse.
+		 * @param string $url       The URL to parse.
 		 *
-		 * @param int     $component PHP_URL_ constant for URL component to return.
+		 * @param int    $component PHP_URL_ constant for URL component to return.
 		 *
 		 * @return mixed An array of the parsed components, mixed for a requested component, or false on error.
 		 */
@@ -197,6 +199,11 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 				$paths['thumb'] = str_replace( $file_name, $meta['thumb'], $file_path );
 			}
 
+			// Original Image (when large image scaled down to threshold size and used as "full").
+			if ( isset( $meta['original_image'] ) ) {
+				$paths['original_image'] = str_replace( $file_name, $meta['original_image'], $file_path );
+			}
+
 			// Sizes
 			if ( isset( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size => $file ) {
@@ -254,13 +261,13 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Get an attachment's edited S3 keys.
 		 *
-		 * @param int   $attachment_id
-		 * @param array $provider_object
+		 * @param int                $attachment_id
+		 * @param Media_Library_Item $as3cf_item
 		 *
 		 * @return array
 		 */
-		public static function get_attachment_edited_keys( $attachment_id, $provider_object ) {
-			$prefix = trailingslashit( pathinfo( $provider_object['key'], PATHINFO_DIRNAME ) );
+		public static function get_attachment_edited_keys( $attachment_id, Media_Library_Item $as3cf_item ) {
+			$prefix = trailingslashit( $as3cf_item->normalized_path_dir() );
 			$paths  = self::get_attachment_edited_file_paths( $attachment_id );
 			$paths  = array_map( function ( $path ) use ( $prefix ) {
 				return array( 'Key' => $prefix . wp_basename( $path ) );
@@ -492,6 +499,80 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			$domain = preg_replace( '@[^a-zA-Z0-9\.\-]@', '', $domain );
 
 			return $domain;
+		}
+
+		/**
+		 * Decode file name in potentially URL encoded URL path.
+		 *
+		 * @param string $file
+		 *
+		 * @return string
+		 */
+		public static function decode_filename_in_path( $file ) {
+			$url = parse_url( $file );
+
+			if ( ! isset( $url['path'] ) ) {
+				// Can't determine path, return original
+				return $file;
+			}
+
+			$file_name = wp_basename( $url['path'] );
+
+			if ( false === strpos( $file_name, '%' ) ) {
+				// File name not encoded, return original
+				return $file;
+			}
+
+			$decoded_file_name = rawurldecode( $file_name );
+
+			return str_replace( $file_name, $decoded_file_name, $file );
+		}
+
+		/**
+		 * Returns indexed array of full size paths, e.g. orig and edited.
+		 *
+		 * @param array $paths Associative array of sizes and relative paths
+		 *
+		 * @return array
+		 *
+		 * @see get_attachment_file_paths
+		 */
+		public static function fullsize_paths( $paths ) {
+			if ( is_array( $paths ) && ! empty( $paths ) ) {
+				return array_values( array_unique( array_intersect_key( $paths, array_flip( array( 'original', 'file', 'full-orig', 'original_image' ) ) ) ) );
+			} else {
+				return array();
+			}
+		}
+
+		/**
+		 * Converts an array of upload file paths to all be relative paths.
+		 * If any path is not absolute or does begin with current uploads base dir it will not be altered.
+		 *
+		 * @param array $paths Array of upload file paths, absolute or relative.
+		 *
+		 * @return array Input array with values switched to relative upload file paths.
+		 */
+		public static function make_upload_file_paths_relative( $paths ) {
+			if ( empty( $paths ) ) {
+				return array();
+			}
+
+			if ( ! is_array( $paths ) ) {
+				$paths = array( $paths );
+			}
+
+			$uploads = wp_upload_dir();
+			$basedir = trailingslashit( $uploads['basedir'] );
+			$offset  = strlen( $basedir );
+
+			foreach ( $paths as $key => $path ) {
+				if ( 0 === strpos( $path, $basedir ) ) {
+					$paths[ $key ] = substr( $path, $offset );
+				}
+			}
+
+			return $paths;
 		}
 	}
 }

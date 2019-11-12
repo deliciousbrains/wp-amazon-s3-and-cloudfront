@@ -2,9 +2,9 @@
 Contributors: bradt, deliciousbrains, ianmjones
 Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.9
-Tested up to: 5.2
+Tested up to: 5.3
 Requires PHP: 5.5
-Stable tag: 2.2.1
+Stable tag: 2.3
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -67,6 +67,9 @@ If you upgrade to the pro version of [WP Offload Media](https://deliciousbrains.
 
 == Upgrade Notice ==
 
+= 2.3 =
+This is a major upgrade that switches to using a custom table for storing data about offloaded Media Library items. Once upgraded you will not be able to downgrade without restoring data from a backup.
+
 = 2.0 =
 This is a major upgrade that introduces support for DigitalOcean Spaces, renames the plugin to WP Offload Media Lite, and coincidentally upgrades some of its database settings. You may not be able to downgrade to WP Offload S3 Lite 1.x after upgrading to WP Offload Media Lite 2.0+.
 
@@ -77,6 +80,18 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 2.3 - 2019-11-12 =
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-3-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: Upgrade routine to migrate offload data to custom table
+* New: Support for changed Media Library upload process introduced with WordPress 5.3
+* New: Support for new "-scaled" and "-rotated" images introduced with WordPress 5.3
+* New: Support for customizer changes introduced with WordPress 5.3
+* New: Offload new "original_image" file introduced with WordPress 5.3
+* Improvement: Performance boost during both page display and save
+* Improvement: Better detection of offloaded media URLs during page display
+* Bug fix: New Media Library upload given same local file name as offloaded and removed file after Remove Files From Server turned off
+* Bug fix: PHP message: PHP Deprecated: strpos(): Non-string needles will be interpreted as strings in the future
 
 = WP Offload Media Lite 2.2.1 - 2019-07-18 =
 * Improvement: Menu option and settings page title now include "Lite"

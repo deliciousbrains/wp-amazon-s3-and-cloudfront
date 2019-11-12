@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 
 /**
  * Upgrade_Region_Meta Class
@@ -61,10 +62,24 @@ class Upgrade_Region_Meta extends Upgrade {
 
 			return false;
 		}
-		// retrieve region and update the attachment metadata
-		$region = $this->as3cf->get_provider_object_region( $provider_object, $attachment->ID );
-		if ( is_wp_error( $region ) ) {
-			AS3CF_Error::log( 'Error updating region: ' . $region->get_error_message() );
+
+		// Using Media_Library_Item::get_by_source_id falls back to legacy metadata and substitutes in defaults and potentially missing values.
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment->ID );
+
+		if ( ! $as3cf_item ) {
+			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $attachment->ID . ' from legacy offload metadata.' );
+			$this->error_count++;
+
+			return false;
+		}
+
+		// Update legacy amazonS3_info record with region required for subsequent upgrades.
+		$provider_object['region'] = $as3cf_item->region();
+
+		$result = update_post_meta( $attachment->ID, 'amazonS3_info', $provider_object );
+
+		if ( false === $result ) {
+			AS3CF_Error::log( 'Error updating region in legacy offload metadata for attachment ' . $attachment->ID );
 			$this->error_count++;
 
 			return false;

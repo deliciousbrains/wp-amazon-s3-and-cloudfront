@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use Exception;
 
 /**
@@ -64,13 +65,18 @@ class Upgrade_File_Sizes extends Upgrade {
 			return false;
 		}
 
-		$region = $this->as3cf->get_provider_object_region( $provider_object );
-		if ( is_wp_error( $region ) ) {
-			AS3CF_Error::log( 'Failed to get the region for the bucket of the attachment ' . $attachment->ID );
+		// Using Media_Library_Item::get_by_source_id falls back to legacy metadata and substitutes in defaults and potentially missing values.
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment->ID );
+
+		if ( ! $as3cf_item ) {
+			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $attachment->ID . ' from legacy offload metadata.' );
 			$this->error_count++;
 
 			return false;
 		}
+
+		// $as3cf_item can't exist without a region value, so we can just use it here.
+		$region = $as3cf_item->region();
 
 		$provider_client = $this->as3cf->get_provider_client( $region, true );
 		$main_file       = $provider_object['key'];

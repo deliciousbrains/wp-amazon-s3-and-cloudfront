@@ -330,6 +330,11 @@ abstract class AS3CF_Filter {
 		$attachment_ids = array();
 
 		foreach ( $matches as $image ) {
+			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image, $class_id ) || ! isset( $class_id[1] ) ) {
+				// Can't determine ID from class, skip
+				continue;
+			}
+
 			if ( ! preg_match( '/src=\\\?["\']+([^"\'\\\]+)/', $image, $src ) || ! isset( $src[1] ) ) {
 				// Can't determine URL, skip
 				continue;
@@ -343,11 +348,6 @@ abstract class AS3CF_Filter {
 			}
 
 			$url = AS3CF_Utils::reduce_url( $url );
-
-			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image, $class_id ) || ! isset( $class_id[1] ) ) {
-				// Can't determine ID from class, skip
-				continue;
-			}
 
 			$attachment_ids[ $url ] = absint( $class_id[1] );
 		}
