@@ -1061,9 +1061,21 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			return $data;
 		}
 
-		// Protect against updates of partially formed metadata.
-		if ( wp_attachment_is_image( $post_id ) && empty( $data['sizes'] ) ) {
-			return $data;
+		// Protect against updates of partially formed metadata since WordPress 5.3.
+		// Checks whether new upload currently has no subsizes recorded but is expected to have subsizes during upload,
+		// and if so, are any of its currently missing sizes part of the set.
+		if ( function_exists( 'wp_get_registered_image_subsizes' ) && function_exists( 'wp_get_missing_image_subsizes' ) ) {
+			if ( empty( $data['sizes'] ) && wp_attachment_is_image( $post_id ) ) {
+
+				// There is no unified way of checking whether subsizes are expected, so we have to duplicate WordPress code here.
+				$new_sizes     = wp_get_registered_image_subsizes();
+				$new_sizes     = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
+				$missing_sizes = wp_get_missing_image_subsizes( $post_id );
+
+				if ( ! empty( $new_sizes ) && ! empty( $missing_sizes ) && array_intersect_key( $missing_sizes, $new_sizes ) ) {
+					return $data;
+				}
+			}
 		}
 
 		$as3cf_item = Media_Library_Item::get_by_source_id( $post_id );
@@ -1086,7 +1098,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		// upload attachment to provider
 		$attachment_metadata = $this->upload_attachment( $post_id, $data );
 
-		if ( is_wp_error( $attachment_metadata ) ) {
+		if ( is_wp_error( $attachment_metadata ) || empty( $attachment_metadata ) || ! is_array( $attachment_metadata ) ) {
 			return $data;
 		}
 
