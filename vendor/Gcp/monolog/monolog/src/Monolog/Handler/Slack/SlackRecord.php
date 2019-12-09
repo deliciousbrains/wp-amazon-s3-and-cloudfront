@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Slack;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
@@ -164,9 +165,13 @@ class SlackRecord
     {
         $normalized = $this->normalizerFormatter->format($fields);
         $prettyPrintFlag = defined('JSON_PRETTY_PRINT') ? JSON_PRETTY_PRINT : 128;
+        $flags = 0;
+        if (PHP_VERSION_ID >= 50400) {
+            $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+        }
         $hasSecondDimension = count(array_filter($normalized, 'is_array'));
         $hasNonNumericKeys = !count(array_filter(array_keys($normalized), 'is_numeric'));
-        return $hasSecondDimension || $hasNonNumericKeys ? json_encode($normalized, $prettyPrintFlag) : json_encode($normalized);
+        return $hasSecondDimension || $hasNonNumericKeys ? \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($normalized, $prettyPrintFlag | $flags) : \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($normalized, $flags);
     }
     /**
      * Sets the formatter

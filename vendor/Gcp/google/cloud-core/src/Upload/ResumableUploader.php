@@ -18,6 +18,8 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\UploadException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\JsonTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
@@ -120,8 +122,11 @@ class ResumableUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
     /**
      * Triggers the upload process.
      *
+     * Errors are of form [`google.rpc.Status`](https://cloud.google.com/apis/design/errors#error_model),
+     * and may be obtained via {@see Google\Cloud\Core\Exception\ServiceException::getMetadata()}.
+     *
      * @return array
-     * @throws GoogleException
+     * @throws ServiceException
      */
     public function upload()
     {
@@ -138,7 +143,7 @@ class ResumableUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
             try {
                 $response = $this->requestWrapper->send($request, $this->requestOptions);
             } catch (GoogleException $ex) {
-                throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException("Upload failed. Please use this URI to resume your upload: {$this->resumeUri}", $ex->getCode());
+                throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException("Upload failed. Please use this URI to resume your upload: {$this->resumeUri}", $ex->getCode(), null, json_decode($ex->getMessage(), true) ?: []);
             }
             if (is_callable($this->uploadProgressCallback)) {
                 call_user_func($this->uploadProgressCallback, $currStreamLimitSize);
@@ -184,7 +189,7 @@ class ResumableUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      * Gets the starting range for the upload.
      *
      * @param string $rangeHeader
-     * @return int
+     * @return int|null
      */
     protected function getRangeStart($rangeHeader)
     {

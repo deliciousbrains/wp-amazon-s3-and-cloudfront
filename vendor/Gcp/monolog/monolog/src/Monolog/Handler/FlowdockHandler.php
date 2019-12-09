@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FlowdockFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
@@ -93,7 +94,7 @@ class FlowdockHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      */
     private function buildContent($record)
     {
-        return json_encode($record['formatted']['flowdock']);
+        return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($record['formatted']['flowdock']);
     }
     /**
      * Builds the header of the API Call

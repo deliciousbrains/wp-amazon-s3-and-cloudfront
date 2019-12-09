@@ -17,13 +17,26 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestBuilder;
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper;
 /**
- * Provides common logic for configuring the usage of an emualtor.
+ * Provides common logic for configuring the usage of an emulator.
  */
 trait EmulatorTrait
 {
+    /**
+     * Configure the gapic configuration to use a service emulator.
+     *
+     * @param string $emulatorHost
+     * @return array
+     */
+    private function emulatorGapicConfig($emulatorHost)
+    {
+        // Strip the URL scheme from the input, if it was provided.
+        if ($scheme = parse_url($emulatorHost, PHP_URL_SCHEME)) {
+            $search = $scheme . '://';
+            $emulatorHost = str_replace($search, '', $emulatorHost);
+        }
+        return ['apiEndpoint' => $emulatorHost, 'transportConfig' => ['grpc' => ['stubOpts' => ['credentials' => \DeliciousBrains\WP_Offload_Media\Gcp\Grpc\ChannelCredentials::createInsecure()]]]];
+    }
     /**
      * Retrieve a valid base uri for a service emulator.
      *

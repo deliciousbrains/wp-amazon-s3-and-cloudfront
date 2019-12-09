@@ -145,7 +145,8 @@ class MockHandler implements \Countable
     private function invokeStats(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, $reason = null)
     {
         if (isset($options['on_stats'])) {
-            $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($request, $response, 0, $reason);
+            $transferTime = isset($options['transfer_time']) ? $options['transfer_time'] : 0;
+            $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($request, $response, $transferTime, $reason);
             call_user_func($options['on_stats'], $stats);
         }
     }

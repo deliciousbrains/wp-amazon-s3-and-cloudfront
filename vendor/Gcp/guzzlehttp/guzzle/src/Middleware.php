@@ -8,7 +8,6 @@ use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface;
-use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LogLevel;
 /**
  * Functions used to create and wrap handlers with handler middleware.
  */
@@ -53,7 +52,7 @@ final class Middleware
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
-                return $handler($request, $options)->then(function (\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response) use($request, $handler) {
+                return $handler($request, $options)->then(function (\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response) use($request) {
                     $code = $response->getStatusCode();
                     if ($code < 400) {
                         return $response;
@@ -158,7 +157,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface $logger, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\MessageFormatter $formatter, $logLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LogLevel::INFO)
+    public static function log(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface $logger, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\MessageFormatter $formatter, $logLevel = 'info')
     {
         return function (callable $handler) use($logger, $formatter, $logLevel) {
             return function ($request, array $options) use($handler, $logger, $formatter, $logLevel) {

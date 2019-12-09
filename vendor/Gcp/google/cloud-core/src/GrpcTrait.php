@@ -17,11 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
-use DateTime;
-use DateTimeZone;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\CredentialsWrapper;
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Cache\MemoryCacheItemPool;
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ArrayTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\GrpcRequestWrapper;
@@ -219,5 +215,16 @@ trait GrpcTrait
     {
         list($dt, $nanos) = $this->parseTimeString($value);
         return ['seconds' => (int) $dt->format('U'), 'nanos' => (int) $nanos];
+    }
+    /**
+     * Construct a gapic client. Allows for tests to intercept.
+     *
+     * @param string $gapicName
+     * @param array $config
+     * @return mixed
+     */
+    protected function constructGapic($gapicName, array $config)
+    {
+        return new $gapicName($config);
     }
 }

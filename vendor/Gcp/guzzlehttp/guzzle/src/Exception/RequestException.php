@@ -87,7 +87,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
     public static function getResponseBodySummary(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response)
     {
         $body = $response->getBody();
-        if (!$body->isSeekable()) {
+        if (!$body->isSeekable() || !$body->isReadable()) {
             return null;
         }
         $size = $body->getSize();

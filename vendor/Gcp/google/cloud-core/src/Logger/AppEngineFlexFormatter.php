@@ -17,14 +17,15 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Logger;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\JsonTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 /**
- * Class for formatting logs on App Engine flexible environment.
+ * Monolog 1.x formatter for formatting logs on App Engine flexible environment.
+ *
+ * If you are using Monolog 2.x, use {@see \Google\Cloud\Core\Logger\AppEngineFlexFormatterV2} instead.
  */
 class AppEngineFlexFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter
 {
-    use JsonTrait;
+    use FormatterTrait;
     /**
      * @param string $format [optional] The format of the message
      * @param string $dateFormat [optional] The format of the timestamp
@@ -39,18 +40,10 @@ class AppEngineFlexFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monol
      * metadata including the trace id then return the json string.
      *
      * @param array $record A record to format
-     * @return mixed The formatted record
+     * @return string The formatted record
      */
     public function format(array $record)
     {
-        $message = parent::format($record);
-        list($usec, $sec) = explode(" ", microtime());
-        $usec = (int) ((double) $usec * 1000000000);
-        $sec = (int) $sec;
-        $payload = ['message' => $message, 'timestamp' => ['seconds' => $sec, 'nanos' => $usec], 'thread' => '', 'severity' => $record['level_name']];
-        if (isset($_SERVER['HTTP_X_CLOUD_TRACE_CONTEXT'])) {
-            $payload['traceId'] = explode("/", $_SERVER['HTTP_X_CLOUD_TRACE_CONTEXT'])[0];
-        }
-        return "\n" . $this->jsonEncode($payload);
+        return $this->formatPayload($record, parent::format($record));
     }
 }

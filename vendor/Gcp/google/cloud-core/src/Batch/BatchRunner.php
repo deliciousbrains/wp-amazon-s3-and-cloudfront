@@ -113,7 +113,7 @@ class BatchRunner
      * @param string $identifier Unique identifier of the job.
      * @param mixed $item It needs to be serializable.
      *
-     * @return bool true on success, false on failure
+     * @return void
      * @throws \RuntimeException
      */
     public function submitItem($identifier, $item)
@@ -123,7 +123,7 @@ class BatchRunner
             throw new \RuntimeException("The identifier does not exist: {$identifier}");
         }
         $idNum = $job->id();
-        return $this->processor->submit($item, $idNum);
+        $this->processor->submit($item, $idNum);
     }
     /**
      * Get the job with the given identifier.

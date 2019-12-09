@@ -59,7 +59,7 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
     public function seek($offset, $whence = SEEK_SET)
     {
         if ($whence !== SEEK_SET || $offset < 0) {
-            throw new \RuntimeException(sprintf('Cannot seek to offset % with whence %s', $offset, $whence));
+            throw new \RuntimeException(sprintf('Cannot seek to offset %s with whence %s', $offset, $whence));
         }
         $offset += $this->offset;
         if ($this->limit !== -1) {

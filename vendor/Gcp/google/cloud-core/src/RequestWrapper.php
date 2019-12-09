@@ -33,7 +33,6 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
  */
 class RequestWrapper
 {
-    use JsonTrait;
     use RequestWrapperTrait;
     use RetryDeciderTrait;
     /**
@@ -72,15 +71,14 @@ class RequestWrapper
      */
     private $retryFunction;
     /**
+     * @var callable Executes a delay.
+     */
+    private $delayFunction;
+    /**
      * @var callable|null Sets the conditions for determining how long to wait
      * between attempts to retry.
      */
-    private $restDelayFunction;
-    /**
-     * @var callable Sets the conditions for determining how long to wait
-     * between attempts to retry.
-     */
-    private $delayFunction;
+    private $calcDelayFunction;
     /**
      * @param array $config [optional] {
      *     Configuration options. Please see
@@ -103,15 +101,20 @@ class RequestWrapper
      *     @type array $restOptions HTTP client specific configuration options.
      *     @type bool $shouldSignRequest Whether to enable request signing.
      *     @type callable $restRetryFunction Sets the conditions for whether or
-     *           not a request should attempt to retry.
-     *     @type callable $restDelayFunction Sets the conditions for determining
-     *           how long to wait between attempts to retry.
+     *           not a request should attempt to retry. Function signature should
+     *           match: `function (\Exception $ex) : bool`.
+     *     @type callable $restDelayFunction Executes a delay, defaults to
+     *           utilizing `usleep`. Function signature should match:
+     *           `function (int $delay) : void`.
+     *     @type callable $restCalcDelayFunction Sets the conditions for
+     *           determining how long to wait between attempts to retry. Function
+     *           signature should match: `function (int $attempt) : int`.
      * }
      */
     public function __construct(array $config = [])
     {
         $this->setCommonDefaults($config);
-        $config += ['accessToken' => null, 'asyncHttpHandler' => null, 'authHttpHandler' => null, 'httpHandler' => null, 'restOptions' => [], 'shouldSignRequest' => true, 'componentVersion' => null, 'restRetryFunction' => null, 'restDelayFunction' => null];
+        $config += ['accessToken' => null, 'asyncHttpHandler' => null, 'authHttpHandler' => null, 'httpHandler' => null, 'restOptions' => [], 'shouldSignRequest' => true, 'componentVersion' => null, 'restRetryFunction' => null, 'restDelayFunction' => null, 'restCalcDelayFunction' => null];
         $this->componentVersion = $config['componentVersion'];
         $this->accessToken = $config['accessToken'];
         $this->restOptions = $config['restOptions'];
@@ -120,6 +123,7 @@ class RequestWrapper
         $this->delayFunction = $config['restDelayFunction'] ?: function ($delay) {
             usleep($delay);
         };
+        $this->calcDelayFunction = $config['restCalcDelayFunction'];
         $this->httpHandler = $config['httpHandler'] ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build();
         $this->authHttpHandler = $config['authHttpHandler'] ?: $this->httpHandler;
         $this->asyncHttpHandler = $config['asyncHttpHandler'] ?: $this->buildDefaultAsyncHandler();
@@ -139,9 +143,14 @@ class RequestWrapper
      *     @type int $retries Number of retries for a failed request.
      *           **Defaults to** `3`.
      *     @type callable $restRetryFunction Sets the conditions for whether or
-     *           not a request should attempt to retry.
-     *     @type callable $restDelayFunction Sets the conditions for determining
-     *           how long to wait between attempts to retry.
+     *           not a request should attempt to retry. Function signature should
+     *           match: `function (\Exception $ex) : bool`.
+     *     @type callable $restDelayFunction Executes a delay, defaults to
+     *           utilizing `usleep`. Function signature should match:
+     *           `function (int $delay) : void`.
+     *     @type callable $restCalcDelayFunction Sets the conditions for
+     *           determining how long to wait between attempts to retry. Function
+     *           signature should match: `function (int $attempt) : int`.
      *     @type array $restOptions HTTP client specific configuration options.
      * }
      * @return ResponseInterface
@@ -149,7 +158,13 @@ class RequestWrapper
     public function send(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = [])
     {
         $retryOptions = $this->getRetryOptions($options);
-        $backoff = $this->configureBackoff($retryOptions['retries'], $retryOptions['retryFunction'], $retryOptions['delayFunction']);
+        $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($retryOptions['retries'], $retryOptions['retryFunction']);
+        if ($retryOptions['delayFunction']) {
+            $backoff->setDelayFunction($retryOptions['delayFunction']);
+        }
+        if ($retryOptions['calcDelayFunction']) {
+            $backoff->setCalcDelayFunction($retryOptions['calcDelayFunction']);
+        }
         try {
             return $backoff->execute($this->httpHandler, [$this->applyHeaders($request), $this->getRequestOptions($options)]);
         } catch (\Exception $ex) {
@@ -168,9 +183,14 @@ class RequestWrapper
      *     @type int $retries Number of retries for a failed request.
      *           **Defaults to** `3`.
      *     @type callable $restRetryFunction Sets the conditions for whether or
-     *           not a request should attempt to retry.
-     *     @type callable $restDelayFunction Sets the conditions for determining
-     *           how long to wait between attempts to retry.
+     *           not a request should attempt to retry. Function signature should
+     *           match: `function (\Exception $ex) : bool`.
+     *     @type callable $restDelayFunction Executes a delay, defaults to
+     *           utilizing `usleep`. Function signature should match:
+     *           `function (int $delay) : void`.
+     *     @type callable $restCalcDelayFunction Sets the conditions for
+     *           determining how long to wait between attempts to retry. Function
+     *           signature should match: `function (int $attempt) : int`.
      *     @type array $restOptions HTTP client specific configuration options.
      * }
      * @return PromiseInterface<ResponseInterface>
@@ -187,12 +207,16 @@ class RequestWrapper
         $fn = function ($retryAttempt) use(&$fn, $request, $options) {
             $asyncHttpHandler = $this->asyncHttpHandler;
             $retryOptions = $this->getRetryOptions($options);
+            if (!$retryOptions['calcDelayFunction']) {
+                $retryOptions['calcDelayFunction'] = [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff::class, 'calculateDelay'];
+            }
             return $asyncHttpHandler($this->applyHeaders($request), $this->getRequestOptions($options))->then(null, function (\Exception $ex) use($fn, $retryAttempt, $retryOptions) {
                 $shouldRetry = $retryOptions['retryFunction']($ex);
                 if ($shouldRetry === false || $retryAttempt >= $retryOptions['retries']) {
                     throw $this->convertToGoogleException($ex);
                 }
-                $retryOptions['delayFunction'](\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff::calculateDelay($retryAttempt));
+                $delay = $retryOptions['calcDelayFunction']($retryAttempt);
+                $retryOptions['delayFunction']($delay);
                 $retryAttempt++;
                 return $fn($retryAttempt);
             });
@@ -275,37 +299,16 @@ class RequestWrapper
     /**
      * Gets the exception message.
      *
+     * @access private
      * @param \Exception $ex
      * @return string
      */
     private function getExceptionMessage(\Exception $ex)
     {
         if ($ex instanceof RequestException && $ex->hasResponse()) {
-            $res = (string) $ex->getResponse()->getBody();
-            try {
-                $this->jsonDecode($res);
-                return $res;
-            } catch (\InvalidArgumentException $e) {
-                // no-op
-            }
+            return (string) $ex->getResponse()->getBody();
         }
         return $ex->getMessage();
-    }
-    /**
-     * Configures an exponential backoff implementation.
-     *
-     * @param int $retries
-     * @param callable $retryFunction
-     * @param callable $delayFunction
-     * @return ExponentialBackoff
-     */
-    private function configureBackoff($retries, callable $retryFunction, callable $delayFunction)
-    {
-        $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($retries, $retryFunction);
-        if ($delayFunction) {
-            $backoff->setDelayFunction($delayFunction);
-        }
-        return $backoff;
     }
     /**
      * Gets a set of request options.
@@ -330,7 +333,7 @@ class RequestWrapper
      */
     private function getRetryOptions(array $options)
     {
-        return ['retries' => isset($options['retries']) ? $options['retries'] : $this->retries, 'retryFunction' => isset($options['restRetryFunction']) ? $options['restRetryFunction'] : $this->retryFunction, 'delayFunction' => isset($options['restDelayFunction']) ? $options['restDelayFunction'] : $this->delayFunction];
+        return ['retries' => isset($options['retries']) ? $options['retries'] : $this->retries, 'retryFunction' => isset($options['restRetryFunction']) ? $options['restRetryFunction'] : $this->retryFunction, 'delayFunction' => isset($options['restDelayFunction']) ? $options['restDelayFunction'] : $this->delayFunction, 'calcDelayFunction' => isset($options['restCalcDelayFunction']) ? $options['restCalcDelayFunction'] : $this->calcDelayFunction];
     }
     /**
      * Builds the default async HTTP handler.

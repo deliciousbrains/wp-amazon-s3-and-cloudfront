@@ -20,6 +20,16 @@ abstract class Item {
 	protected static $items_cache_by_path = array();
 	protected static $items_cache_by_source_path = array();
 
+	/**
+	 * @var array Keys with array of fields that can be used for cache lookups.
+	 */
+	protected static $cache_keys = array(
+		'id'          => array( 'id' ),
+		'source_id'   => array( 'source_id' ),
+		'path'        => array( 'path', 'original_path' ),
+		'source_path' => array( 'source_path', 'original_source_path' ),
+	);
+
 	private $id;
 	private $provider;
 	private $region;
@@ -72,6 +82,136 @@ abstract class Item {
 	}
 
 	/**
+	 * Returns the string used to group all keys in the object cache by.
+	 *
+	 * @return string
+	 */
+	protected static function get_object_cache_group() {
+		static $group;
+
+		if ( empty( $group ) ) {
+			/** @var Amazon_S3_And_CloudFront $as3cf */
+			global $as3cf;
+			$group = trim( '' . apply_filters( 'as3cf_object_cache_group', $as3cf->get_plugin_prefix() ) );
+		}
+
+		return $group;
+	}
+
+	/**
+	 * Get base string for all of current blog's object cache keys.
+	 *
+	 * @return string
+	 */
+	protected static function get_object_cache_base_key() {
+		$blog_id = get_current_blog_id();
+
+		return static::items_table() . '-' . $blog_id . '-' . static::$source_type;
+	}
+
+	/**
+	 * Get full object cache key.
+	 *
+	 * @param string $base_key
+	 * @param string $key
+	 * @param string $field
+	 *
+	 * @return string
+	 */
+	protected static function get_object_cache_full_key( $base_key, $key, $field ) {
+		return sanitize_text_field( $base_key . '-' . $key . '-' . $field );
+	}
+
+	/**
+	 * Add the given item to the object cache.
+	 *
+	 * @param Item $item
+	 */
+	protected static function add_to_object_cache( $item ) {
+		if ( empty( $item ) || empty( static::$cache_keys ) ) {
+			return;
+		}
+
+		$base_key = static::get_object_cache_base_key();
+		$group    = static::get_object_cache_group();
+
+		$keys = array();
+
+		foreach ( static::$cache_keys as $key => $fields ) {
+			foreach ( $fields as $field ) {
+				$full_key = static::get_object_cache_full_key( $base_key, $key, $item->{$field}() );
+
+				if ( in_array( $full_key, $keys ) ) {
+					continue;
+				}
+
+				wp_cache_set( $full_key, $item, $group );
+
+				$keys[] = $full_key;
+			}
+		}
+	}
+
+	/**
+	 * Delete the given item from the object cache.
+	 *
+	 * @param Item $item
+	 */
+	protected static function remove_from_object_cache( $item ) {
+		if ( empty( $item ) || empty( static::$cache_keys ) ) {
+			return;
+		}
+
+		$base_key = static::get_object_cache_base_key();
+		$group    = static::get_object_cache_group();
+
+		$keys = array();
+
+		foreach ( static::$cache_keys as $key => $fields ) {
+			foreach ( $fields as $field ) {
+				$full_key = static::get_object_cache_full_key( $base_key, $key, $item->{$field}() );
+
+				if ( in_array( $full_key, $keys ) ) {
+					continue;
+				}
+
+				wp_cache_delete( $full_key, $group );
+
+				$keys[] = $full_key;
+			}
+		}
+	}
+
+	/**
+	 * Try and get Item from object cache by known key and value.
+	 *
+	 * Note: Actual lookup is scoped by blog and item's source_type, so example key may be 'source_id'.
+	 *
+	 * @param string $key   The base of the key that makes up the lookup, e.g. field for given value.
+	 * @param mixed  $value Will be coerced to string for lookup.
+	 *
+	 * @return bool|Item
+	 */
+	protected static function get_from_object_cache( $key, $value ) {
+		if ( ! array_key_exists( $key, static::$cache_keys ) ) {
+			return false;
+		}
+
+		$base_key = static::get_object_cache_base_key();
+		$full_key = static::get_object_cache_full_key( $base_key, $key, $value );
+		$group    = static::get_object_cache_group();
+		$force    = false;
+		$found    = false;
+		$result   = wp_cache_get( $full_key, $group, $force, $found );
+
+		if ( $found ) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	/**
 	 * (Re)initialize the static cache used for speeding up queries.
 	 */
 	public static function init_cache() {
@@ -111,7 +251,7 @@ abstract class Item {
 	}
 
 	/**
-	 * Add an item to the static cache to allow fast retrieval via get_from_items_cache_by_* functions.
+	 * Remove an item from the static cache that allows fast retrieval via get_from_items_cache_by_* functions.
 	 *
 	 * @param Item $item
 	 */
@@ -151,6 +291,14 @@ abstract class Item {
 			return static::$items_cache_by_id[ $blog_id ][ $id ];
 		}
 
+		$item = static::get_from_object_cache( 'id', $id );
+
+		if ( $item ) {
+			static::add_to_items_cache( $item );
+
+			return $item;
+		}
+
 		return false;
 	}
 
@@ -166,6 +314,14 @@ abstract class Item {
 
 		if ( ! empty( static::$items_cache_by_source_id[ $blog_id ][ static::$source_type ][ $source_id ] ) ) {
 			return static::$items_cache_by_source_id[ $blog_id ][ static::$source_type ][ $source_id ];
+		}
+
+		$item = static::get_from_object_cache( 'source_id', $source_id );
+
+		if ( $item ) {
+			static::add_to_items_cache( $item );
+
+			return $item;
 		}
 
 		return false;
@@ -372,14 +528,22 @@ abstract class Item {
 				$this->id = $wpdb->insert_id;
 
 				// Now that the item has an ID it should be (re)cached.
-				self::add_to_items_cache( $this );
+				static::add_to_items_cache( $this );
 			}
 		} else {
+			// Make sure object cache does not have stale items.
+			$old_item = static::get_from_object_cache( 'id', $this->id() );
+			static::remove_from_object_cache( $old_item );
+			unset( $old_item );
+
 			$result = $wpdb->update( static::items_table(), $this->key_values(), array( 'id' => $this->id ), $this->formats(), array( '%d' ) );
 		}
 
-		if ( false === $result ) {
-			self::remove_from_items_cache( $this );
+		if ( $result ) {
+			// Now that the item has an ID it should be (re)cached.
+			static::add_to_object_cache( $this );
+		} else {
+			static::remove_from_items_cache( $this );
 
 			return new WP_Error( 'item_save', 'Error saving item:- ' . $wpdb->last_error );
 		}
@@ -396,6 +560,7 @@ abstract class Item {
 		global $wpdb;
 
 		static::remove_from_items_cache( $this );
+		static::remove_from_object_cache( $this );
 
 		if ( empty( $this->id ) ) {
 			return new WP_Error( 'item_delete', 'Error trying to delete item with no id.' );
@@ -414,17 +579,18 @@ abstract class Item {
 	 * Creates an item based on object from database.
 	 *
 	 * @param object $object
+	 * @param bool   $add_to_object_cache Should this object be added to the object cache too?
 	 *
 	 * @return Item
 	 */
-	protected static function create( $object ) {
+	protected static function create( $object, $add_to_object_cache = false ) {
 		$extra_info = array();
 
 		if ( ! empty( $object->extra_info ) ) {
 			$extra_info = unserialize( $object->extra_info );
 		}
 
-		return new static(
+		$item = new static(
 			$object->provider,
 			$object->region,
 			$object->bucket,
@@ -436,6 +602,12 @@ abstract class Item {
 			$extra_info,
 			$object->id
 		);
+
+		if ( $add_to_object_cache ) {
+			static::add_to_object_cache( $item );
+		}
+
+		return $item;
 	}
 
 	/**
@@ -466,7 +638,7 @@ abstract class Item {
 			return false;
 		}
 
-		return static::create( $object );
+		return static::create( $object, true );
 	}
 
 	/**
@@ -505,7 +677,7 @@ abstract class Item {
 			return false;
 		}
 
-		return static::create( $object );
+		return static::create( $object, true );
 	}
 
 	/**

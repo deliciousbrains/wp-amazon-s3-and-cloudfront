@@ -10,6 +10,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 /**
  * Class FluentdFormatter
  *
@@ -59,7 +60,7 @@ class FluentdFormatter implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
             $message['level'] = $record['level'];
             $message['level_name'] = $record['level_name'];
         }
-        return json_encode(array($tag, $record['datetime']->getTimestamp(), $message));
+        return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode(array($tag, $record['datetime']->getTimestamp(), $message));
     }
     public function formatBatch(array $records)
     {

@@ -135,7 +135,7 @@ class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
             return $this->toJson($data, true);
         }
-        return str_replace('\\/', '/', @json_encode($data));
+        return str_replace('\\/', '/', $this->toJson($data, true));
     }
     protected function replaceNewlines($str)
     {

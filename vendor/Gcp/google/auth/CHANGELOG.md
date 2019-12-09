@@ -1,3 +1,34 @@
+## 1.6.1 (10/29/2019)
+
+* [fix] Handle DST correctly for cache item expirations. (#246)
+
+## 1.6.0 (10/01/2019)
+
+* [feat] Add utility for verifying and revoking access tokens. (#243)
+* [docs] Fix README console terminology. (#242)
+* [feat] Support custom scopes with GCECredentials. (#239)
+* [fix] Fix phpseclib existence check. (#237)
+
+## 1.5.2 (07/22/2019)
+
+* [fix] Move loadItems call out of `SysVCacheItemPool` constructor. (#229)
+* [fix] Add `Metadata-Flavor` header to initial GCE metadata call. (#232)
+
+## 1.5.1 (04/16/2019)
+
+* [fix] Moved `getClientName()` from `Google\Auth\FetchAuthTokenInterface`
+  to `Google\Auth\SignBlobInterface`, and removed `getClientName()` from
+  `InsecureCredentials` and `UserRefreshCredentials`. (#223)
+
+## 1.5.0 (04/15/2019)
+
+### Changes
+
+ * Add support for signing strings with a Credentials instance. (#221)
+ * [Docs] Describe the arrays returned by fetchAuthToken. (#216)
+ * [Testing] Fix failing tests (#217)
+ * Update GitHub issue templates (#214, #213)
+
 ## 1.4.0 (09/17/2018)
 
 ### Changes

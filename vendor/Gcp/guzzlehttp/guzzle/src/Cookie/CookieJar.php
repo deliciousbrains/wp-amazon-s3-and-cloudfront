@@ -100,7 +100,7 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cook
             $this->cookies = [];
             return;
         } elseif (!$path) {
-            $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\SetCookie $cookie) use($path, $domain) {
+            $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\SetCookie $cookie) use($domain) {
                 return !$cookie->matchesDomain($domain);
             });
         } elseif (!$name) {

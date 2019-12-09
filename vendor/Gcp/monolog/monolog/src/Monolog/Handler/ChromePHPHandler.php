@@ -12,6 +12,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\ChromePHPFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 /**
  * Handler sending logs to the ChromePHP extension (http://www.chromephp.com/)
  *
@@ -37,7 +38,7 @@ class ChromePHPHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
     /**
      * Tracks whether we sent too much data
      *
-     * Chrome limits the headers to 256KB, so when we sent 240KB we stop sending
+     * Chrome limits the headers to 4KB, so when we sent 3KB we stop sending
      *
      * @var bool
      */
@@ -110,13 +111,13 @@ class ChromePHPHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
             }
             self::$json['request_uri'] = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         }
-        $json = @json_encode(self::$json);
+        $json = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode(self::$json, null, true);
         $data = base64_encode(utf8_encode($json));
-        if (strlen($data) > 240 * 1024) {
+        if (strlen($data) > 3 * 1024) {
             self::$overflowed = true;
             $record = array('message' => 'Incomplete logs, chrome header size limit reached', 'context' => array(), 'level' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING, 'level_name' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::getLevelName(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING), 'channel' => 'monolog', 'datetime' => new \DateTime(), 'extra' => array());
             self::$json['rows'][count(self::$json['rows']) - 1] = $this->getFormatter()->format($record);
-            $json = @json_encode(self::$json);
+            $json = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode(self::$json, null, true);
             $data = base64_encode(utf8_encode($json));
         }
         if (trim($data) !== '') {

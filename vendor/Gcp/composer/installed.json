@@ -49,17 +49,17 @@
     },
     {
         "name": "google\/auth",
-        "version": "v1.4.0",
-        "version_normalized": "1.4.0.0",
+        "version": "v1.6.1",
+        "version_normalized": "1.6.1.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-auth-library-php.git",
-            "reference": "196237248e636a3554a7d9e4dfddeb97f450ab5c"
+            "reference": "45635ac69d0b95f38885531d4ebcdfcb2ebb6f36"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/196237248e636a3554a7d9e4dfddeb97f450ab5c",
-            "reference": "196237248e636a3554a7d9e4dfddeb97f450ab5c",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/45635ac69d0b95f38885531d4ebcdfcb2ebb6f36",
+            "reference": "45635ac69d0b95f38885531d4ebcdfcb2ebb6f36",
             "shasum": ""
         },
         "require": {
@@ -73,10 +73,14 @@
         "require-dev": {
             "friendsofphp\/php-cs-fixer": "^1.11",
             "guzzlehttp\/promises": "0.1.1|^1.3",
+            "phpseclib\/phpseclib": "^2",
             "phpunit\/phpunit": "^4.8.36|^5.7",
             "sebastian\/comparator": ">=1.2.3"
         },
-        "time": "2018-09-17T20:29:21+00:00",
+        "suggest": {
+            "phpseclib\/phpseclib": "May be used in place of OpenSSL for signing strings or for token management. Please require version ^2."
+        },
+        "time": "2019-10-29T20:13:04+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -98,32 +102,33 @@
     },
     {
         "name": "google\/cloud-core",
-        "version": "v1.25.1",
-        "version_normalized": "1.25.1.0",
+        "version": "v1.34.0",
+        "version_normalized": "1.34.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-cloud-php-core.git",
-            "reference": "106c78d25b14f55167338d71737507be2bf8400c"
+            "reference": "52db21acb2da25d2d79e493842de58da7836c97f"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/106c78d25b14f55167338d71737507be2bf8400c",
-            "reference": "106c78d25b14f55167338d71737507be2bf8400c",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/52db21acb2da25d2d79e493842de58da7836c97f",
+            "reference": "52db21acb2da25d2d79e493842de58da7836c97f",
             "shasum": ""
         },
         "require": {
-            "google\/auth": "^1.2",
+            "google\/auth": "^1.6",
             "guzzlehttp\/guzzle": "^5.3|^6.0",
             "guzzlehttp\/promises": "^1.3",
             "guzzlehttp\/psr7": "^1.2",
-            "monolog\/monolog": "~1",
+            "monolog\/monolog": "^1.1|^2.0",
             "php": ">=5.5",
             "psr\/http-message": "1.0.*",
             "rize\/uri-template": "~0.3"
         },
         "require-dev": {
             "erusev\/parsedown": "^1.6",
-            "google\/gax": "^0.38.0",
+            "google\/common-protos": "^1.0",
+            "google\/gax": "^1.1",
             "opis\/closure": "^3",
             "phpdocumentor\/reflection": "^3.0",
             "phpunit\/phpunit": "^4.8|^5.0",
@@ -133,7 +138,7 @@
             "opis\/closure": "May be used to serialize closures to process jobs in the batch daemon. Please require version ^3.",
             "symfony\/lock": "Required for the Spanner cached based session pool. Please require the following commit: 3.3.x-dev#1ba6ac9"
         },
-        "time": "2018-12-18T18:55:23+00:00",
+        "time": "2019-10-28T19:05:44+00:00",
         "bin": [
             "bin\/google-cloud-batch"
         ],
@@ -160,21 +165,22 @@
     },
     {
         "name": "google\/cloud-storage",
-        "version": "v1.10.0",
-        "version_normalized": "1.10.0.0",
+        "version": "v1.16.0",
+        "version_normalized": "1.16.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-cloud-php-storage.git",
-            "reference": "6e2ea113a802f95f3779931e5446c42afbd75cb8"
+            "reference": "308ad790b257286e02777e3bf1a2c0473a4651a7"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/6e2ea113a802f95f3779931e5446c42afbd75cb8",
-            "reference": "6e2ea113a802f95f3779931e5446c42afbd75cb8",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/308ad790b257286e02777e3bf1a2c0473a4651a7",
+            "reference": "308ad790b257286e02777e3bf1a2c0473a4651a7",
             "shasum": ""
         },
         "require": {
-            "google\/cloud-core": "^1.25"
+            "google\/cloud-core": "^1.31",
+            "google\/crc32": "^0.1.0"
         },
         "require-dev": {
             "erusev\/parsedown": "^1.6",
@@ -188,7 +194,7 @@
             "google\/cloud-pubsub": "May be used to register a topic to receive bucket notifications.",
             "phpseclib\/phpseclib": "May be used in place of OpenSSL for creating signed Cloud Storage URLs. Please require version ^2."
         },
-        "time": "2018-12-10T22:57:51+00:00",
+        "time": "2019-11-12T23:35:42+00:00",
         "type": "library",
         "extra": {
             "component": {
@@ -211,34 +217,79 @@
         "description": "Cloud Storage Client for PHP"
     },
     {
-        "name": "guzzlehttp\/guzzle",
-        "version": "6.3.3",
-        "version_normalized": "6.3.3.0",
+        "name": "google\/crc32",
+        "version": "v0.1.0",
+        "version_normalized": "0.1.0.0",
         "source": {
             "type": "git",
-            "url": "https:\/\/github.com\/guzzle\/guzzle.git",
-            "reference": "407b0cb880ace85c9b63c5f9551db498cb2d50ba"
+            "url": "https:\/\/github.com\/google\/php-crc32.git",
+            "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/407b0cb880ace85c9b63c5f9551db498cb2d50ba",
-            "reference": "407b0cb880ace85c9b63c5f9551db498cb2d50ba",
+            "url": "https:\/\/api.github.com\/repos\/google\/php-crc32\/zipball\/a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
+            "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
             "shasum": ""
         },
         "require": {
+            "php": ">=5.4"
+        },
+        "require-dev": {
+            "friendsofphp\/php-cs-fixer": "^1.13 || v2.14.2",
+            "paragonie\/random_compat": ">=2",
+            "phpunit\/phpunit": "^4"
+        },
+        "time": "2019-05-09T06:24:58+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\CRC32\\": "src"
+            }
+        },
+        "notification-url": "https:\/\/packagist.org\/downloads\/",
+        "license": [
+            "Apache-2.0"
+        ],
+        "authors": [
+            {
+                "name": "Andrew Brampton",
+                "email": "bramp@google.com"
+            }
+        ],
+        "description": "Various CRC32 implementations",
+        "homepage": "https:\/\/github.com\/google\/php-crc32"
+    },
+    {
+        "name": "guzzlehttp\/guzzle",
+        "version": "6.4.1",
+        "version_normalized": "6.4.1.0",
+        "source": {
+            "type": "git",
+            "url": "https:\/\/github.com\/guzzle\/guzzle.git",
+            "reference": "0895c932405407fd3a7368b6910c09a24d26db11"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/0895c932405407fd3a7368b6910c09a24d26db11",
+            "reference": "0895c932405407fd3a7368b6910c09a24d26db11",
+            "shasum": ""
+        },
+        "require": {
+            "ext-json": "*",
             "guzzlehttp\/promises": "^1.0",
-            "guzzlehttp\/psr7": "^1.4",
+            "guzzlehttp\/psr7": "^1.6.1",
             "php": ">=5.5"
         },
         "require-dev": {
             "ext-curl": "*",
             "phpunit\/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
-            "psr\/log": "^1.0"
+            "psr\/log": "^1.1"
         },
         "suggest": {
             "psr\/log": "Required for using the Log middleware"
         },
-        "time": "2018-04-22T15:46:56+00:00",
+        "time": "2019-10-23T15:58:00+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -247,12 +298,12 @@
         },
         "installation-source": "dist",
         "autoload": {
-            "files": [
-                "src\/functions_include.php"
-            ],
             "psr-4": {
                 "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\": "src\/"
-            }
+            },
+            "files": [
+                "src\/functions_include.php"
+            ]
         },
         "notification-url": "https:\/\/packagist.org\/downloads\/",
         "license": [
@@ -332,35 +383,39 @@
     },
     {
         "name": "guzzlehttp\/psr7",
-        "version": "1.5.2",
-        "version_normalized": "1.5.2.0",
+        "version": "1.6.1",
+        "version_normalized": "1.6.1.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/guzzle\/psr7.git",
-            "reference": "9f83dded91781a01c63574e387eaa769be769115"
+            "reference": "239400de7a173fe9901b9ac7c06497751f00727a"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/9f83dded91781a01c63574e387eaa769be769115",
-            "reference": "9f83dded91781a01c63574e387eaa769be769115",
+            "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/239400de7a173fe9901b9ac7c06497751f00727a",
+            "reference": "239400de7a173fe9901b9ac7c06497751f00727a",
             "shasum": ""
         },
         "require": {
             "php": ">=5.4.0",
             "psr\/http-message": "~1.0",
-            "ralouphie\/getallheaders": "^2.0.5"
+            "ralouphie\/getallheaders": "^2.0.5 || ^3.0.0"
         },
         "provide": {
             "psr\/http-message-implementation": "1.0"
         },
         "require-dev": {
+            "ext-zlib": "*",
             "phpunit\/phpunit": "~4.8.36 || ^5.7.27 || ^6.5.8"
         },
-        "time": "2018-12-04T20:46:45+00:00",
+        "suggest": {
+            "zendframework\/zend-httphandlerrunner": "Emit PSR-7 responses"
+        },
+        "time": "2019-07-01T23:21:34+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "1.5-dev"
+                "dev-master": "1.6-dev"
             }
         },
         "installation-source": "dist",
@@ -401,17 +456,17 @@
     },
     {
         "name": "monolog\/monolog",
-        "version": "1.24.0",
-        "version_normalized": "1.24.0.0",
+        "version": "1.25.2",
+        "version_normalized": "1.25.2.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/Seldaek\/monolog.git",
-            "reference": "bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266"
+            "reference": "d5e2fb341cb44f7e2ab639d12a1e5901091ec287"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266",
-            "reference": "bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266",
+            "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/d5e2fb341cb44f7e2ab639d12a1e5901091ec287",
+            "reference": "d5e2fb341cb44f7e2ab639d12a1e5901091ec287",
             "shasum": ""
         },
         "require": {
@@ -447,7 +502,7 @@
             "ruflin\/elastica": "Allow sending log messages to an Elastic Search server",
             "sentry\/sentry": "Allow sending log messages to a Sentry server"
         },
-        "time": "2018-11-05T09:00:11+00:00",
+        "time": "2019-11-13T10:00:05+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -581,27 +636,27 @@
     },
     {
         "name": "psr\/log",
-        "version": "1.1.0",
-        "version_normalized": "1.1.0.0",
+        "version": "1.1.2",
+        "version_normalized": "1.1.2.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/php-fig\/log.git",
-            "reference": "6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd"
+            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd",
-            "reference": "6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd",
+            "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/446d54b4cb6bf489fc9d75f55843658e6f25d801",
+            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-        "time": "2018-11-20T15:27:04+00:00",
+        "time": "2019-11-01T11:05:21+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "1.0.x-dev"
+                "dev-master": "1.1.x-dev"
             }
         },
         "installation-source": "dist",
@@ -630,27 +685,27 @@
     },
     {
         "name": "ralouphie\/getallheaders",
-        "version": "2.0.5",
-        "version_normalized": "2.0.5.0",
+        "version": "3.0.3",
+        "version_normalized": "3.0.3.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/ralouphie\/getallheaders.git",
-            "reference": "5601c8a83fbba7ef674a7369456d12f1e0d0eafa"
+            "reference": "120b605dfeb996808c31b6477290a714d356e822"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/ralouphie\/getallheaders\/zipball\/5601c8a83fbba7ef674a7369456d12f1e0d0eafa",
-            "reference": "5601c8a83fbba7ef674a7369456d12f1e0d0eafa",
+            "url": "https:\/\/api.github.com\/repos\/ralouphie\/getallheaders\/zipball\/120b605dfeb996808c31b6477290a714d356e822",
+            "reference": "120b605dfeb996808c31b6477290a714d356e822",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.3"
+            "php": ">=5.6"
         },
         "require-dev": {
-            "phpunit\/phpunit": "~3.7.0",
-            "satooshi\/php-coveralls": ">=1.0"
+            "php-coveralls\/php-coveralls": "^2.1",
+            "phpunit\/phpunit": "^5 || ^6.5"
         },
-        "time": "2016-02-11T07:05:27+00:00",
+        "time": "2019-03-08T08:55:37+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {

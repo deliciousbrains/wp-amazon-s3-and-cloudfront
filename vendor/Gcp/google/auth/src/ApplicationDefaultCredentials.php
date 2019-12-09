@@ -20,8 +20,11 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 use DomainException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\AppIdentityCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Subscriber\AuthTokenSubscriber;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
 /**
  * ApplicationDefaultCredentials obtains the default credentials for
@@ -125,12 +128,19 @@ class ApplicationDefaultCredentials
     {
         $creds = null;
         $jsonKey = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromEnv() ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromWellKnownFile();
+        if (!$httpHandler) {
+            if (!($client = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::getHttpClient())) {
+                $client = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client();
+                \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::setHttpClient($client);
+            }
+            $httpHandler = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build($client);
+        }
         if (!is_null($jsonKey)) {
             $creds = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::makeCredentials($scope, $jsonKey);
         } elseif (\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\AppIdentityCredentials::onAppEngine() && !\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onAppEngineFlexible()) {
             $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\AppIdentityCredentials($scope);
         } elseif (\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler)) {
-            $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials();
+            $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials(null, $scope);
         }
         if (is_null($creds)) {
             throw new \DomainException(self::notFound());

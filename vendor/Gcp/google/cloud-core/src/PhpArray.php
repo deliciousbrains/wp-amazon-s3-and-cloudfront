@@ -26,6 +26,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\google\protobuf\Struct;
  * Extend the Protobuf-PHP array codec to allow messages to match the format
  * used for REST.
  * @deprecated
+ * @codeCoverageIgnore
  */
 class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Codec\PhpArray
 {

@@ -19,6 +19,8 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ServiceAccountSignerTrait;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface;
 /**
  * ServiceAccountCredentials supports authorization using a Google service
  * account.
@@ -52,8 +54,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2;
  *
  *   $res = $client->get('myproject/taskqueues/myqueue');
  */
-class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader
+class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface
 {
+    use ServiceAccountSignerTrait;
     /**
      * The OAuth2 instance used to conduct authorization.
      *
@@ -92,7 +95,11 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
     /**
      * @param callable $httpHandler
      *
-     * @return array
+     * @return array A set of auth related metadata, containing the following
+     * keys:
+     *   - access_token (string)
+     *   - expires_in (int)
+     *   - token_type (string)
      */
     public function fetchAuthToken(callable $httpHandler = null)
     {
@@ -144,5 +151,17 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
     public function setSub($sub)
     {
         $this->auth->setSub($sub);
+    }
+    /**
+     * Get the client name from the keyfile.
+     *
+     * In this case, it returns the keyfile's client_email key.
+     *
+     * @param callable $httpHandler Not used by this credentials type.
+     * @return string
+     */
+    public function getClientName(callable $httpHandler = null)
+    {
+        return $this->auth->getIssuer();
     }
 }

@@ -19,6 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 /**
  * Builds a PSR7 request from a service definition.
@@ -51,8 +52,18 @@ class RequestBuilder
     public function __construct($servicePath, $baseUri, array $resourceRoot = [])
     {
         $this->service = $this->loadServiceDefinition($servicePath);
-        $this->baseUri = $baseUri;
         $this->resourceRoot = $resourceRoot;
+        // Append service definition base path if bare apiEndpoint domain is given.
+        if (isset($this->service['basePath'])) {
+            $uriParts = parse_url($baseUri) + ['path' => null];
+            if (!$uriParts['path'] || $uriParts['path'] === '/') {
+                $uriParts['path'] = $this->service['basePath'];
+                // Recreate the URI from its modified parts and ensure it ends in a single slash.
+                $this->baseUri = rtrim((string) \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Uri::fromParts($uriParts), '/') . '/';
+                return;
+            }
+        }
+        $this->baseUri = rtrim($baseUri, '/') . '/';
     }
     /**
      * Build the request.

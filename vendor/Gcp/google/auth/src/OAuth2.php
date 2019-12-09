@@ -17,6 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
@@ -411,7 +412,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
     public function fetchAuthToken(callable $httpHandler = null)
     {
         if (is_null($httpHandler)) {
-            $httpHandler = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build();
+            $httpHandler = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::getHttpClient());
         }
         $response = $httpHandler($this->generateCredentialsRequest());
         $credentials = $this->parseTokenResponse($response);
@@ -1071,6 +1072,19 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
             return ['access_token' => $token, 'expires_at' => $this->getExpiresAt()];
         }
         return null;
+    }
+    /**
+     * Get the client ID.
+     *
+     * Alias of {@see Google\Auth\OAuth2::getClientId()}.
+     *
+     * @param callable $httpHandler
+     * @return string
+     * @access private
+     */
+    public function getClientName(callable $httpHandler = null)
+    {
+        return $this->getClientId();
     }
     /**
      * @todo handle uri as array

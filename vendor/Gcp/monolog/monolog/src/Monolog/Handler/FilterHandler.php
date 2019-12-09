@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
  * Simple handler wrapper that filters records based on a list of levels
  *
@@ -40,7 +41,7 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
      */
     protected $bubble;
     /**
-     * @param callable|HandlerInterface $handler        Handler or factory callable($record, $this).
+     * @param callable|HandlerInterface $handler        Handler or factory callable($record|null, $filterHandler).
      * @param int|array                 $minLevelOrList A list of levels to accept or a minimum level if maxLevel is provided
      * @param int                       $maxLevel       Maximum level to accept, only used if $minLevelOrList is not an array
      * @param bool                      $bubble         Whether the messages that are handled can bubble up the stack or not
@@ -93,19 +94,12 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
         if (!$this->isHandling($record)) {
             return false;
         }
-        // The same logic as in FingersCrossedHandler
-        if (!$this->handler instanceof HandlerInterface) {
-            $this->handler = call_user_func($this->handler, $record, $this);
-            if (!$this->handler instanceof HandlerInterface) {
-                throw new \RuntimeException("The factory callable should return a HandlerInterface");
-            }
-        }
         if ($this->processors) {
             foreach ($this->processors as $processor) {
                 $record = call_user_func($processor, $record);
             }
         }
-        $this->handler->handle($record);
+        $this->getHandler($record)->handle($record);
         return false === $this->bubble;
     }
     /**
@@ -119,6 +113,38 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
                 $filtered[] = $record;
             }
         }
-        $this->handler->handleBatch($filtered);
+        $this->getHandler($filtered[count($filtered) - 1])->handleBatch($filtered);
+    }
+    /**
+     * Return the nested handler
+     *
+     * If the handler was provided as a factory callable, this will trigger the handler's instantiation.
+     *
+     * @return HandlerInterface
+     */
+    public function getHandler(array $record = null)
+    {
+        if (!$this->handler instanceof HandlerInterface) {
+            $this->handler = call_user_func($this->handler, $record, $this);
+            if (!$this->handler instanceof HandlerInterface) {
+                throw new \RuntimeException("The factory callable should return a HandlerInterface");
+            }
+        }
+        return $this->handler;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    {
+        $this->getHandler()->setFormatter($formatter);
+        return $this;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormatter()
+    {
+        return $this->getHandler()->getFormatter();
     }
 }

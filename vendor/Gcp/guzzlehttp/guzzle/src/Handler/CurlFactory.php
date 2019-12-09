@@ -14,6 +14,8 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  */
 class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactoryInterface
 {
+    const CURL_VERSION_STR = 'curl_version';
+    const LOW_CURL_VERSION_NUMBER = '7.21.2';
     /** @var array */
     private $handles = [];
     /** @var int Total number of idle handles to keep in cache */
@@ -97,13 +99,15 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
     private static function invokeStats(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy)
     {
         $curlStats = curl_getinfo($easy->handle);
+        $curlStats['appconnect_time'] = curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME);
         $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
         call_user_func($easy->options['on_stats'], $stats);
     }
     private static function finishError(callable $handler, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactoryInterface $factory)
     {
         // Get error information and release the handle to the factory.
-        $ctx = ['errno' => $easy->errno, 'error' => curl_error($easy->handle)] + curl_getinfo($easy->handle);
+        $ctx = ['errno' => $easy->errno, 'error' => curl_error($easy->handle), 'appconnect_time' => curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME)] + curl_getinfo($easy->handle);
+        $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
         $factory->release($easy);
         // Retry when nothing is present or when curl failed to rewind.
         if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
@@ -119,7 +123,11 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         if ($easy->onHeadersException) {
             return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\rejection_for(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
         }
-        $message = sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see http://curl.haxx.se/libcurl/c/libcurl-errors.html');
+        if (version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
+            $message = sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see https://curl.haxx.se/libcurl/c/libcurl-errors.html');
+        } else {
+            $message = sprintf('cURL error %s: %s (%s) for %s', $ctx['errno'], $ctx['error'], 'see https://curl.haxx.se/libcurl/c/libcurl-errors.html', $easy->request->getUri());
+        }
         // Create a connection exception if it was a specific error code.
         $error = isset($connectionErrors[$easy->errno]) ? new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ConnectException($message, $easy->request, null, $ctx) : new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException($message, $easy->request, $easy->response, null, $ctx);
         return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\rejection_for($error);

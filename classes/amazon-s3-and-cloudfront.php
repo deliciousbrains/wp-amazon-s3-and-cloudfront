@@ -1064,7 +1064,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		// Protect against updates of partially formed metadata since WordPress 5.3.
 		// Checks whether new upload currently has no subsizes recorded but is expected to have subsizes during upload,
 		// and if so, are any of its currently missing sizes part of the set.
-		if ( function_exists( 'wp_get_registered_image_subsizes' ) && function_exists( 'wp_get_missing_image_subsizes' ) ) {
+		if ( ! empty( $data ) && function_exists( 'wp_get_registered_image_subsizes' ) && function_exists( 'wp_get_missing_image_subsizes' ) ) {
 			if ( empty( $data['sizes'] ) && wp_attachment_is_image( $post_id ) ) {
 
 				// There is no unified way of checking whether subsizes are expected, so we have to duplicate WordPress code here.

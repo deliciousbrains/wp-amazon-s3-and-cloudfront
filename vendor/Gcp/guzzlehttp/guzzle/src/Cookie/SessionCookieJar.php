@@ -21,6 +21,7 @@ class SessionCookieJar extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
      */
     public function __construct($sessionKey, $storeSessionCookies = false)
     {
+        parent::__construct();
         $this->sessionKey = $sessionKey;
         $this->storeSessionCookies = $storeSessionCookies;
         $this->load();

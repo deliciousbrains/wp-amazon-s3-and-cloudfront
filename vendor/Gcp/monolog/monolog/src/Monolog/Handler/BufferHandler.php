@@ -12,6 +12,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
  * Buffers all records until closing the handler and then pass them as batch.
  *
@@ -108,5 +109,20 @@ class BufferHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
         if ($this->handler instanceof ResettableInterface) {
             $this->handler->reset();
         }
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    {
+        $this->handler->setFormatter($formatter);
+        return $this;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormatter()
+    {
+        return $this->handler->getFormatter();
     }
 }

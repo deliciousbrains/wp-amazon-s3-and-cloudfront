@@ -50,7 +50,7 @@ trait ItemIteratorTrait
      */
     public function nextResultToken()
     {
-        return $this->pageIterator->nextResultToken();
+        return method_exists($this->pageIterator, 'nextResultToken') ? $this->pageIterator->nextResultToken() : null;
     }
     /**
      * Iterate over the results on a per page basis.

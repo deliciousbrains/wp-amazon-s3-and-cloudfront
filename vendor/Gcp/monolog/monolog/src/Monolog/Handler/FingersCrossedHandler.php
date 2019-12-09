@@ -14,6 +14,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\ErrorLev
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\ActivationStrategyInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
  * Buffers all records until a certain level is reached
  *
@@ -36,7 +37,7 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     protected $stopBuffering;
     protected $passthruLevel;
     /**
-     * @param callable|HandlerInterface       $handler            Handler or factory callable($record, $fingersCrossedHandler).
+     * @param callable|HandlerInterface       $handler            Handler or factory callable($record|null, $fingersCrossedHandler).
      * @param int|ActivationStrategyInterface $activationStrategy Strategy which determines when this handler takes action
      * @param int                             $bufferSize         How many entries should be buffered at most, beyond that the oldest items are removed from the buffer.
      * @param bool                            $bubble             Whether the messages that are handled can bubble up the stack or not
@@ -79,14 +80,7 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         if ($this->stopBuffering) {
             $this->buffering = false;
         }
-        if (!$this->handler instanceof HandlerInterface) {
-            $record = end($this->buffer) ?: null;
-            $this->handler = call_user_func($this->handler, $record, $this);
-            if (!$this->handler instanceof HandlerInterface) {
-                throw new \RuntimeException("The factory callable should return a HandlerInterface");
-            }
-        }
-        $this->handler->handleBatch($this->buffer);
+        $this->getHandler(end($this->buffer) ?: null)->handleBatch($this->buffer);
         $this->buffer = array();
     }
     /**
@@ -108,7 +102,7 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
                 $this->activate();
             }
         } else {
-            $this->handler->handle($record);
+            $this->getHandler($record)->handle($record);
         }
         return false === $this->bubble;
     }
@@ -123,8 +117,8 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     {
         $this->flushBuffer();
         parent::reset();
-        if ($this->handler instanceof ResettableInterface) {
-            $this->handler->reset();
+        if ($this->getHandler() instanceof ResettableInterface) {
+            $this->getHandler()->reset();
         }
     }
     /**
@@ -148,10 +142,42 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
                 return $record['level'] >= $level;
             });
             if (count($this->buffer) > 0) {
-                $this->handler->handleBatch($this->buffer);
+                $this->getHandler(end($this->buffer) ?: null)->handleBatch($this->buffer);
             }
         }
         $this->buffer = array();
         $this->buffering = true;
+    }
+    /**
+     * Return the nested handler
+     *
+     * If the handler was provided as a factory callable, this will trigger the handler's instantiation.
+     *
+     * @return HandlerInterface
+     */
+    public function getHandler(array $record = null)
+    {
+        if (!$this->handler instanceof HandlerInterface) {
+            $this->handler = call_user_func($this->handler, $record, $this);
+            if (!$this->handler instanceof HandlerInterface) {
+                throw new \RuntimeException("The factory callable should return a HandlerInterface");
+            }
+        }
+        return $this->handler;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    {
+        $this->getHandler()->setFormatter($formatter);
+        return $this;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormatter()
+    {
+        return $this->getHandler()->getFormatter();
     }
 }

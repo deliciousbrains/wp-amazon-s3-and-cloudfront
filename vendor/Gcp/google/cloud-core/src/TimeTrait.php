@@ -28,7 +28,7 @@ trait TimeTrait
      * @param string $timestamp A string representation of a timestamp, encoded
      *        in RFC 3339 format (YYYY-MM-DDTHH:MM:SS.000000[000]TZ).
      * @return array [\DateTimeImmutable, int]
-     * @throws \InvalidArgumentException If the timestamp string is in an unrecognized format.
+     * @throws \Exception If the timestamp string is in an unrecognized format.
      */
     private function parseTimeString($timestamp)
     {
@@ -39,10 +39,7 @@ trait TimeTrait
             $timestamp = str_replace('.' . $subSeconds, '.' . substr($subSeconds, 0, 6), $timestamp);
         }
         $dt = new \DateTimeImmutable($timestamp);
-        if (!$dt) {
-            throw new \InvalidArgumentException(sprintf('Could not create a DateTime instance from given timestamp %s.', $timestamp));
-        }
-        $nanos = (int) str_pad($subSeconds, 9, '0', STR_PAD_RIGHT);
+        $nanos = $this->convertFractionToNanoSeconds($subSeconds);
         return [$dt, $nanos];
     }
     /**
@@ -69,12 +66,7 @@ trait TimeTrait
         if ($ns === null) {
             return $dateTime->format(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::FORMAT);
         } else {
-            $ns = (string) $ns;
-            $ns = str_pad($ns, 9, '0', STR_PAD_LEFT);
-            if (substr($ns, 6, 3) === '000') {
-                $ns = substr($ns, 0, 6);
-            }
-            return sprintf($dateTime->format(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::FORMAT_INTERPOLATE), $ns);
+            return sprintf($dateTime->format(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::FORMAT_INTERPOLATE), $this->convertNanoSecondsToFraction($ns));
         }
     }
     /**
@@ -91,5 +83,39 @@ trait TimeTrait
             $ns = $dateTime->format('u');
         }
         return ['seconds' => (int) $dateTime->format('U'), 'nanos' => (int) $ns];
+    }
+    /**
+     * Convert subseconds, expressed as a decimal to nanoseconds.
+     *
+     * @param int|string $subseconds Provide value as a whole number (i.e.
+     *     provide 0.1 as 1).
+     * @return int
+     */
+    private function convertFractionToNanoSeconds($subseconds)
+    {
+        return (int) str_pad($subseconds, 9, '0', STR_PAD_RIGHT);
+    }
+    /**
+     * Convert nanoseconds to subseconds.
+     *
+     * Note that result should be used as a fraction of one second, but is
+     * given as an integer.
+     *
+     * @param int|string $nanos
+     * @param bool $rpad Whether to right-pad to 6 or 9 digits. **Defaults to**
+     *     `true`.
+     * @return string
+     */
+    private function convertNanoSecondsToFraction($nanos, $rpad = true)
+    {
+        $nanos = (string) $nanos;
+        $res = str_pad($nanos, 9, '0', STR_PAD_LEFT);
+        if (substr($res, 6, 3) === '000') {
+            $res = substr($res, 0, 6);
+        }
+        if (!$rpad) {
+            $res = rtrim($res, '0');
+        }
+        return $res;
     }
 }

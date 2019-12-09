@@ -35,7 +35,13 @@ class CurlMultiHandler
     public function __construct(array $options = [])
     {
         $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactory(50);
-        $this->selectTimeout = isset($options['select_timeout']) ? $options['select_timeout'] : 1;
+        if (isset($options['select_timeout'])) {
+            $this->selectTimeout = $options['select_timeout'];
+        } elseif ($selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
+            $this->selectTimeout = $selectTimeout;
+        } else {
+            $this->selectTimeout = 1;
+        }
     }
     public function __get($name)
     {
@@ -68,7 +74,7 @@ class CurlMultiHandler
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
-            $currentTime = microtime(true);
+            $currentTime = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\_current_time();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
@@ -109,7 +115,7 @@ class CurlMultiHandler
         if (empty($easy->options['delay'])) {
             curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = microtime(true) + $easy->options['delay'] / 1000;
+            $this->delays[$id] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\_current_time() + $easy->options['delay'] / 1000;
         }
     }
     /**
@@ -148,7 +154,7 @@ class CurlMultiHandler
     }
     private function timeToNext()
     {
-        $currentTime = microtime(true);
+        $currentTime = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\_current_time();
         $nextTime = PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {

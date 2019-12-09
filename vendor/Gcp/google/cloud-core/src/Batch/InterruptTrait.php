@@ -46,7 +46,7 @@ trait InterruptTrait
      *
      * @return void
      */
-    public function sigHandler($signo, $signinfo = null)
+    public function sigHandler($signo, $siginfo = null)
     {
         switch ($signo) {
             case SIGINT:

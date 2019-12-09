@@ -22,7 +22,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
  * A class to implement caching for any object implementing
  * FetchAuthTokenInterface
  */
-class FetchAuthTokenCache implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface
+class FetchAuthTokenCache implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface
 {
     use CacheTrait;
     /**
@@ -87,5 +87,33 @@ class FetchAuthTokenCache implements \DeliciousBrains\WP_Offload_Media\Gcp\Googl
     public function getLastReceivedToken()
     {
         return $this->fetcher->getLastReceivedToken();
+    }
+    /**
+     * Get the client name from the fetcher.
+     *
+     * @param callable $httpHandler An HTTP handler to deliver PSR7 requests.
+     * @return string
+     */
+    public function getClientName(callable $httpHandler = null)
+    {
+        return $this->fetcher->getClientName($httpHandler);
+    }
+    /**
+     * Sign a blob using the fetcher.
+     *
+     * @param string $stringToSign The string to sign.
+     * @param bool $forceOpenssl Require use of OpenSSL for local signing. Does
+     *        not apply to signing done using external services. **Defaults to**
+     *        `false`.
+     * @return string The resulting signature.
+     * @throws \RuntimeException If the fetcher does not implement
+     *     `Google\Auth\SignBlobInterface`.
+     */
+    public function signBlob($stringToSign, $forceOpenSsl = false)
+    {
+        if (!$this->fetcher instanceof SignBlobInterface) {
+            throw new \RuntimeException('Credentials fetcher does not implement ' . 'DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Auth\\SignBlobInterface');
+        }
+        return $this->fetcher->signBlob($stringToSign, $forceOpenSsl);
     }
 }

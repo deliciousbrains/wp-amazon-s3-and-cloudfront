@@ -13,6 +13,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 use Exception;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Connector;
 use DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Handler;
 use DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Helper;
@@ -191,7 +192,7 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
         $tags = $this->getRecordTags($record);
         $message = $record['message'];
         if ($record['context']) {
-            $message .= ' ' . json_encode($this->connector->getDumper()->dump(array_filter($record['context'])));
+            $message .= ' ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($this->connector->getDumper()->dump(array_filter($record['context'])), null, true);
         }
         $this->connector->getDebugDispatcher()->dispatchDebug($message, $tags, $this->options['classesPartialsTraceIgnore']);
     }

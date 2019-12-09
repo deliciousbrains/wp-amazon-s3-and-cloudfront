@@ -128,7 +128,7 @@ class JsonFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if ($depth > 9) {
             return 'Over 9 levels deep, aborting normalization';
         }
-        if (is_array($data) || $data instanceof \Traversable) {
+        if (is_array($data)) {
             $normalized = array();
             $count = 1;
             foreach ($data as $key => $value) {
@@ -159,18 +159,12 @@ class JsonFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if (!$e instanceof Exception && !$e instanceof Throwable) {
             throw new \InvalidArgumentException('Exception/Throwable expected, got ' . gettype($e) . ' / ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e));
         }
-        $data = array('class' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e), 'message' => $e->getMessage(), 'code' => $e->getCode(), 'file' => $e->getFile() . ':' . $e->getLine());
+        $data = array('class' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e), 'message' => $e->getMessage(), 'code' => (int) $e->getCode(), 'file' => $e->getFile() . ':' . $e->getLine());
         if ($this->includeStacktraces) {
             $trace = $e->getTrace();
             foreach ($trace as $frame) {
                 if (isset($frame['file'])) {
                     $data['trace'][] = $frame['file'] . ':' . $frame['line'];
-                } elseif (isset($frame['function']) && $frame['function'] === '{closure}') {
-                    // We should again normalize the frames, because it might contain invalid items
-                    $data['trace'][] = $frame['function'];
-                } else {
-                    // We should again normalize the frames, because it might contain invalid items
-                    $data['trace'][] = $this->normalize($frame);
                 }
             }
         }

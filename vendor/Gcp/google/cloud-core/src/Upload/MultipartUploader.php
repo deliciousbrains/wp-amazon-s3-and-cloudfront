@@ -34,7 +34,11 @@ class MultipartUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
     public function upload()
     {
         $multipartStream = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MultipartStream([['name' => 'metadata', 'headers' => ['Content-Type' => 'application/json; charset=UTF-8'], 'contents' => $this->jsonEncode($this->metadata)], ['name' => 'data', 'headers' => ['Content-Type' => $this->contentType], 'contents' => $this->data]], 'boundary');
-        $headers = ['Content-Type' => 'multipart/related; boundary=boundary', 'Content-Length' => $multipartStream->getSize()];
+        $headers = ['Content-Type' => 'multipart/related; boundary=boundary'];
+        $size = $multipartStream->getSize();
+        if ($size !== null) {
+            $headers['Content-Length'] = $size;
+        }
         return $this->jsonDecode($this->requestWrapper->send(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('POST', $this->uri, $headers, $multipartStream), $this->requestOptions)->getBody(), true);
     }
 }

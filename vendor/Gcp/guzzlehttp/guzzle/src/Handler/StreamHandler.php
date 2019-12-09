@@ -31,14 +31,14 @@ class StreamHandler
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
-        $startTime = isset($options['on_stats']) ? microtime(true) : null;
+        $startTime = isset($options['on_stats']) ? \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\_current_time() : null;
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
             // Append a content-length header if body size is zero to match
             // cURL's behavior.
             if (0 === $request->getBody()->getSize()) {
-                $request = $request->withHeader('Content-Length', 0);
+                $request = $request->withHeader('Content-Length', '0');
             }
             return $this->createResponse($request, $options, $this->createStream($request, $options), $startTime);
         } catch (\InvalidArgumentException $e) {
@@ -58,7 +58,7 @@ class StreamHandler
     private function invokeStats(array $options, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, $startTime, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, $error = null)
     {
         if (isset($options['on_stats'])) {
-            $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($request, $response, microtime(true) - $startTime, $error, []);
+            $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($request, $response, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\_current_time() - $startTime, $error, []);
             call_user_func($options['on_stats'], $stats);
         }
     }

@@ -73,7 +73,7 @@ class MongoDBFormatter implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
     }
     protected function formatException(\Exception $exception, $nestingLevel)
     {
-        $formattedException = array('class' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($exception), 'message' => $exception->getMessage(), 'code' => $exception->getCode(), 'file' => $exception->getFile() . ':' . $exception->getLine());
+        $formattedException = array('class' => \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($exception), 'message' => $exception->getMessage(), 'code' => (int) $exception->getCode(), 'file' => $exception->getFile() . ':' . $exception->getLine());
         if ($this->exceptionTraceAsString === true) {
             $formattedException['trace'] = $exception->getTraceAsString();
         } else {

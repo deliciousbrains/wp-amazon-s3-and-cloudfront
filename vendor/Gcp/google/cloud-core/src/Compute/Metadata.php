@@ -17,16 +17,13 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\StreamReader;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\HttpHandlerReader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\ReaderInterface;
 /**
  * A library for accessing the Google Compute Engine (GCE) metadata.
  *
  * The metadata is available from Google Compute Engine instances and
  * App Engine Managed VMs instances.
- *
- * You can get the GCE metadata values very easily like:
- *
  *
  * Example:
  * ```
@@ -44,7 +41,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Read
 class Metadata
 {
     /**
-     * @var StreamReader The metadata reader.
+     * @var ReaderInterface The metadata reader.
      */
     private $reader;
     /**
@@ -56,15 +53,17 @@ class Metadata
      */
     private $numericProjectId;
     /**
-     * We use StreamReader for the default implementation for fetching the URL.
+     * @param ReaderInterface $reader [optional] A metadata reader implementation.
      */
-    public function __construct()
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\ReaderInterface $reader = null)
     {
-        $this->reader = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\StreamReader();
+        $this->reader = $reader ?: new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\HttpHandlerReader();
     }
     /**
      * Replace the default reader implementation
      *
+     * @deprecated If a custom reader implementation is desired, provide it at
+     *     construction.
      * @param ReaderInterface $reader The reader implementation
      */
     public function setReader(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\ReaderInterface $reader)

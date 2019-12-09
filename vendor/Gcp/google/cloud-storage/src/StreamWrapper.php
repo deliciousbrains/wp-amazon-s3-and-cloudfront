@@ -40,7 +40,7 @@ class StreamWrapper
     const DIRECTORY_READABLE_MODE = 16676;
     // 40444 in octal
     /**
-     * @var resource Must be public according to the PHP documentation.
+     * @var resource|null Must be public according to the PHP documentation.
      */
     public $context;
     /**
@@ -66,7 +66,7 @@ class StreamWrapper
      */
     private static $clients = [];
     /**
-     * @var ObjectsItemIterator Used for iterating through a directory
+     * @var ObjectIterator Used for iterating through a directory
      */
     private $directoryIterator;
     /**
@@ -336,7 +336,7 @@ class StreamWrapper
         $url = (array) parse_url($to) + ['path' => '', 'host' => ''];
         $destinationBucket = $url['host'];
         $destinationPath = substr($url['path'], 1);
-        $this->dir_opendir($from, []);
+        $this->dir_opendir($from, 0);
         foreach ($this->directoryIterator as $file) {
             $name = $file->name();
             $newPath = str_replace($this->file, $destinationPath, $name);

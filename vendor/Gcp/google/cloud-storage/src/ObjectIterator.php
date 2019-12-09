@@ -32,6 +32,6 @@ class ObjectIterator implements \Iterator
      */
     public function prefixes()
     {
-        return $this->pageIterator->prefixes();
+        return method_exists($this->pageIterator, 'prefixes') ? $this->pageIterator->prefixes() : [];
     }
 }

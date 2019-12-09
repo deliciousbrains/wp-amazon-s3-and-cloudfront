@@ -24,6 +24,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials;
  */
 use DeliciousBrains\WP_Offload_Media\Gcp\google\appengine\api\app_identity\AppIdentityService;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface;
 /**
  * AppIdentityCredentials supports authorization on Google App Engine.
  *
@@ -48,7 +49,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
  *
  *   $res = $client->get('volumes?q=Henry+David+Thoreau&country=US');
  */
-class AppIdentityCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader
+class AppIdentityCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface
 {
     /**
      * Result of fetchAuthToken.
@@ -60,6 +61,10 @@ class AppIdentityCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Googl
      * Array of OAuth2 scopes to be requested.
      */
     private $scope;
+    /**
+     * @var string
+     */
+    private $clientName;
     public function __construct($scope = array())
     {
         $this->scope = $scope;
@@ -92,29 +97,54 @@ class AppIdentityCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Googl
      *
      * @param callable $httpHandler callback which delivers psr7 request
      *
-     * @return array the auth metadata:
-     *  array(2) {
-     *   ["access_token"]=>
-     *   string(3) "xyz"
-     *   ["expiration_time"]=>
-     *   string(10) "1444339905"
-     *  }
-     *
-     * @throws \Exception
+     * @return array A set of auth related metadata, containing the following
+     *     keys:
+     *         - access_token (string)
+     *         - expiration_time (string)
      */
     public function fetchAuthToken(callable $httpHandler = null)
     {
-        if (!self::onAppEngine()) {
-            return array();
-        }
-        if (!class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\google\\appengine\\api\\app_identity\\AppIdentityService')) {
-            throw new \Exception('This class must be run in App Engine, or you must include the AppIdentityService ' . 'mock class defined in tests/mocks/AppIdentityService.php');
+        try {
+            $this->checkAppEngineContext();
+        } catch (\Exception $e) {
+            return [];
         }
         // AppIdentityService expects an array when multiple scopes are supplied
         $scope = is_array($this->scope) ? $this->scope : explode(' ', $this->scope);
         $token = \DeliciousBrains\WP_Offload_Media\Gcp\google\appengine\api\app_identity\AppIdentityService::getAccessToken($scope);
         $this->lastReceivedToken = $token;
         return $token;
+    }
+    /**
+     * Sign a string using AppIdentityService.
+     *
+     * @param string $stringToSign The string to sign.
+     * @param bool $forceOpenSsl [optional] Does not apply to this credentials
+     *        type.
+     * @return string The signature, base64-encoded.
+     * @throws \Exception If AppEngine SDK or mock is not available.
+     */
+    public function signBlob($stringToSign, $forceOpenSsl = false)
+    {
+        $this->checkAppEngineContext();
+        return base64_encode(\DeliciousBrains\WP_Offload_Media\Gcp\google\appengine\api\app_identity\AppIdentityService::signForApp($stringToSign)['signature']);
+    }
+    /**
+     * Get the client name from AppIdentityService.
+     *
+     * Subsequent calls to this method will return a cached value.
+     *
+     * @param callable $httpHandler Not used in this implementation.
+     * @return string
+     * @throws \Exception If AppEngine SDK or mock is not available.
+     */
+    public function getClientName(callable $httpHandler = null)
+    {
+        $this->checkAppEngineContext();
+        if (!$this->clientName) {
+            $this->clientName = \DeliciousBrains\WP_Offload_Media\Gcp\google\appengine\api\app_identity\AppIdentityService::getServiceAccountName();
+        }
+        return $this->clientName;
     }
     /**
      * @return array|null
@@ -135,5 +165,11 @@ class AppIdentityCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Googl
     public function getCacheKey()
     {
         return '';
+    }
+    private function checkAppEngineContext()
+    {
+        if (!self::onAppEngine() || !class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\google\\appengine\\api\\app_identity\\AppIdentityService')) {
+            throw new \Exception('This class must be run in App Engine, or you must include the AppIdentityService ' . 'mock class defined in tests/mocks/AppIdentityService.php');
+        }
     }
 }

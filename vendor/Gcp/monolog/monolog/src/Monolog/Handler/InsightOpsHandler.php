@@ -35,7 +35,7 @@ class InsightOpsHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
     public function __construct($token, $region = 'us', $useSSL = true, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
     {
         if ($useSSL && !extension_loaded('openssl')) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP plugin is required to use SSL encrypted connection for LogEntriesHandler');
+            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP plugin is required to use SSL encrypted connection for InsightOpsHandler');
         }
         $endpoint = $useSSL ? 'ssl://' . $region . '.data.logs.insight.rapid7.com:443' : $region . '.data.logs.insight.rapid7.com:80';
         parent::__construct($endpoint, $level, $bubble);

@@ -172,7 +172,7 @@ class Client implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientI
      *
      * @return array
      */
-    private function prepareDefaults($options)
+    private function prepareDefaults(array $options)
     {
         $defaults = $this->config;
         if (!empty($defaults['headers'])) {

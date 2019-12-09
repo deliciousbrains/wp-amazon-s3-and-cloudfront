@@ -58,6 +58,7 @@ class StreamHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
             fclose($this->stream);
         }
         $this->stream = null;
+        $this->dirCreated = null;
     }
     /**
      * Return the currently active stream if it is open

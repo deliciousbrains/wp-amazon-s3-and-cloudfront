@@ -17,11 +17,13 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException;
 /**
  * Provides methods for deciding if a request should be retried.
  */
 trait RetryDeciderTrait
 {
+    use JsonTrait;
     /**
      * @var array
      */
@@ -49,7 +51,12 @@ trait RetryDeciderTrait
             if (!$shouldRetryMessages) {
                 return false;
             }
-            $message = json_decode($ex->getMessage(), true);
+            $message = $ex instanceof RequestException && $ex->hasResponse() ? (string) $ex->getResponse()->getBody() : $ex->getMessage();
+            try {
+                $message = $this->jsonDecode($message, true);
+            } catch (\InvalidArgumentException $ex) {
+                return false;
+            }
             if (!isset($message['error']['errors'])) {
                 return false;
             }

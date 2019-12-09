@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter;
 /**
  * Class to record a log on a NewRelic application.
@@ -165,7 +166,7 @@ class NewRelicHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
         if (null === $value || is_scalar($value)) {
             newrelic_add_custom_parameter($key, $value);
         } else {
-            newrelic_add_custom_parameter($key, @json_encode($value));
+            newrelic_add_custom_parameter($key, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($value, null, true));
         }
     }
     /**

@@ -78,14 +78,14 @@ trait BatchTrait
             call_user_func_array($this->getCallback(), [$items]);
         } catch (\Exception $e) {
             if ($this->debugOutput) {
-                fwrite($this->debugOutputResource ?: STDERR, $e->getMessage() . PHP_EOL . PHP_EOL . $e->getTraceAsString() . PHP_EOL);
+                fwrite($this->debugOutputResource, $e->getMessage() . PHP_EOL . PHP_EOL . $e->getTraceAsString() . PHP_EOL);
             }
             return false;
         }
         $end = microtime(true);
         if ($this->debugOutput) {
-            fwrite($this->debugOutputResource ?: STDERR, sprintf('%f seconds for %s: %d items' . PHP_EOL, $end - $start, $this->batchMethod, count($items)));
-            fwrite($this->debugOutputResource ?: STDERR, sprintf('memory used: %d' . PHP_EOL, memory_get_usage()));
+            fwrite($this->debugOutputResource, sprintf('%f seconds for %s: %d items' . PHP_EOL, $end - $start, $this->batchMethod, count($items)));
+            fwrite($this->debugOutputResource, sprintf('memory used: %d' . PHP_EOL, memory_get_usage()));
         }
         return true;
     }
@@ -101,10 +101,11 @@ trait BatchTrait
      *     Configuration options.
      *
      *     @type resource $debugOutputResource A resource to output debug output
-     *           to.
+     *           to. **Defaults to** `php://stderr`.
      *     @type bool $debugOutput Whether or not to output debug information.
-     *           Please note debug output currently only applies in CLI based
-     *           applications. **Defaults to** `false`.
+     *           Please note that unless a debug output resource is configured
+     *           this setting will only apply to CLI based applications.
+     *           **Defaults to** `false`.
      *     @type array $batchOptions A set of options for a BatchJob.
      *           {@see \Google\Cloud\Core\Batch\BatchJob::__construct()} for
      *           more details.
@@ -140,7 +141,7 @@ trait BatchTrait
         $this->setSerializableClientOptions($options);
         $this->batchMethod = $options['batchMethod'];
         $this->identifier = $options['identifier'];
-        $this->debugOutputResource = isset($options['debugOutputResource']) ? $options['debugOutputResource'] : null;
+        $this->debugOutputResource = isset($options['debugOutputResource']) ? $options['debugOutputResource'] : fopen('php://stderr', 'w');
         $this->debugOutput = isset($options['debugOutput']) ? $options['debugOutput'] : false;
         $batchOptions = isset($options['batchOptions']) ? $options['batchOptions'] : [];
         $this->batchOptions = $batchOptions + ['batchSize' => 1000, 'callPeriod' => 2.0, 'numWorkers' => 2];

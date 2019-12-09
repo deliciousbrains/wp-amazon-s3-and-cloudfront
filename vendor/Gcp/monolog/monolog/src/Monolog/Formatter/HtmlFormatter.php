@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 /**
  * Formats incoming records into an HTML table
  *
@@ -111,8 +112,8 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         }
         $data = $this->normalize($data);
         if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
-            return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE, true);
         }
-        return str_replace('\\/', '/', json_encode($data));
+        return str_replace('\\/', '/', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data, null, true));
     }
 }

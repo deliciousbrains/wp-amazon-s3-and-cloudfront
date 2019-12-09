@@ -45,7 +45,7 @@ class StorageClient
 {
     use ArrayTrait;
     use ClientTrait;
-    const VERSION = '1.10.0';
+    const VERSION = '1.16.0';
     const FULL_CONTROL_SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
     const READ_ONLY_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only';
     const READ_WRITE_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_write';
@@ -170,9 +170,7 @@ class StorageClient
      */
     public function buckets(array $options = [])
     {
-        if (!$this->projectId) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
-        }
+        $this->requireProjectId();
         $resultLimit = $this->pluck('resultLimit', $options, false);
         $bucketUserProject = $this->pluck('bucketUserProject', $options, false);
         $bucketUserProject = !is_null($bucketUserProject) ? $bucketUserProject : true;
@@ -204,6 +202,7 @@ class StorageClient
      * @see https://cloud.google.com/storage/docs/json_api/v1/buckets/insert Buckets insert API documentation.
      *
      * @param string $name Name of the bucket to be created.
+     * @codingStandardsIgnoreStart
      * @param array $options [optional] {
      *     Configuration options.
      *
@@ -270,15 +269,25 @@ class StorageClient
      *           period for objects in seconds. During the retention period an
      *           object cannot be overwritten or deleted. Retention period must
      *           be greater than zero and less than 100 years.
+     *     @type array $iamConfiguration The bucket's IAM configuration.
+     *     @type bool $iamConfiguration.bucketPolicyOnly.enabled this is an alias
+     *           for $iamConfiguration.uniformBucketLevelAccess.
+     *     @type bool $iamConfiguration.uniformBucketLevelAccess.enabled If set and
+     *           true, access checks only use bucket-level IAM policies or
+     *           above. When enabled, requests attempting to view or manipulate
+     *           ACLs will fail with error code 400. **NOTE**: Before using
+     *           Uniform bucket-level access, please review the
+     *           [feature documentation](https://cloud.google.com/storage/docs/uniform-bucket-level-access),
+     *           as well as
+     *           [Should You Use uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access#should-you-use)
      * }
+     * @codingStandardsIgnoreEnd
      * @return Bucket
      * @throws GoogleException When a project ID has not been detected.
      */
     public function createBucket($name, array $options = [])
     {
-        if (!$this->projectId) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
-        }
+        $this->requireProjectId();
         if (isset($options['lifecycle']) && $options['lifecycle'] instanceof Lifecycle) {
             $options['lifecycle'] = $options['lifecycle']->toArray();
         }
@@ -333,7 +342,7 @@ class StorageClient
      * $timestamp = $storage->timestamp(new \DateTime('2003-02-05 11:15:02.421827Z'));
      * ```
      *
-     * @param \DateTimeInterface $value The timestamp value.
+     * @param \DateTimeInterface $timestamp The timestamp value.
      * @param int $nanoSeconds [optional] The number of nanoseconds in the timestamp.
      * @return Timestamp
      */
@@ -361,5 +370,112 @@ class StorageClient
     {
         $resp = $this->connection->getServiceAccount($options + ['projectId' => $this->projectId]);
         return $resp['email_address'];
+    }
+    /**
+     * List Service Account HMAC keys in the project.
+     *
+     * Example:
+     * ```
+     * $hmacKeys = $storage->hmacKeys();
+     * ```
+     *
+     * ```
+     * // Get the HMAC keys associated with a Service Account email
+     * $hmacKeys = $storage->hmacKeys([
+     *     'serviceAccountEmail' => $serviceAccountEmail
+     * ]);
+     * ```
+     *
+     * @param array $options {
+     *     Configuration Options
+     *
+     *     @type string $serviceAccountEmail If present, only keys for the given
+     *           service account are returned.
+     *     @type bool $showDeletedKeys Whether or not to show keys in the
+     *           DELETED state.
+     *     @type string $userProject If set, this is the ID of the project which
+     *           will be billed for the request.
+     *     @type string $projectId The project ID to use, if different from that
+     *           with which the client was created.
+     * }
+     * @return ItemIterator<HmacKey>
+     */
+    public function hmacKeys(array $options = [])
+    {
+        $options += ['projectId' => $this->projectId];
+        if (!$options['projectId']) {
+            $this->requireProjectId();
+        }
+        $resultLimit = $this->pluck('resultLimit', $options, false);
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\ItemIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\PageIterator(function (array $metadata) use($options) {
+            return $this->hmacKey($metadata['accessId'], $options['projectId'], $metadata);
+        }, [$this->connection, 'listHmacKeys'], $options, ['resultLimit' => $resultLimit]));
+    }
+    /**
+     * Lazily instantiate an HMAC Key instance using an Access ID.
+     *
+     * Example:
+     * ```
+     * $hmacKey = $storage->hmacKey($accessId);
+     * ```
+     *
+     * @param string $accessId The ID of the HMAC Key.
+     * @param string $projectId [optional] The project ID to use, if different
+     *        from that with which the client was created.
+     * @param array $metadata [optional] HMAC key metadata.
+     * @return HmacKey
+     */
+    public function hmacKey($accessId, $projectId = null, array $metadata = [])
+    {
+        if (!$projectId) {
+            $this->requireProjectId();
+        }
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\HmacKey($this->connection, $projectId ?: $this->projectId, $accessId, $metadata);
+    }
+    /**
+     * Creates a new HMAC key for the specified service account.
+     *
+     * Please note that the HMAC secret is only available at creation. Make sure
+     * to note the secret after creation.
+     *
+     * Example:
+     * ```
+     * $response = $storage->createHmacKey('account@myProject.iam.gserviceaccount.com');
+     * $secret = $response->secret();
+     * ```
+     *
+     * @param string $serviceAccountEmail Email address of the service account.
+     * @param array $options {
+     *     Configuration Options
+     *
+     *     @type string $userProject If set, this is the ID of the project which
+     *           will be billed for the request. **NOTE**: This option is
+     *           currently ignored by Cloud Storage.
+     *     @type string $projectId The project ID to use, if different from that
+     *           with which the client was created.
+     * }
+     * @return CreatedHmacKey
+     */
+    public function createHmacKey($serviceAccountEmail, array $options = [])
+    {
+        $options += ['projectId' => $this->projectId];
+        if (!$options['projectId']) {
+            $this->requireProjectId();
+        }
+        $res = $this->connection->createHmacKey(['projectId' => $options['projectId'], 'serviceAccountEmail' => $serviceAccountEmail] + $options);
+        $key = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\HmacKey($this->connection, $options['projectId'], $res['metadata']['accessId'], $res['metadata']);
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\CreatedHmacKey($key, $res['secret']);
+    }
+    /**
+     * Throw an exception if no project ID available.
+     *
+     * @return void
+     * @throws GoogleException
+     */
+    private function requireProjectId()
+    {
+        if (!$this->projectId) {
+            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
+        }
     }
 }

@@ -356,9 +356,9 @@ class Uri implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriI
     }
     public function withUserInfo($user, $password = null)
     {
-        $info = $user;
-        if ($password != '') {
-            $info .= ':' . $password;
+        $info = $this->filterUserInfoComponent($user);
+        if ($password !== null) {
+            $info .= ':' . $this->filterUserInfoComponent($password);
         }
         if ($this->userInfo === $info) {
             return $this;
@@ -430,14 +430,14 @@ class Uri implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriI
     private function applyParts(array $parts)
     {
         $this->scheme = isset($parts['scheme']) ? $this->filterScheme($parts['scheme']) : '';
-        $this->userInfo = isset($parts['user']) ? $parts['user'] : '';
+        $this->userInfo = isset($parts['user']) ? $this->filterUserInfoComponent($parts['user']) : '';
         $this->host = isset($parts['host']) ? $this->filterHost($parts['host']) : '';
         $this->port = isset($parts['port']) ? $this->filterPort($parts['port']) : null;
         $this->path = isset($parts['path']) ? $this->filterPath($parts['path']) : '';
         $this->query = isset($parts['query']) ? $this->filterQueryAndFragment($parts['query']) : '';
         $this->fragment = isset($parts['fragment']) ? $this->filterQueryAndFragment($parts['fragment']) : '';
         if (isset($parts['pass'])) {
-            $this->userInfo .= ':' . $parts['pass'];
+            $this->userInfo .= ':' . $this->filterUserInfoComponent($parts['pass']);
         }
         $this->removeDefaultPort();
     }
@@ -454,6 +454,20 @@ class Uri implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriI
             throw new \InvalidArgumentException('Scheme must be a string');
         }
         return strtolower($scheme);
+    }
+    /**
+     * @param string $component
+     *
+     * @return string
+     *
+     * @throws \InvalidArgumentException If the user info is invalid.
+     */
+    private function filterUserInfoComponent($component)
+    {
+        if (!is_string($component)) {
+            throw new \InvalidArgumentException('User info must be a string');
+        }
+        return preg_replace_callback('/(?:[^%' . self::$charUnreserved . self::$charSubDelims . ']+|%(?![A-Fa-f0-9]{2}))/', [$this, 'rawurlencodeMatchZero'], $component);
     }
     /**
      * @param string $host
@@ -482,8 +496,8 @@ class Uri implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriI
             return null;
         }
         $port = (int) $port;
-        if (1 > $port || 0xffff < $port) {
-            throw new \InvalidArgumentException(sprintf('Invalid port: %d. Must be between 1 and 65535', $port));
+        if (0 > $port || 0xffff < $port) {
+            throw new \InvalidArgumentException(sprintf('Invalid port: %d. Must be between 0 and 65535', $port));
         }
         return $port;
     }

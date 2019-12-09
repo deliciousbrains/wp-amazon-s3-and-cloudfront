@@ -27,10 +27,12 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\StreamableUplo
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\UriTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\ConnectionInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Implementation of the
  * [Google Cloud Storage JSON API](https://cloud.google.com/storage/docs/json_api/).
@@ -39,9 +41,9 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
 {
     use RestTrait;
     use UriTrait;
-    const BASE_URI = 'https://www.googleapis.com/storage/v1/';
-    const UPLOAD_URI = 'https://www.googleapis.com/upload/storage/v1/b/{bucket}/o{?query*}';
-    const DOWNLOAD_URI = 'https://www.googleapis.com/storage/v1/b/{bucket}/o/{object}{?query*}';
+    const BASE_URI = 'https://storage.googleapis.com/storage/v1/';
+    const UPLOAD_URI = 'https://storage.googleapis.com/upload/storage/v1/b/{bucket}/o{?query*}';
+    const DOWNLOAD_URI = 'https://storage.googleapis.com/storage/v1/b/{bucket}/o/{object}{?query*}';
     /**
      * @var string
      */
@@ -235,9 +237,11 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
         if (!$args['name']) {
             $args['name'] = basename($args['data']->getMetadata('uri'));
         }
-        // @todo add support for rolling hash
-        if ($args['validate'] && !isset($args['metadata']['md5Hash'])) {
+        $validate = $this->chooseValidationMethod($args);
+        if ($validate === 'md5') {
             $args['metadata']['md5Hash'] = base64_encode(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\hash($args['data'], 'md5', true));
+        } elseif ($validate === 'crc32') {
+            $args['metadata']['crc32c'] = $this->crcFromStream($args['data']);
         }
         $args['metadata']['name'] = $args['name'];
         unset($args['name']);
@@ -312,13 +316,121 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     }
     /**
      * @param array $args
+     */
+    public function createHmacKey(array $args = [])
+    {
+        return $this->send('projects.resources.hmacKeys', 'create', $args);
+    }
+    /**
+     * @param array $args
+     */
+    public function deleteHmacKey(array $args = [])
+    {
+        return $this->send('projects.resources.hmacKeys', 'delete', $args);
+    }
+    /**
+     * @param array $args
+     */
+    public function getHmacKey(array $args = [])
+    {
+        return $this->send('projects.resources.hmacKeys', 'get', $args);
+    }
+    /**
+     * @param array $args
+     */
+    public function updateHmacKey(array $args = [])
+    {
+        return $this->send('projects.resources.hmacKeys', 'update', $args);
+    }
+    /**
+     * @param array $args
+     */
+    public function listHmacKeys(array $args = [])
+    {
+        return $this->send('projects.resources.hmacKeys', 'list', $args);
+    }
+    /**
+     * @param array $args
      * @return array
      */
     private function buildDownloadObjectParams(array $args)
     {
         $args += ['bucket' => null, 'object' => null, 'generation' => null, 'userProject' => null];
-        $requestOptions = array_intersect_key($args, ['restOptions' => null, 'retries' => null, 'restRetryFunction' => null, 'restDelayFunction' => null]);
+        $requestOptions = array_intersect_key($args, ['restOptions' => null, 'retries' => null, 'restRetryFunction' => null, 'restCalcDelayFunction' => null, 'restDelayFunction' => null]);
         $uri = $this->expandUri(self::DOWNLOAD_URI, ['bucket' => $args['bucket'], 'object' => $args['object'], 'query' => ['generation' => $args['generation'], 'alt' => 'media', 'userProject' => $args['userProject']]]);
         return [new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('GET', \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\uri_for($uri)), $requestOptions];
+    }
+    /**
+     * Choose a upload validation method based on user input and platform
+     * requirements.
+     *
+     * @param array $args
+     * @return bool|string
+     */
+    private function chooseValidationMethod(array $args)
+    {
+        // If the user provided a hash, skip hashing.
+        if (isset($args['metadata']['md5']) || isset($args['metadata']['crc32c'])) {
+            return false;
+        }
+        $validate = $args['validate'];
+        if (in_array($validate, [false, 'crc32', 'md5'], true)) {
+            return $validate;
+        }
+        // not documented, but the feature is called crc32c, so let's accept that as input anyways.
+        if ($validate === 'crc32c') {
+            return 'crc32';
+        }
+        // is the extension loaded?
+        if ($this->crc32cExtensionLoaded()) {
+            return 'crc32';
+        }
+        // is crc32c available in `hash()`?
+        if ($this->supportsBuiltinCrc32c()) {
+            return 'crc32';
+        }
+        return 'md5';
+    }
+    /**
+     * Generate a CRC32c checksum from a stream.
+     *
+     * @param StreamInterface $data
+     * @return string
+     */
+    private function crcFromStream(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface $data)
+    {
+        $pos = $data->tell();
+        if ($pos > 0) {
+            $data->rewind();
+        }
+        $crc32c = \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::create(\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI);
+        $data->rewind();
+        while (!$data->eof()) {
+            $crc32c->update($data->read(1048576));
+        }
+        $data->seek($pos);
+        return base64_encode($crc32c->hash(true));
+    }
+    /**
+     * Check if the crc32c extension is available.
+     *
+     * Protected access for unit testing.
+     *
+     * @return bool
+     */
+    protected function crc32cExtensionLoaded()
+    {
+        return extension_loaded('crc32c');
+    }
+    /**
+     * Check if hash() supports crc32c.
+     *
+     * Protected access for unit testing.
+     *
+     * @return bool
+     */
+    protected function supportsBuiltinCrc32c()
+    {
+        return \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin::supports(\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI);
     }
 }

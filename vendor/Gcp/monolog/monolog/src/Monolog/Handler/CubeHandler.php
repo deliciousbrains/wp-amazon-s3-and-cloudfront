@@ -11,6 +11,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 /**
  * Logs to Cube.
  *
@@ -98,9 +99,9 @@ class CubeHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
         $data['data'] = $record['context'];
         $data['data']['level'] = $record['level'];
         if ($this->scheme === 'http') {
-            $this->writeHttp(json_encode($data));
+            $this->writeHttp(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data));
         } else {
-            $this->writeUdp(json_encode($data));
+            $this->writeUdp(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data));
         }
     }
     private function writeUdp($data)
