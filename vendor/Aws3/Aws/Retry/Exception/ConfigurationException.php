@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Retry\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 
 /**
  * Represents an error interacting with retry configuration

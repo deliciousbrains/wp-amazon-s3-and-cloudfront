@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Glacier;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Glacier;
 
-use Aws\HashInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashInterface;
 
 /**
  * Encapsulates the creation of a tree hash from streamed data

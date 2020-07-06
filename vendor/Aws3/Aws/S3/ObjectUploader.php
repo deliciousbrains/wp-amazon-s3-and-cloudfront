@@ -1,5 +1,5 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;

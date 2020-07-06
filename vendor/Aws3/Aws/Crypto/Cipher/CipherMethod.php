@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Crypto\Cipher;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher;
 
 interface CipherMethod
 {

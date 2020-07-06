@@ -1,15 +1,15 @@
 <?php
-namespace Aws\S3\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
 
-use Aws\HashingStream;
-use Aws\PhpHash;
-use Aws\Crypto\AbstractCryptoClientV2;
-use Aws\Crypto\DecryptionTraitV2;
-use Aws\Crypto\EncryptionTraitV2;
-use Aws\Crypto\MetadataEnvelope;
-use Aws\Crypto\MaterialsProvider;
-use Aws\Crypto\Cipher\CipherBuilderTrait;
-use Aws\S3\S3Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\PhpHash;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AbstractCryptoClientV2;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\DecryptionTraitV2;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\EncryptionTraitV2;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherBuilderTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
@@ -185,7 +185,7 @@ class S3EncryptionClientV2 extends AbstractCryptoClientV2
      *   instruction file if an using an InstructionFileMetadataHandler was
      *   determined.
      *
-     * @return \Aws\Result PutObject call result with the details of uploading
+     * @return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result PutObject call result with the details of uploading
      *                     the encrypted file.
      *
      * @throws \InvalidArgumentException Thrown when arguments above are not
@@ -320,7 +320,7 @@ class S3EncryptionClientV2 extends AbstractCryptoClientV2
      *            passed directly to OpenSSL when using gcm. It is ignored when
      *            using cbc.
      *
-     * @return \Aws\Result GetObject call result with the 'Body' field
+     * @return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result GetObject call result with the 'Body' field
      *                     wrapped in a decryption stream with its metadata
      *                     information.
      *

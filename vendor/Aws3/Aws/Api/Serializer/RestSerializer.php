@@ -1,13 +1,13 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\MapShape;
-use Aws\Api\Service;
-use Aws\Api\Operation;
-use Aws\Api\Shape;
-use Aws\Api\StructureShape;
-use Aws\Api\TimestampShape;
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver;

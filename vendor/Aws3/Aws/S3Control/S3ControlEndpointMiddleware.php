@@ -1,7 +1,7 @@
 <?php
-namespace Aws\S3Control;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3Control;
 
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
@@ -92,7 +92,7 @@ class S3ControlEndpointMiddleware
 
     private function getAccountIdStyleHost(CommandInterface $command, $host)
     {
-        if (!\Aws\is_valid_hostname($command['AccountId'])) {
+        if (!\DeliciousBrains\WP_Offload_Media\Aws3\Aws\is_valid_hostname($command['AccountId'])) {
             throw new \InvalidArgumentException(
                 "The supplied parameters result in an invalid hostname: '{$command['AccountId']}.{$host}'."
             );

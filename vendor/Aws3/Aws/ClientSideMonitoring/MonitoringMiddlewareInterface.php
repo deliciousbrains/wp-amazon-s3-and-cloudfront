@@ -1,10 +1,10 @@
 <?php
 
-namespace Aws\ClientSideMonitoring;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 

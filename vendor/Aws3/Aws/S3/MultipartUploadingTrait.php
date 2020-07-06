@@ -1,9 +1,9 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\CommandInterface;
-use Aws\Multipart\UploadState;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 
 trait MultipartUploadingTrait
 {

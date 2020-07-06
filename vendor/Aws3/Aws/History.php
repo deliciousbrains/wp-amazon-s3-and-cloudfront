@@ -1,8 +1,8 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents a history container that is required when using the history

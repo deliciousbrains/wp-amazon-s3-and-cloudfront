@@ -1,5 +1,5 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
@@ -20,7 +20,7 @@ abstract class AbstractConfigurationProvider
 
     /**
      * Wraps a config provider and saves provided configuration in an
-     * instance of Aws\CacheInterface. Forwards calls when no config found
+     * instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface. Forwards calls when no config found
      * in cache and updates cache with the results.
      *
      * @param callable $provider Configuration provider function to wrap

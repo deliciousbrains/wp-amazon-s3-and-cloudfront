@@ -1,8 +1,8 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Signature\SignatureV4;
-use Aws\Endpoint\EndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\EndpointProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
@@ -77,7 +77,7 @@ class PresignUrlMiddleware
         $newCmd->{'__skip' . $cmdName} = true;
 
         // Serialize a request for the operation.
-        $request = \Aws\serialize($newCmd);
+        $request = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($newCmd);
         // Create the new endpoint for the target endpoint.
         $endpoint = EndpointProvider::resolve($this->endpointProvider, [
             'region'  => $cmd['SourceRegion'],

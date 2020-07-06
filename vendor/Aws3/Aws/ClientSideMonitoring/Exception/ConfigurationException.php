@@ -1,8 +1,8 @@
 <?php
-namespace Aws\ClientSideMonitoring\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 
 
 /**

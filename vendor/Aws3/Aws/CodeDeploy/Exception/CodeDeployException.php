@@ -1,7 +1,7 @@
 <?php
-namespace Aws\CodeDeploy\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\CodeDeploy\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with AWS CodeDeploy.

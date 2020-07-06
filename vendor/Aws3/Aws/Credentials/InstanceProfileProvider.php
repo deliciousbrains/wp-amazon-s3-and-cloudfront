@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use Aws\Exception\CredentialsException;
-use Aws\Exception\InvalidJsonException;
-use Aws\Sdk;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidJsonException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sdk;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
@@ -58,7 +58,7 @@ class InstanceProfileProvider
         $this->attempts = 0;
         $this->client = isset($config['client'])
             ? $config['client'] // internal use only
-            : \Aws\default_http_handler();
+            : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_http_handler();
     }
 
     /**
@@ -201,7 +201,7 @@ class InstanceProfileProvider
         if (defined('HHVM_VERSION')) {
             $userAgent .= ' HHVM/' . HHVM_VERSION;
         }
-        $userAgent .= ' ' . \Aws\default_user_agent();
+        $userAgent .= ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_user_agent();
         $request = $request->withHeader('User-Agent', $userAgent);
         foreach ($headers as $key => $value) {
             $request = $request->withHeader($key, $value);

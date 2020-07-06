@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
 /**
  * Basic implementation of the AWS Credentials interface that allows callers to

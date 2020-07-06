@@ -1,11 +1,11 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use Aws\Crypto\Polyfill\AesGcm;
-use Aws\Crypto\Polyfill\Key;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\AesGcm;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\Key;
 
 /**
  * @internal Represents a stream of data to be gcm decrypted.

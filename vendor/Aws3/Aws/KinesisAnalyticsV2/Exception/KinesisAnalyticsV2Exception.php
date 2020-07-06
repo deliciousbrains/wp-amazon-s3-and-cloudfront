@@ -1,7 +1,7 @@
 <?php
-namespace Aws\KinesisAnalyticsV2\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\KinesisAnalyticsV2\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon Kinesis Analytics** service.

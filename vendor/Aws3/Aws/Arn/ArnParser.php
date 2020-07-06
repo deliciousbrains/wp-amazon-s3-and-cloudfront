@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Arn;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn;
 
-use Aws\Arn\S3\AccessPointArn as S3AccessPointArn;
-use Aws\Arn\S3\BucketArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn as S3AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\BucketArn;
 
 /**
  * @internal

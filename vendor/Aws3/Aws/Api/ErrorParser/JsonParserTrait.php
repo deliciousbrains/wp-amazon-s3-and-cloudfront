@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Api\ErrorParser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser;
 
-use Aws\Api\Parser\PayloadParserTrait;
-use Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 /**

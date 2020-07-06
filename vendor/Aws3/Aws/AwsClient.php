@@ -1,14 +1,14 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\ApiProvider;
-use Aws\Api\DocModel;
-use Aws\Api\Service;
-use Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
-use Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
-use Aws\ClientSideMonitoring\ConfigurationProvider;
-use Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
-use Aws\Signature\SignatureProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 
 /**
@@ -63,18 +63,18 @@ class AwsClient implements AwsClientInterface
      *   corresponding configuration data. The type value can be one of api,
      *   waiter, or paginator.
      * - credentials:
-     *   (Aws\Credentials\CredentialsInterface|array|bool|callable) Specifies
+     *   (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface|array|bool|callable) Specifies
      *   the credentials used to sign requests. Provide an
-     *   Aws\Credentials\CredentialsInterface object, an associative array of
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface object, an associative array of
      *   "key", "secret", and an optional "token" key, `false` to use null
      *   credentials, or a callable credentials provider used to create
-     *   credentials or return null. See Aws\Credentials\CredentialProvider for
+     *   credentials or return null. See DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider for
      *   a list of built-in credentials providers. If no credentials are
      *   provided, the SDK will attempt to load them from the environment.
      * - csm:
-     *   (Aws\ClientSideMonitoring\ConfigurationInterface|array|callable) Specifies
+     *   (DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface|array|callable) Specifies
      *   the credentials used to sign requests. Provide an
-     *   Aws\ClientSideMonitoring\ConfigurationInterface object, a callable
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface object, a callable
      *   configuration provider used to create client-side monitoring configuration,
      *   `false` to disable csm, or an associative array with the following keys:
      *   enabled: (bool) Set to true to enable client-side monitoring, defaults
@@ -107,10 +107,10 @@ class AwsClient implements AwsClientInterface
      * - endpoint: (string) The full URI of the webservice. This is only
      *   required when connecting to a custom endpoint (e.g., a local version
      *   of S3).
-     * - endpoint_discovery: (Aws\EndpointDiscovery\ConfigurationInterface,
-     *   Aws\CacheInterface, array, callable) Settings for endpoint discovery.
-     *   Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface,
-     *   an instance Aws\CacheInterface, a callable that provides a promise for
+     * - endpoint_discovery: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface,
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, array, callable) Settings for endpoint discovery.
+     *   Provide an instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface,
+     *   an instance DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, a callable that provides a promise for
      *   a Configuration object, or an associative array with the following
      *   keys: enabled: (bool) Set to true to enable endpoint discovery, false
      *   to explicitly disable it, defaults to false; cache_limit: (int) The
@@ -118,12 +118,12 @@ class AwsClient implements AwsClientInterface
      * - endpoint_provider: (callable) An optional PHP callable that
      *   accepts a hash of options including a "service" and "region" key and
      *   returns NULL or a hash of endpoint data, of which the "endpoint" key
-     *   is required. See Aws\Endpoint\EndpointProvider for a list of built-in
+     *   is required. See DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\EndpointProvider for a list of built-in
      *   providers.
      * - handler: (callable) A handler that accepts a command object,
      *   request object and returns a promise that is fulfilled with an
-     *   Aws\ResultInterface object or rejected with an
-     *   Aws\Exception\AwsException. A handler does not accept a next handler
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface object or rejected with an
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException. A handler does not accept a next handler
      *   as it is terminal and expected to fulfill a command. If no handler is
      *   provided, a default Guzzle handler will be utilized.
      * - http: (array, default=array(0)) Set to an array of SDK request
@@ -147,12 +147,12 @@ class AwsClient implements AwsClientInterface
      * - region: (string, required) Region to connect to. See
      *   http://docs.aws.amazon.com/general/latest/gr/rande.html for a list of
      *   available regions.
-     * - retries: (int, Aws\Retry\ConfigurationInterface, Aws\CacheInterface,
+     * - retries: (int, DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface, DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface,
      *   array, callable) Configures the retry mode and maximum number of
      *   allowed retries for a client (pass 0 to disable retries). Provide an
      *   integer for 'legacy' mode with the specified number of retries.
-     *   Otherwise provide an instance of Aws\Retry\ConfigurationInterface, an
-     *   instance of  Aws\CacheInterface, a callable function, or an array with
+     *   Otherwise provide an instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface, an
+     *   instance of  DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, a callable function, or an array with
      *   the following keys: mode: (string) Set to 'legacy', 'standard' (uses
      *   retry quota management), or 'adapative' (an experimental mode that adds
      *   client-side rate limiting to standard mode); max_attempts (int) The
@@ -166,7 +166,7 @@ class AwsClient implements AwsClientInterface
      *   version name (e.g., "v4"), a service name, and region, and
      *   returns a SignatureInterface object or null. This provider is used to
      *   create signers utilized by the client. See
-     *   Aws\Signature\SignatureProvider for a list of built-in providers
+     *   DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider for a list of built-in providers
      * - signature_version: (string) A string representing a custom
      *   signature version to use with a service (e.g., v4). Note that
      *   per/operation signature version MAY override this requested signature
@@ -300,7 +300,7 @@ class AwsClient implements AwsClientInterface
 
         return [
             strtolower($service),
-            "Aws\\{$service}\\Exception\\{$service}Exception"
+            "DeliciousBrains\WP_Offload_Media\Aws3\Aws\\{$service}\\Exception\\{$service}Exception"
         ];
     }
 
@@ -376,7 +376,7 @@ class AwsClient implements AwsClientInterface
             if (is_null($file)) {
                 $file = __DIR__ . '/data/aliases.json';
             }
-            $aliases = \Aws\load_compiled_json($file);
+            $aliases = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json($file);
             $serviceId = $this->api->getServiceId();
             $version = $this->getApi()->getApiVersion();
             if (!empty($aliases['operations'][$serviceId][$version])) {
@@ -411,7 +411,7 @@ class AwsClient implements AwsClientInterface
      */
     public static function applyDocFilters(array $api, array $docs)
     {
-        $aliases = \Aws\load_compiled_json(__DIR__ . '/data/aliases.json');
+        $aliases = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/data/aliases.json');
         $serviceId = $api['metadata']['serviceId'];
         $version = $api['metadata']['apiVersion'];
 

@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Rds;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Rds;
 
 use Aws\Credentials\CredentialsInterface;
 use Aws\Credentials\Credentials;
@@ -7,7 +7,7 @@ use Aws\Signature\SignatureV4;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
-use Aws;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Generates RDS auth tokens for use with IAM authentication.

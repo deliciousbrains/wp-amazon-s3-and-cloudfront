@@ -1,7 +1,7 @@
 <?php
-namespace Aws\ResourceGroups\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResourceGroups\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AWS Resource Groups** service.

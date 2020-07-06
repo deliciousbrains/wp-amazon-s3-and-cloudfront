@@ -1,7 +1,7 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
@@ -30,7 +30,7 @@ class IdempotencyTokenMiddleware
      * You may also supply a custom bytes generator as an optional second
      * parameter.
      *
-     * @param \Aws\Api\Service $service
+     * @param \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service
      * @param callable|null $bytesGenerator
      *
      * @return callable

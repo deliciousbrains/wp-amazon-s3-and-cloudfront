@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
-use Aws\Api\Serializer\QuerySerializer;
-use Aws\Api\Serializer\Ec2ParamBuilder;
-use Aws\Api\Parser\QueryParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\QuerySerializer;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\Ec2ParamBuilder;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\QueryParser;
 
 /**
  * Represents a web service API model.

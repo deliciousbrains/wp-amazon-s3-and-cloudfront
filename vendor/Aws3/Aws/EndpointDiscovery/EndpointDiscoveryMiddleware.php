@@ -1,14 +1,14 @@
 <?php
-namespace Aws\EndpointDiscovery;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery;
 
-use Aws\AwsClient;
-use Aws\CacheInterface;
-use Aws\CommandInterface;
-use Aws\Credentials\CredentialsInterface;
-use Aws\Exception\AwsException;
-use Aws\Exception\UnresolvedEndpointException;
-use Aws\LruArrayCache;
-use Aws\Middleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 

@@ -1,12 +1,12 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\MapShape;
-use Aws\Api\Service;
-use Aws\Api\Shape;
-use Aws\Api\StructureShape;
-use Aws\Api\ListShape;
-use Aws\Api\TimestampShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 use XMLWriter;
 
 /**
@@ -14,7 +14,7 @@ use XMLWriter;
  */
 class XmlBody
 {
-    /** @var \Aws\Api\Service */
+    /** @var \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service */
     private $api;
 
     /**

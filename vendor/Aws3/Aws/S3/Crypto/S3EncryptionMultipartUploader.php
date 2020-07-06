@@ -1,12 +1,12 @@
 <?php
-namespace Aws\S3\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
 
-use Aws\Crypto\AbstractCryptoClient;
-use Aws\Crypto\EncryptionTrait;
-use Aws\Crypto\MetadataEnvelope;
-use Aws\Crypto\Cipher\CipherBuilderTrait;
-use Aws\S3\MultipartUploader;
-use Aws\S3\S3ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AbstractCryptoClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\EncryptionTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherBuilderTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
@@ -71,13 +71,13 @@ class S3EncryptionMultipartUploader extends MultipartUploader
      *   private by default.
      * - before_complete: (callable) Callback to invoke before the
      *   `CompleteMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_initiate: (callable) Callback to invoke before the
      *   `CreateMultipartUpload` operation. The callback should have a function
-     *   signature like `function (Aws\Command $command) {...}`.
+     *   signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_upload: (callable) Callback to invoke before any `UploadPart`
      *   operations. The callback should have a function signature like
-     *   `function (Aws\Command $command) {...}`.
+     *   `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(5)) Maximum number of concurrent
      *   `UploadPart` operations allowed during the multipart upload.
      * - params: (array) An array of key/value parameters that will be applied
@@ -87,7 +87,7 @@ class S3EncryptionMultipartUploader extends MultipartUploader
      *   options detailed above to update the commands directly.
      * - part_size: (int, default=int(5242880)) Part size, in bytes, to use when
      *   doing a multipart upload. This must between 5 MB and 5 GB, inclusive.
-     * - state: (Aws\Multipart\UploadState) An object that represents the state
+     * - state: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState) An object that represents the state
      *   of the multipart upload and that is used to resume a previous upload.
      *   When this option is provided, the `bucket`, `key`, and `part_size`
      *   options are ignored.

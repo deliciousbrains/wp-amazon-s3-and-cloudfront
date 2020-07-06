@@ -1,5 +1,5 @@
 <?php
-namespace Aws\CloudFront;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\CloudFront;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;

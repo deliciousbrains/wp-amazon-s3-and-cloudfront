@@ -1,8 +1,8 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\AwsClientInterface;
-use Aws\S3\Exception\DeleteMultipleObjectsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
@@ -12,13 +12,13 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  * iterator that yields keys. Deletes are made using the DeleteObjects API
  * operation.
  *
- *     $s3 = new Aws\S3\Client([
+ *     $s3 = new DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Client([
  *         'region' => 'us-west-2',
  *         'version' => 'latest'
  *     ]);
  *
  *     $listObjectsParams = ['Bucket' => 'foo', 'Prefix' => 'starts/with/'];
- *     $delete = Aws\S3\BatchDelete::fromListObjects($s3, $listObjectsParams);
+ *     $delete = DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete::fromListObjects($s3, $listObjectsParams);
  *     // Asynchronously delete
  *     $promise = $delete->promise();
  *     // Force synchronous completion

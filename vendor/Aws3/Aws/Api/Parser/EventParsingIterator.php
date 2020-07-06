@@ -1,11 +1,11 @@
 <?php
 
-namespace Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
 use \Iterator;
-use Aws\Exception\EventStreamDataException;
-use Aws\Api\Parser\Exception\ParserException;
-use Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\EventStreamDataException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 
 /**

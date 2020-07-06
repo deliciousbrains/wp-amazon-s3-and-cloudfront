@@ -1,7 +1,7 @@
 <?php
-namespace Aws\WorkSpaces\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\WorkSpaces\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error while interacting with Amazon WorkSpaces.

@@ -1,12 +1,12 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 
 /**
  * A trait providing generic functionality for interacting with Amazon Web
  * Services. This is meant to be used in classes implementing
- * \Aws\AwsClientInterface
+ * \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface
  */
 trait AwsClientTrait
 {

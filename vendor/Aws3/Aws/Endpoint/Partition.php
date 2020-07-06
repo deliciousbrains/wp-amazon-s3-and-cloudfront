@@ -1,10 +1,10 @@
 <?php
-namespace Aws\Endpoint;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
 use ArrayAccess;
-use Aws\HasDataTrait;
-use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
-use Aws\S3\RegionalEndpoint\ConfigurationProvider as S3ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationProvider as S3ConfigurationProvider;
 use InvalidArgumentException as Iae;
 
 /**

@@ -1,7 +1,7 @@
 <?php
-namespace Aws\StorageGateway\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\StorageGateway\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the AWS Storage Gateway service.

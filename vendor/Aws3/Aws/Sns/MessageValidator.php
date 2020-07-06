@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Sns;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sns;
 
-use Aws\Sns\Exception\InvalidSnsMessageException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sns\Exception\InvalidSnsMessageException;
 
 /**
  * Uses openssl to verify SNS messages to ensure that they were sent by AWS.

@@ -1,7 +1,7 @@
 <?php
-namespace Aws\QuickSight\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\QuickSight\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon QuickSight** service.

@@ -1,5 +1,5 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Builds a single handler function from zero or more middleware functions and
@@ -11,7 +11,7 @@ namespace Aws;
  * the end of the list using one of the "append" method. The last function
  * invoked in a handler list is the handler (a function that does not accept a
  * next handler but rather is responsible for returning a promise that is
- * fulfilled with an Aws\ResultInterface object).
+ * fulfilled with an DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface object).
  *
  * Handlers are ordered using a "step" that describes the step at which the
  * SDK is when sending a command. The available steps are:
@@ -272,7 +272,7 @@ class HandlerList implements \Countable
      * function that accepts the next handler in the list. This function must
      * then return a function that accepts a CommandInterface and optional
      * RequestInterface and returns a promise that is fulfilled with an
-     * Aws\ResultInterface or rejected with an Aws\Exception\AwsException
+     * DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface or rejected with an DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException
      * object.
      *
      * @param callable|null $fn Pass null to remove any previously set function

@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
 /**
  * Represents an exception that was supplied via an EventStream.

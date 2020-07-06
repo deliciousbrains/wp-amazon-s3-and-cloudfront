@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Endpoint;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env;
 
@@ -94,8 +94,8 @@ class PartitionEndpointProvider
      */
     public static function defaultProvider($options = [])
     {
-        $data = \Aws\load_compiled_json(__DIR__ . '/../data/endpoints.json');
-        $prefixData = \Aws\load_compiled_json(__DIR__ . '/../data/endpoints_prefix_history.json');
+        $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/../data/endpoints.json');
+        $prefixData = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/../data/endpoints_prefix_history.json');
         $mergedData = self::mergePrefixData($data, $prefixData);
 
         return new self($mergedData['partitions'], 'aws', $options);

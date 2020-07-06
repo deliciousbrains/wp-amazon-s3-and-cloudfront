@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream;

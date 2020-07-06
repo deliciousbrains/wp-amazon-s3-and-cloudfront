@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Handler\GuzzleV5;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV5;
 
 use Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client;

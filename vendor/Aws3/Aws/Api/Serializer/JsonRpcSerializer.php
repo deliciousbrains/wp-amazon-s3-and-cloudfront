@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\Service;
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 

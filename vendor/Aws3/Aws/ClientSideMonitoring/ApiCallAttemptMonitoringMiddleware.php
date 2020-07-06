@@ -1,12 +1,12 @@
 <?php
 
-namespace Aws\ClientSideMonitoring;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
-use Aws\CommandInterface;
-use Aws\Credentials\CredentialsInterface;
-use Aws\Exception\AwsException;
-use Aws\ResponseContainerInterface;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 

@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Sts\RegionalEndpoints;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints;
 
 class Configuration implements ConfigurationInterface
 {

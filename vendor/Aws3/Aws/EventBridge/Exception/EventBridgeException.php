@@ -1,7 +1,7 @@
 <?php
-namespace Aws\EventBridge\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\EventBridge\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon EventBridge** service.

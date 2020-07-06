@@ -1,11 +1,11 @@
 <?php
-namespace Aws\Api\ErrorParser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser;
 
-use Aws\Api\Parser\MetadataParserTrait;
-use Aws\Api\Parser\PayloadParserTrait;
-use Aws\Api\Service;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\MetadataParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractErrorParser

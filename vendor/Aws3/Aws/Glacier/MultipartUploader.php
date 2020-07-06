@@ -1,12 +1,12 @@
 <?php
-namespace Aws\Glacier;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Glacier;
 
-use Aws\CommandInterface;
-use Aws\HashingStream;
-use Aws\Multipart\AbstractUploader;
-use Aws\Multipart\UploadState;
-use Aws\PhpHash;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploader;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\PhpHash;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
 
@@ -89,13 +89,13 @@ class MultipartUploader extends AbstractUploader
      * - archive_description: (string) Description of the archive.
      * - before_complete: (callable) Callback to invoke before the
      *   `CompleteMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_initiate: (callable) Callback to invoke before the
      *   `InitiateMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_upload: (callable) Callback to invoke before any
      *   `UploadMultipartPart` operations. The callback should have a function
-     *   signature like `function (Aws\Command $command) {...}`.
+     *   signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(3)) Maximum number of concurrent
      *   `UploadMultipartPart` operations allowed during the multipart upload.
      * - part_size: (int, default=int(1048576)) Part size, in bytes, to use when
@@ -104,7 +104,7 @@ class MultipartUploader extends AbstractUploader
      * - prepare_data_source: (callable) Callback to invoke before starting the
      *   multipart upload workflow. The callback should have a function
      *   signature like `function () {...}`.
-     * - state: (Aws\Multipart\UploadState) An object that represents the state
+     * - state: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState) An object that represents the state
      *   of the multipart upload and that is used to resume a previous upload.
      *   When this options is provided, the `account_id`, `key`, and `part_size`
      *   options are ignored.

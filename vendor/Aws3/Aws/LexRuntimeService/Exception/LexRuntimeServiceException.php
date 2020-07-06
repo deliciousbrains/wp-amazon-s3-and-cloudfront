@@ -1,7 +1,7 @@
 <?php
-namespace Aws\LexRuntimeService\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\LexRuntimeService\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon Lex Runtime Service** service.

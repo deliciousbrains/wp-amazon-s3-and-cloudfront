@@ -1,5 +1,5 @@
 <?php
-namespace Aws\ClientSideMonitoring;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
 class Configuration implements ConfigurationInterface
 {

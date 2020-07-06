@@ -1,20 +1,20 @@
 <?php
-namespace Aws\Sts\RegionalEndpoints;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints;
 
-use Aws\AbstractConfigurationProvider;
-use Aws\CacheInterface;
-use Aws\ConfigurationProviderInterface;
-use Aws\Sts\RegionalEndpoints\Exception\ConfigurationException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\Exception\ConfigurationException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * A configuration provider is a function that returns a promise that is
- * fulfilled with a {@see \Aws\Sts\RegionalEndpoints\ConfigurationInterface}
- * or rejected with an {@see \Aws\Sts\RegionalEndpoints\Exception\ConfigurationException}.
+ * fulfilled with a {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationInterface}
+ * or rejected with an {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\Exception\ConfigurationException}.
  *
  * <code>
- * use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+ * use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
  * $provider = ConfigurationProvider::defaultProvider();
  * // Returns a ConfigurationInterface or throws.
  * $config = $provider()->wait();
@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  * Configuration providers can be composed to create configuration using
  * conditional logic that can create different configurations in different
  * environments. You can compose multiple providers into a single provider using
- * {@see \Aws\Sts\RegionalEndpoints\ConfigurationProvider::chain}. This function
+ * {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider::chain}. This function
  * accepts providers as variadic arguments and returns a new function that will
  * invoke each provider until a successful configuration is returned.
  *
@@ -149,7 +149,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider
             if (!is_readable($filename)) {
                 return self::reject("Cannot read configuration from $filename");
             }
-            $data = \Aws\parse_ini_file($filename, true);
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true);
             if ($data === false) {
                 return self::reject("Invalid config file: $filename");
             }

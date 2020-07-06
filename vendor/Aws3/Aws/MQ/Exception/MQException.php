@@ -1,7 +1,7 @@
 <?php
-namespace Aws\MQ\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\MQ\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AmazonMQ** service.

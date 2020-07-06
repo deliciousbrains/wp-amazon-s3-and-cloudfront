@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
-use Aws\Multipart\UploadState;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
 
 class MultipartUploadException extends \RuntimeException implements
     MonitoringEventsInterface

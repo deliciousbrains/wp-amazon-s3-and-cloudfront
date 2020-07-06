@@ -1,8 +1,8 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\Endpoint\PartitionInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionInterface;
 
 class MultiRegionClient implements AwsClientInterface
 {
@@ -42,7 +42,7 @@ class MultiRegionClient implements AwsClientInterface
                 'internal' => true,
                 'default' => function (array $args) {
                     $namespace = manifest($args['service'])['namespace'];
-                    $klass = "Aws\\{$namespace}\\{$namespace}Client";
+                    $klass = "DeliciousBrains\WP_Offload_Media\Aws3\Aws\\{$namespace}\\{$namespace}Client";
                     $region = isset($args['region']) ? $args['region'] : null;
 
                     return function (array $args) use ($klass, $region) {
@@ -91,7 +91,7 @@ class MultiRegionClient implements AwsClientInterface
      *
      * - client_factory: (callable) An optional callable that takes an array of
      *   client configuration arguments and returns a regionalized client.
-     * - partition: (Aws\Endpoint\Partition|string) AWS partition to connect to.
+     * - partition: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\Partition|string) AWS partition to connect to.
      *   Valid partitions include "aws," "aws-cn," and "aws-us-gov." Used to
      *   restrict the scope of the mapRegions method.
      * - region: (string) Region to connect to when no override is provided.

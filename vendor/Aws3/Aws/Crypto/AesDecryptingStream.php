@@ -1,10 +1,10 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use \LogicException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use Aws\Crypto\Cipher\CipherMethod;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
 
 /**
  * @internal Represents a stream of data to be decrypted with passed cipher.

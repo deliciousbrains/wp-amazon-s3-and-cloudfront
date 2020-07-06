@@ -1,14 +1,14 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
  * Returns promises that are rejected or fulfilled using a queue of
- * Aws\ResultInterface and Aws\Exception\AwsException objects.
+ * DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface and DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException objects.
  */
 class MockHandler implements \Countable
 {
@@ -53,7 +53,7 @@ class MockHandler implements \Countable
             ) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected an Aws\ResultInterface or Aws\Exception\AwsException.');
+                throw new \InvalidArgumentException('Expected an DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface or DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException.');
             }
         }
     }

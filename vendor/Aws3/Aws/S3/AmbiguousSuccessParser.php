@@ -1,11 +1,11 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Api\Parser\AbstractParser;
-use Aws\Api\Parser\Exception\ParserException;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 

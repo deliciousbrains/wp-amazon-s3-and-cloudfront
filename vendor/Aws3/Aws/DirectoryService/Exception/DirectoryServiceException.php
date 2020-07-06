@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DirectoryService\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DirectoryService\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * AWS Directory Service Exception

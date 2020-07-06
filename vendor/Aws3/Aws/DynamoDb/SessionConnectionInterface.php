@@ -1,5 +1,5 @@
 <?php
-namespace Aws\DynamoDb;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb;
 
 /**
  * The session connection provides the underlying logic for interacting with

@@ -1,8 +1,8 @@
 <?php
-namespace Aws\S3\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
 
-use \Aws\Crypto\MetadataStrategyInterface;
-use \Aws\Crypto\MetadataEnvelope;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataStrategyInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
 
 class HeadersMetadataStrategy implements MetadataStrategyInterface
 {

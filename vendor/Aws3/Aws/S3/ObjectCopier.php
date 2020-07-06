@@ -1,11 +1,11 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Arn\ArnParser;
-use Aws\Arn\S3\AccessPointArn;
-use Aws\Exception\MultipartUploadException;
-use Aws\Result;
-use Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use InvalidArgumentException;
 
@@ -135,7 +135,7 @@ class ObjectCopier implements PromisorInterface
     {
         if (empty($location['Bucket']) || empty($location['Key'])) {
             throw new \InvalidArgumentException('Locations provided to an'
-                . ' Aws\S3\ObjectCopier must have a non-empty Bucket and Key');
+                . ' DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ObjectCopier must have a non-empty Bucket and Key');
         }
     }
 

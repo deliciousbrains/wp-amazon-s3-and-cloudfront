@@ -1,7 +1,7 @@
 <?php
-namespace Aws\RAM\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\RAM\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AWS Resource Access Manager** service.

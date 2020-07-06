@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Retry;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry;
 
-use Aws\Retry\Exception\ConfigurationException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {

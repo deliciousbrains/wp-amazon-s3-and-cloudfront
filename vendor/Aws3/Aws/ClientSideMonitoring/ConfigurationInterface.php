@@ -1,5 +1,5 @@
 <?php
-namespace Aws\ClientSideMonitoring;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
 /**
  * Provides access to client-side monitoring configuration options:

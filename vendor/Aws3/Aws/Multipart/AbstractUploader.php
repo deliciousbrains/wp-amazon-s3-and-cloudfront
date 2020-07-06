@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Multipart;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
-use Aws\AwsClientInterface as Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;

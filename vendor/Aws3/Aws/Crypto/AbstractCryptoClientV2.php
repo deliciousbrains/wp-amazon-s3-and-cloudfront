@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use Aws\Crypto\Cipher\CipherMethod;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 
 /**

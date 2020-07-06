@@ -1,9 +1,9 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Arn\Exception\InvalidArnException;
-use Aws\Arn\S3\AccessPointArn;
-use Aws\Arn\ArnParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 

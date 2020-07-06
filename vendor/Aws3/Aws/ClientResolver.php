@@ -1,23 +1,23 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Validator;
-use Aws\Api\ApiProvider;
-use Aws\Api\Service;
-use Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
-use Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
-use Aws\ClientSideMonitoring\Configuration;
-use Aws\Credentials\Credentials;
-use Aws\Credentials\CredentialsInterface;
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\EndpointDiscovery\ConfigurationInterface;
-use Aws\EndpointDiscovery\ConfigurationProvider;
-use Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
-use Aws\Retry\ConfigurationInterface as RetryConfigInterface;
-use Aws\Retry\ConfigurationProvider as RetryConfigProvider;
-use Aws\Signature\SignatureProvider;
-use Aws\Endpoint\EndpointProvider;
-use Aws\Credentials\CredentialProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface as RetryConfigInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationProvider as RetryConfigProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\EndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider;
 use InvalidArgumentException as IAE;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
@@ -44,7 +44,7 @@ class ClientResolver
         'service' => [
             'type'     => 'value',
             'valid'    => ['string'],
-            'doc'      => 'Name of the service to utilize. This value will be supplied by default when using one of the SDK clients (e.g., Aws\\S3\\S3Client).',
+            'doc'      => 'Name of the service to utilize. This value will be supplied by default when using one of the SDK clients (e.g., DeliciousBrains\WP_Offload_Media\Aws3\Aws\\S3\\S3Client).',
             'required' => true,
             'internal' => true
         ],
@@ -88,7 +88,7 @@ class ClientResolver
         'signature_provider' => [
             'type'    => 'value',
             'valid'   => ['callable'],
-            'doc'     => 'A callable that accepts a signature version name (e.g., "v4"), a service name, and region, and  returns a SignatureInterface object or null. This provider is used to create signers utilized by the client. See Aws\\Signature\\SignatureProvider for a list of built-in providers',
+            'doc'     => 'A callable that accepts a signature version name (e.g., "v4"), a service name, and region, and  returns a SignatureInterface object or null. This provider is used to create signers utilized by the client. See DeliciousBrains\WP_Offload_Media\Aws3\Aws\\Signature\\SignatureProvider for a list of built-in providers',
             'default' => [__CLASS__, '_default_signature_provider'],
         ],
         'api_provider' => [
@@ -102,7 +102,7 @@ class ClientResolver
             'type'     => 'value',
             'valid'    => ['callable'],
             'fn'       => [__CLASS__, '_apply_endpoint_provider'],
-            'doc'      => 'An optional PHP callable that accepts a hash of options including a "service" and "region" key and returns NULL or a hash of endpoint data, of which the "endpoint" key is required. See Aws\\Endpoint\\EndpointProvider for a list of built-in providers.',
+            'doc'      => 'An optional PHP callable that accepts a hash of options including a "service" and "region" key and returns NULL or a hash of endpoint data, of which the "endpoint" key is required. See DeliciousBrains\WP_Offload_Media\Aws3\Aws\\Endpoint\\EndpointProvider for a list of built-in providers.',
             'default' => [__CLASS__, '_default_endpoint_provider'],
         ],
         'serializer' => [
@@ -139,14 +139,14 @@ class ClientResolver
         'credentials' => [
             'type'    => 'value',
             'valid'   => [CredentialsInterface::class, CacheInterface::class, 'array', 'bool', 'callable'],
-            'doc'     => 'Specifies the credentials used to sign requests. Provide an Aws\Credentials\CredentialsInterface object, an associative array of "key", "secret", and an optional "token" key, `false` to use null credentials, or a callable credentials provider used to create credentials or return null. See Aws\\Credentials\\CredentialProvider for a list of built-in credentials providers. If no credentials are provided, the SDK will attempt to load them from the environment.',
+            'doc'     => 'Specifies the credentials used to sign requests. Provide an DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface object, an associative array of "key", "secret", and an optional "token" key, `false` to use null credentials, or a callable credentials provider used to create credentials or return null. See DeliciousBrains\WP_Offload_Media\Aws3\Aws\\Credentials\\CredentialProvider for a list of built-in credentials providers. If no credentials are provided, the SDK will attempt to load them from the environment.',
             'fn'      => [__CLASS__, '_apply_credentials'],
             'default' => [__CLASS__, '_default_credential_provider'],
         ],
         'endpoint_discovery' => [
             'type'     => 'value',
             'valid'    => [ConfigurationInterface::class, CacheInterface::class, 'array', 'callable'],
-            'doc'      => 'Specifies settings for endpoint discovery. Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface, an instance Aws\CacheInterface, a callable that provides a promise for a Configuration object, or an associative array with the following keys: enabled: (bool) Set to true to enable endpoint discovery, false to explicitly disable it. Defaults to false; cache_limit: (int) The maximum number of keys in the endpoints cache. Defaults to 1000.',
+            'doc'      => 'Specifies settings for endpoint discovery. Provide an instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface, an instance DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, a callable that provides a promise for a Configuration object, or an associative array with the following keys: enabled: (bool) Set to true to enable endpoint discovery, false to explicitly disable it. Defaults to false; cache_limit: (int) The maximum number of keys in the endpoints cache. Defaults to 1000.',
             'fn'       => [__CLASS__, '_apply_endpoint_discovery'],
             'default'  => [__CLASS__, '_default_endpoint_discovery_provider']
         ],
@@ -160,7 +160,7 @@ class ClientResolver
         'retries' => [
             'type'    => 'value',
             'valid'   => ['int', RetryConfigInterface::class, CacheInterface::class, 'callable', 'array'],
-            'doc'     => "Configures the retry mode and maximum number of allowed retries for a client (pass 0 to disable retries). Provide an integer for 'legacy' mode with the specified number of retries. Otherwise provide an instance of Aws\Retry\ConfigurationInterface, an instance of  Aws\CacheInterface, a callable function, or an array with the following keys: mode: (string) Set to 'legacy', 'standard' (uses retry quota management), or 'adapative' (an experimental mode that adds client-side rate limiting to standard mode); max_attempts: (int) The maximum number of attempts for a given request. ",
+            'doc'     => "Configures the retry mode and maximum number of allowed retries for a client (pass 0 to disable retries). Provide an integer for 'legacy' mode with the specified number of retries. Otherwise provide an instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface, an instance of  DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, a callable function, or an array with the following keys: mode: (string) Set to 'legacy', 'standard' (uses retry quota management), or 'adapative' (an experimental mode that adds client-side rate limiting to standard mode); max_attempts: (int) The maximum number of attempts for a given request. ",
             'fn'      => [__CLASS__, '_apply_retries'],
             'default' => [RetryConfigProvider::class, 'defaultProvider']
         ],
@@ -179,10 +179,10 @@ class ClientResolver
         ],
         'csm' => [
             'type'     => 'value',
-            'valid'    => [\Aws\ClientSideMonitoring\ConfigurationInterface::class, 'callable', 'array', 'bool'],
+            'valid'    => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface::class, 'callable', 'array', 'bool'],
             'doc'      => 'CSM options for the client. Provides a callable wrapping a promise, a boolean "false", an instance of ConfigurationInterface, or an associative array of "enabled", "host", "port", and "client_id".',
             'fn'       => [__CLASS__, '_apply_csm'],
-            'default'  => [\Aws\ClientSideMonitoring\ConfigurationProvider::class, 'defaultProvider']
+            'default'  => [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::class, 'defaultProvider']
         ],
         'http' => [
             'type'    => 'value',
@@ -199,7 +199,7 @@ class ClientResolver
         'handler' => [
             'type'     => 'value',
             'valid'    => ['callable'],
-            'doc'      => 'A handler that accepts a command object, request object and returns a promise that is fulfilled with an Aws\ResultInterface object or rejected with an Aws\Exception\AwsException. A handler does not accept a next handler as it is terminal and expected to fulfill a command. If no handler is provided, a default Guzzle handler will be utilized.',
+            'doc'      => 'A handler that accepts a command object, request object and returns a promise that is fulfilled with an DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface object or rejected with an DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException. A handler does not accept a next handler as it is terminal and expected to fulfill a command. If no handler is provided, a default Guzzle handler will be utilized.',
             'fn'       => [__CLASS__, '_apply_handler'],
             'default'  => [__CLASS__, '_default_handler']
         ],
@@ -455,7 +455,7 @@ class ClientResolver
             $args['credentials'] = CredentialProvider::defaultProvider($args);
         } else {
             throw new IAE('Credentials must be an instance of '
-                . 'Aws\Credentials\CredentialsInterface, an associative '
+                . 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface, an associative '
                 . 'array that contains "key", "secret", and an optional "token" '
                 . 'key-value pairs, a credentials provider function, or false.');
         }
@@ -471,9 +471,9 @@ class ClientResolver
         if ($value === false) {
             $value = new Configuration(
                 false,
-                \Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_HOST,
-                \Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_PORT,
-                \Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_CLIENT_ID
+                \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_HOST,
+                \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_PORT,
+                \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_CLIENT_ID
             );
             $args['csm'] = $value;
         }

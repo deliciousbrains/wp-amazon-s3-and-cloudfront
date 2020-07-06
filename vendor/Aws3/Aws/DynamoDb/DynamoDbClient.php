@@ -1,99 +1,99 @@
 <?php
-namespace Aws\DynamoDb;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb;
 
-use Aws\Api\Parser\Crc32ValidatingParser;
-use Aws\AwsClient;
-use Aws\ClientResolver;
-use Aws\Exception\AwsException;
-use Aws\HandlerList;
-use Aws\Middleware;
-use Aws\RetryMiddleware;
-use Aws\RetryMiddlewareV2;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Crc32ValidatingParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddlewareV2;
 
 /**
  * This client is used to interact with the **Amazon DynamoDB** service.
  *
- * @method \Aws\Result batchGetItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result batchGetItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise batchGetItemAsync(array $args = [])
- * @method \Aws\Result batchWriteItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result batchWriteItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise batchWriteItemAsync(array $args = [])
- * @method \Aws\Result createTable(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result createTable(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise createTableAsync(array $args = [])
- * @method \Aws\Result deleteItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteItemAsync(array $args = [])
- * @method \Aws\Result deleteTable(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteTable(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteTableAsync(array $args = [])
- * @method \Aws\Result describeTable(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeTable(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeTableAsync(array $args = [])
- * @method \Aws\Result getItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getItemAsync(array $args = [])
- * @method \Aws\Result listTables(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listTables(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listTablesAsync(array $args = [])
- * @method \Aws\Result putItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result putItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise putItemAsync(array $args = [])
- * @method \Aws\Result query(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result query(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise queryAsync(array $args = [])
- * @method \Aws\Result scan(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result scan(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise scanAsync(array $args = [])
- * @method \Aws\Result updateItem(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateItem(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateItemAsync(array $args = [])
- * @method \Aws\Result updateTable(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateTable(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateTableAsync(array $args = [])
- * @method \Aws\Result createBackup(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result createBackup(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise createBackupAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result createGlobalTable(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result createGlobalTable(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise createGlobalTableAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result deleteBackup(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteBackup(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteBackupAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeBackup(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeBackup(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeBackupAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeContinuousBackups(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeContinuousBackups(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeContinuousBackupsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeContributorInsights(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeContributorInsights(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeContributorInsightsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeEndpoints(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeEndpoints(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeEndpointsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeGlobalTable(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeGlobalTable(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeGlobalTableAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeGlobalTableSettings(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeGlobalTableSettings(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeGlobalTableSettingsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeLimits(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeLimits(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeLimitsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeTableReplicaAutoScaling(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeTableReplicaAutoScaling(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeTableReplicaAutoScalingAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result describeTimeToLive(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeTimeToLive(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeTimeToLiveAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result listBackups(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listBackups(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listBackupsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result listContributorInsights(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listContributorInsights(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listContributorInsightsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result listGlobalTables(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listGlobalTables(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listGlobalTablesAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result listTagsOfResource(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listTagsOfResource(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listTagsOfResourceAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result restoreTableFromBackup(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result restoreTableFromBackup(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise restoreTableFromBackupAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result restoreTableToPointInTime(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result restoreTableToPointInTime(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise restoreTableToPointInTimeAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result tagResource(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result tagResource(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result transactGetItems(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result transactGetItems(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise transactGetItemsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result transactWriteItems(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result transactWriteItems(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise transactWriteItemsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result untagResource(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result untagResource(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateContinuousBackups(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateContinuousBackups(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateContinuousBackupsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateContributorInsights(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateContributorInsights(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateContributorInsightsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateGlobalTable(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateGlobalTable(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateGlobalTableAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateGlobalTableSettings(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateGlobalTableSettings(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateGlobalTableSettingsAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateTableReplicaAutoScaling(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateTableReplicaAutoScaling(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateTableReplicaAutoScalingAsync(array $args = []) (supported in versions 2012-08-10)
- * @method \Aws\Result updateTimeToLive(array $args = []) (supported in versions 2012-08-10)
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result updateTimeToLive(array $args = []) (supported in versions 2012-08-10)
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise updateTimeToLiveAsync(array $args = []) (supported in versions 2012-08-10)
  */
 class DynamoDbClient extends AwsClient
@@ -128,7 +128,7 @@ class DynamoDbClient extends AwsClient
     public static function _applyRetryConfig($value, array &$args, HandlerList $list)
     {
         if ($value) {
-            $config = \Aws\Retry\ConfigurationProvider::unwrap($value);
+            $config = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationProvider::unwrap($value);
 
             if ($config->getMode() === 'legacy') {
                 $list->appendSign(

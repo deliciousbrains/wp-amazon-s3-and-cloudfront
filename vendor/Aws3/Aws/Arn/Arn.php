@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Arn;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn;
 
-use Aws\Arn\Exception\InvalidArnException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
 
 /**
  * Amazon Resource Names (ARNs) uniquely identify AWS resources. The Arn class

@@ -1,8 +1,8 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Exception\AwsException;
-use Aws\Retry\RetryHelperTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\RetryHelperTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
@@ -61,7 +61,7 @@ class RetryMiddleware
      *
      * The optional $extraConfig parameter is an associative array
      * that specifies additional retry conditions on top of the ones specified
-     * by default by the Aws\RetryMiddleware class, with the following keys:
+     * by default by the DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware class, with the following keys:
      *
      * - errorCodes: (string[]) An indexed array of AWS exception codes to retry.
      *   Optional.

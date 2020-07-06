@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Textract\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Textract\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon Textract** service.

@@ -1,7 +1,7 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 use Aws\CommandInterface;
 use Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
@@ -47,7 +47,7 @@ class Transfer implements PromisorInterface
      *   iterator. If the $source option is not an array, then this option is
      *   ignored.
      * - before: (callable) A callback to invoke before each transfer. The
-     *   callback accepts a single argument: Aws\CommandInterface $command.
+     *   callback accepts a single argument: DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command.
      *   The provided command will be either a GetObject, PutObject,
      *   InitiateMultipartUpload, or UploadPart command.
      * - mup_threshold: (int) Size in bytes in which a multipart upload should

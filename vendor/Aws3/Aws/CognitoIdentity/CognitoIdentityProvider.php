@@ -1,7 +1,7 @@
 <?php
-namespace Aws\CognitoIdentity;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\CognitoIdentity;
 
-use Aws\Credentials\Credentials;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 class CognitoIdentityProvider

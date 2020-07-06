@@ -1,11 +1,11 @@
 <?php
-namespace Aws\S3\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\Multipart\UploadState;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
 
-class S3MultipartUploadException extends \Aws\Exception\MultipartUploadException
+class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException
 {
     /** @var string Bucket of the transfer object */
     private $bucket;

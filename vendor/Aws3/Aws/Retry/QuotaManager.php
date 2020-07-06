@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Retry;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry;
 
-use Aws\Exception\AwsException;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 
 /**
  * @internal

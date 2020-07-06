@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Multipart;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
 /**
  * Representation of the multipart upload.

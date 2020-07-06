@@ -1,12 +1,12 @@
 <?php
 
-namespace Aws\ClientSideMonitoring;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\MonitoringEventsInterface;
-use Aws\ResponseContainerInterface;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
@@ -142,7 +142,7 @@ abstract class AbstractMonitoringMiddleware
             'Service' => $this->getService(),
             'Timestamp' => (int) floor(microtime(true) * 1000),
             'UserAgent' => substr(
-                $request->getHeaderLine('User-Agent') . ' ' . \Aws\default_user_agent(),
+                $request->getHeaderLine('User-Agent') . ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_user_agent(),
                 0,
                 256
             ),

@@ -1,8 +1,8 @@
 <?php
-namespace Aws\S3\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 
 /**
  * Exception thrown when errors occur while deleting objects using a

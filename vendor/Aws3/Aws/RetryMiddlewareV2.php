@@ -1,11 +1,11 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Exception\AwsException;
-use Aws\Retry\ConfigurationInterface;
-use Aws\Retry\QuotaManager;
-use Aws\Retry\RateLimiter;
-use Aws\Retry\RetryHelperTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\QuotaManager;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\RateLimiter;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\RetryHelperTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;

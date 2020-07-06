@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Efs\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Efs\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Amazon EFS exception.

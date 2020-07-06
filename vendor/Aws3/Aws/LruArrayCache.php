@@ -1,5 +1,5 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Simple in-memory LRU cache that limits the number of cached entries.

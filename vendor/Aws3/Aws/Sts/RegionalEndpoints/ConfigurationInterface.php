@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Sts\RegionalEndpoints;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints;
 
 /**
  * Provides access to STS regional endpoints configuration options: endpoints_type

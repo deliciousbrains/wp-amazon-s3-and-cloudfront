@@ -1,5 +1,5 @@
 <?php
-namespace Aws\S3\RegionalEndpoint;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint;
 
 /**
  * Provides access to S3 regional endpoints configuration options: endpoints_type

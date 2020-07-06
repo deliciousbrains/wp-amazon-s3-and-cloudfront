@@ -1,5 +1,5 @@
 <?php
-namespace Aws\CloudFront;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\CloudFront;
 
 /**
  * @internal

@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DirectConnect\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DirectConnect\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the AWS Direct Connect service.

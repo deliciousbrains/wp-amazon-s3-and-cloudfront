@@ -1,7 +1,7 @@
 <?php
-namespace Aws\EC2InstanceConnect\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\EC2InstanceConnect\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AWS EC2 Instance Connect** service.

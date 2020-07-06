@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use Aws\HasDataTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
 use \ArrayAccess;
 use \IteratorAggregate;
 use \InvalidArgumentException;

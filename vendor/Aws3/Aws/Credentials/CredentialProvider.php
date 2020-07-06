@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use Aws;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 use Aws\Api\DateTimeResult;
 use Aws\CacheInterface;
 use Aws\Exception\CredentialsException;
@@ -14,7 +14,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  * or rejected with an {@see \Aws\Exception\CredentialsException}.
  *
  * <code>
- * use Aws\Credentials\CredentialProvider;
+ * use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider;
  * $provider = CredentialProvider::defaultProvider();
  * // Returns a CredentialsInterface or throws.
  * $creds = $provider()->wait();
@@ -212,7 +212,7 @@ class CredentialProvider
 
     /**
      * Wraps a credential provider and saves provided credentials in an
-     * instance of Aws\CacheInterface. Forwards calls when no credentials found
+     * instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface. Forwards calls when no credentials found
      * in cache and updates cache with the results.
      *
      * @param callable $provider Credentials provider function to wrap

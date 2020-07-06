@@ -1,12 +1,12 @@
 <?php
-namespace Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use Aws\Api\DateTimeResult;
-use Aws\Api\ListShape;
-use Aws\Api\MapShape;
-use Aws\Api\Parser\Exception\ParserException;
-use Aws\Api\Shape;
-use Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 
 /**
  * @internal Implements standard XML parsing for REST-XML and Query protocols.

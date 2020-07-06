@@ -1,7 +1,7 @@
 <?php
-namespace Aws\CloudHsm\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\CloudHsm\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * AWS CloudHSM exception.

@@ -1,7 +1,7 @@
 <?php
-namespace Aws\S3\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
 
-use Aws\Crypto\MaterialsProviderInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface;
 
 trait CryptoParamsTraitV2
 {

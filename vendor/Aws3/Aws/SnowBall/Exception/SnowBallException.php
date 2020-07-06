@@ -1,7 +1,7 @@
 <?php
-namespace Aws\SnowBall\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\SnowBall\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon Import/Export Snowball** service.

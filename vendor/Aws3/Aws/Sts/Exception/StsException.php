@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Sts\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * AWS Security Token Service exception.

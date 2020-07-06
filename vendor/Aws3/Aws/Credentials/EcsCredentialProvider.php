@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
@@ -34,7 +34,7 @@ class EcsCredentialProvider
         $this->timeout = (float) getenv(self::ENV_TIMEOUT) ?: (isset($config['timeout']) ? $config['timeout'] : 1.0);
         $this->client = isset($config['client'])
             ? $config['client']
-            : \Aws\default_http_handler();
+            : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_http_handler();
     }
 
     /**

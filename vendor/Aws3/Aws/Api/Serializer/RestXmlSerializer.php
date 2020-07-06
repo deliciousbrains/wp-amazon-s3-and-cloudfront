@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\StructureShape;
-use Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 
 /**
  * @internal

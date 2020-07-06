@@ -1,10 +1,10 @@
 <?php
-namespace Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use Aws\Api\Service;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 
@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
  */
 abstract class AbstractParser
 {
-    /** @var \Aws\Api\Service Representation of the service API*/
+    /** @var \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service Representation of the service API*/
     protected $api;
 
     /** @var callable */

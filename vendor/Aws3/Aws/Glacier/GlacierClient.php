@@ -1,85 +1,85 @@
 <?php
-namespace Aws\Glacier;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Glacier;
 
-use Aws\Api\ApiProvider;
-use Aws\Api\DocModel;
-use Aws\Api\Service;
-use Aws\AwsClient;
-use Aws\CommandInterface;
-use Aws\Exception\CouldNotCreateChecksumException;
-use Aws\HashingStream;
-use Aws\Middleware;
-use Aws\PhpHash;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HashingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\PhpHash;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
  * This client is used to interact with the **Amazon Glacier** service.
  *
- * @method \Aws\Result abortMultipartUpload(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result abortMultipartUpload(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise abortMultipartUploadAsync(array $args = [])
- * @method \Aws\Result abortVaultLock(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result abortVaultLock(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise abortVaultLockAsync(array $args = [])
- * @method \Aws\Result addTagsToVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result addTagsToVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise addTagsToVaultAsync(array $args = [])
- * @method \Aws\Result completeMultipartUpload(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result completeMultipartUpload(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise completeMultipartUploadAsync(array $args = [])
- * @method \Aws\Result completeVaultLock(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result completeVaultLock(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise completeVaultLockAsync(array $args = [])
- * @method \Aws\Result createVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result createVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise createVaultAsync(array $args = [])
- * @method \Aws\Result deleteArchive(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteArchive(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteArchiveAsync(array $args = [])
- * @method \Aws\Result deleteVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteVaultAsync(array $args = [])
- * @method \Aws\Result deleteVaultAccessPolicy(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteVaultAccessPolicy(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteVaultAccessPolicyAsync(array $args = [])
- * @method \Aws\Result deleteVaultNotifications(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result deleteVaultNotifications(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteVaultNotificationsAsync(array $args = [])
- * @method \Aws\Result describeJob(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeJob(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeJobAsync(array $args = [])
- * @method \Aws\Result describeVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result describeVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeVaultAsync(array $args = [])
- * @method \Aws\Result getDataRetrievalPolicy(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getDataRetrievalPolicy(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getDataRetrievalPolicyAsync(array $args = [])
- * @method \Aws\Result getJobOutput(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getJobOutput(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getJobOutputAsync(array $args = [])
- * @method \Aws\Result getVaultAccessPolicy(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getVaultAccessPolicy(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getVaultAccessPolicyAsync(array $args = [])
- * @method \Aws\Result getVaultLock(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getVaultLock(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getVaultLockAsync(array $args = [])
- * @method \Aws\Result getVaultNotifications(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getVaultNotifications(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getVaultNotificationsAsync(array $args = [])
- * @method \Aws\Result initiateJob(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result initiateJob(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise initiateJobAsync(array $args = [])
- * @method \Aws\Result initiateMultipartUpload(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result initiateMultipartUpload(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise initiateMultipartUploadAsync(array $args = [])
- * @method \Aws\Result initiateVaultLock(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result initiateVaultLock(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise initiateVaultLockAsync(array $args = [])
- * @method \Aws\Result listJobs(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listJobs(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listJobsAsync(array $args = [])
- * @method \Aws\Result listMultipartUploads(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listMultipartUploads(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listMultipartUploadsAsync(array $args = [])
- * @method \Aws\Result listParts(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listParts(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listPartsAsync(array $args = [])
- * @method \Aws\Result listProvisionedCapacity(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listProvisionedCapacity(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listProvisionedCapacityAsync(array $args = [])
- * @method \Aws\Result listTagsForVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listTagsForVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listTagsForVaultAsync(array $args = [])
- * @method \Aws\Result listVaults(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listVaults(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listVaultsAsync(array $args = [])
- * @method \Aws\Result purchaseProvisionedCapacity(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result purchaseProvisionedCapacity(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise purchaseProvisionedCapacityAsync(array $args = [])
- * @method \Aws\Result removeTagsFromVault(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result removeTagsFromVault(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise removeTagsFromVaultAsync(array $args = [])
- * @method \Aws\Result setDataRetrievalPolicy(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result setDataRetrievalPolicy(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise setDataRetrievalPolicyAsync(array $args = [])
- * @method \Aws\Result setVaultAccessPolicy(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result setVaultAccessPolicy(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise setVaultAccessPolicyAsync(array $args = [])
- * @method \Aws\Result setVaultNotifications(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result setVaultNotifications(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise setVaultNotificationsAsync(array $args = [])
- * @method \Aws\Result uploadArchive(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result uploadArchive(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise uploadArchiveAsync(array $args = [])
- * @method \Aws\Result uploadMultipartPart(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result uploadMultipartPart(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise uploadMultipartPartAsync(array $args = [])
  */
 class GlacierClient extends AwsClient

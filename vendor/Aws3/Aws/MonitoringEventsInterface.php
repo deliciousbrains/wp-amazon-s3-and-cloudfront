@@ -1,5 +1,5 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 /**
  * Interface for adding and retrieving client-side monitoring events

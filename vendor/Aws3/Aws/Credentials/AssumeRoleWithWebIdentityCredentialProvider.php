@@ -1,10 +1,10 @@
 <?php
-namespace Aws\Credentials;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
-use Aws\Exception\AwsException;
-use Aws\Exception\CredentialsException;
-use Aws\Result;
-use Aws\Sts\StsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\StsClient;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**

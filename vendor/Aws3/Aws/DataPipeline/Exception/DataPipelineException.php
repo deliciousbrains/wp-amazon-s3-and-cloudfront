@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DataPipeline\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DataPipeline\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the AWS Data Pipeline service.

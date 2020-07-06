@@ -1,8 +1,8 @@
 <?php
 
-namespace Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
-use Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
 use Exception;
 
 /**
@@ -70,7 +70,7 @@ class DateTimeResult extends \DateTime implements \JsonSerializable
                 } catch (Exception $exception) {
                     return self::fromISO8601($timestamp);
                 }
-            } else if (\Aws\is_valid_epoch($timestamp)) {
+            } else if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\is_valid_epoch($timestamp)) {
                 return self::fromEpoch($timestamp);
             }
             return self::fromISO8601($timestamp);

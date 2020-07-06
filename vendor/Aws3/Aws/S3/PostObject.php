@@ -1,7 +1,7 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 
 /**

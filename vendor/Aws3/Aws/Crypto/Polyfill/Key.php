@@ -1,12 +1,12 @@
 <?php
-namespace Aws\Crypto\Polyfill;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill;
 
 /**
  * Class Key
  *
  * Wraps a string to keep it hidden from stack traces.
  *
- * @package Aws\Crypto\Polyfill
+ * @package DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill
  */
 class Key
 {

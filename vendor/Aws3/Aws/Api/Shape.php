@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
 /**
  * Base class representing a modeled shape.

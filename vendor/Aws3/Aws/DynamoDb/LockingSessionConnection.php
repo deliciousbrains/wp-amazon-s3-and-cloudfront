@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DynamoDb;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb;
 
-use Aws\DynamoDb\Exception\DynamoDbException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb\Exception\DynamoDbException;
 
 /**
  * The locking connection adds locking logic to the read operation.

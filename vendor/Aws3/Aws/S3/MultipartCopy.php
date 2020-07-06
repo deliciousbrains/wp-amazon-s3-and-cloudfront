@@ -1,10 +1,10 @@
 <?php
 
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Arn\ArnParser;
-use Aws\Multipart\AbstractUploadManager;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 class MultipartCopy extends AbstractUploadManager
@@ -25,13 +25,13 @@ class MultipartCopy extends AbstractUploadManager
      *   private by default.
      * - before_complete: (callable) Callback to invoke before the
      *   `CompleteMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_initiate: (callable) Callback to invoke before the
      *   `CreateMultipartUpload` operation. The callback should have a function
-     *   signature like `function (Aws\Command $command) {...}`.
+     *   signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - before_upload: (callable) Callback to invoke before `UploadPartCopy`
      *   operations. The callback should have a function signature like
-     *   `function (Aws\Command $command) {...}`.
+     *   `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - bucket: (string, required) Name of the bucket to which the object is
      *   being uploaded.
      * - concurrency: (int, default=int(5)) Maximum number of concurrent
@@ -44,11 +44,11 @@ class MultipartCopy extends AbstractUploadManager
      *   options detailed above to update the commands directly.
      * - part_size: (int, default=int(5242880)) Part size, in bytes, to use when
      *   doing a multipart upload. This must between 5 MB and 5 GB, inclusive.
-     * - state: (Aws\Multipart\UploadState) An object that represents the state
+     * - state: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState) An object that represents the state
      *   of the multipart upload and that is used to resume a previous upload.
      *   When this option is provided, the `bucket`, `key`, and `part_size`
      *   options are ignored.
-     * - source_metadata: (Aws\ResultInterface) An object that represents the
+     * - source_metadata: (DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface) An object that represents the
      *   result of executing a HeadObject command on the copy source.
      *
      * @param S3ClientInterface $client Client used for the upload.

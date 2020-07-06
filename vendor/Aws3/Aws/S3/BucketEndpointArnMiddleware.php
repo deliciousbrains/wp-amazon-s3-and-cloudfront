@@ -1,16 +1,16 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Api\Service;
-use Aws\Arn\ArnInterface;
-use Aws\Arn\ArnParser;
-use Aws\Arn\Exception\InvalidArnException;
-use Aws\Arn\S3\AccessPointArn;
-use Aws\CommandInterface;
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\Exception\InvalidRegionException;
-use Aws\Exception\UnresolvedEndpointException;
-use Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidRegionException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
@@ -209,7 +209,7 @@ class BucketEndpointArnMiddleware
      * if successful
      *
      * @param $arn
-     * @return \Aws\Endpoint\Partition
+     * @return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\Partition
      */
     private function validateArn($arn)
     {

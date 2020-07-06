@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Crypto\Polyfill;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill;
 
-use Aws\Exception\CryptoPolyfillException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CryptoPolyfillException;
 use InvalidArgumentException;
 use RangeException;
 
@@ -15,7 +15,7 @@ use RangeException;
  *
  * Supports AES key sizes of 128-bit, 192-bit, and 256-bit.
  *
- * @package Aws\Crypto\Polyfill
+ * @package DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill
  */
 class AesGcm
 {

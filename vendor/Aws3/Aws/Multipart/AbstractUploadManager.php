@@ -1,13 +1,13 @@
 <?php
-namespace Aws\Multipart;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
-use Aws\AwsClientInterface as Client;
-use Aws\CommandInterface;
-use Aws\CommandPool;
-use Aws\Exception\AwsException;
-use Aws\Exception\MultipartUploadException;
-use Aws\Result;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException as IAE;

@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Arn\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3;
 
-use Aws\Arn\AccessPointArn as BaseAccessPointArn;
-use Aws\Arn\ArnInterface;
-use Aws\Arn\Exception\InvalidArnException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn as BaseAccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
 
 /**
  * @internal

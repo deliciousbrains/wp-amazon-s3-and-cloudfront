@@ -1,7 +1,7 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use Psr\Log\InvalidArgumentException;
 
@@ -76,7 +76,7 @@ class EndpointParameterMiddleware
 
             $uri = $request->getUri();
             $host = $prefix . $uri->getHost();
-            if (!\Aws\is_valid_hostname($host)) {
+            if (!\DeliciousBrains\WP_Offload_Media\Aws3\Aws\is_valid_hostname($host)) {
                 throw new \InvalidArgumentException(
                     "The supplied parameters result in an invalid hostname: '{$host}'."
                 );

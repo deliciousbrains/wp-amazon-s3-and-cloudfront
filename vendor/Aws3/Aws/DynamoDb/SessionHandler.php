@@ -1,5 +1,5 @@
 <?php
-namespace Aws\DynamoDb;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb;
 
 /**
  * Provides an interface for using Amazon DynamoDB as a session store by hooking
@@ -55,7 +55,7 @@ class SessionHandler implements \SessionHandlerInterface
      * - max_lock_retry_microtime:      Max time (µs) to wait between lock attempts.
      *
      * You can find the full list of parameters and defaults within the trait
-     * Aws\DynamoDb\SessionConnectionConfigTrait
+     * DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb\SessionConnectionConfigTrait
      *
      * @param DynamoDbClient $client Client for doing DynamoDB operations
      * @param array          $config Configuration for the Session Handler

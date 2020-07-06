@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Sqs\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sqs\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the Amazon Simple Queue Service.

@@ -1,10 +1,10 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\CacheInterface;
-use Aws\LruArrayCache;
-use Aws\Result;
-use Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\CachingStream;
@@ -416,7 +416,7 @@ class StreamWrapper
 
         // Filter our "/" keys added by the console as directories, and ensure
         // that if a filter function is provided that it passes the filter.
-        $this->objectIterator = \Aws\flatmap(
+        $this->objectIterator = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\flatmap(
             $this->getClient()->getPaginator('ListObjects', $op),
             function (Result $result) use ($filterFn) {
                 $contentsAndPrefixes = $result->search('[Contents[], CommonPrefixes[]][]');

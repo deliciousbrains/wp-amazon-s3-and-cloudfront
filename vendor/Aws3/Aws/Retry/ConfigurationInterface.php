@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Retry;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry;
 
 /**
  * Provides access to retry configuration

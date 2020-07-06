@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DynamoDb;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb;
 
-use Aws\DynamoDb\Exception\DynamoDbException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\DynamoDb\Exception\DynamoDbException;
 
 /**
  * The standard connection performs the read and write operations to DynamoDB.

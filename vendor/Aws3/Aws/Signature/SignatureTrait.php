@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Signature;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature;
 
 /**
  * Provides signature calculation for SignatureV4.

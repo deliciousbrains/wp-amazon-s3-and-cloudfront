@@ -1,10 +1,10 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Service;
-use Aws\Api\Validator;
-use Aws\Credentials\CredentialsInterface;
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream;
@@ -317,8 +317,8 @@ final class Middleware
     /**
      * Creates a middleware that applies a map function to results.
      *
-     * @param callable $f Map function that accepts an Aws\ResultInterface and
-     *                    returns an Aws\ResultInterface.
+     * @param callable $f Map function that accepts an DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface and
+     *                    returns an DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface.
      *
      * @return callable
      */

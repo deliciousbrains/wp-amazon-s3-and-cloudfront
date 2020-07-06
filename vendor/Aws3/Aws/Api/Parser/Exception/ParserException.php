@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Api\Parser\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
-use Aws\ResponseContainerInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 class ParserException extends \RuntimeException implements

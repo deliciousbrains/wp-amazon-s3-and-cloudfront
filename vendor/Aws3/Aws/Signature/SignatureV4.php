@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Signature;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature;
 
-use Aws\Credentials\CredentialsInterface;
-use Aws\Exception\CouldNotCreateChecksumException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CouldNotCreateChecksumException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 

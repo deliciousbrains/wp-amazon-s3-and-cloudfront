@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Api;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 
-use Aws\Exception\UnresolvedApiException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException;
 
 /**
  * API providers.
@@ -13,9 +13,9 @@ use Aws\Exception\UnresolvedApiException;
  * You can wrap your calls to an API provider with the
  * {@see ApiProvider::resolve} method to ensure that API data is created. If the
  * API data is not created, then the resolve() method will throw a
- * {@see Aws\Exception\UnresolvedApiException}.
+ * {@see DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException}.
  *
- *     use Aws\Api\ApiProvider;
+ *     use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
  *     $provider = ApiProvider::defaultProvider();
  *     // Returns an array or NULL.
  *     $data = $provider('api', 's3', '2006-03-01');
@@ -23,14 +23,14 @@ use Aws\Exception\UnresolvedApiException;
  *     $data = ApiProvider::resolve($provider, 'api', 'elasticfood', '2020-01-01');
  *
  * You can compose multiple providers into a single provider using
- * {@see Aws\or_chain}. This method accepts providers as arguments and
+ * {@see DeliciousBrains\WP_Offload_Media\Aws3\Aws\or_chain}. This method accepts providers as arguments and
  * returns a new function that will invoke each provider until a non-null value
  * is returned.
  *
  *     $a = ApiProvider::filesystem(sys_get_temp_dir() . '/aws-beta-models');
  *     $b = ApiProvider::manifest();
  *
- *     $c = \Aws\or_chain($a, $b);
+ *     $c = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\or_chain($a, $b);
  *     $data = $c('api', 'betaservice', '2015-08-08'); // $a handles this.
  *     $data = $c('api', 's3', '2006-03-01');          // $b handles this.
  *     $data = $c('api', 'invalid', '2014-12-15');     // Neither handles this.
@@ -94,7 +94,7 @@ class ApiProvider
      */
     public static function defaultProvider()
     {
-        return new self(__DIR__ . '/../data', \Aws\manifest());
+        return new self(__DIR__ . '/../data', \DeliciousBrains\WP_Offload_Media\Aws3\Aws\manifest());
     }
 
     /**
@@ -195,7 +195,7 @@ class ApiProvider
         $path = "{$this->modelsDir}/{$service}/{$version}/{$type}.json";
 
         try {
-            return \Aws\load_compiled_json($path);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json($path);
         } catch (\InvalidArgumentException $e) {
             return null;
         }

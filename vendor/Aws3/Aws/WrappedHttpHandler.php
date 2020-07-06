@@ -1,7 +1,7 @@
 <?php
-namespace Aws;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
-use Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
@@ -81,7 +81,7 @@ class WrappedHttpHandler
             };
         } elseif (isset($options['http_stats_receiver'])) {
             throw new \InvalidArgumentException('Providing a custom HTTP stats'
-                . ' receiver to Aws\WrappedHttpHandler is not supported.');
+                . ' receiver to DeliciousBrains\WP_Offload_Media\Aws3\Aws\WrappedHttpHandler is not supported.');
         }
 
         return Promise\promise_for($fn($request, $options))

@@ -1,19 +1,19 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\Api\Parser\PayloadParserTrait;
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\HandlerList;
-use Aws\ResultInterface;
-use Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 /**
  * A trait providing S3-specific functionality. This is meant to be used in
- * classes implementing \Aws\S3\S3ClientInterface
+ * classes implementing \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface
  */
 trait S3ClientTrait
 {
@@ -130,7 +130,7 @@ trait S3ClientTrait
         $iter = $this->getIterator('ListObjects', $params);
 
         if ($regex) {
-            $iter = \Aws\filter($iter, function ($c) use ($regex) {
+            $iter = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\filter($iter, function ($c) use ($regex) {
                 return preg_match($regex, $c['Key']);
             });
         }

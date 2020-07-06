@@ -1,13 +1,13 @@
 <?php
-namespace Aws\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
-use Aws\Api\Shape;
-use Aws\CommandInterface;
-use Aws\HasDataTrait;
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
-use Aws\ResponseContainerInterface;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;

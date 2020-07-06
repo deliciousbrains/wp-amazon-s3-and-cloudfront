@@ -1,7 +1,7 @@
 <?php
-namespace Aws\ApplicationDiscoveryService\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ApplicationDiscoveryService\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AWS Application Discovery Service** service.

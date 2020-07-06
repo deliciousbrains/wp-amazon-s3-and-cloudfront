@@ -1,5 +1,5 @@
 <?php
-namespace Aws\Sns;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sns;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 

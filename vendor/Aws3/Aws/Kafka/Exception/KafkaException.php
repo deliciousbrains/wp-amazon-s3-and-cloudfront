@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Kafka\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kafka\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Managed Streaming for Kafka** service.

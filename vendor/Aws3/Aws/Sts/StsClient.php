@@ -1,30 +1,30 @@
 <?php
-namespace Aws\Sts;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts;
 
-use Aws\AwsClient;
-use Aws\CacheInterface;
-use Aws\Credentials\Credentials;
-use Aws\Result;
-use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
 
 /**
  * This client is used to interact with the **AWS Security Token Service (AWS STS)**.
  *
- * @method \Aws\Result assumeRole(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result assumeRole(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleAsync(array $args = [])
- * @method \Aws\Result assumeRoleWithSAML(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result assumeRoleWithSAML(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleWithSAMLAsync(array $args = [])
- * @method \Aws\Result assumeRoleWithWebIdentity(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result assumeRoleWithWebIdentity(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleWithWebIdentityAsync(array $args = [])
- * @method \Aws\Result decodeAuthorizationMessage(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result decodeAuthorizationMessage(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise decodeAuthorizationMessageAsync(array $args = [])
- * @method \Aws\Result getAccessKeyInfo(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getAccessKeyInfo(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getAccessKeyInfoAsync(array $args = [])
- * @method \Aws\Result getCallerIdentity(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getCallerIdentity(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getCallerIdentityAsync(array $args = [])
- * @method \Aws\Result getFederationToken(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getFederationToken(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getFederationTokenAsync(array $args = [])
- * @method \Aws\Result getSessionToken(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result getSessionToken(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
  */
 class StsClient extends AwsClient
@@ -34,14 +34,14 @@ class StsClient extends AwsClient
      * {@inheritdoc}
      *
      * In addition to the options available to
-     * {@see \Aws\AwsClient::__construct}, StsClient accepts the following
+     * {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient::__construct}, StsClient accepts the following
      * options:
      *
      * - sts_regional_endpoints:
-     *   (Aws\Sts\RegionalEndpoints\ConfigurationInterface|Aws\CacheInterface\|callable|string|array)
+     *   (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationInterface|DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface\|callable|string|array)
      *   Specifies whether to use regional or legacy endpoints for legacy regions.
-     *   Provide an Aws\Sts\RegionalEndpoints\ConfigurationInterface object, an
-     *   instance of Aws\CacheInterface, a callable configuration provider used
+     *   Provide an DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationInterface object, an
+     *   instance of DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface, a callable configuration provider used
      *   to create endpoint configuration, a string value of `legacy` or
      *   `regional`, or an associative array with the following keys:
      *   endpoint_types (string)  Set to `legacy` or `regional`, defaults to

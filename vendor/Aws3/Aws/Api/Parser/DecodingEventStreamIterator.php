@@ -1,12 +1,12 @@
 <?php
 
-namespace Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
 use \Iterator;
-use Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use Aws\Api\Parser\Exception\ParserException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
 
 /**
  * @internal Implements a decoder for a binary encoded event stream that will

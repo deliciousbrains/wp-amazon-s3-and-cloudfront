@@ -1,7 +1,7 @@
 <?php
-namespace Aws\S3\UseArnRegion;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion;
 
-use Aws;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 use Aws\S3\UseArnRegion\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface

@@ -1,8 +1,8 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\Shape;
-use Aws\Api\ListShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
 
 /**
  * @internal

@@ -1,9 +1,9 @@
 <?php
-namespace Aws\Api\Serializer;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
 
-use Aws\Api\Service;
-use Aws\Api\Shape;
-use Aws\Api\TimestampShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 
 /**
  * Formats the JSON body of a JSON-REST or JSON-RPC operation.

@@ -1,9 +1,9 @@
 <?php
-namespace Aws\S3;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
-use Aws\AwsClientInterface;
-use Aws\CommandInterface;
-use Aws\ResultInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
@@ -29,7 +29,7 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * The URL returned by this method is not signed nor does it ensure that the
      * bucket and key given to the method exist. If you need a signed URL, then
-     * use the {@see \Aws\S3\S3Client::createPresignedRequest} method and get
+     * use the {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::createPresignedRequest} method and get
      * the URI of the signed request.
      *
      * @param string $bucket  The name of the bucket where the object is located
@@ -73,9 +73,9 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $bucket  Bucket that contains the object keys
      * @param string $prefix  Optionally delete only objects under this key prefix
      * @param string $regex   Delete only objects that match this regex
-     * @param array  $options Aws\S3\BatchDelete options array.
+     * @param array  $options DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete options array.
      *
-     * @see Aws\S3\S3Client::listObjects
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::listObjects
      * @throws \RuntimeException if no prefix and no regex is given
      */
     public function deleteMatchingObjects(
@@ -93,9 +93,9 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $bucket  Bucket that contains the object keys
      * @param string $prefix  Optionally delete only objects under this key prefix
      * @param string $regex   Delete only objects that match this regex
-     * @param array  $options Aws\S3\BatchDelete options array.
+     * @param array  $options DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete options array.
      *
-     * @see Aws\S3\S3Client::listObjects
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::listObjects
      *
      * @return PromiseInterface     A promise that is settled when matching
      *                              objects are deleted.
@@ -117,7 +117,7 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * - before_upload: (callable) Callback to invoke before any upload
      *   operations during the upload process. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(3)) Maximum number of concurrent
      *   `UploadPart` operations allowed during a multipart upload.
      * - mup_threshold: (int, default=int(16777216)) The size, in bytes, allowed
@@ -136,7 +136,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $acl     ACL to apply to the object (default: private).
      * @param array  $options Options used to configure the upload process.
      *
-     * @see Aws\S3\MultipartUploader for more info about multipart uploads.
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader for more info about multipart uploads.
      * @return ResultInterface Returns the result of the upload.
      */
     public function upload(
@@ -180,7 +180,7 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * - before_upload: (callable) Callback to invoke before any upload
      *   operations during the upload process. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(5)) Maximum number of concurrent
      *   `UploadPart` operations allowed during a multipart upload.
      * - params: (array, default=array([])) Custom parameters to use with the
@@ -196,7 +196,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $acl           ACL to apply to the copy (default: private).
      * @param array  $options       Options used to configure the upload process.
      *
-     * @see Aws\S3\MultipartCopy for more info about multipart uploads.
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartCopy for more info about multipart uploads.
      * @return ResultInterface Returns the result of the copy.
      */
     public function copy(
@@ -237,9 +237,9 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $directory Full path to a directory to upload
      * @param string $bucket    Name of the bucket
      * @param string $keyPrefix Virtual directory key prefix to add to each upload
-     * @param array  $options   Options available in Aws\S3\Transfer::__construct
+     * @param array  $options   Options available in DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer::__construct
      *
-     * @see Aws\S3\Transfer for more options and customization
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer for more options and customization
      */
     public function uploadDirectory(
         $directory,
@@ -254,9 +254,9 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $directory Full path to a directory to upload
      * @param string $bucket    Name of the bucket
      * @param string $keyPrefix Virtual directory key prefix to add to each upload
-     * @param array  $options   Options available in Aws\S3\Transfer::__construct
+     * @param array  $options   Options available in DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer::__construct
      *
-     * @see Aws\S3\Transfer for more options and customization
+     * @see DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer for more options and customization
      *
      * @return PromiseInterface A promise that is settled when the upload is
      *                          complete.
@@ -274,7 +274,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $directory Directory to download to
      * @param string $bucket    Bucket to download from
      * @param string $keyPrefix Only download objects that use this key prefix
-     * @param array  $options   Options available in Aws\S3\Transfer::__construct
+     * @param array  $options   Options available in DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer::__construct
      */
     public function downloadBucket(
         $directory,
@@ -289,7 +289,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $directory Directory to download to
      * @param string $bucket    Bucket to download from
      * @param string $keyPrefix Only download objects that use this key prefix
-     * @param array  $options   Options available in Aws\S3\Transfer::__construct
+     * @param array  $options   Options available in DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Transfer::__construct
      *
      * @return PromiseInterface A promise that is settled when the download is
      *                          complete.

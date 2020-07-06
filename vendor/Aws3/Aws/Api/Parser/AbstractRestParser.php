@@ -1,11 +1,11 @@
 <?php
-namespace Aws\Api\Parser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser;
 
-use Aws\Api\DateTimeResult;
-use Aws\Api\Shape;
-use Aws\Api\StructureShape;
-use Aws\Result;
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 /**

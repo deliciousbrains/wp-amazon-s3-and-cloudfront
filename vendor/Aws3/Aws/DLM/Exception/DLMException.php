@@ -1,7 +1,7 @@
 <?php
-namespace Aws\DLM\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\DLM\Exception;
 
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Amazon Data Lifecycle Manager** service.

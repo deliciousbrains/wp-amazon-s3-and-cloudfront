@@ -1,7 +1,7 @@
 <?php
-namespace Aws\Crypto;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-use Aws\Kms\KmsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient;
 
 /**
  * Uses KMS to supply materials for encrypting and decrypting data.

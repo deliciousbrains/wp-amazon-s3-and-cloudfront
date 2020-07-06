@@ -1,11 +1,11 @@
 <?php
-namespace Aws\Api\ErrorParser;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser;
 
-use Aws\Api\Parser\PayloadParserTrait;
-use Aws\Api\Parser\XmlParser;
-use Aws\Api\Service;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\PayloadParserTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\XmlParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 /**
