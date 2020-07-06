@@ -1,18 +1,20 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
+namespace GuzzleHttp\Cookie;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
+
 /**
  * Cookie jar that stores cookies as an array
  */
-class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJarInterface
+class CookieJar implements CookieJarInterface
 {
     /** @var SetCookie[] Loaded cookie data */
     private $cookies = [];
+
     /** @var bool */
     private $strictMode;
+
     /**
      * @param bool $strictMode   Set to true to throw exceptions when invalid
      *                           cookies are added to the cookie jar.
@@ -23,13 +25,15 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
     public function __construct($strictMode = false, $cookieArray = [])
     {
         $this->strictMode = $strictMode;
+
         foreach ($cookieArray as $cookie) {
-            if (!$cookie instanceof SetCookie) {
-                $cookie = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie($cookie);
+            if (!($cookie instanceof SetCookie)) {
+                $cookie = new SetCookie($cookie);
             }
             $this->setCookie($cookie);
         }
     }
+
     /**
      * Create a new Cookie jar from an associative array and domain.
      *
@@ -42,10 +46,17 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
     {
         $cookieJar = new self();
         foreach ($cookies as $name => $value) {
-            $cookieJar->setCookie(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie(['Domain' => $domain, 'Name' => $name, 'Value' => $value, 'Discard' => true]));
+            $cookieJar->setCookie(new SetCookie([
+                'Domain'  => $domain,
+                'Name'    => $name,
+                'Value'   => $value,
+                'Discard' => true
+            ]));
         }
+
         return $cookieJar;
     }
+
     /**
      * @deprecated
      */
@@ -53,6 +64,7 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
     {
         return $value;
     }
+
     /**
      * Evaluate if this cookie should be persisted to storage
      * that survives between requests.
@@ -61,15 +73,19 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
      * @param bool $allowSessionCookies If we should persist session cookies
      * @return bool
      */
-    public static function shouldPersist(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie, $allowSessionCookies = false)
-    {
+    public static function shouldPersist(
+        SetCookie $cookie,
+        $allowSessionCookies = false
+    ) {
         if ($cookie->getExpires() || $allowSessionCookies) {
             if (!$cookie->getDiscard()) {
                 return true;
             }
         }
+
         return false;
     }
+
     /**
      * Finds and returns the cookie based on the name
      *
@@ -78,8 +94,8 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
      */
     public function getCookieByName($name)
     {
-        // don't allow a null name
-        if ($name === null) {
+        // don't allow a non string name
+        if ($name === null || !is_scalar($name)) {
             return null;
         }
         foreach ($this->cookies as $cookie) {
@@ -87,39 +103,60 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
                 return $cookie;
             }
         }
+
+        return null;
     }
+
     public function toArray()
     {
-        return array_map(function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie) {
+        return array_map(function (SetCookie $cookie) {
             return $cookie->toArray();
         }, $this->getIterator()->getArrayCopy());
     }
+
     public function clear($domain = null, $path = null, $name = null)
     {
         if (!$domain) {
             $this->cookies = [];
             return;
         } elseif (!$path) {
-            $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie) use($path, $domain) {
-                return !$cookie->matchesDomain($domain);
-            });
+            $this->cookies = array_filter(
+                $this->cookies,
+                function (SetCookie $cookie) use ($domain) {
+                    return !$cookie->matchesDomain($domain);
+                }
+            );
         } elseif (!$name) {
-            $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie) use($path, $domain) {
-                return !($cookie->matchesPath($path) && $cookie->matchesDomain($domain));
-            });
+            $this->cookies = array_filter(
+                $this->cookies,
+                function (SetCookie $cookie) use ($path, $domain) {
+                    return !($cookie->matchesPath($path) &&
+                        $cookie->matchesDomain($domain));
+                }
+            );
         } else {
-            $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie) use($path, $domain, $name) {
-                return !($cookie->getName() == $name && $cookie->matchesPath($path) && $cookie->matchesDomain($domain));
-            });
+            $this->cookies = array_filter(
+                $this->cookies,
+                function (SetCookie $cookie) use ($path, $domain, $name) {
+                    return !($cookie->getName() == $name &&
+                        $cookie->matchesPath($path) &&
+                        $cookie->matchesDomain($domain));
+                }
+            );
         }
     }
+
     public function clearSessionCookies()
     {
-        $this->cookies = array_filter($this->cookies, function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie) {
-            return !$cookie->getDiscard() && $cookie->getExpires();
-        });
+        $this->cookies = array_filter(
+            $this->cookies,
+            function (SetCookie $cookie) {
+                return !$cookie->getDiscard() && $cookie->getExpires();
+            }
+        );
     }
-    public function setCookie(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie)
+
+    public function setCookie(SetCookie $cookie)
     {
         // If the name string is empty (but not 0), ignore the set-cookie
         // string entirely.
@@ -127,6 +164,7 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
         if (!$name && $name !== '0') {
             return false;
         }
+
         // Only allow cookies with set and valid domain, name, value
         $result = $cookie->validate();
         if ($result !== true) {
@@ -137,49 +175,65 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
                 return false;
             }
         }
+
         // Resolve conflicts with previously set cookies
         foreach ($this->cookies as $i => $c) {
+
             // Two cookies are identical, when their path, and domain are
             // identical.
-            if ($c->getPath() != $cookie->getPath() || $c->getDomain() != $cookie->getDomain() || $c->getName() != $cookie->getName()) {
+            if ($c->getPath() != $cookie->getPath() ||
+                $c->getDomain() != $cookie->getDomain() ||
+                $c->getName() != $cookie->getName()
+            ) {
                 continue;
             }
+
             // The previously set cookie is a discard cookie and this one is
             // not so allow the new cookie to be set
             if (!$cookie->getDiscard() && $c->getDiscard()) {
                 unset($this->cookies[$i]);
                 continue;
             }
+
             // If the new cookie's expiration is further into the future, then
             // replace the old cookie
             if ($cookie->getExpires() > $c->getExpires()) {
                 unset($this->cookies[$i]);
                 continue;
             }
+
             // If the value has changed, we better change it
             if ($cookie->getValue() !== $c->getValue()) {
                 unset($this->cookies[$i]);
                 continue;
             }
+
             // The cookie exists, so no need to continue
             return false;
         }
+
         $this->cookies[] = $cookie;
+
         return true;
     }
+
     public function count()
     {
         return count($this->cookies);
     }
+
     public function getIterator()
     {
         return new \ArrayIterator(array_values($this->cookies));
     }
-    public function extractCookies(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
-    {
+
+    public function extractCookies(
+        RequestInterface $request,
+        ResponseInterface $response
+    ) {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
-                $sc = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie::fromString($cookie);
+                $sc = SetCookie::fromString($cookie);
                 if (!$sc->getDomain()) {
                     $sc->setDomain($request->getUri()->getHost());
                 }
@@ -190,6 +244,7 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
             }
         }
     }
+
     /**
      * Computes cookie path following RFC 6265 section 5.1.4
      *
@@ -198,10 +253,10 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
      * @param RequestInterface $request
      * @return string
      */
-    private function getCookiePathFromRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function getCookiePathFromRequest(RequestInterface $request)
     {
         $uriPath = $request->getUri()->getPath();
-        if ('' === $uriPath) {
+        if (''  === $uriPath) {
             return '/';
         }
         if (0 !== strpos($uriPath, '/')) {
@@ -210,36 +265,52 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Coo
         if ('/' === $uriPath) {
             return '/';
         }
-        if (0 === ($lastSlashPos = strrpos($uriPath, '/'))) {
+        if (0 === $lastSlashPos = strrpos($uriPath, '/')) {
             return '/';
         }
+
         return substr($uriPath, 0, $lastSlashPos);
     }
-    public function withCookieHeader(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+
+    public function withCookieHeader(RequestInterface $request)
     {
         $values = [];
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
         $path = $uri->getPath() ?: '/';
+
         foreach ($this->cookies as $cookie) {
-            if ($cookie->matchesPath($path) && $cookie->matchesDomain($host) && !$cookie->isExpired() && (!$cookie->getSecure() || $scheme === 'https')) {
-                $values[] = $cookie->getName() . '=' . $cookie->getValue();
+            if ($cookie->matchesPath($path) &&
+                $cookie->matchesDomain($host) &&
+                !$cookie->isExpired() &&
+                (!$cookie->getSecure() || $scheme === 'https')
+            ) {
+                $values[] = $cookie->getName() . '='
+                    . $cookie->getValue();
             }
         }
-        return $values ? $request->withHeader('Cookie', implode('; ', $values)) : $request;
+
+        return $values
+            ? $request->withHeader('Cookie', implode('; ', $values))
+            : $request;
     }
+
     /**
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
      *
      * @param SetCookie $cookie
      */
-    private function removeCookieIfEmpty(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie $cookie)
+    private function removeCookieIfEmpty(SetCookie $cookie)
     {
         $cookieValue = $cookie->getValue();
         if ($cookieValue === null || $cookieValue === '') {
-            $this->clear($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+            $this->clear(
+                $cookie->getDomain(),
+                $cookie->getPath(),
+                $cookie->getName()
+            );
         }
     }
 }

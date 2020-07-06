@@ -1,16 +1,21 @@
 <?php
+namespace Aws\Crypto;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
+use Aws\Crypto\Cipher\CipherMethod;
+use Aws\Crypto\Cipher\Cbc;
+use GuzzleHttp\Psr7\Stream;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\Cbc;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 /**
+ * Legacy abstract encryption client. New workflows should use
+ * AbstractCryptoClientV2.
+ *
+ * @deprecated
  * @internal
  */
 abstract class AbstractCryptoClient
 {
     public static $supportedCiphers = ['cbc', 'gcm'];
+
     /**
      * Returns if the passed cipher name is supported for encryption by the SDK.
      *
@@ -22,6 +27,7 @@ abstract class AbstractCryptoClient
     {
         return in_array($cipherName, self::$supportedCiphers);
     }
+
     /**
      * Returns an identifier recognizable by `openssl_*` functions, such as
      * `aes-256-cbc` or `aes-128-ctr`.
@@ -33,7 +39,8 @@ abstract class AbstractCryptoClient
      *
      * @return string
      */
-    protected abstract function getCipherOpenSslName($cipherName, $keySize);
+    abstract protected function getCipherOpenSslName($cipherName, $keySize);
+
     /**
      * Constructs a CipherMethod for the given name, initialized with the other
      * data passed for use in encrypting or decrypting.
@@ -47,7 +54,8 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    protected abstract function buildCipherMethod($cipherName, $iv, $keySize);
+    abstract protected function buildCipherMethod($cipherName, $iv, $keySize);
+
     /**
      * Performs a reverse lookup to get the openssl_* cipher name from the
      * AESName passed in from the MetadataEnvelope.
@@ -58,7 +66,8 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    protected abstract function getCipherFromAesName($aesName);
+    abstract protected function getCipherFromAesName($aesName);
+
     /**
      * Dependency to provide an interface for building an encryption stream for
      * data given cipher details, metadata, and materials to do so.
@@ -76,7 +85,13 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    abstract public function encrypt(
+        Stream $plaintext,
+        array $cipherOptions,
+        MaterialsProvider $provider,
+        MetadataEnvelope $envelope
+    );
+
     /**
      * Dependency to provide an interface for building a decryption stream for
      * cipher text given metadata and materials to do so.
@@ -93,5 +108,10 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
+    abstract public function decrypt(
+        $cipherText,
+        MaterialsProvider $provider,
+        MetadataEnvelope $envelope,
+        array $cipherOptions = []
+    );
 }

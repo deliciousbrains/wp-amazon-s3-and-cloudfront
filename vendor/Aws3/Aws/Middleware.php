@@ -1,15 +1,15 @@
 <?php
+namespace Aws;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream;
+use Aws\Api\Service;
+use Aws\Api\Validator;
+use Aws\Credentials\CredentialsInterface;
+use Aws\Exception\AwsException;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\LazyOpenStream;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+
 final class Middleware
 {
     /**
@@ -22,20 +22,40 @@ final class Middleware
      *
      * @return callable
      */
-    public static function sourceFile(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, $bodyParameter = 'Body', $sourceParameter = 'SourceFile')
-    {
-        return function (callable $handler) use($api, $bodyParameter, $sourceParameter) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $api, $bodyParameter, $sourceParameter) {
+    public static function sourceFile(
+        Service $api,
+        $bodyParameter = 'Body',
+        $sourceParameter = 'SourceFile'
+    ) {
+        return function (callable $handler) use (
+            $api,
+            $bodyParameter,
+            $sourceParameter
+        ) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null)
+            use (
+                $handler,
+                $api,
+                $bodyParameter,
+                $sourceParameter
+            ) {
                 $operation = $api->getOperation($command->getName());
                 $source = $command[$sourceParameter];
-                if ($source !== null && $operation->getInput()->hasMember($bodyParameter)) {
-                    $command[$bodyParameter] = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($source, 'r');
+
+                if ($source !== null
+                    && $operation->getInput()->hasMember($bodyParameter)
+                ) {
+                    $command[$bodyParameter] = new LazyOpenStream($source, 'r');
                     unset($command[$sourceParameter]);
                 }
+
                 return $handler($command, $request);
             };
         };
     }
+
     /**
      * Adds a middleware that uses client-side validation.
      *
@@ -43,17 +63,25 @@ final class Middleware
      *
      * @return callable
      */
-    public static function validation(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator $validator = null)
+    public static function validation(Service $api, Validator $validator = null)
     {
-        $validator = $validator ?: new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Validator();
-        return function (callable $handler) use($api, $validator) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($api, $validator, $handler) {
+        $validator = $validator ?: new Validator();
+        return function (callable $handler) use ($api, $validator) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($api, $validator, $handler) {
                 $operation = $api->getOperation($command->getName());
-                $validator->validate($command->getName(), $operation->getInput(), $command->toArray());
+                $validator->validate(
+                    $command->getName(),
+                    $operation->getInput(),
+                    $command->toArray()
+                );
                 return $handler($command, $request);
             };
         };
     }
+
     /**
      * Builds an HTTP request for a command.
      *
@@ -63,12 +91,13 @@ final class Middleware
      */
     public static function requestBuilder(callable $serializer)
     {
-        return function (callable $handler) use($serializer) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command) use($serializer, $handler) {
+        return function (callable $handler) use ($serializer) {
+            return function (CommandInterface $command) use ($serializer, $handler) {
                 return $handler($command, $serializer($command));
             };
         };
     }
+
     /**
      * Creates a middleware that signs requests for a command.
      *
@@ -83,15 +112,25 @@ final class Middleware
      */
     public static function signer(callable $credProvider, callable $signatureFunction)
     {
-        return function (callable $handler) use($signatureFunction, $credProvider) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request) use($handler, $signatureFunction, $credProvider) {
+        return function (callable $handler) use ($signatureFunction, $credProvider) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request
+            ) use ($handler, $signatureFunction, $credProvider) {
                 $signer = $signatureFunction($command);
-                return $credProvider()->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $creds) use($handler, $command, $signer, $request) {
-                    return $handler($command, $signer->signRequest($request, $creds));
-                });
+                return $credProvider()->then(
+                    function (CredentialsInterface $creds)
+                    use ($handler, $command, $signer, $request) {
+                        return $handler(
+                            $command,
+                            $signer->signRequest($request, $creds)
+                        );
+                    }
+                );
             };
         };
     }
+
     /**
      * Creates a middleware that invokes a callback at a given step.
      *
@@ -106,13 +145,17 @@ final class Middleware
      */
     public static function tap(callable $fn)
     {
-        return function (callable $handler) use($fn) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $fn) {
+        return function (callable $handler) use ($fn) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $fn) {
                 $fn($command, $request);
                 return $handler($command, $request);
             };
         };
     }
+
     /**
      * Middleware wrapper function that retries requests based on the boolean
      * result of invoking the provided "decider" function.
@@ -130,12 +173,16 @@ final class Middleware
      *
      * @return callable
      */
-    public static function retry(callable $decider = null, callable $delay = null, $stats = false)
-    {
-        $decider = $decider ?: \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::createDefaultDecider();
-        $delay = $delay ?: [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::class, 'exponentialDelay'];
-        return function (callable $handler) use($decider, $delay, $stats) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware($decider, $delay, $handler, $stats);
+    public static function retry(
+        callable $decider = null,
+        callable $delay = null,
+        $stats = false
+    ) {
+        $decider = $decider ?: RetryMiddleware::createDefaultDecider();
+        $delay = $delay ?: [RetryMiddleware::class, 'exponentialDelay'];
+
+        return function (callable $handler) use ($decider, $delay, $stats) {
+            return new RetryMiddleware($decider, $delay, $handler, $stats);
         };
     }
     /**
@@ -150,8 +197,14 @@ final class Middleware
     public static function invocationId()
     {
         return function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request) use($handler) {
-                return $handler($command, $request->withHeader('aws-sdk-invocation-id', md5(uniqid(gethostname(), true))));
+            return function (
+                CommandInterface $command,
+                RequestInterface $request
+            ) use ($handler){
+                return $handler($command, $request->withHeader(
+                    'aws-sdk-invocation-id',
+                    md5(uniqid(gethostname(), true))
+                ));
             };
         };
     }
@@ -167,15 +220,26 @@ final class Middleware
      */
     public static function contentType(array $operations)
     {
-        return function (callable $handler) use($operations) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $operations) {
-                if (!$request->hasHeader('Content-Type') && in_array($command->getName(), $operations, true) && ($uri = $request->getBody()->getMetadata('uri'))) {
-                    $request = $request->withHeader('Content-Type', \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($uri) ?: 'application/octet-stream');
+        return function (callable $handler) use ($operations) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $operations) {
+                if (!$request->hasHeader('Content-Type')
+                    && in_array($command->getName(), $operations, true)
+                    && ($uri = $request->getBody()->getMetadata('uri'))
+                ) {
+                    $request = $request->withHeader(
+                        'Content-Type',
+                        Psr7\mimetype_from_filename($uri) ?: 'application/octet-stream'
+                    );
                 }
+
                 return $handler($command, $request);
             };
         };
     }
+
     /**
      * Tracks command and request history using a history container.
      *
@@ -185,21 +249,29 @@ final class Middleware
      *
      * @return callable
      */
-    public static function history(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\History $history)
+    public static function history(History $history)
     {
-        return function (callable $handler) use($history) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $history) {
+        return function (callable $handler) use ($history) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $history) {
                 $ticket = $history->start($command, $request);
-                return $handler($command, $request)->then(function ($result) use($history, $ticket) {
-                    $history->finish($ticket, $result);
-                    return $result;
-                }, function ($reason) use($history, $ticket) {
-                    $history->finish($ticket, $reason);
-                    return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
-                });
+                return $handler($command, $request)
+                    ->then(
+                        function ($result) use ($history, $ticket) {
+                            $history->finish($ticket, $result);
+                            return $result;
+                        },
+                        function ($reason) use ($history, $ticket) {
+                            $history->finish($ticket, $reason);
+                            return Promise\rejection_for($reason);
+                        }
+                    );
             };
         };
     }
+
     /**
      * Creates a middleware that applies a map function to requests as they
      * pass through the middleware.
@@ -211,12 +283,16 @@ final class Middleware
      */
     public static function mapRequest(callable $f)
     {
-        return function (callable $handler) use($f) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $f) {
+        return function (callable $handler) use ($f) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $f) {
                 return $handler($command, $f($request));
             };
         };
     }
+
     /**
      * Creates a middleware that applies a map function to commands as they
      * pass through the middleware.
@@ -228,12 +304,16 @@ final class Middleware
      */
     public static function mapCommand(callable $f)
     {
-        return function (callable $handler) use($f) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $f) {
+        return function (callable $handler) use ($f) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $f) {
                 return $handler($f($command), $request);
             };
         };
     }
+
     /**
      * Creates a middleware that applies a map function to results.
      *
@@ -244,32 +324,48 @@ final class Middleware
      */
     public static function mapResult(callable $f)
     {
-        return function (callable $handler) use($f) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler, $f) {
+        return function (callable $handler) use ($f) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler, $f) {
                 return $handler($command, $request)->then($f);
             };
         };
     }
+
     public static function timer()
     {
         return function (callable $handler) {
-            return function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null) use($handler) {
+            return function (
+                CommandInterface $command,
+                RequestInterface $request = null
+            ) use ($handler) {
                 $start = microtime(true);
-                return $handler($command, $request)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $res) use($start) {
-                    if (!isset($res['@metadata'])) {
-                        $res['@metadata'] = [];
-                    }
-                    if (!isset($res['@metadata']['transferStats'])) {
-                        $res['@metadata']['transferStats'] = [];
-                    }
-                    $res['@metadata']['transferStats']['total_time'] = microtime(true) - $start;
-                    return $res;
-                }, function ($err) use($start) {
-                    if ($err instanceof AwsException) {
-                        $err->setTransferInfo(['total_time' => microtime(true) - $start] + $err->getTransferInfo());
-                    }
-                    return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($err);
-                });
+                return $handler($command, $request)
+                    ->then(
+                        function (ResultInterface $res) use ($start) {
+                            if (!isset($res['@metadata'])) {
+                                $res['@metadata'] = [];
+                            }
+                            if (!isset($res['@metadata']['transferStats'])) {
+                                $res['@metadata']['transferStats'] = [];
+                            }
+
+                            $res['@metadata']['transferStats']['total_time']
+                                = microtime(true) - $start;
+
+                            return $res;
+                        },
+                        function ($err) use ($start) {
+                            if ($err instanceof AwsException) {
+                                $err->setTransferInfo([
+                                    'total_time' => microtime(true) - $start,
+                                ] + $err->getTransferInfo());
+                            }
+                            return Promise\rejection_for($err);
+                        }
+                    );
             };
         };
     }

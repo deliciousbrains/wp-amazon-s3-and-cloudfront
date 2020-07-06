@@ -1,12 +1,12 @@
 <?php
+namespace Aws\S3;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
+use Aws\Credentials\CredentialsInterface;
+use GuzzleHttp\Psr7\Uri;
+use Aws\Signature\SignatureTrait;
+use Aws\Signature\SignatureV4 as SignatureV4;
+use Aws\Api\TimestampShape as TimestampShape;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureTrait;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 /**
  * Encapsulates the logic for getting the data for an S3 object POST upload form
  *
@@ -16,10 +16,12 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 class PostObjectV4
 {
     use SignatureTrait;
+
     private $client;
     private $bucket;
     private $formAttributes;
     private $formInputs;
+
     /**
      * Constructs the PostObject.
      *
@@ -34,24 +36,47 @@ class PostObjectV4
      * @param mixed             $expiration Upload expiration time value. By
      *                                      default: 1 hour valid period.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $bucket, array $formInputs, array $options = [], $expiration = '+1 hours')
-    {
+    public function __construct(
+        S3ClientInterface $client,
+        $bucket,
+        array $formInputs,
+        array $options = [],
+        $expiration = '+1 hours'
+    ) {
         $this->client = $client;
         $this->bucket = $bucket;
+
         // setup form attributes
-        $this->formAttributes = ['action' => $this->generateUri(), 'method' => 'POST', 'enctype' => 'multipart/form-data'];
-        $credentials = $this->client->getCredentials()->wait();
+        $this->formAttributes = [
+            'action'  => $this->generateUri(),
+            'method'  => 'POST',
+            'enctype' => 'multipart/form-data'
+        ];
+
+        $credentials   = $this->client->getCredentials()->wait();
+
         if ($securityToken = $credentials->getSecurityToken()) {
             array_push($options, ['x-amz-security-token' => $securityToken]);
             $formInputs['X-Amz-Security-Token'] = $securityToken;
         }
+
         // setup basic policy
-        $policy = ['expiration' => \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($expiration, 'iso8601'), 'conditions' => $options];
+        $policy = [
+            'expiration' => TimestampShape::format($expiration, 'iso8601'),
+            'conditions' => $options,
+        ];
+
         // setup basic formInputs
         $this->formInputs = $formInputs + ['key' => '${filename}'];
+
         // finalize policy and signature
-        $this->formInputs += $this->getPolicyAndSignature($credentials, $policy);
+
+        $this->formInputs += $this->getPolicyAndSignature(
+            $credentials,
+            $policy
+        );
     }
+
     /**
      * Gets the S3 client.
      *
@@ -61,6 +86,7 @@ class PostObjectV4
     {
         return $this->client;
     }
+
     /**
      * Gets the bucket name.
      *
@@ -70,6 +96,7 @@ class PostObjectV4
     {
         return $this->bucket;
     }
+
     /**
      * Gets the form attributes as an array.
      *
@@ -79,6 +106,7 @@ class PostObjectV4
     {
         return $this->formAttributes;
     }
+
     /**
      * Set a form attribute.
      *
@@ -89,6 +117,7 @@ class PostObjectV4
     {
         $this->formAttributes[$attribute] = $value;
     }
+
     /**
      * Gets the form inputs as an array.
      *
@@ -98,6 +127,7 @@ class PostObjectV4
     {
         return $this->formInputs;
     }
+
     /**
      * Set a form input.
      *
@@ -108,10 +138,15 @@ class PostObjectV4
     {
         $this->formInputs[$field] = $value;
     }
+
     private function generateUri()
     {
-        $uri = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($this->client->getEndpoint());
-        if ($this->client->getConfig('use_path_style_endpoint') === true || $uri->getScheme() === 'https' && strpos($this->bucket, '.') !== false) {
+        $uri = new Uri($this->client->getEndpoint());
+
+        if ($this->client->getConfig('use_path_style_endpoint') === true
+            || ($uri->getScheme() === 'https'
+            && strpos($this->bucket, '.') !== false)
+        ) {
             // Use path-style URLs
             $uri = $uri->withPath("/{$this->bucket}");
         } else {
@@ -120,20 +155,41 @@ class PostObjectV4
                 $uri = $uri->withHost($this->bucket . '.' . $uri->getHost());
             }
         }
+
         return (string) $uri;
     }
-    protected function getPolicyAndSignature(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials, array $policy)
-    {
-        $ldt = gmdate(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4::ISO8601_BASIC);
+
+    protected function getPolicyAndSignature(
+        CredentialsInterface $credentials,
+        array $policy
+    ){
+        $ldt = gmdate(SignatureV4::ISO8601_BASIC);
         $sdt = substr($ldt, 0, 8);
         $policy['conditions'][] = ['X-Amz-Date' => $ldt];
+
         $region = $this->client->getRegion();
         $scope = $this->createScope($sdt, $region, 's3');
-        $creds = "{$credentials->getAccessKeyId()}/{$scope}";
+        $creds = "{$credentials->getAccessKeyId()}/$scope";
         $policy['conditions'][] = ['X-Amz-Credential' => $creds];
+
         $policy['conditions'][] = ['X-Amz-Algorithm' => "AWS4-HMAC-SHA256"];
+
         $jsonPolicy64 = base64_encode(json_encode($policy));
-        $key = $this->getSigningKey($sdt, $region, 's3', $credentials->getSecretKey());
-        return ['X-Amz-Credential' => $creds, 'X-Amz-Algorithm' => "AWS4-HMAC-SHA256", 'X-Amz-Date' => $ldt, 'Policy' => $jsonPolicy64, 'X-Amz-Signature' => bin2hex(hash_hmac('sha256', $jsonPolicy64, $key, true))];
+        $key = $this->getSigningKey(
+            $sdt,
+            $region,
+            's3',
+            $credentials->getSecretKey()
+        );
+
+        return [
+            'X-Amz-Credential' => $creds,
+            'X-Amz-Algorithm' => "AWS4-HMAC-SHA256",
+            'X-Amz-Date' => $ldt,
+            'Policy'           => $jsonPolicy64,
+            'X-Amz-Signature'  => bin2hex(
+                hash_hmac('sha256', $jsonPolicy64, $key, true)
+            ),
+        ];
     }
 }

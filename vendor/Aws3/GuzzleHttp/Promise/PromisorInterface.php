@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+namespace GuzzleHttp\Promise;
 
 /**
  * Interface used with classes that return a promise.

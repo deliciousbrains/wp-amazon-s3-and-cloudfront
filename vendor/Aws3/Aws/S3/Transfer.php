@@ -1,13 +1,13 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
+namespace Aws\S3;
 
 use Aws;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use Aws\CommandInterface;
+use Aws\Exception\AwsException;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromisorInterface;
 use Iterator;
+
 /**
  * Transfers files from the local filesystem to S3 or from S3 to the local
  * filesystem.
@@ -15,7 +15,7 @@ use Iterator;
  * This class does not support copying from the local filesystem to somewhere
  * else on the local filesystem or from one S3 bucket to another.
  */
-class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
+class Transfer implements PromisorInterface
 {
     private $client;
     private $promise;
@@ -26,12 +26,14 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
     private $mupThreshold;
     private $before;
     private $s3Args = [];
+
     /**
      * When providing the $source argument, you may provide a string referencing
      * the path to a directory on disk to upload, an s3 scheme URI that contains
      * the bucket and key (e.g., "s3://bucket/key"), or an \Iterator object
      * that yields strings containing filenames that are the path to a file on
-     * disk or an s3 scheme URI. The "/key" portion of an s3 URI is optional.
+     * disk or an s3 scheme URI. The bucket portion of the s3 URI may be an S3
+     * access point ARN. The "/key" portion of an s3 URI is optional.
      *
      * When providing an iterator for the $source argument, you must also
      * provide a 'base_dir' key value pair in the $options argument.
@@ -64,37 +66,56 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
      * @param string            $dest    Where the files are transferred to.
      * @param array             $options Hash of options.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, $dest, array $options = [])
-    {
+    public function __construct(
+        S3ClientInterface $client,
+        $source,
+        $dest,
+        array $options = []
+    ) {
         $this->client = $client;
+
         // Prepare the destination.
         $this->destination = $this->prepareTarget($dest);
         if ($this->destination['scheme'] === 's3') {
             $this->s3Args = $this->getS3Args($this->destination['path']);
         }
+
         // Prepare the source.
         if (is_string($source)) {
             $this->sourceMetadata = $this->prepareTarget($source);
             $this->source = $source;
         } elseif ($source instanceof Iterator) {
             if (empty($options['base_dir'])) {
-                throw new \InvalidArgumentException('You must provide the source' . ' argument as a string or provide the "base_dir" option.');
+                throw new \InvalidArgumentException('You must provide the source'
+                    . ' argument as a string or provide the "base_dir" option.');
             }
+
             $this->sourceMetadata = $this->prepareTarget($options['base_dir']);
             $this->source = $source;
         } else {
-            throw new \InvalidArgumentException('source must be the path to a ' . 'directory or an iterator that yields file names.');
+            throw new \InvalidArgumentException('source must be the path to a '
+                . 'directory or an iterator that yields file names.');
         }
+
         // Validate schemes.
         if ($this->sourceMetadata['scheme'] === $this->destination['scheme']) {
-            throw new \InvalidArgumentException("You cannot copy from" . " {$this->sourceMetadata['scheme']} to" . " {$this->destination['scheme']}.");
+            throw new \InvalidArgumentException("You cannot copy from"
+                . " {$this->sourceMetadata['scheme']} to"
+                . " {$this->destination['scheme']}."
+            );
         }
+
         // Handle multipart-related options.
-        $this->concurrency = isset($options['concurrency']) ? $options['concurrency'] : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader::DEFAULT_CONCURRENCY;
-        $this->mupThreshold = isset($options['mup_threshold']) ? $options['mup_threshold'] : 16777216;
-        if ($this->mupThreshold < \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader::PART_MIN_SIZE) {
+        $this->concurrency = isset($options['concurrency'])
+            ? $options['concurrency']
+            : MultipartUploader::DEFAULT_CONCURRENCY;
+        $this->mupThreshold = isset($options['mup_threshold'])
+            ? $options['mup_threshold']
+            : 16777216;
+        if ($this->mupThreshold < MultipartUploader::PART_MIN_SIZE) {
             throw new \InvalidArgumentException('mup_threshold must be >= 5MB');
         }
+
         // Handle "before" callback option.
         if (isset($options['before'])) {
             $this->before = $options['before'];
@@ -102,14 +123,18 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
                 throw new \InvalidArgumentException('before must be a callable.');
             }
         }
+
         // Handle "debug" option.
         if (isset($options['debug'])) {
             if ($options['debug'] === true) {
                 $options['debug'] = fopen('php://output', 'w');
             }
-            $this->addDebugToBefore($options['debug']);
+            if (is_resource($options['debug'])) {
+                $this->addDebugToBefore($options['debug']);
+            }
         }
     }
+
     /**
      * Transfers the files.
      */
@@ -118,10 +143,14 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
         // If the promise has been created, just return it.
         if (!$this->promise) {
             // Create an upload/download promise for the transfer.
-            $this->promise = $this->sourceMetadata['scheme'] === 'file' ? $this->createUploadPromise() : $this->createDownloadPromise();
+            $this->promise = $this->sourceMetadata['scheme'] === 'file'
+                ? $this->createUploadPromise()
+                : $this->createDownloadPromise();
         }
+
         return $this->promise;
     }
+
     /**
      * Transfers the files synchronously.
      */
@@ -129,14 +158,21 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
     {
         $this->promise()->wait();
     }
+
     private function prepareTarget($targetPath)
     {
-        $target = ['path' => $this->normalizePath($targetPath), 'scheme' => $this->determineScheme($targetPath)];
+        $target = [
+            'path'   => $this->normalizePath($targetPath),
+            'scheme' => $this->determineScheme($targetPath),
+        ];
+
         if ($target['scheme'] !== 's3' && $target['scheme'] !== 'file') {
             throw new \InvalidArgumentException('Scheme must be "s3" or "file".');
         }
+
         return $target;
     }
+
     /**
      * Creates an array that contains Bucket and Key by parsing the filename.
      *
@@ -151,8 +187,10 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
         if (isset($parts[1])) {
             $args['Key'] = $parts[1];
         }
+
         return $args;
     }
+
     /**
      * Parses the scheme from a filename.
      *
@@ -164,6 +202,7 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
     {
         return !strpos($path, '://') ? 'file' : explode('://', $path)[0];
     }
+
     /**
      * Normalize a path so that it has UNIX-style directory separators and no trailing /
      *
@@ -175,6 +214,7 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
     {
         return rtrim(str_replace('\\', '/', $path), '/');
     }
+
     private function resolveUri($uri)
     {
         $resolved = [];
@@ -186,62 +226,96 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
             if ($section === '..') {
                 array_pop($resolved);
             } else {
-                $resolved[] = $section;
+                $resolved []= $section;
             }
         }
-        return ($uri[0] === '/' ? '/' : '') . implode('/', $resolved);
+
+        return ($uri[0] === '/' ? '/' : '')
+            . implode('/', $resolved);
     }
+
     private function createDownloadPromise()
     {
         $parts = $this->getS3Args($this->sourceMetadata['path']);
-        $prefix = "s3://{$parts['Bucket']}/" . (isset($parts['Key']) ? $parts['Key'] . '/' : '');
+        $prefix = "s3://{$parts['Bucket']}/"
+            . (isset($parts['Key']) ? $parts['Key'] . '/' : '');
+
+
         $commands = [];
         foreach ($this->getDownloadsIterator() as $object) {
             // Prepare the sink.
             $objectKey = preg_replace('/^' . preg_quote($prefix, '/') . '/', '', $object);
+
             $resolveSink = $this->destination['path'] . '/';
             if (isset($parts['Key']) && strpos($objectKey, $parts['Key']) !== 0) {
                 $resolveSink .= $parts['Key'] . '/';
             }
             $resolveSink .= $objectKey;
             $sink = $this->destination['path'] . '/' . $objectKey;
-            $command = $this->client->getCommand('GetObject', $this->getS3Args($object) + ['@http' => ['sink' => $sink]]);
-            if (strpos($this->resolveUri($resolveSink), $this->destination['path']) !== 0) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException('Cannot download key ' . $objectKey . ', its relative path resolves outside the' . ' parent directory', $command);
+
+            $command = $this->client->getCommand(
+                'GetObject',
+                $this->getS3Args($object) + ['@http'  => ['sink'  => $sink]]
+            );
+
+            if (strpos(
+                    $this->resolveUri($resolveSink),
+                    $this->destination['path']
+                ) !== 0
+            ) {
+                throw new AwsException(
+                    'Cannot download key ' . $objectKey
+                    . ', its relative path resolves outside the'
+                    . ' parent directory', $command);
             }
+
             // Create the directory if needed.
             $dir = dirname($sink);
             if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
                 throw new \RuntimeException("Could not create dir: {$dir}");
             }
+
             // Create the command.
-            $commands[] = $command;
+            $commands []= $command;
         }
+
         // Create a GetObject command pool and return the promise.
-        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool($this->client, $commands, ['concurrency' => $this->concurrency, 'before' => $this->before, 'rejected' => function ($reason, $idx, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $p) {
-            $p->reject($reason);
-        }]))->promise();
+        return (new Aws\CommandPool($this->client, $commands, [
+            'concurrency' => $this->concurrency,
+            'before'      => $this->before,
+            'rejected'    => function ($reason, $idx, Promise\PromiseInterface $p) {
+                $p->reject($reason);
+            }
+        ]))->promise();
     }
+
     private function createUploadPromise()
     {
         // Map each file into a promise that performs the actual transfer.
-        $files = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\map($this->getUploadsIterator(), function ($file) {
-            return filesize($file) >= $this->mupThreshold ? $this->uploadMultipart($file) : $this->upload($file);
+        $files = \Aws\map($this->getUploadsIterator(), function ($file) {
+            return (filesize($file) >= $this->mupThreshold)
+                ? $this->uploadMultipart($file)
+                : $this->upload($file);
         });
+
         // Create an EachPromise, that will concurrently handle the upload
         // operations' yielded promises from the iterator.
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\each_limit_all($files, $this->concurrency);
+        return Promise\each_limit_all($files, $this->concurrency);
     }
+
     /** @return Iterator */
     private function getUploadsIterator()
     {
         if (is_string($this->source)) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\filter(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\recursive_dir_iterator($this->sourceMetadata['path']), function ($file) {
-                return !is_dir($file);
-            });
+            return Aws\filter(
+                Aws\recursive_dir_iterator($this->sourceMetadata['path']),
+                function ($file) { return !is_dir($file); }
+            );
         }
+
         return $this->source;
     }
+
     /** @return Iterator */
     private function getDownloadsIterator()
     {
@@ -251,16 +325,21 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
                 $listArgs['Prefix'] = $listArgs['Key'] . '/';
                 unset($listArgs['Key']);
             }
-            $files = $this->client->getPaginator('ListObjects', $listArgs)->search('Contents[].Key');
-            $files = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\map($files, function ($key) use($listArgs) {
-                return "s3://{$listArgs['Bucket']}/{$key}";
+
+            $files = $this->client
+                ->getPaginator('ListObjects', $listArgs)
+                ->search('Contents[].Key');
+            $files = Aws\map($files, function ($key) use ($listArgs) {
+                return "s3://{$listArgs['Bucket']}/$key";
             });
-            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\filter($files, function ($key) {
+            return Aws\filter($files, function ($key) {
                 return substr($key, -1, 1) !== '/';
             });
         }
+
         return $this->source;
     }
+
     private function upload($filename)
     {
         $args = $this->s3Args;
@@ -268,31 +347,52 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
         $args['Key'] = $this->createS3Key($filename);
         $command = $this->client->getCommand('PutObject', $args);
         $this->before and call_user_func($this->before, $command);
+
         return $this->client->executeAsync($command);
     }
+
     private function uploadMultipart($filename)
     {
         $args = $this->s3Args;
         $args['Key'] = $this->createS3Key($filename);
-        return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader($this->client, $filename, ['bucket' => $args['Bucket'], 'key' => $args['Key'], 'before_initiate' => $this->before, 'before_upload' => $this->before, 'before_complete' => $this->before, 'concurrency' => $this->concurrency]))->promise();
+
+        return (new MultipartUploader($this->client, $filename, [
+            'bucket'          => $args['Bucket'],
+            'key'             => $args['Key'],
+            'before_initiate' => $this->before,
+            'before_upload'   => $this->before,
+            'before_complete' => $this->before,
+            'concurrency'     => $this->concurrency,
+        ]))->promise();
     }
+
     private function createS3Key($filename)
     {
         $filename = $this->normalizePath($filename);
-        $relative_file_path = ltrim(preg_replace('#^' . preg_quote($this->sourceMetadata['path']) . '#', '', $filename), '/\\');
+        $relative_file_path = ltrim(
+            preg_replace('#^' . preg_quote($this->sourceMetadata['path']) . '#', '', $filename),
+            '/\\'
+        );
+
         if (isset($this->s3Args['Key'])) {
-            return rtrim($this->s3Args['Key'], '/') . '/' . $relative_file_path;
+            return rtrim($this->s3Args['Key'], '/').'/'.$relative_file_path;
         }
+
         return $relative_file_path;
     }
+
     private function addDebugToBefore($debug)
     {
         $before = $this->before;
         $sourcePath = $this->sourceMetadata['path'];
         $s3Args = $this->s3Args;
-        $this->before = static function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command) use($before, $debug, $sourcePath, $s3Args) {
+
+        $this->before = static function (
+            CommandInterface $command
+        ) use ($before, $debug, $sourcePath, $s3Args) {
             // Call the composed before function.
             $before and $before($command);
+
             // Determine the source and dest values based on operation.
             switch ($operation = $command->getName()) {
                 case 'GetObject':
@@ -315,8 +415,11 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
                     $dest = "s3://{$command['Bucket']}/{$command['Key']}";
                     break;
                 default:
-                    throw new \UnexpectedValueException("Transfer encountered an unexpected operation: {$operation}.");
+                    throw new \UnexpectedValueException(
+                        "Transfer encountered an unexpected operation: {$operation}."
+                    );
             }
+
             // Print the debugging message.
             $context = sprintf('%s -> %s (%s)', $source, $dest, $operation);
             if (isset($part)) {

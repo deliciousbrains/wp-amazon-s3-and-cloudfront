@@ -1,11 +1,11 @@
 <?php
+namespace Aws;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
+use Aws\Exception\AwsException;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+
 /**
  * Returns promises that are rejected or fulfilled using a queue of
  * Aws\ResultInterface and Aws\Exception\AwsException objects.
@@ -17,6 +17,7 @@ class MockHandler implements \Countable
     private $lastRequest;
     private $onFulfilled;
     private $onRejected;
+
     /**
      * The passed in value must be an array of {@see Aws\ResultInterface} or
      * {@see AwsException} objects that acts as a queue of results or
@@ -26,14 +27,19 @@ class MockHandler implements \Countable
      * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable $onRejected  Callback to invoke when the return value is rejected.
      */
-    public function __construct(array $resultOrQueue = [], callable $onFulfilled = null, callable $onRejected = null)
-    {
+    public function __construct(
+        array $resultOrQueue = [],
+        callable $onFulfilled = null,
+        callable $onRejected = null
+    ) {
         $this->onFulfilled = $onFulfilled;
         $this->onRejected = $onRejected;
+
         if ($resultOrQueue) {
             call_user_func_array([$this, 'append'], $resultOrQueue);
         }
     }
+
     /**
      * Adds one or more variadic ResultInterface or AwsException objects to the
      * queue.
@@ -41,13 +47,17 @@ class MockHandler implements \Countable
     public function append()
     {
         foreach (func_get_args() as $value) {
-            if ($value instanceof ResultInterface || $value instanceof AwsException || is_callable($value)) {
+            if ($value instanceof ResultInterface
+                || $value instanceof AwsException
+                || is_callable($value)
+            ) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected an Aws\\ResultInterface or Aws\\Exception\\AwsException.');
+                throw new \InvalidArgumentException('Expected an Aws\ResultInterface or Aws\Exception\AwsException.');
             }
         }
     }
+
     /**
      * Adds one or more \Exception or \Throwable to the queue
      */
@@ -57,24 +67,34 @@ class MockHandler implements \Countable
             if ($value instanceof \Exception || $value instanceof \Throwable) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected an \\Exception or \\Throwable.');
+                throw new \InvalidArgumentException('Expected an \Exception or \Throwable.');
             }
         }
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
-    {
+
+    public function __invoke(
+        CommandInterface $command,
+        RequestInterface $request
+    ) {
         if (!$this->queue) {
-            $last = $this->lastCommand ? ' The last command sent was ' . $this->lastCommand->getName() . '.' : '';
-            throw new \RuntimeException('Mock queue is empty. Trying to send a ' . $command->getName() . ' command failed.' . $last);
+            $last = $this->lastCommand
+                ? ' The last command sent was ' . $this->lastCommand->getName() . '.'
+                : '';
+            throw new \RuntimeException('Mock queue is empty. Trying to send a '
+                . $command->getName() . ' command failed.' . $last);
         }
+
         $this->lastCommand = $command;
         $this->lastRequest = $request;
+
         $result = array_shift($this->queue);
+
         if (is_callable($result)) {
             $result = $result($command, $request);
         }
+
         if ($result instanceof \Exception) {
-            $result = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($result);
+            $result = new RejectedPromise($result);
         } else {
             // Add an effective URI and statusCode if not present.
             $meta = $result['@metadata'];
@@ -85,11 +105,14 @@ class MockHandler implements \Countable
                 $meta['statusCode'] = 200;
             }
             $result['@metadata'] = $meta;
-            $result = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($result);
+            $result = Promise\promise_for($result);
         }
+
         $result->then($this->onFulfilled, $this->onRejected);
+
         return $result;
     }
+
     /**
      * Get the last received request.
      *
@@ -99,6 +122,7 @@ class MockHandler implements \Countable
     {
         return $this->lastRequest;
     }
+
     /**
      * Get the last received command.
      *
@@ -108,6 +132,7 @@ class MockHandler implements \Countable
     {
         return $this->lastCommand;
     }
+
     /**
      * Returns the number of remaining items in the queue.
      *

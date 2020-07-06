@@ -1,37 +1,52 @@
 <?php
+namespace Aws\Crypto;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
+use Aws\Kms\KmsClient;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient;
 /**
  * Uses KMS to supply materials for encrypting and decrypting data.
  */
-class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider
+class KmsMaterialsProvider extends MaterialsProvider implements MaterialsProviderInterface
 {
     private $kmsClient;
     private $kmsKeyId;
+
     /**
      * @param KmsClient $kmsClient A KMS Client for use encrypting and
      *                             decrypting keys.
      * @param string $kmsKeyId The private KMS key id to be used for encrypting
      *                         and decrypting keys.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient $kmsClient, $kmsKeyId = null)
-    {
+    public function __construct(
+        KmsClient $kmsClient,
+        $kmsKeyId = null
+    ) {
         $this->kmsClient = $kmsClient;
         $this->kmsKeyId = $kmsKeyId;
     }
-    public function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
+
+    public function fromDecryptionEnvelope(MetadataEnvelope $envelope)
     {
-        if (empty($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
-            throw new \RuntimeException('Not able to detect kms_cmk_id from an' . ' empty materials description.');
+        if (empty($envelope[MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
+            throw new \RuntimeException('Not able to detect kms_cmk_id from an'
+                . ' empty materials description.');
         }
-        $materialsDescription = json_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true);
+
+        $materialsDescription = json_decode(
+            $envelope[MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER],
+            true
+        );
         if (empty($materialsDescription['kms_cmk_id'])) {
-            throw new \RuntimeException('Not able to detect kms_cmk_id from kms' . ' materials description.');
+            throw new \RuntimeException('Not able to detect kms_cmk_id from kms'
+                . ' materials description.');
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\KmsMaterialsProvider($this->kmsClient, $materialsDescription['kms_cmk_id']);
+
+        return new KmsMaterialsProvider(
+            $this->kmsClient,
+            $materialsDescription['kms_cmk_id']
+        );
     }
+
     /**
      * The KMS key id for use in matching this Provider to its keys,
      * consistently with other SDKs as 'kms_cmk_id'.
@@ -42,10 +57,12 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Cr
     {
         return ['kms_cmk_id' => $this->kmsKeyId];
     }
+
     public function getWrapAlgorithmName()
     {
         return 'kms';
     }
+
     /**
      * Takes a content encryption key (CEK) and description to return an encrypted
      * key by using KMS' Encrypt API.
@@ -60,9 +77,14 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Cr
      */
     public function encryptCek($unencryptedCek, $materialDescription)
     {
-        $encryptedDataKey = $this->kmsClient->encrypt(['Plaintext' => $unencryptedCek, 'KeyId' => $this->kmsKeyId, 'EncryptionContext' => $materialDescription]);
+        $encryptedDataKey = $this->kmsClient->encrypt([
+            'Plaintext' => $unencryptedCek,
+            'KeyId' => $this->kmsKeyId,
+            'EncryptionContext' => $materialDescription
+        ]);
         return base64_encode($encryptedDataKey['CiphertextBlob']);
     }
+
     /**
      * Takes an encrypted content encryption key (CEK) and material description
      * for use decrypting the key by using KMS' Decrypt API.
@@ -76,7 +98,11 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Cr
      */
     public function decryptCek($encryptedCek, $materialDescription)
     {
-        $result = $this->kmsClient->decrypt(['CiphertextBlob' => $encryptedCek, 'EncryptionContext' => $materialDescription]);
+        $result = $this->kmsClient->decrypt([
+            'CiphertextBlob' => $encryptedCek,
+            'EncryptionContext' => $materialDescription
+        ]);
+
         return $result['Plaintext'];
     }
 }

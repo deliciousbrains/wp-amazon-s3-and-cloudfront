@@ -3,3 +3,4 @@ mirror
 assets/node_modules
 /vendor/deliciousbrains
 /languages/amazon-s3-and-cloudfront-en.mo
+.idea

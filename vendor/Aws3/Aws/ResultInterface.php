@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
+namespace Aws;
 
 /**
  * Represents an AWS result object that is returned from executing an operation.
@@ -13,12 +12,14 @@ interface ResultInterface extends \ArrayAccess, \IteratorAggregate, \Countable
      * @return string
      */
     public function __toString();
+
     /**
      * Convert the result to an array.
      *
      * @return array
      */
     public function toArray();
+
     /**
      * Check if the model contains a key by name
      *
@@ -27,6 +28,7 @@ interface ResultInterface extends \ArrayAccess, \IteratorAggregate, \Countable
      * @return bool
      */
     public function hasKey($name);
+
     /**
      * Get a specific key value from the result model.
      *
@@ -35,6 +37,7 @@ interface ResultInterface extends \ArrayAccess, \IteratorAggregate, \Countable
      * @return mixed|null Value of the key or NULL if not found.
      */
     public function get($key);
+
     /**
      * Returns the result of executing a JMESPath expression on the contents
      * of the Result model.
@@ -48,4 +51,4 @@ interface ResultInterface extends \ArrayAccess, \IteratorAggregate, \Countable
      * @link http://jmespath.readthedocs.org/en/latest/ JMESPath documentation
      */
     public function search($expression);
-}
+};

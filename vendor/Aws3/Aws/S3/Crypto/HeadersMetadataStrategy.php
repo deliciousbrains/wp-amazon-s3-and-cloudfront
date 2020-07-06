@@ -1,10 +1,10 @@
 <?php
+namespace Aws\S3\Crypto;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto;
+use \Aws\Crypto\MetadataStrategyInterface;
+use \Aws\Crypto\MetadataEnvelope;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataStrategyInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
-class HeadersMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataStrategyInterface
+class HeadersMetadataStrategy implements MetadataStrategyInterface
 {
     /**
      * Places the information in the MetadataEnvelope in to the Meatadata for
@@ -17,13 +17,15 @@ class HeadersMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\
      *
      * @return array Updated arguments for PutObject.
      */
-    public function save(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $args)
+    public function save(MetadataEnvelope $envelope, array $args)
     {
-        foreach ($envelope as $header => $value) {
+        foreach ($envelope as $header=>$value) {
             $args['Metadata'][$header] = $value;
         }
+
         return $args;
     }
+
     /**
      * Generates a MetadataEnvelope according to the Metadata headers from the
      * GetObject result.
@@ -36,13 +38,15 @@ class HeadersMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\
      */
     public function load(array $args)
     {
-        $envelope = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope();
-        $constantValues = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::getConstantValues();
+        $envelope = new MetadataEnvelope();
+        $constantValues = MetadataEnvelope::getConstantValues();
+
         foreach ($constantValues as $constant) {
             if (!empty($args['Metadata'][$constant])) {
                 $envelope[$constant] = $args['Metadata'][$constant];
             }
         }
+
         return $envelope;
     }
 }

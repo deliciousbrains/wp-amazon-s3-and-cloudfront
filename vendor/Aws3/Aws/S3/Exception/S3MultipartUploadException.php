@@ -1,11 +1,11 @@
 <?php
+namespace Aws\S3\Exception;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception;
+use Aws\CommandInterface;
+use Aws\Exception\AwsException;
+use Aws\Multipart\UploadState;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
-class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException
+class S3MultipartUploadException extends \Aws\Exception\MultipartUploadException
 {
     /** @var string Bucket of the transfer object */
     private $bucket;
@@ -13,6 +13,7 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\
     private $key;
     /** @var string Source file name of the transfer object */
     private $filename;
+
     /**
      * @param UploadState      $state Upload state at time of the exception.
      * @param \Exception|array $prev  Exception being thrown. Could be an array of
@@ -21,15 +22,15 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\
      *                                for a specific Multipart error being thrown in
      *                                the MultipartUpload process.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState $state, $prev = null)
-    {
-        if (is_array($prev) && ($error = $prev[key($prev)])) {
+    public function __construct(UploadState $state, $prev = null) {
+        if (is_array($prev) && $error = $prev[key($prev)]) {
             $this->collectPathInfo($error->getCommand());
         } elseif ($prev instanceof AwsException) {
             $this->collectPathInfo($prev->getCommand());
         }
         parent::__construct($state, $prev);
     }
+
     /**
      * Get the Bucket information of the transfer object
      *
@@ -40,6 +41,7 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\
     {
         return $this->bucket;
     }
+
     /**
      * Get the Key information of the transfer object
      *
@@ -50,6 +52,7 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\
     {
         return $this->key;
     }
+
     /**
      * Get the source file name of the transfer object
      *
@@ -60,12 +63,13 @@ class S3MultipartUploadException extends \DeliciousBrains\WP_Offload_Media\Aws3\
     {
         return $this->filename;
     }
+
     /**
      * Collect file path information when accessible. (Bucket, Key)
      *
      * @param CommandInterface $cmd
      */
-    private function collectPathInfo(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd)
+    private function collectPathInfo(CommandInterface $cmd)
     {
         if (empty($this->bucket) && isset($cmd['Bucket'])) {
             $this->bucket = $cmd['Bucket'];

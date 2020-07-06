@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
+namespace Aws;
 
 /**
  * Represents a simple cache interface.
@@ -15,6 +14,7 @@ interface CacheInterface
      * @return mixed|null Returns the value or null if not found.
      */
     public function get($key);
+
     /**
      * Set a cache key value.
      *
@@ -24,6 +24,7 @@ interface CacheInterface
      *                      to 0 to allow an unlimited lifetime.
      */
     public function set($key, $value, $ttl = 0);
+
     /**
      * Remove a cache key.
      *

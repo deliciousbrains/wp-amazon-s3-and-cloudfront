@@ -1,24 +1,45 @@
 <?php
+namespace Aws\Crypto;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
+use Aws\Crypto\Polyfill\AesGcm;
+use Aws\Crypto\Polyfill\Key;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\StreamDecoratorTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use RuntimeException;
+use \RuntimeException;
+
 /**
  * @internal Represents a stream of data to be gcm encrypted.
  */
-class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterface
+class AesGcmEncryptingStream implements AesStreamInterface, AesStreamInterfaceV2
 {
     use StreamDecoratorTrait;
+
     private $aad;
+
     private $initializationVector;
+
     private $key;
+
     private $keySize;
+
     private $plaintext;
+
     private $tag = '';
+
     private $tagLength;
+
+    /**
+     * Same as non-static 'getAesName' method, allowing calls in a static
+     * context.
+     *
+     * @return string
+     */
+    public static function getStaticAesName()
+    {
+        return 'AES/GCM/NoPadding';
+    }
+
     /**
      * @param StreamInterface $plaintext
      * @param string $key
@@ -27,11 +48,15 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
      * @param int $tagLength
      * @param int $keySize
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $plaintext, $key, $initializationVector, $aad = '', $tagLength = 16, $keySize = 256)
-    {
-        if (version_compare(PHP_VERSION, '7.1', '<')) {
-            throw new \RuntimeException('AES-GCM decryption is only supported in PHP 7.1 or greater');
-        }
+    public function __construct(
+        StreamInterface $plaintext,
+        $key,
+        $initializationVector,
+        $aad = '',
+        $tagLength = 16,
+        $keySize = 256
+    ) {
+
         $this->plaintext = $plaintext;
         $this->key = $key;
         $this->initializationVector = $initializationVector;
@@ -39,22 +64,52 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
         $this->tagLength = $tagLength;
         $this->keySize = $keySize;
     }
+
     public function getOpenSslName()
     {
         return "aes-{$this->keySize}-gcm";
     }
+
+    /**
+     * Same as static method and retained for backwards compatibility
+     *
+     * @return string
+     */
     public function getAesName()
     {
-        return 'AES/GCM/NoPadding';
+        return self::getStaticAesName();
     }
+
     public function getCurrentIv()
     {
         return $this->initializationVector;
     }
+
     public function createStream()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(openssl_encrypt((string) $this->plaintext, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad, $this->tagLength));
+        if (version_compare(PHP_VERSION, '7.1', '<')) {
+            return Psr7\stream_for(AesGcm::encrypt(
+                (string) $this->plaintext,
+                $this->initializationVector,
+                new Key($this->key),
+                $this->aad,
+                $this->tag,
+                $this->keySize
+            ));
+        } else {
+            return Psr7\stream_for(\openssl_encrypt(
+                (string)$this->plaintext,
+                $this->getOpenSslName(),
+                $this->key,
+                OPENSSL_RAW_DATA,
+                $this->initializationVector,
+                $this->tag,
+                $this->aad,
+                $this->tagLength
+            ));
+        }
     }
+
     /**
      * @return string
      */
@@ -62,6 +117,7 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
     {
         return $this->tag;
     }
+
     public function isWritable()
     {
         return false;

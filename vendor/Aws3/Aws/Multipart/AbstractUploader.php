@@ -1,25 +1,27 @@
 <?php
+namespace Aws\Multipart;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use Aws\AwsClientInterface as Client;
+use GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
-abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager
+
+abstract class AbstractUploader extends AbstractUploadManager
 {
     /** @var Stream Source of the data to be uploaded. */
     protected $source;
+
     /**
      * @param Client $client
      * @param mixed  $source
      * @param array  $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $source, array $config = [])
+    public function __construct(Client $client, $source, array $config = [])
     {
         $this->source = $this->determineSource($source);
         parent::__construct($client, $config);
     }
+
     /**
      * Create a stream for a part that starts at the current position and
      * has a length of the upload part size (or less with the final part).
@@ -28,15 +30,22 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      *
      * @return Psr7\LimitStream
      */
-    protected function limitPartStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    protected function limitPartStream(Stream $stream)
     {
         // Limit what is read from the stream to the part size.
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($stream, $this->state->getPartSize(), $this->source->tell());
+        return new Psr7\LimitStream(
+            $stream,
+            $this->state->getPartSize(),
+            $this->source->tell()
+        );
     }
+
     protected function getUploadCommands(callable $resultHandler)
     {
         // Determine if the source can be seeked.
-        $seekable = $this->source->isSeekable() && $this->source->getMetadata('wrapper_type') === 'plainfile';
+        $seekable = $this->source->isSeekable()
+            && $this->source->getMetadata('wrapper_type') === 'plainfile';
+
         for ($partNumber = 1; $this->isEof($seekable); $partNumber++) {
             // If we haven't already uploaded this part, yield a new part.
             if (!$this->state->hasPartBeenUploaded($partNumber)) {
@@ -44,21 +53,29 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
                 if (!($data = $this->createPart($seekable, $partNumber))) {
                     break;
                 }
-                $command = $this->client->getCommand($this->info['command']['upload'], $data + $this->state->getId());
+                $command = $this->client->getCommand(
+                    $this->info['command']['upload'],
+                    $data + $this->state->getId()
+                );
                 $command->getHandlerList()->appendSign($resultHandler, 'mup');
-                (yield $command);
+                yield $command;
                 if ($this->source->tell() > $partStartPos) {
                     continue;
                 }
             }
+
             // Advance the source's offset if not already advanced.
             if ($seekable) {
-                $this->source->seek(min($this->source->tell() + $this->state->getPartSize(), $this->source->getSize()));
+                $this->source->seek(min(
+                    $this->source->tell() + $this->state->getPartSize(),
+                    $this->source->getSize()
+                ));
             } else {
                 $this->source->read($this->state->getPartSize());
             }
         }
     }
+
     /**
      * Generates the parameters for an upload part by analyzing a range of the
      * source starting from the current offset up to the part size.
@@ -68,7 +85,8 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      *
      * @return array|null
      */
-    protected abstract function createPart($seekable, $number);
+    abstract protected function createPart($seekable, $number);
+
     /**
      * Checks if the source is at EOF.
      *
@@ -78,8 +96,11 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      */
     private function isEof($seekable)
     {
-        return $seekable ? $this->source->tell() < $this->source->getSize() : !$this->source->eof();
+        return $seekable
+            ? $this->source->tell() < $this->source->getSize()
+            : !$this->source->eof();
     }
+
     /**
      * Turns the provided source into a stream and stores it.
      *
@@ -94,13 +115,15 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
     {
         // Use the contents of a file as the data source.
         if (is_string($source)) {
-            $source = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\try_fopen($source, 'r');
+            $source = Psr7\try_fopen($source, 'r');
         }
+
         // Create a source stream.
-        $stream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($source);
+        $stream = Psr7\stream_for($source);
         if (!$stream->isReadable()) {
-            throw new \InvalidArgumentException('Source stream must be readable.');
+            throw new IAE('Source stream must be readable.');
         }
+
         return $stream;
     }
 }

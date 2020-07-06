@@ -1,8 +1,8 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+namespace GuzzleHttp\Psr7;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+
 /**
  * Trait implementing functionality common to requests and responses.
  */
@@ -10,68 +10,82 @@ trait MessageTrait
 {
     /** @var array Map of all registered headers, as original name => array of values */
     private $headers = [];
+
     /** @var array Map of lowercase header name => original name at registration */
-    private $headerNames = [];
+    private $headerNames  = [];
+
     /** @var string */
     private $protocol = '1.1';
+
     /** @var StreamInterface */
     private $stream;
+
     public function getProtocolVersion()
     {
         return $this->protocol;
     }
+
     public function withProtocolVersion($version)
     {
         if ($this->protocol === $version) {
             return $this;
         }
+
         $new = clone $this;
         $new->protocol = $version;
         return $new;
     }
+
     public function getHeaders()
     {
         return $this->headers;
     }
+
     public function hasHeader($header)
     {
         return isset($this->headerNames[strtolower($header)]);
     }
+
     public function getHeader($header)
     {
         $header = strtolower($header);
+
         if (!isset($this->headerNames[$header])) {
             return [];
         }
+
         $header = $this->headerNames[$header];
+
         return $this->headers[$header];
     }
+
     public function getHeaderLine($header)
     {
         return implode(', ', $this->getHeader($header));
     }
+
     public function withHeader($header, $value)
     {
-        if (!is_array($value)) {
-            $value = [$value];
-        }
-        $value = $this->trimHeaderValues($value);
+        $this->assertHeader($header);
+        $value = $this->normalizeHeaderValue($value);
         $normalized = strtolower($header);
+
         $new = clone $this;
         if (isset($new->headerNames[$normalized])) {
             unset($new->headers[$new->headerNames[$normalized]]);
         }
         $new->headerNames[$normalized] = $header;
         $new->headers[$header] = $value;
+
         return $new;
     }
+
     public function withAddedHeader($header, $value)
     {
-        if (!is_array($value)) {
-            $value = [$value];
-        }
-        $value = $this->trimHeaderValues($value);
+        $this->assertHeader($header);
+        $value = $this->normalizeHeaderValue($value);
         $normalized = strtolower($header);
+
         $new = clone $this;
         if (isset($new->headerNames[$normalized])) {
             $header = $this->headerNames[$normalized];
@@ -80,43 +94,57 @@ trait MessageTrait
             $new->headerNames[$normalized] = $header;
             $new->headers[$header] = $value;
         }
+
         return $new;
     }
+
     public function withoutHeader($header)
     {
         $normalized = strtolower($header);
+
         if (!isset($this->headerNames[$normalized])) {
             return $this;
         }
+
         $header = $this->headerNames[$normalized];
+
         $new = clone $this;
         unset($new->headers[$header], $new->headerNames[$normalized]);
+
         return $new;
     }
+
     public function getBody()
     {
         if (!$this->stream) {
             $this->stream = stream_for('');
         }
+
         return $this->stream;
     }
-    public function withBody(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $body)
+
+    public function withBody(StreamInterface $body)
     {
         if ($body === $this->stream) {
             return $this;
         }
+
         $new = clone $this;
         $new->stream = $body;
         return $new;
     }
+
     private function setHeaders(array $headers)
     {
         $this->headerNames = $this->headers = [];
         foreach ($headers as $header => $value) {
-            if (!is_array($value)) {
-                $value = [$value];
+            if (is_int($header)) {
+                // Numeric array keys are converted to int by PHP but having a header name '123' is not forbidden by the spec
+                // and also allowed in withHeader(). So we need to cast it to string again for the following assertion to pass.
+                $header = (string) $header;
             }
-            $value = $this->trimHeaderValues($value);
+            $this->assertHeader($header);
+            $value = $this->normalizeHeaderValue($value);
             $normalized = strtolower($header);
             if (isset($this->headerNames[$normalized])) {
                 $header = $this->headerNames[$normalized];
@@ -127,6 +155,20 @@ trait MessageTrait
             }
         }
     }
+
+    private function normalizeHeaderValue($value)
+    {
+        if (!is_array($value)) {
+            return $this->trimHeaderValues([$value]);
+        }
+
+        if (count($value) === 0) {
+            throw new \InvalidArgumentException('Header value can not be an empty array.');
+        }
+
+        return $this->trimHeaderValues($value);
+    }
+
     /**
      * Trims whitespace from the header values.
      *
@@ -144,7 +186,28 @@ trait MessageTrait
     private function trimHeaderValues(array $values)
     {
         return array_map(function ($value) {
-            return trim($value, " \t");
+            if (!is_scalar($value) && null !== $value) {
+                throw new \InvalidArgumentException(sprintf(
+                    'Header value must be scalar or null but %s provided.',
+                    is_object($value) ? get_class($value) : gettype($value)
+                ));
+            }
+
+            return trim((string) $value, " \t");
         }, $values);
+    }
+
+    private function assertHeader($header)
+    {
+        if (!is_string($header)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Header name must be a string but %s provided.',
+                is_object($header) ? get_class($header) : gettype($header)
+            ));
+        }
+
+        if ($header === '') {
+            throw new \InvalidArgumentException('Header name can not be empty.');
+        }
     }
 }

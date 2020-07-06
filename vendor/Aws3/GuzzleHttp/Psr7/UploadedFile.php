@@ -1,45 +1,62 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+namespace GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
-class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UploadedFileInterface
+
+class UploadedFile implements UploadedFileInterface
 {
     /**
      * @var int[]
      */
-    private static $errors = [UPLOAD_ERR_OK, UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE, UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_EXTENSION];
+    private static $errors = [
+        UPLOAD_ERR_OK,
+        UPLOAD_ERR_INI_SIZE,
+        UPLOAD_ERR_FORM_SIZE,
+        UPLOAD_ERR_PARTIAL,
+        UPLOAD_ERR_NO_FILE,
+        UPLOAD_ERR_NO_TMP_DIR,
+        UPLOAD_ERR_CANT_WRITE,
+        UPLOAD_ERR_EXTENSION,
+    ];
+
     /**
      * @var string
      */
     private $clientFilename;
+
     /**
      * @var string
      */
     private $clientMediaType;
+
     /**
      * @var int
      */
     private $error;
+
     /**
      * @var null|string
      */
     private $file;
+
     /**
      * @var bool
      */
     private $moved = false;
+
     /**
      * @var int
      */
     private $size;
+
     /**
      * @var StreamInterface|null
      */
     private $stream;
+
     /**
      * @param StreamInterface|string|resource $streamOrFile
      * @param int $size
@@ -47,16 +64,23 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
      * @param string|null $clientFilename
      * @param string|null $clientMediaType
      */
-    public function __construct($streamOrFile, $size, $errorStatus, $clientFilename = null, $clientMediaType = null)
-    {
+    public function __construct(
+        $streamOrFile,
+        $size,
+        $errorStatus,
+        $clientFilename = null,
+        $clientMediaType = null
+    ) {
         $this->setError($errorStatus);
         $this->setSize($size);
         $this->setClientFilename($clientFilename);
         $this->setClientMediaType($clientMediaType);
+
         if ($this->isOk()) {
             $this->setStreamOrFile($streamOrFile);
         }
     }
+
     /**
      * Depending on the value set file or stream variable
      *
@@ -68,13 +92,16 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
         if (is_string($streamOrFile)) {
             $this->file = $streamOrFile;
         } elseif (is_resource($streamOrFile)) {
-            $this->stream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($streamOrFile);
+            $this->stream = new Stream($streamOrFile);
         } elseif ($streamOrFile instanceof StreamInterface) {
             $this->stream = $streamOrFile;
         } else {
-            throw new \InvalidArgumentException('Invalid stream or file provided for UploadedFile');
+            throw new InvalidArgumentException(
+                'Invalid stream or file provided for UploadedFile'
+            );
         }
     }
+
     /**
      * @param int $error
      * @throws InvalidArgumentException
@@ -82,13 +109,20 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     private function setError($error)
     {
         if (false === is_int($error)) {
-            throw new \InvalidArgumentException('Upload file error status must be an integer');
+            throw new InvalidArgumentException(
+                'Upload file error status must be an integer'
+            );
         }
+
         if (false === in_array($error, UploadedFile::$errors)) {
-            throw new \InvalidArgumentException('Invalid error status for UploadedFile');
+            throw new InvalidArgumentException(
+                'Invalid error status for UploadedFile'
+            );
         }
+
         $this->error = $error;
     }
+
     /**
      * @param int $size
      * @throws InvalidArgumentException
@@ -96,10 +130,14 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     private function setSize($size)
     {
         if (false === is_int($size)) {
-            throw new \InvalidArgumentException('Upload file size must be an integer');
+            throw new InvalidArgumentException(
+                'Upload file size must be an integer'
+            );
         }
+
         $this->size = $size;
     }
+
     /**
      * @param mixed $param
      * @return boolean
@@ -108,6 +146,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return in_array(gettype($param), ['string', 'NULL']);
     }
+
     /**
      * @param mixed $param
      * @return boolean
@@ -116,6 +155,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return is_string($param) && false === empty($param);
     }
+
     /**
      * @param string|null $clientFilename
      * @throws InvalidArgumentException
@@ -123,10 +163,14 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     private function setClientFilename($clientFilename)
     {
         if (false === $this->isStringOrNull($clientFilename)) {
-            throw new \InvalidArgumentException('Upload file client filename must be a string or null');
+            throw new InvalidArgumentException(
+                'Upload file client filename must be a string or null'
+            );
         }
+
         $this->clientFilename = $clientFilename;
     }
+
     /**
      * @param string|null $clientMediaType
      * @throws InvalidArgumentException
@@ -134,10 +178,14 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     private function setClientMediaType($clientMediaType)
     {
         if (false === $this->isStringOrNull($clientMediaType)) {
-            throw new \InvalidArgumentException('Upload file client media type must be a string or null');
+            throw new InvalidArgumentException(
+                'Upload file client media type must be a string or null'
+            );
         }
+
         $this->clientMediaType = $clientMediaType;
     }
+
     /**
      * Return true if there is no upload error
      *
@@ -147,6 +195,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return $this->error === UPLOAD_ERR_OK;
     }
+
     /**
      * @return boolean
      */
@@ -154,18 +203,21 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return $this->moved;
     }
+
     /**
      * @throws RuntimeException if is moved or not ok
      */
     private function validateActive()
     {
         if (false === $this->isOk()) {
-            throw new \RuntimeException('Cannot retrieve stream due to upload error');
+            throw new RuntimeException('Cannot retrieve stream due to upload error');
         }
+
         if ($this->isMoved()) {
-            throw new \RuntimeException('Cannot retrieve stream after it has already been moved');
+            throw new RuntimeException('Cannot retrieve stream after it has already been moved');
         }
     }
+
     /**
      * {@inheritdoc}
      * @throws RuntimeException if the upload was not successful.
@@ -173,11 +225,14 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     public function getStream()
     {
         $this->validateActive();
+
         if ($this->stream instanceof StreamInterface) {
             return $this->stream;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($this->file, 'r+');
+
+        return new LazyOpenStream($this->file, 'r+');
     }
+
     /**
      * {@inheritdoc}
      *
@@ -192,19 +247,33 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     public function moveTo($targetPath)
     {
         $this->validateActive();
+
         if (false === $this->isStringNotEmpty($targetPath)) {
-            throw new \InvalidArgumentException('Invalid path provided for move operation; must be a non-empty string');
+            throw new InvalidArgumentException(
+                'Invalid path provided for move operation; must be a non-empty string'
+            );
         }
+
         if ($this->file) {
-            $this->moved = php_sapi_name() == 'cli' ? rename($this->file, $targetPath) : move_uploaded_file($this->file, $targetPath);
+            $this->moved = php_sapi_name() == 'cli'
+                ? rename($this->file, $targetPath)
+                : move_uploaded_file($this->file, $targetPath);
         } else {
-            copy_to_stream($this->getStream(), new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
+            copy_to_stream(
+                $this->getStream(),
+                new LazyOpenStream($targetPath, 'w')
+            );
+
             $this->moved = true;
         }
+
         if (false === $this->moved) {
-            throw new \RuntimeException(sprintf('Uploaded file could not be moved to %s', $targetPath));
+            throw new RuntimeException(
+                sprintf('Uploaded file could not be moved to %s', $targetPath)
+            );
         }
     }
+
     /**
      * {@inheritdoc}
      *
@@ -214,6 +283,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return $this->size;
     }
+
     /**
      * {@inheritdoc}
      *
@@ -224,6 +294,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return $this->error;
     }
+
     /**
      * {@inheritdoc}
      *
@@ -234,6 +305,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     {
         return $this->clientFilename;
     }
+
     /**
      * {@inheritdoc}
      */

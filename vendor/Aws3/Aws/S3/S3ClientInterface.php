@@ -1,12 +1,12 @@
 <?php
+namespace Aws\S3;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use Aws\AwsClientInterface;
+use Aws\CommandInterface;
+use Aws\ResultInterface;
+use GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+
 interface S3ClientInterface extends AwsClientInterface
 {
     /**
@@ -22,11 +22,12 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * @return RequestInterface
      */
-    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires);
+    public function createPresignedRequest(CommandInterface $command, $expires, array $options = []);
+
     /**
      * Returns the URL to an object identified by its bucket and key.
      *
-     * The URL returned by this method is not signed nor does it ensure the the
+     * The URL returned by this method is not signed nor does it ensure that the
      * bucket and key given to the method exist. If you need a signed URL, then
      * use the {@see \Aws\S3\S3Client::createPresignedRequest} method and get
      * the URI of the signed request.
@@ -37,6 +38,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @return string The URL to the object
      */
     public function getObjectUrl($bucket, $key);
+
     /**
      * Determines whether or not a bucket exists by name.
      *
@@ -45,6 +47,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @return bool
      */
     public function doesBucketExist($bucket);
+
     /**
      * Determines whether or not an object exists by name.
      *
@@ -56,10 +59,12 @@ interface S3ClientInterface extends AwsClientInterface
      * @return bool
      */
     public function doesObjectExist($bucket, $key, array $options = []);
+
     /**
      * Register the Amazon S3 stream wrapper with this client instance.
      */
     public function registerStreamWrapper();
+
     /**
      * Deletes objects from Amazon S3 that match the result of a ListObjects
      * operation. For example, this allows you to do things like delete all
@@ -73,7 +78,13 @@ interface S3ClientInterface extends AwsClientInterface
      * @see Aws\S3\S3Client::listObjects
      * @throws \RuntimeException if no prefix and no regex is given
      */
-    public function deleteMatchingObjects($bucket, $prefix = '', $regex = '', array $options = []);
+    public function deleteMatchingObjects(
+        $bucket,
+        $prefix = '',
+        $regex = '',
+        array $options = []
+    );
+
     /**
      * Deletes objects from Amazon S3 that match the result of a ListObjects
      * operation. For example, this allows you to do things like delete all
@@ -89,7 +100,13 @@ interface S3ClientInterface extends AwsClientInterface
      * @return PromiseInterface     A promise that is settled when matching
      *                              objects are deleted.
      */
-    public function deleteMatchingObjectsAsync($bucket, $prefix = '', $regex = '', array $options = []);
+    public function deleteMatchingObjectsAsync(
+        $bucket,
+        $prefix = '',
+        $regex = '',
+        array $options = []
+    );
+
     /**
      * Upload a file, stream, or string to a bucket.
      *
@@ -122,7 +139,14 @@ interface S3ClientInterface extends AwsClientInterface
      * @see Aws\S3\MultipartUploader for more info about multipart uploads.
      * @return ResultInterface Returns the result of the upload.
      */
-    public function upload($bucket, $key, $body, $acl = 'private', array $options = []);
+    public function upload(
+        $bucket,
+        $key,
+        $body,
+        $acl = 'private',
+        array $options = []
+    );
+
     /**
      * Upload a file, stream, or string to a bucket asynchronously.
      *
@@ -138,7 +162,14 @@ interface S3ClientInterface extends AwsClientInterface
      * @return PromiseInterface     Returns a promise that will be fulfilled
      *                              with the result of the upload.
      */
-    public function uploadAsync($bucket, $key, $body, $acl = 'private', array $options = []);
+    public function uploadAsync(
+        $bucket,
+        $key,
+        $body,
+        $acl = 'private',
+        array $options = []
+    );
+
     /**
      * Copy an object of any size to a different location.
      *
@@ -168,7 +199,15 @@ interface S3ClientInterface extends AwsClientInterface
      * @see Aws\S3\MultipartCopy for more info about multipart uploads.
      * @return ResultInterface Returns the result of the copy.
      */
-    public function copy($fromBucket, $fromKey, $destBucket, $destKey, $acl = 'private', array $options = []);
+    public function copy(
+        $fromBucket,
+        $fromKey,
+        $destBucket,
+        $destKey,
+        $acl = 'private',
+        array $options = []
+    );
+
     /**
      * Copy an object of any size to a different location asynchronously.
      *
@@ -183,7 +222,15 @@ interface S3ClientInterface extends AwsClientInterface
      * @return PromiseInterface     Returns a promise that will be fulfilled
      *                              with the result of the copy.
      */
-    public function copyAsync($fromBucket, $fromKey, $destBucket, $destKey, $acl = 'private', array $options = []);
+    public function copyAsync(
+        $fromBucket,
+        $fromKey,
+        $destBucket,
+        $destKey,
+        $acl = 'private',
+        array $options = []
+    );
+
     /**
      * Recursively uploads all files in a given directory to a given bucket.
      *
@@ -194,7 +241,13 @@ interface S3ClientInterface extends AwsClientInterface
      *
      * @see Aws\S3\Transfer for more options and customization
      */
-    public function uploadDirectory($directory, $bucket, $keyPrefix = null, array $options = []);
+    public function uploadDirectory(
+        $directory,
+        $bucket,
+        $keyPrefix = null,
+        array $options = []
+    );
+
     /**
      * Recursively uploads all files in a given directory to a given bucket.
      *
@@ -208,7 +261,13 @@ interface S3ClientInterface extends AwsClientInterface
      * @return PromiseInterface A promise that is settled when the upload is
      *                          complete.
      */
-    public function uploadDirectoryAsync($directory, $bucket, $keyPrefix = null, array $options = []);
+    public function uploadDirectoryAsync(
+        $directory,
+        $bucket,
+        $keyPrefix = null,
+        array $options = []
+    );
+
     /**
      * Downloads a bucket to the local filesystem
      *
@@ -217,7 +276,13 @@ interface S3ClientInterface extends AwsClientInterface
      * @param string $keyPrefix Only download objects that use this key prefix
      * @param array  $options   Options available in Aws\S3\Transfer::__construct
      */
-    public function downloadBucket($directory, $bucket, $keyPrefix = '', array $options = []);
+    public function downloadBucket(
+        $directory,
+        $bucket,
+        $keyPrefix = '',
+        array $options = []
+    );
+
     /**
      * Downloads a bucket to the local filesystem
      *
@@ -229,7 +294,13 @@ interface S3ClientInterface extends AwsClientInterface
      * @return PromiseInterface A promise that is settled when the download is
      *                          complete.
      */
-    public function downloadBucketAsync($directory, $bucket, $keyPrefix = '', array $options = []);
+    public function downloadBucketAsync(
+        $directory,
+        $bucket,
+        $keyPrefix = '',
+        array $options = []
+    );
+
     /**
      * Returns the region in which a given bucket is located.
      *
@@ -238,6 +309,7 @@ interface S3ClientInterface extends AwsClientInterface
      * @return string
      */
     public function determineBucketRegion($bucketName);
+
     /**
      * Returns a promise fulfilled with the region in which a given bucket is
      * located.

@@ -1,5 +1,4 @@
 <?php
-
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message;
 
 /**
@@ -39,6 +38,7 @@ interface UriInterface
      * @return string The URI scheme.
      */
     public function getScheme();
+
     /**
      * Retrieve the authority component of the URI.
      *
@@ -58,6 +58,7 @@ interface UriInterface
      * @return string The URI authority, in "[user-info@]host[:port]" format.
      */
     public function getAuthority();
+
     /**
      * Retrieve the user information component of the URI.
      *
@@ -74,6 +75,7 @@ interface UriInterface
      * @return string The URI user information, in "username[:password]" format.
      */
     public function getUserInfo();
+
     /**
      * Retrieve the host component of the URI.
      *
@@ -86,6 +88,7 @@ interface UriInterface
      * @return string The URI host.
      */
     public function getHost();
+
     /**
      * Retrieve the port component of the URI.
      *
@@ -102,6 +105,7 @@ interface UriInterface
      * @return null|int The URI port.
      */
     public function getPort();
+
     /**
      * Retrieve the path component of the URI.
      *
@@ -128,6 +132,7 @@ interface UriInterface
      * @return string The URI path.
      */
     public function getPath();
+
     /**
      * Retrieve the query string of the URI.
      *
@@ -149,6 +154,7 @@ interface UriInterface
      * @return string The URI query string.
      */
     public function getQuery();
+
     /**
      * Retrieve the fragment component of the URI.
      *
@@ -166,6 +172,7 @@ interface UriInterface
      * @return string The URI fragment.
      */
     public function getFragment();
+
     /**
      * Return an instance with the specified scheme.
      *
@@ -182,6 +189,7 @@ interface UriInterface
      * @throws \InvalidArgumentException for invalid or unsupported schemes.
      */
     public function withScheme($scheme);
+
     /**
      * Return an instance with the specified user information.
      *
@@ -197,6 +205,7 @@ interface UriInterface
      * @return static A new instance with the specified user information.
      */
     public function withUserInfo($user, $password = null);
+
     /**
      * Return an instance with the specified host.
      *
@@ -210,6 +219,7 @@ interface UriInterface
      * @throws \InvalidArgumentException for invalid hostnames.
      */
     public function withHost($host);
+
     /**
      * Return an instance with the specified port.
      *
@@ -228,6 +238,7 @@ interface UriInterface
      * @throws \InvalidArgumentException for invalid ports.
      */
     public function withPort($port);
+
     /**
      * Return an instance with the specified path.
      *
@@ -251,6 +262,7 @@ interface UriInterface
      * @throws \InvalidArgumentException for invalid paths.
      */
     public function withPath($path);
+
     /**
      * Return an instance with the specified query string.
      *
@@ -267,6 +279,7 @@ interface UriInterface
      * @throws \InvalidArgumentException for invalid query strings.
      */
     public function withQuery($query);
+
     /**
      * Return an instance with the specified URI fragment.
      *
@@ -282,6 +295,7 @@ interface UriInterface
      * @return static A new instance with the specified fragment.
      */
     public function withFragment($fragment);
+
     /**
      * Return the string representation as a URI reference.
      *

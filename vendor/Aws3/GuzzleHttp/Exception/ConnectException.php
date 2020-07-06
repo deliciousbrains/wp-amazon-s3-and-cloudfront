@@ -1,19 +1,24 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception;
+namespace GuzzleHttp\Exception;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+
 /**
  * Exception thrown when a connection cannot be established.
  *
  * Note that no response is present for a ConnectException
  */
-class ConnectException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException
+class ConnectException extends RequestException
 {
-    public function __construct($message, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \Exception $previous = null, array $handlerContext = [])
-    {
+    public function __construct(
+        $message,
+        RequestInterface $request,
+        \Exception $previous = null,
+        array $handlerContext = []
+    ) {
         parent::__construct($message, $request, null, $previous, $handlerContext);
     }
+
     /**
      * @return null
      */
@@ -21,6 +26,7 @@ class ConnectException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
     {
         return null;
     }
+
     /**
      * @return bool
      */

@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
+namespace GuzzleHttp;
 
 /**
  * Expands URI templates. Userland implementation of PECL uri_template.
@@ -11,23 +10,47 @@ class UriTemplate
 {
     /** @var string URI template */
     private $template;
+
     /** @var array Variables to use in the template expansion */
     private $variables;
+
     /** @var array Hash for quick operator lookups */
-    private static $operatorHash = ['' => ['prefix' => '', 'joiner' => ',', 'query' => false], '+' => ['prefix' => '', 'joiner' => ',', 'query' => false], '#' => ['prefix' => '#', 'joiner' => ',', 'query' => false], '.' => ['prefix' => '.', 'joiner' => '.', 'query' => false], '/' => ['prefix' => '/', 'joiner' => '/', 'query' => false], ';' => ['prefix' => ';', 'joiner' => ';', 'query' => true], '?' => ['prefix' => '?', 'joiner' => '&', 'query' => true], '&' => ['prefix' => '&', 'joiner' => '&', 'query' => true]];
+    private static $operatorHash = [
+        ''  => ['prefix' => '',  'joiner' => ',', 'query' => false],
+        '+' => ['prefix' => '',  'joiner' => ',', 'query' => false],
+        '#' => ['prefix' => '#', 'joiner' => ',', 'query' => false],
+        '.' => ['prefix' => '.', 'joiner' => '.', 'query' => false],
+        '/' => ['prefix' => '/', 'joiner' => '/', 'query' => false],
+        ';' => ['prefix' => ';', 'joiner' => ';', 'query' => true],
+        '?' => ['prefix' => '?', 'joiner' => '&', 'query' => true],
+        '&' => ['prefix' => '&', 'joiner' => '&', 'query' => true]
+    ];
+
     /** @var array Delimiters */
-    private static $delims = [':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='];
+    private static $delims = [':', '/', '?', '#', '[', ']', '@', '!', '$',
+        '&', '\'', '(', ')', '*', '+', ',', ';', '='];
+
     /** @var array Percent encoded delimiters */
-    private static $delimsPct = ['%3A', '%2F', '%3F', '%23', '%5B', '%5D', '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C', '%3B', '%3D'];
+    private static $delimsPct = ['%3A', '%2F', '%3F', '%23', '%5B', '%5D',
+        '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C',
+        '%3B', '%3D'];
+
     public function expand($template, array $variables)
     {
         if (false === strpos($template, '{')) {
             return $template;
         }
+
         $this->template = $template;
         $this->variables = $variables;
-        return preg_replace_callback('/\\{([^\\}]+)\\}/', [$this, 'expandMatch'], $this->template);
+
+        return preg_replace_callback(
+            '/\{([^\}]+)\}/',
+            [$this, 'expandMatch'],
+            $this->template
+        );
     }
+
     /**
      * Parse an expression into parts
      *
@@ -38,12 +61,14 @@ class UriTemplate
     private function parseExpression($expression)
     {
         $result = [];
+
         if (isset(self::$operatorHash[$expression[0]])) {
             $result['operator'] = $expression[0];
             $expression = substr($expression, 1);
         } else {
             $result['operator'] = '';
         }
+
         foreach (explode(',', $expression) as $value) {
             $value = trim($value);
             $varspec = [];
@@ -60,8 +85,10 @@ class UriTemplate
             }
             $result['values'][] = $varspec;
         }
+
         return $result;
     }
+
     /**
      * Process an expansion
      *
@@ -72,18 +99,22 @@ class UriTemplate
     private function expandMatch(array $matches)
     {
         static $rfc1738to3986 = ['+' => '%20', '%7e' => '~'];
+
         $replacements = [];
         $parsed = self::parseExpression($matches[1]);
         $prefix = self::$operatorHash[$parsed['operator']]['prefix'];
         $joiner = self::$operatorHash[$parsed['operator']]['joiner'];
         $useQuery = self::$operatorHash[$parsed['operator']]['query'];
+
         foreach ($parsed['values'] as $value) {
             if (!isset($this->variables[$value['value']])) {
                 continue;
             }
+
             $variable = $this->variables[$value['value']];
             $actuallyUseQuery = $useQuery;
             $expanded = '';
+
             if (is_array($variable)) {
                 $isAssoc = $this->isAssoc($variable);
                 $kvp = [];
@@ -94,18 +125,25 @@ class UriTemplate
                     } else {
                         $isNestedArray = false;
                     }
+
                     if (!$isNestedArray) {
                         $var = rawurlencode($var);
-                        if ($parsed['operator'] === '+' || $parsed['operator'] === '#') {
+                        if ($parsed['operator'] === '+' ||
+                            $parsed['operator'] === '#'
+                        ) {
                             $var = $this->decodeReserved($var);
                         }
                     }
+
                     if ($value['modifier'] === '*') {
                         if ($isAssoc) {
                             if ($isNestedArray) {
                                 // Nested arrays must allow for deeply nested
                                 // structures.
-                                $var = strtr(http_build_query([$key => $var]), $rfc1738to3986);
+                                $var = strtr(
+                                    http_build_query([$key => $var]),
+                                    $rfc1738to3986
+                                );
                             } else {
                                 $var = $key . '=' . $var;
                             }
@@ -113,8 +151,10 @@ class UriTemplate
                             $var = $value['value'] . '=' . $var;
                         }
                     }
+
                     $kvp[$key] = $var;
                 }
+
                 if (empty($variable)) {
                     $actuallyUseQuery = false;
                 } elseif ($value['modifier'] === '*') {
@@ -145,6 +185,7 @@ class UriTemplate
                     $expanded = $this->decodeReserved($expanded);
                 }
             }
+
             if ($actuallyUseQuery) {
                 if (!$expanded && $joiner !== '&') {
                     $expanded = $value['value'];
@@ -152,14 +193,18 @@ class UriTemplate
                     $expanded = $value['value'] . '=' . $expanded;
                 }
             }
+
             $replacements[] = $expanded;
         }
+
         $ret = implode($joiner, $replacements);
         if ($ret && $prefix) {
             return $prefix . $ret;
         }
+
         return $ret;
     }
+
     /**
      * Determines if an array is associative.
      *
@@ -176,6 +221,7 @@ class UriTemplate
     {
         return $array && array_keys($array)[0] !== 0;
     }
+
     /**
      * Removes percent encoding on reserved characters (used with + and #
      * modifiers).

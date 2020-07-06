@@ -1,9 +1,9 @@
 <?php
+namespace Aws\S3;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
+use Aws\Credentials\CredentialsInterface;
+use GuzzleHttp\Psr7\Uri;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 /**
  * @deprecated
  */
@@ -14,6 +14,7 @@ class PostObject
     private $formAttributes;
     private $formInputs;
     private $jsonPolicy;
+
     /**
      * Constructs the PostObject.
      *
@@ -26,19 +27,31 @@ class PostObject
      *                                      and applied to the form on your
      *                                      behalf.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $bucket, array $formInputs, $jsonPolicy)
-    {
+    public function __construct(
+        S3ClientInterface $client,
+        $bucket,
+        array $formInputs,
+        $jsonPolicy
+    ) {
         $this->client = $client;
         $this->bucket = $bucket;
+
         if (is_array($jsonPolicy)) {
             $jsonPolicy = json_encode($jsonPolicy);
         }
+
         $this->jsonPolicy = $jsonPolicy;
-        $this->formAttributes = ['action' => $this->generateUri(), 'method' => 'POST', 'enctype' => 'multipart/form-data'];
+        $this->formAttributes = [
+            'action'  => $this->generateUri(),
+            'method'  => 'POST',
+            'enctype' => 'multipart/form-data'
+        ];
+
         $this->formInputs = $formInputs + ['key' => '${filename}'];
         $credentials = $client->getCredentials()->wait();
         $this->formInputs += $this->getPolicyAndSignature($credentials);
     }
+
     /**
      * Gets the S3 client.
      *
@@ -48,6 +61,7 @@ class PostObject
     {
         return $this->client;
     }
+
     /**
      * Gets the bucket name.
      *
@@ -57,6 +71,7 @@ class PostObject
     {
         return $this->bucket;
     }
+
     /**
      * Gets the form attributes as an array.
      *
@@ -66,6 +81,7 @@ class PostObject
     {
         return $this->formAttributes;
     }
+
     /**
      * Set a form attribute.
      *
@@ -76,6 +92,7 @@ class PostObject
     {
         $this->formAttributes[$attribute] = $value;
     }
+
     /**
      * Gets the form inputs as an array.
      *
@@ -85,6 +102,7 @@ class PostObject
     {
         return $this->formInputs;
     }
+
     /**
      * Set a form input.
      *
@@ -95,6 +113,7 @@ class PostObject
     {
         $this->formInputs[$field] = $value;
     }
+
     /**
      * Gets the raw JSON policy.
      *
@@ -104,21 +123,38 @@ class PostObject
     {
         return $this->jsonPolicy;
     }
+
     private function generateUri()
     {
-        $uri = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($this->client->getEndpoint());
-        if ($this->client->getConfig('use_path_style_endpoint') === true || $uri->getScheme() === 'https' && strpos($this->bucket, '.') !== false) {
+        $uri = new Uri($this->client->getEndpoint());
+
+        if ($this->client->getConfig('use_path_style_endpoint') === true
+            || ($uri->getScheme() === 'https'
+            && strpos($this->bucket, '.') !== false)
+        ) {
             // Use path-style URLs
             $uri = $uri->withPath("/{$this->bucket}");
         } else {
             // Use virtual-style URLs
             $uri = $uri->withHost($this->bucket . '.' . $uri->getHost());
         }
+
         return (string) $uri;
     }
-    protected function getPolicyAndSignature(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $creds)
+
+    protected function getPolicyAndSignature(CredentialsInterface $creds)
     {
         $jsonPolicy64 = base64_encode($this->jsonPolicy);
-        return ['AWSAccessKeyId' => $creds->getAccessKeyId(), 'policy' => $jsonPolicy64, 'signature' => base64_encode(hash_hmac('sha1', $jsonPolicy64, $creds->getSecretKey(), true))];
+
+        return [
+            'AWSAccessKeyId' => $creds->getAccessKeyId(),
+            'policy'    => $jsonPolicy64,
+            'signature' => base64_encode(hash_hmac(
+                'sha1',
+                $jsonPolicy64,
+                $creds->getSecretKey(),
+                true
+            ))
+        ];
     }
 }

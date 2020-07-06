@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
+namespace GuzzleHttp\Cookie;
 
 /**
  * Set-Cookie object
@@ -8,9 +7,21 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
 class SetCookie
 {
     /** @var array */
-    private static $defaults = ['Name' => null, 'Value' => null, 'Domain' => null, 'Path' => '/', 'Max-Age' => null, 'Expires' => null, 'Secure' => false, 'Discard' => false, 'HttpOnly' => false];
+    private static $defaults = [
+        'Name'     => null,
+        'Value'    => null,
+        'Domain'   => null,
+        'Path'     => '/',
+        'Max-Age'  => null,
+        'Expires'  => null,
+        'Secure'   => false,
+        'Discard'  => false,
+        'HttpOnly' => false
+    ];
+
     /** @var array Cookie data */
     private $data;
+
     /**
      * Create a new SetCookie object from a string
      *
@@ -28,11 +39,15 @@ class SetCookie
         if (empty($pieces[0]) || !strpos($pieces[0], '=')) {
             return new self($data);
         }
+
         // Add the cookie pieces into the parsed data array
         foreach ($pieces as $part) {
             $cookieParts = explode('=', $part, 2);
             $key = trim($cookieParts[0]);
-            $value = isset($cookieParts[1]) ? trim($cookieParts[1], " \n\r\t\0\v") : true;
+            $value = isset($cookieParts[1])
+                ? trim($cookieParts[1], " \n\r\t\0\x0B")
+                : true;
+
             // Only check for non-cookies when cookies have been found
             if (empty($data['Name'])) {
                 $data['Name'] = $key;
@@ -47,8 +62,10 @@ class SetCookie
                 $data[$key] = $value;
             }
         }
+
         return new self($data);
     }
+
     /**
      * @param array $data Array of cookie data provided by a Cookie parser
      */
@@ -63,24 +80,28 @@ class SetCookie
             $this->setExpires($this->getExpires());
         }
     }
+
     public function __toString()
     {
         $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
         foreach ($this->data as $k => $v) {
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
-                    $str .= 'Expires=' . gmdate('D, d M Y H:i:s \\G\\M\\T', $v) . '; ';
+                    $str .= 'Expires=' . gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
                 } else {
                     $str .= ($v === true ? $k : "{$k}={$v}") . '; ';
                 }
             }
         }
+
         return rtrim($str, '; ');
     }
+
     public function toArray()
     {
         return $this->data;
     }
+
     /**
      * Get the cookie name
      *
@@ -90,6 +111,7 @@ class SetCookie
     {
         return $this->data['Name'];
     }
+
     /**
      * Set the cookie name
      *
@@ -99,6 +121,7 @@ class SetCookie
     {
         $this->data['Name'] = $name;
     }
+
     /**
      * Get the cookie value
      *
@@ -108,6 +131,7 @@ class SetCookie
     {
         return $this->data['Value'];
     }
+
     /**
      * Set the cookie value
      *
@@ -117,6 +141,7 @@ class SetCookie
     {
         $this->data['Value'] = $value;
     }
+
     /**
      * Get the domain
      *
@@ -126,6 +151,7 @@ class SetCookie
     {
         return $this->data['Domain'];
     }
+
     /**
      * Set the domain of the cookie
      *
@@ -135,6 +161,7 @@ class SetCookie
     {
         $this->data['Domain'] = $domain;
     }
+
     /**
      * Get the path
      *
@@ -144,6 +171,7 @@ class SetCookie
     {
         return $this->data['Path'];
     }
+
     /**
      * Set the path of the cookie
      *
@@ -153,6 +181,7 @@ class SetCookie
     {
         $this->data['Path'] = $path;
     }
+
     /**
      * Maximum lifetime of the cookie in seconds
      *
@@ -162,6 +191,7 @@ class SetCookie
     {
         return $this->data['Max-Age'];
     }
+
     /**
      * Set the max-age of the cookie
      *
@@ -171,6 +201,7 @@ class SetCookie
     {
         $this->data['Max-Age'] = $maxAge;
     }
+
     /**
      * The UNIX timestamp when the cookie Expires
      *
@@ -180,6 +211,7 @@ class SetCookie
     {
         return $this->data['Expires'];
     }
+
     /**
      * Set the unix timestamp for which the cookie will expire
      *
@@ -187,17 +219,21 @@ class SetCookie
      */
     public function setExpires($timestamp)
     {
-        $this->data['Expires'] = is_numeric($timestamp) ? (int) $timestamp : strtotime($timestamp);
+        $this->data['Expires'] = is_numeric($timestamp)
+            ? (int) $timestamp
+            : strtotime($timestamp);
     }
+
     /**
      * Get whether or not this is a secure cookie
      *
-     * @return null|bool
+     * @return bool|null
      */
     public function getSecure()
     {
         return $this->data['Secure'];
     }
+
     /**
      * Set whether or not the cookie is secure
      *
@@ -207,15 +243,17 @@ class SetCookie
     {
         $this->data['Secure'] = $secure;
     }
+
     /**
      * Get whether or not this is a session cookie
      *
-     * @return null|bool
+     * @return bool|null
      */
     public function getDiscard()
     {
         return $this->data['Discard'];
     }
+
     /**
      * Set whether or not this is a session cookie
      *
@@ -225,6 +263,7 @@ class SetCookie
     {
         $this->data['Discard'] = $discard;
     }
+
     /**
      * Get whether or not this is an HTTP only cookie
      *
@@ -234,6 +273,7 @@ class SetCookie
     {
         return $this->data['HttpOnly'];
     }
+
     /**
      * Set whether or not this is an HTTP only cookie
      *
@@ -243,6 +283,7 @@ class SetCookie
     {
         $this->data['HttpOnly'] = $httpOnly;
     }
+
     /**
      * Check if the cookie matches a path value.
      *
@@ -263,21 +304,26 @@ class SetCookie
     public function matchesPath($requestPath)
     {
         $cookiePath = $this->getPath();
+
         // Match on exact matches or when path is the default empty "/"
         if ($cookiePath === '/' || $cookiePath == $requestPath) {
             return true;
         }
+
         // Ensure that the cookie-path is a prefix of the request path.
         if (0 !== strpos($requestPath, $cookiePath)) {
             return false;
         }
+
         // Match if the last character of the cookie-path is "/"
         if (substr($cookiePath, -1, 1) === '/') {
             return true;
         }
+
         // Match if the first character not included in cookie path is "/"
         return substr($requestPath, strlen($cookiePath), 1) === '/';
     }
+
     /**
      * Check if the cookie matches a domain value
      *
@@ -290,17 +336,21 @@ class SetCookie
         // Remove the leading '.' as per spec in RFC 6265.
         // http://tools.ietf.org/html/rfc6265#section-5.2.3
         $cookieDomain = ltrim($this->getDomain(), '.');
+
         // Domain not set or exact match.
         if (!$cookieDomain || !strcasecmp($domain, $cookieDomain)) {
             return true;
         }
+
         // Matching the subdomain according to RFC 6265.
         // http://tools.ietf.org/html/rfc6265#section-5.1.3
         if (filter_var($domain, FILTER_VALIDATE_IP)) {
             return false;
         }
-        return (bool) preg_match('/\\.' . preg_quote($cookieDomain, '/') . '$/', $domain);
+
+        return (bool) preg_match('/\.' . preg_quote($cookieDomain, '/') . '$/', $domain);
     }
+
     /**
      * Check if the cookie is expired
      *
@@ -310,6 +360,7 @@ class SetCookie
     {
         return $this->getExpires() !== null && time() > $this->getExpires();
     }
+
     /**
      * Check if the cookie is valid according to RFC 6265
      *
@@ -322,15 +373,23 @@ class SetCookie
         if (empty($name) && !is_numeric($name)) {
             return 'The cookie name must not be empty';
         }
+
         // Check if any of the invalid characters are present in the cookie name
-        if (preg_match('/[\\x00-\\x20\\x22\\x28-\\x29\\x2c\\x2f\\x3a-\\x40\\x5c\\x7b\\x7d\\x7f]/', $name)) {
-            return 'Cookie name must not contain invalid characters: ASCII ' . 'Control characters (0-31;127), space, tab and the ' . 'following characters: ()<>@,;:\\"/?={}';
+        if (preg_match(
+            '/[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5c\x7b\x7d\x7f]/',
+            $name
+        )) {
+            return 'Cookie name must not contain invalid characters: ASCII '
+                . 'Control characters (0-31;127), space, tab and the '
+                . 'following characters: ()<>@,;:\"/?={}';
         }
+
         // Value must not be empty, but can be 0
         $value = $this->getValue();
         if (empty($value) && !is_numeric($value)) {
             return 'The cookie value must not be empty';
         }
+
         // Domains must not be empty, but can be 0
         // A "0" is not a valid internet domain, but may be used as server name
         // in a private network.
@@ -338,6 +397,7 @@ class SetCookie
         if (empty($domain) && !is_numeric($domain)) {
             return 'The cookie domain must not be empty';
         }
+
         return true;
     }
 }

@@ -1,12 +1,12 @@
 <?php
+namespace Aws\S3;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
+use Aws\AwsClientInterface;
+use Aws\S3\Exception\DeleteMultipleObjectsException;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromisorInterface;
+use GuzzleHttp\Promise\PromiseInterface;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 /**
  * Efficiently deletes many objects from a single Amazon S3 bucket using an
  * iterator that yields keys. Deletes are made using the DeleteObjects API
@@ -34,7 +34,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  *
  * @link http://docs.aws.amazon.com/AmazonS3/latest/API/multiobjectdeleteapi.html
  */
-class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
+class BatchDelete implements PromisorInterface
 {
     private $bucket;
     /** @var AwsClientInterface */
@@ -47,6 +47,7 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
     private $promiseCreator;
     private $batchSize = 1000;
     private $queue = [];
+
     /**
      * Creates a BatchDelete object from all of the paginated results of a
      * ListObjects operation. Each result that is returned by the ListObjects
@@ -58,12 +59,15 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
      *
      * @return BatchDelete
      */
-    public static function fromListObjects(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, array $listObjectsParams, array $options = [])
-    {
+    public static function fromListObjects(
+        AwsClientInterface $client,
+        array $listObjectsParams,
+        array $options = []
+    ) {
         $iter = $client->getPaginator('ListObjects', $listObjectsParams);
         $bucket = $listObjectsParams['Bucket'];
-        $fn = function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete $that) use($iter) {
-            return $iter->each(function ($result) use($that) {
+        $fn = function (BatchDelete $that) use ($iter) {
+            return $iter->each(function ($result) use ($that) {
                 $promises = [];
                 if (is_array($result['Contents'])) {
                     foreach ($result['Contents'] as $object) {
@@ -72,11 +76,13 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
                         }
                     }
                 }
-                return $promises ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\all($promises) : null;
+                return $promises ? Promise\all($promises) : null;
             });
         };
+
         return new self($client, $bucket, $fn, $options);
     }
+
     /**
      * Creates a BatchDelete object from an iterator that yields results.
      *
@@ -87,26 +93,34 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
      *
      * @return BatchDelete
      */
-    public static function fromIterator(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $bucket, \Iterator $iter, array $options = [])
-    {
-        $fn = function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BatchDelete $that) use($iter) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () use($that, $iter) {
+    public static function fromIterator(
+        AwsClientInterface $client,
+        $bucket,
+        \Iterator $iter,
+        array $options = []
+    ) {
+        $fn = function (BatchDelete $that) use ($iter) {
+            return Promise\coroutine(function () use ($that, $iter) {
                 foreach ($iter as $obj) {
                     if ($promise = $that->enqueue($obj)) {
-                        (yield $promise);
+                        yield $promise;
                     }
                 }
             });
         };
+
         return new self($client, $bucket, $fn, $options);
     }
+
     public function promise()
     {
         if (!$this->cachedPromise) {
             $this->cachedPromise = $this->createPromise();
         }
+
         return $this->cachedPromise;
     }
+
     /**
      * Synchronously deletes all of the objects.
      *
@@ -116,6 +130,7 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
     {
         $this->promise()->wait();
     }
+
     /**
      * @param AwsClientInterface $client    Client used to transfer the requests
      * @param string             $bucket    Bucket to delete from.
@@ -124,17 +139,23 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
      *
      * @throws \InvalidArgumentException if the provided batch_size is <= 0
      */
-    private function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $bucket, callable $promiseFn, array $options = [])
-    {
+    private function __construct(
+        AwsClientInterface $client,
+        $bucket,
+        callable $promiseFn,
+        array $options = []
+    ) {
         $this->client = $client;
         $this->bucket = $bucket;
         $this->promiseCreator = $promiseFn;
+
         if (isset($options['before'])) {
             if (!is_callable($options['before'])) {
                 throw new \InvalidArgumentException('before must be callable');
             }
             $this->before = $options['before'];
         }
+
         if (isset($options['batch_size'])) {
             if ($options['batch_size'] <= 0) {
                 throw new \InvalidArgumentException('batch_size is not > 0');
@@ -142,32 +163,49 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
             $this->batchSize = min($options['batch_size'], 1000);
         }
     }
+
     private function enqueue(array $obj)
     {
         $this->queue[] = $obj;
-        return count($this->queue) >= $this->batchSize ? $this->flushQueue() : null;
+        return count($this->queue) >= $this->batchSize
+            ? $this->flushQueue()
+            : null;
     }
+
     private function flushQueue()
     {
         static $validKeys = ['Key' => true, 'VersionId' => true];
+
         if (count($this->queue) === 0) {
             return null;
         }
+
         $batch = [];
         while ($obj = array_shift($this->queue)) {
             $batch[] = array_intersect_key($obj, $validKeys);
         }
-        $command = $this->client->getCommand('DeleteObjects', ['Bucket' => $this->bucket, 'Delete' => ['Objects' => $batch]]);
+
+        $command = $this->client->getCommand('DeleteObjects', [
+            'Bucket' => $this->bucket,
+            'Delete' => ['Objects' => $batch]
+        ]);
+
         if ($this->before) {
             call_user_func($this->before, $command);
         }
-        return $this->client->executeAsync($command)->then(function ($result) {
-            if (!empty($result['Errors'])) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\DeleteMultipleObjectsException($result['Deleted'] ?: [], $result['Errors']);
-            }
-            return $result;
-        });
+
+        return $this->client->executeAsync($command)
+            ->then(function ($result) {
+                if (!empty($result['Errors'])) {
+                    throw new DeleteMultipleObjectsException(
+                        $result['Deleted'] ?: [],
+                        $result['Errors']
+                    );
+                }
+                return $result;
+            });
     }
+
     /**
      * Returns a promise that will clean up any references when it completes.
      *
@@ -178,16 +216,22 @@ class BatchDelete implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\P
         // Create the promise
         $promise = call_user_func($this->promiseCreator, $this);
         $this->promiseCreator = null;
+
         // Cleans up the promise state and references.
         $cleanup = function () {
             $this->before = $this->client = $this->queue = null;
         };
+
         // When done, ensure cleanup and that any remaining are processed.
-        return $promise->then(function () use($cleanup) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($this->flushQueue())->then($cleanup);
-        }, function ($reason) use($cleanup) {
-            $cleanup();
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
-        });
+        return $promise->then(
+            function () use ($cleanup)  {
+                return Promise\promise_for($this->flushQueue())
+                    ->then($cleanup);
+            },
+            function ($reason) use ($cleanup)  {
+                $cleanup();
+                return Promise\rejection_for($reason);
+            }
+        );
     }
 }

@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
+namespace Aws\Api;
 
 /**
  * Encapsulates the documentation strings for a given service-version and
@@ -11,6 +10,7 @@ class DocModel
 {
     /** @var array */
     private $docs;
+
     /**
      * @param array $docs
      *
@@ -21,8 +21,10 @@ class DocModel
         if (!extension_loaded('tidy')) {
             throw new \RuntimeException('The "tidy" PHP extension is required.');
         }
+
         $this->docs = $docs;
     }
+
     /**
      * Convert the doc model to an array.
      *
@@ -32,6 +34,7 @@ class DocModel
     {
         return $this->docs;
     }
+
     /**
      * Retrieves documentation about the service.
      *
@@ -41,6 +44,7 @@ class DocModel
     {
         return isset($this->docs['service']) ? $this->docs['service'] : null;
     }
+
     /**
      * Retrieves documentation about an operation.
      *
@@ -50,8 +54,11 @@ class DocModel
      */
     public function getOperationDocs($operation)
     {
-        return isset($this->docs['operations'][$operation]) ? $this->docs['operations'][$operation] : null;
+        return isset($this->docs['operations'][$operation])
+            ? $this->docs['operations'][$operation]
+            : null;
     }
+
     /**
      * Retrieves documentation about an error.
      *
@@ -61,8 +68,11 @@ class DocModel
      */
     public function getErrorDocs($error)
     {
-        return isset($this->docs['shapes'][$error]['base']) ? $this->docs['shapes'][$error]['base'] : null;
+        return isset($this->docs['shapes'][$error]['base'])
+            ? $this->docs['shapes'][$error]['base']
+            : null;
     }
+
     /**
      * Retrieves documentation about a shape, specific to the context.
      *
@@ -77,26 +87,42 @@ class DocModel
         if (!isset($this->docs['shapes'][$shapeName])) {
             return '';
         }
+
         $result = '';
         $d = $this->docs['shapes'][$shapeName];
-        if (isset($d['refs']["{$parentName}\${$ref}"])) {
-            $result = $d['refs']["{$parentName}\${$ref}"];
+        if (isset($d['refs']["{$parentName}\$${ref}"])) {
+            $result = $d['refs']["{$parentName}\$${ref}"];
         } elseif (isset($d['base'])) {
             $result = $d['base'];
         }
+
         if (isset($d['append'])) {
             $result .= $d['append'];
         }
+
         return $this->clean($result);
     }
+
     private function clean($content)
     {
         if (!$content) {
             return '';
         }
-        $tidy = new \Tidy();
-        $tidy->parseString($content, ['indent' => true, 'doctype' => 'omit', 'output-html' => true, 'show-body-only' => true, 'drop-empty-paras' => true, 'drop-font-tags' => true, 'drop-proprietary-attributes' => true, 'hide-comments' => true, 'logical-emphasis' => true]);
+
+        $tidy = new \tidy();
+        $tidy->parseString($content, [
+            'indent' => true,
+            'doctype' => 'omit',
+            'output-html' => true,
+            'show-body-only' => true,
+            'drop-empty-paras' => true,
+            'drop-font-tags' => true,
+            'drop-proprietary-attributes' => true,
+            'hide-comments' => true,
+            'logical-emphasis' => true
+        ]);
         $tidy->cleanRepair();
+
         return (string) $content;
     }
 }

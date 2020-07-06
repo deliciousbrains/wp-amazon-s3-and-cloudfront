@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
+namespace Aws;
 
 /**
  * A command object encapsulates the input parameters used to control the
@@ -17,12 +16,14 @@ interface CommandInterface extends \ArrayAccess, \Countable, \IteratorAggregate
      * @return array
      */
     public function toArray();
+
     /**
      * Get the name of the command
      *
      * @return string
      */
     public function getName();
+
     /**
      * Check if the command has a parameter by name.
      *
@@ -31,6 +32,7 @@ interface CommandInterface extends \ArrayAccess, \Countable, \IteratorAggregate
      * @return bool
      */
     public function hasParam($name);
+
     /**
      * Get the handler list used to transfer the command.
      *

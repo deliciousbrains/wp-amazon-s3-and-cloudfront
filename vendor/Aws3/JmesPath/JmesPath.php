@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
+namespace JmesPath;
 
 /**
  * Returns data from the input array that matches a JMESPath expression.
@@ -10,9 +9,9 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
  *
  * @return mixed|null
  */
-if (!function_exists(__NAMESPACE__ . '\\search')) {
+if (!function_exists(__NAMESPACE__ . '\search')) {
     function search($expression, $data)
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search($expression, $data);
+        return Env::search($expression, $data);
     }
 }

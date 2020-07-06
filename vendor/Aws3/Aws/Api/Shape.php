@@ -1,11 +1,10 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
+namespace Aws\Api;
 
 /**
  * Base class representing a modeled shape.
  */
-class Shape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
+class Shape extends AbstractModel
 {
     /**
      * Get a concrete shape for the given definition.
@@ -16,18 +15,38 @@ class Shape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
      * @return mixed
      * @throws \RuntimeException if the type is invalid
      */
-    public static function create(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public static function create(array $definition, ShapeMap $shapeMap)
     {
-        static $map = ['structure' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\StructureShape', 'map' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\MapShape', 'list' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ListShape', 'timestamp' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\TimestampShape', 'integer' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'double' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'float' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'long' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'string' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'byte' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'character' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'blob' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape', 'boolean' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Shape'];
+        static $map = [
+            'structure' => 'Aws\Api\StructureShape',
+            'map'       => 'Aws\Api\MapShape',
+            'list'      => 'Aws\Api\ListShape',
+            'timestamp' => 'Aws\Api\TimestampShape',
+            'integer'   => 'Aws\Api\Shape',
+            'double'    => 'Aws\Api\Shape',
+            'float'     => 'Aws\Api\Shape',
+            'long'      => 'Aws\Api\Shape',
+            'string'    => 'Aws\Api\Shape',
+            'byte'      => 'Aws\Api\Shape',
+            'character' => 'Aws\Api\Shape',
+            'blob'      => 'Aws\Api\Shape',
+            'boolean'   => 'Aws\Api\Shape'
+        ];
+
         if (isset($definition['shape'])) {
             return $shapeMap->resolve($definition);
         }
+
         if (!isset($map[$definition['type']])) {
-            throw new \RuntimeException('Invalid type: ' . print_r($definition, true));
+            throw new \RuntimeException('Invalid type: '
+                . print_r($definition, true));
         }
+
         $type = $map[$definition['type']];
+
         return new $type($definition, $shapeMap);
     }
+
     /**
      * Get the type of the shape
      *
@@ -37,6 +56,7 @@ class Shape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
     {
         return $this->definition['type'];
     }
+
     /**
      * Get the name of the shape
      *

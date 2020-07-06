@@ -1,10 +1,11 @@
 <?php
+namespace Aws\Exception;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
+use Aws\HasMonitoringEventsTrait;
+use Aws\MonitoringEventsInterface;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
-class CredentialsException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class CredentialsException extends \RuntimeException implements
+    MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
 }

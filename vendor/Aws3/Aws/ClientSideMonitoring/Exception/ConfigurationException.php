@@ -1,13 +1,15 @@
 <?php
+namespace Aws\ClientSideMonitoring\Exception;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Exception;
+use Aws\HasMonitoringEventsTrait;
+use Aws\MonitoringEventsInterface;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
+
 /**
  * Represents an error interacting with configuration for client-side monitoring.
  */
-class ConfigurationException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class ConfigurationException extends \RuntimeException implements
+    MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
 }

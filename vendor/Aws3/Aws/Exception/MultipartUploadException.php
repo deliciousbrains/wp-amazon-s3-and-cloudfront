@@ -1,28 +1,31 @@
 <?php
+namespace Aws\Exception;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
+use Aws\HasMonitoringEventsTrait;
+use Aws\MonitoringEventsInterface;
+use Aws\Multipart\UploadState;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState;
-class MultipartUploadException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class MultipartUploadException extends \RuntimeException implements
+    MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
+
     /** @var UploadState State of the erroneous transfer */
     private $state;
+
     /**
      * @param UploadState      $state Upload state at time of the exception.
      * @param \Exception|array $prev  Exception being thrown.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\UploadState $state, $prev = null)
-    {
+    public function __construct(UploadState $state, $prev = null) {
         $msg = 'An exception occurred while performing a multipart upload';
+
         if (is_array($prev)) {
             $msg = strtr($msg, ['performing' => 'uploading parts to']);
             $msg .= ". The following parts had errors:\n";
             /** @var $error AwsException */
             foreach ($prev as $part => $error) {
-                $msg .= "- Part {$part}: " . $error->getMessage() . "\n";
+                $msg .= "- Part {$part}: " . $error->getMessage(). "\n";
             }
         } elseif ($prev instanceof AwsException) {
             switch ($prev->getCommand()->getName()) {
@@ -39,12 +42,15 @@ class MultipartUploadException extends \RuntimeException implements \DeliciousBr
             }
             $msg .= ": {$prev->getMessage()}";
         }
+
         if (!$prev instanceof \Exception) {
             $prev = null;
         }
+
         parent::__construct($msg, 0, $prev);
         $this->state = $state;
     }
+
     /**
      * Get the state of the transfer
      *

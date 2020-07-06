@@ -1,26 +1,30 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
+namespace Aws\Api;
 
 /**
  * Represents an API operation.
  */
-class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
+class Operation extends AbstractModel
 {
     private $input;
     private $output;
     private $errors;
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
+
+    public function __construct(array $definition, ShapeMap $shapeMap)
     {
         $definition['type'] = 'structure';
+
         if (!isset($definition['http']['method'])) {
             $definition['http']['method'] = 'POST';
         }
+
         if (!isset($definition['http']['requestUri'])) {
             $definition['http']['requestUri'] = '/';
         }
+
         parent::__construct($definition, $shapeMap);
     }
+
     /**
      * Returns an associative array of the HTTP attribute of the operation:
      *
@@ -33,6 +37,7 @@ class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractM
     {
         return $this->definition['http'];
     }
+
     /**
      * Get the input shape of the operation.
      *
@@ -44,11 +49,13 @@ class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractM
             if ($input = $this['input']) {
                 $this->input = $this->shapeFor($input);
             } else {
-                $this->input = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
+                $this->input = new StructureShape([], $this->shapeMap);
             }
         }
+
         return $this->input;
     }
+
     /**
      * Get the output shape of the operation.
      *
@@ -60,11 +67,13 @@ class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractM
             if ($output = $this['output']) {
                 $this->output = $this->shapeFor($output);
             } else {
-                $this->output = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape([], $this->shapeMap);
+                $this->output = new StructureShape([], $this->shapeMap);
             }
         }
+
         return $this->output;
     }
+
     /**
      * Get an array of operation error shapes.
      *
@@ -82,6 +91,7 @@ class Operation extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractM
                 $this->errors = [];
             }
         }
+
         return $this->errors;
     }
 }

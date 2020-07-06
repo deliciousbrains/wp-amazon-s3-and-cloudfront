@@ -1,16 +1,17 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
+namespace GuzzleHttp\Cookie;
 
 /**
  * Persists non-session cookies using a JSON formatted file
  */
-class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar
+class FileCookieJar extends CookieJar
 {
     /** @var string filename */
     private $filename;
+
     /** @var bool Control whether to persist session cookies or not. */
     private $storeSessionCookies;
+
     /**
      * Create a new FileCookieJar object
      *
@@ -22,12 +23,15 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Co
      */
     public function __construct($cookieFile, $storeSessionCookies = false)
     {
+        parent::__construct();
         $this->filename = $cookieFile;
         $this->storeSessionCookies = $storeSessionCookies;
+
         if (file_exists($cookieFile)) {
             $this->load($cookieFile);
         }
     }
+
     /**
      * Saves the file when shutting down
      */
@@ -35,6 +39,7 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Co
     {
         $this->save($this->filename);
     }
+
     /**
      * Saves the cookies to a file.
      *
@@ -46,15 +51,17 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Co
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
+            if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }
-        $jsonStr = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\json_encode($json);
-        if (false === file_put_contents($filename, $jsonStr)) {
+
+        $jsonStr = \GuzzleHttp\json_encode($json);
+        if (false === file_put_contents($filename, $jsonStr, LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
     }
+
     /**
      * Load cookies from a JSON formatted file.
      *
@@ -71,10 +78,11 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Co
         } elseif ($json === '') {
             return;
         }
-        $data = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\json_decode($json, true);
+
+        $data = \GuzzleHttp\json_decode($json, true);
         if (is_array($data)) {
             foreach (json_decode($json, true) as $cookie) {
-                $this->setCookie(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\SetCookie($cookie));
+                $this->setCookie(new SetCookie($cookie));
             }
         } elseif (strlen($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");

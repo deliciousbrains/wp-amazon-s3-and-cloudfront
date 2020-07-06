@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
+namespace Aws\Multipart;
 
 /**
  * Representation of the multipart upload.
@@ -13,14 +12,19 @@ class UploadState
     const CREATED = 0;
     const INITIATED = 1;
     const COMPLETED = 2;
+
     /** @var array Params used to identity the upload. */
     private $id;
+
     /** @var int Part size being used by the upload. */
     private $partSize;
+
     /** @var array Parts that have been uploaded. */
     private $uploadedParts = [];
+
     /** @var int Identifies the status the upload. */
     private $status = self::CREATED;
+
     /**
      * @param array $id Params used to identity the upload.
      */
@@ -28,6 +32,7 @@ class UploadState
     {
         $this->id = $id;
     }
+
     /**
      * Get the upload's ID, which is a tuple of parameters that can uniquely
      * identify the upload.
@@ -38,6 +43,7 @@ class UploadState
     {
         return $this->id;
     }
+
     /**
      * Set's the "upload_id", or 3rd part of the upload's ID. This typically
      * only needs to be done after initiating an upload.
@@ -49,6 +55,7 @@ class UploadState
     {
         $this->id[$key] = $value;
     }
+
     /**
      * Get the part size.
      *
@@ -58,6 +65,7 @@ class UploadState
     {
         return $this->partSize;
     }
+
     /**
      * Set the part size.
      *
@@ -67,6 +75,7 @@ class UploadState
     {
         $this->partSize = $partSize;
     }
+
     /**
      * Marks a part as being uploaded.
      *
@@ -78,6 +87,7 @@ class UploadState
     {
         $this->uploadedParts[$partNumber] = $partData;
     }
+
     /**
      * Returns whether a part has been uploaded.
      *
@@ -89,6 +99,7 @@ class UploadState
     {
         return isset($this->uploadedParts[$partNumber]);
     }
+
     /**
      * Returns a sorted list of all the uploaded parts.
      *
@@ -97,8 +108,10 @@ class UploadState
     public function getUploadedParts()
     {
         ksort($this->uploadedParts);
+
         return $this->uploadedParts;
     }
+
     /**
      * Set the status of the upload.
      *
@@ -109,6 +122,7 @@ class UploadState
     {
         $this->status = $status;
     }
+
     /**
      * Determines whether the upload state is in the INITIATED status.
      *
@@ -118,6 +132,7 @@ class UploadState
     {
         return $this->status === self::INITIATED;
     }
+
     /**
      * Determines whether the upload state is in the COMPLETED status.
      *

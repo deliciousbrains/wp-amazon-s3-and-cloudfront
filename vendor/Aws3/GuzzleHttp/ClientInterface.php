@@ -1,18 +1,22 @@
 <?php
+namespace GuzzleHttp;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
+
 /**
  * Client interface for sending HTTP requests.
  */
 interface ClientInterface
 {
-    const VERSION = '6.3.3';
+    /**
+     * @deprecated Will be removed in Guzzle 7.0.0
+     */
+    const VERSION = '6.5.5';
+
     /**
      * Send an HTTP request.
      *
@@ -23,7 +27,8 @@ interface ClientInterface
      * @return ResponseInterface
      * @throws GuzzleException
      */
-    public function send(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = []);
+    public function send(RequestInterface $request, array $options = []);
+
     /**
      * Asynchronously send an HTTP request.
      *
@@ -33,7 +38,8 @@ interface ClientInterface
      *
      * @return PromiseInterface
      */
-    public function sendAsync(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = []);
+    public function sendAsync(RequestInterface $request, array $options = []);
+
     /**
      * Create and send an HTTP request.
      *
@@ -49,6 +55,7 @@ interface ClientInterface
      * @throws GuzzleException
      */
     public function request($method, $uri, array $options = []);
+
     /**
      * Create and send an asynchronous HTTP request.
      *
@@ -64,6 +71,7 @@ interface ClientInterface
      * @return PromiseInterface
      */
     public function requestAsync($method, $uri, array $options = []);
+
     /**
      * Get a client configuration option.
      *

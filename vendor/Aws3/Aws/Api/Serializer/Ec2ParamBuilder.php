@@ -1,24 +1,32 @@
 <?php
+namespace Aws\Api\Serializer;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer;
+use Aws\Api\Shape;
+use Aws\Api\ListShape;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape;
 /**
  * @internal
  */
-class Ec2ParamBuilder extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\QueryParamBuilder
+class Ec2ParamBuilder extends QueryParamBuilder
 {
-    protected function queryName(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, $default = null)
+    protected function queryName(Shape $shape, $default = null)
     {
-        return $shape['queryName'] ?: ucfirst($shape['locationName']) ?: $default;
+        return ($shape['queryName']
+            ?: ucfirst($shape['locationName']))
+                ?: $default;
     }
-    protected function isFlat(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape)
+
+    protected function isFlat(Shape $shape)
     {
         return false;
     }
-    protected function format_list(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape $shape, array $value, $prefix, &$query)
-    {
+
+    protected function format_list(
+        ListShape $shape,
+        array $value,
+        $prefix,
+        &$query
+    ) {
         // Handle empty list serialization
         if (!$value) {
             $query[$prefix] = false;

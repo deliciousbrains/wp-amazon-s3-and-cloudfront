@@ -1,10 +1,10 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
+namespace GuzzleHttp;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
+
 /**
  * Represents data at the point after it was transferred either successfully
  * or after a network error.
@@ -16,21 +16,28 @@ final class TransferStats
     private $transferTime;
     private $handlerStats;
     private $handlerErrorData;
+
     /**
-     * @param RequestInterface  $request          Request that was sent.
-     * @param ResponseInterface $response         Response received (if any)
-     * @param null              $transferTime     Total handler transfer time.
-     * @param mixed             $handlerErrorData Handler error data.
-     * @param array             $handlerStats     Handler specific stats.
+     * @param RequestInterface       $request          Request that was sent.
+     * @param ResponseInterface|null $response         Response received (if any)
+     * @param float|null             $transferTime     Total handler transfer time.
+     * @param mixed                  $handlerErrorData Handler error data.
+     * @param array                  $handlerStats     Handler specific stats.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, $transferTime = null, $handlerErrorData = null, $handlerStats = [])
-    {
+    public function __construct(
+        RequestInterface $request,
+        ResponseInterface $response = null,
+        $transferTime = null,
+        $handlerErrorData = null,
+        $handlerStats = []
+    ) {
         $this->request = $request;
         $this->response = $response;
         $this->transferTime = $transferTime;
         $this->handlerErrorData = $handlerErrorData;
         $this->handlerStats = $handlerStats;
     }
+
     /**
      * @return RequestInterface
      */
@@ -38,6 +45,7 @@ final class TransferStats
     {
         return $this->request;
     }
+
     /**
      * Returns the response that was received (if any).
      *
@@ -47,6 +55,7 @@ final class TransferStats
     {
         return $this->response;
     }
+
     /**
      * Returns true if a response was received.
      *
@@ -56,6 +65,7 @@ final class TransferStats
     {
         return $this->response !== null;
     }
+
     /**
      * Gets handler specific error data.
      *
@@ -69,6 +79,7 @@ final class TransferStats
     {
         return $this->handlerErrorData;
     }
+
     /**
      * Get the effective URI the request was sent to.
      *
@@ -78,15 +89,17 @@ final class TransferStats
     {
         return $this->request->getUri();
     }
+
     /**
      * Get the estimated time the request was being transferred by the handler.
      *
-     * @return float Time in seconds.
+     * @return float|null Time in seconds.
      */
     public function getTransferTime()
     {
         return $this->transferTime;
     }
+
     /**
      * Gets an array of all of the handler specific transfer data.
      *
@@ -96,6 +109,7 @@ final class TransferStats
     {
         return $this->handlerStats;
     }
+
     /**
      * Get a specific handler statistic from the handler by name.
      *
@@ -105,6 +119,8 @@ final class TransferStats
      */
     public function getHandlerStat($stat)
     {
-        return isset($this->handlerStats[$stat]) ? $this->handlerStats[$stat] : null;
+        return isset($this->handlerStats[$stat])
+            ? $this->handlerStats[$stat]
+            : null;
     }
 }

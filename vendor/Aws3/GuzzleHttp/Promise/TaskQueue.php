@@ -1,6 +1,5 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+namespace GuzzleHttp\Promise;
 
 /**
  * A task queue that executes tasks in a FIFO order.
@@ -11,10 +10,11 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  *
  *     GuzzleHttp\Promise\queue()->run();
  */
-class TaskQueue implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\TaskQueueInterface
+class TaskQueue implements TaskQueueInterface
 {
     private $enableShutdown = true;
     private $queue = [];
+
     public function __construct($withShutdown = true)
     {
         if ($withShutdown) {
@@ -22,21 +22,24 @@ class TaskQueue implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Pro
                 if ($this->enableShutdown) {
                     // Only run the tasks if an E_ERROR didn't occur.
                     $err = error_get_last();
-                    if (!$err || $err['type'] ^ E_ERROR) {
+                    if (!$err || ($err['type'] ^ E_ERROR)) {
                         $this->run();
                     }
                 }
             });
         }
     }
+
     public function isEmpty()
     {
         return !$this->queue;
     }
+
     public function add(callable $task)
     {
         $this->queue[] = $task;
     }
+
     public function run()
     {
         /** @var callable $task */
@@ -44,6 +47,7 @@ class TaskQueue implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Pro
             $task();
         }
     }
+
     /**
      * The task queue will be run and exhausted by default when the process
      * exits IFF the exit is not the result of a PHP E_ERROR error.

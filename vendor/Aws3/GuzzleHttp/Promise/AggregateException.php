@@ -1,14 +1,16 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+namespace GuzzleHttp\Promise;
 
 /**
  * Exception thrown when too many errors occur in the some() or any() methods.
  */
-class AggregateException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectionException
+class AggregateException extends RejectionException
 {
     public function __construct($msg, array $reasons)
     {
-        parent::__construct($reasons, sprintf('%s; %d rejected promises', $msg, count($reasons)));
+        parent::__construct(
+            $reasons,
+            sprintf('%s; %d rejected promises', $msg, count($reasons))
+        );
     }
 }

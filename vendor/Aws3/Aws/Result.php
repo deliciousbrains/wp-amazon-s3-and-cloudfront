@@ -1,31 +1,36 @@
 <?php
+namespace Aws;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
+use JmesPath\Env as JmesPath;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 /**
  * AWS result.
  */
-class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class Result implements ResultInterface, MonitoringEventsInterface
 {
     use HasDataTrait;
     use HasMonitoringEventsTrait;
+
     public function __construct(array $data = [])
     {
         $this->data = $data;
     }
+
     public function hasKey($name)
     {
         return isset($this->data[$name]);
     }
+
     public function get($key)
     {
         return $this[$key];
     }
+
     public function search($expression)
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search($expression, $this->toArray());
+        return JmesPath::search($expression, $this->toArray());
     }
+
     public function __toString()
     {
         $jsonData = json_encode($this->toArray(), JSON_PRETTY_PRINT);
@@ -41,6 +46,7 @@ expressions on the result data using the search() method.
 
 EOT;
     }
+
     /**
      * @deprecated
      */

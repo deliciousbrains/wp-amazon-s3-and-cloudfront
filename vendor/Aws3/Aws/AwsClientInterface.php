@@ -1,9 +1,9 @@
 <?php
-
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
+namespace Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\PromiseInterface;
+
 /**
  * Represents an AWS client.
  */
@@ -22,6 +22,7 @@ interface AwsClientInterface
      * @throws \Exception
      */
     public function __call($name, array $arguments);
+
     /**
      * Create a command for an operation name.
      *
@@ -40,6 +41,7 @@ interface AwsClientInterface
      * @throws \InvalidArgumentException if no command can be found by name
      */
     public function getCommand($name, array $args = []);
+
     /**
      * Execute a single command.
      *
@@ -48,7 +50,8 @@ interface AwsClientInterface
      * @return ResultInterface
      * @throws \Exception
      */
-    public function execute(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command);
+    public function execute(CommandInterface $command);
+
     /**
      * Execute a command asynchronously.
      *
@@ -56,7 +59,8 @@ interface AwsClientInterface
      *
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function executeAsync(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command);
+    public function executeAsync(CommandInterface $command);
+
     /**
      * Returns a promise that is fulfilled with an
      * {@see \Aws\Credentials\CredentialsInterface} object.
@@ -67,24 +71,28 @@ interface AwsClientInterface
      * @return PromiseInterface
      */
     public function getCredentials();
+
     /**
      * Get the region to which the client is configured to send requests.
      *
      * @return string
      */
     public function getRegion();
+
     /**
      * Gets the default endpoint, or base URL, used by the client.
      *
      * @return UriInterface
      */
     public function getEndpoint();
+
     /**
      * Get the service description associated with the client.
      *
      * @return \Aws\Api\Service
      */
     public function getApi();
+
     /**
      * Get a client configuration value.
      *
@@ -93,6 +101,7 @@ interface AwsClientInterface
      * @return mixed|null
      */
     public function getConfig($option = null);
+
     /**
      * Get the handler list used to transfer commands.
      *
@@ -102,6 +111,7 @@ interface AwsClientInterface
      * @return HandlerList
      */
     public function getHandlerList();
+
     /**
      * Get a resource iterator for the specified operation.
      *
@@ -112,6 +122,7 @@ interface AwsClientInterface
      * @throws \UnexpectedValueException if the iterator config is invalid.
      */
     public function getIterator($name, array $args = []);
+
     /**
      * Get a result paginator for the specified operation.
      *
@@ -122,6 +133,7 @@ interface AwsClientInterface
      * @throws \UnexpectedValueException if the iterator config is invalid.
      */
     public function getPaginator($name, array $args = []);
+
     /**
      * Wait until a resource is in a particular state.
      *
@@ -135,6 +147,7 @@ interface AwsClientInterface
      * @throws \UnexpectedValueException if the waiter is invalid.
      */
     public function waitUntil($name, array $args = []);
+
     /**
      * Get a waiter that waits until a resource is in a particular state.
      *

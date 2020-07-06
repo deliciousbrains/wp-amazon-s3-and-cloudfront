@@ -1,9 +1,9 @@
 <?php
+namespace Aws\Signature;
 
-namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature;
-
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use Aws\Credentials\CredentialsInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+
 /**
  * Interface used to provide interchangeable strategies for signing requests
  * using the various AWS signature protocols.
@@ -20,7 +20,11 @@ interface SignatureInterface
      *
      * @return RequestInterface Returns the modified request.
      */
-    public function signRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials);
+    public function signRequest(
+        RequestInterface $request,
+        CredentialsInterface $credentials
+    );
+
     /**
      * Create a pre-signed request.
      *
@@ -32,5 +36,10 @@ interface SignatureInterface
      *
      * @return RequestInterface
      */
-    public function presign(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials, $expires);
+    public function presign(
+        RequestInterface $request,
+        CredentialsInterface $credentials,
+        $expires,
+        array $options = []
+    );
 }
