@@ -1,5 +1,5 @@
 <?php
-namespace JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Compiles JMESPath expressions to PHP source code and executes it.

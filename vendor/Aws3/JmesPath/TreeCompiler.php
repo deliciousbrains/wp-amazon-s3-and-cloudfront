@@ -1,5 +1,5 @@
 <?php
-namespace JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Tree visitor used to compile JMESPath expressions into native PHP code.
@@ -22,9 +22,9 @@ class TreeCompiler
         $this->vars = [];
         $this->source = $this->indentation = '';
         $this->write("<?php\n")
-            ->write('use JmesPath\\TreeInterpreter as Ti;')
-            ->write('use JmesPath\\FnDispatcher as Fd;')
-            ->write('use JmesPath\\Utils;')
+            ->write('use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\\TreeInterpreter as Ti;')
+            ->write('use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\\FnDispatcher as Fd;')
+            ->write('use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\\Utils;')
             ->write('')
             ->write('function %s(Ti $interpreter, $value) {', $fnName)
             ->indent()

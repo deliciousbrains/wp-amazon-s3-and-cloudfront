@@ -1,5 +1,5 @@
 <?php
-namespace JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Returns data from the input array that matches a JMESPath expression.

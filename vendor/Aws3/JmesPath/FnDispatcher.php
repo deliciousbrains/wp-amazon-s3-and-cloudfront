@@ -1,5 +1,5 @@
 <?php
-namespace JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Dispatches to named JMESPath functions using a single function that has the

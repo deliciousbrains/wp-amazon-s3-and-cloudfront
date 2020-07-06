@@ -1,7 +1,7 @@
 <?php
 namespace Aws;
 
-use JmesPath\Env as JmesPath;
+use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 
 /**
  * AWS result.

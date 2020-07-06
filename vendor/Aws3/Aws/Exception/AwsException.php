@@ -8,7 +8,7 @@ use Aws\HasMonitoringEventsTrait;
 use Aws\MonitoringEventsInterface;
 use Aws\ResponseContainerInterface;
 use Aws\ResultInterface;
-use JmesPath\Env as JmesPath;
+use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 

@@ -1,5 +1,5 @@
 <?php
-namespace JmesPath;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 /**
  * Provides CLI debugging information for the AST and Compiler runtimes.

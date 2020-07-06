@@ -1,7 +1,7 @@
 <?php
 namespace Aws\Endpoint;
 
-use JmesPath\Env;
+use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env;
 
 class PartitionEndpointProvider
 {
