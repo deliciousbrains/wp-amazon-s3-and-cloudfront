@@ -5,7 +5,7 @@ use Aws\HashingStream;
 use Aws\Multipart\AbstractUploader;
 use Aws\PhpHash;
 use Aws\ResultInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
 use Aws\S3\Exception\S3MultipartUploadException;
 

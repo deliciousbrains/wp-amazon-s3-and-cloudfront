@@ -5,9 +5,9 @@ use Aws\CacheInterface;
 use Aws\LruArrayCache;
 use Aws\Result;
 use Aws\S3\Exception\S3Exception;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Stream;
-use GuzzleHttp\Psr7\CachingStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\CachingStream;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 
 /**

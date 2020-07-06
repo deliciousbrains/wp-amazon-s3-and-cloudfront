@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
 /**
  * This class contains a list of built-in Guzzle request options.
@@ -58,11 +58,11 @@ final class RequestOptions
     const CERT = 'cert';
 
     /**
-     * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     * cookies: (bool|DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
      * handler has the `cookie` middleware. Valid values are `false` and
-     * an instance of {@see GuzzleHttp\Cookie\CookieJarInterface}.
+     * an instance of {@see DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie\CookieJarInterface}.
      */
     const COOKIES = 'cookies';
 

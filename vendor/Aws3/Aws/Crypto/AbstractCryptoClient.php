@@ -3,7 +3,7 @@ namespace Aws\Crypto;
 
 use Aws\Crypto\Cipher\CipherMethod;
 use Aws\Crypto\Cipher\Cbc;
-use GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 
 /**
  * Legacy abstract encryption client. New workflows should use

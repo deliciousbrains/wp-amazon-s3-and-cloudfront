@@ -1,7 +1,7 @@
 <?php
 namespace Aws;
 
-use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 
 /**

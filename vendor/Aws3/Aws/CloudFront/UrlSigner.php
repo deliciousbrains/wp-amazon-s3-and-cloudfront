@@ -1,8 +1,8 @@
 <?php
 namespace Aws\CloudFront;
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 
 /**

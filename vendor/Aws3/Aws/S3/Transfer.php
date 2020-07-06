@@ -4,8 +4,8 @@ namespace Aws\S3;
 use Aws;
 use Aws\CommandInterface;
 use Aws\Exception\AwsException;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use Iterator;
 
 /**

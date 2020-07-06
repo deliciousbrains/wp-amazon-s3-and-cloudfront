@@ -2,7 +2,7 @@
 namespace Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Represents an AWS client.
@@ -57,7 +57,7 @@ interface AwsClientInterface
      *
      * @param CommandInterface $command Command to execute
      *
-     * @return \GuzzleHttp\Promise\PromiseInterface
+     * @return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
      */
     public function executeAsync(CommandInterface $command);
 

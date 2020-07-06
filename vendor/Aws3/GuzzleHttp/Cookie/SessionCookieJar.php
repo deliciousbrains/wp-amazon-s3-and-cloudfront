@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Cookie;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Cookie;
 
 /**
  * Persists cookies in the client session

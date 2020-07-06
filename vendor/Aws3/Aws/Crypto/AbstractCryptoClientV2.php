@@ -2,7 +2,7 @@
 namespace Aws\Crypto;
 
 use Aws\Crypto\Cipher\CipherMethod;
-use GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 
 /**
  * @internal

@@ -4,10 +4,10 @@ namespace Aws\Credentials;
 use Aws\Exception\CredentialsException;
 use Aws\Exception\InvalidJsonException;
 use Aws\Sdk;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 
 /**
@@ -212,7 +212,7 @@ class InstanceProfileProvider
                 return (string) $response->getBody();
             })->otherwise(function (array $reason) {
                 $reason = $reason['exception'];
-                if ($reason instanceof \GuzzleHttp\Exception\RequestException) {
+                if ($reason instanceof \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException) {
                     throw $reason;
                 }
                 $msg = $reason->getMessage();

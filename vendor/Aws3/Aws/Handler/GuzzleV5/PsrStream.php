@@ -1,8 +1,8 @@
 <?php
 namespace Aws\Handler\GuzzleV5;
 
-use GuzzleHttp\Stream\StreamDecoratorTrait;
-use GuzzleHttp\Stream\StreamInterface as GuzzleStreamInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\StreamInterface as GuzzleStreamInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Psr7StreamInterface;
 
 /**

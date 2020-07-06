@@ -4,30 +4,30 @@ namespace Aws\Polly;
 use Aws\Api\Serializer\JsonBody;
 use Aws\AwsClient;
 use Aws\Signature\SignatureV4;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 /**
  * This client is used to interact with the **Amazon Polly** service.
  * @method \Aws\Result deleteLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteLexiconAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteLexiconAsync(array $args = [])
  * @method \Aws\Result describeVoices(array $args = [])
- * @method \GuzzleHttp\Promise\Promise describeVoicesAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise describeVoicesAsync(array $args = [])
  * @method \Aws\Result getLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getLexiconAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getLexiconAsync(array $args = [])
  * @method \Aws\Result getSpeechSynthesisTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getSpeechSynthesisTaskAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getSpeechSynthesisTaskAsync(array $args = [])
  * @method \Aws\Result listLexicons(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listLexiconsAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listLexiconsAsync(array $args = [])
  * @method \Aws\Result listSpeechSynthesisTasks(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listSpeechSynthesisTasksAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listSpeechSynthesisTasksAsync(array $args = [])
  * @method \Aws\Result putLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise putLexiconAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise putLexiconAsync(array $args = [])
  * @method \Aws\Result startSpeechSynthesisTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise startSpeechSynthesisTaskAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise startSpeechSynthesisTaskAsync(array $args = [])
  * @method \Aws\Result synthesizeSpeech(array $args = [])
- * @method \GuzzleHttp\Promise\Promise synthesizeSpeechAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise synthesizeSpeechAsync(array $args = [])
  */
 class PollyClient extends AwsClient
 {

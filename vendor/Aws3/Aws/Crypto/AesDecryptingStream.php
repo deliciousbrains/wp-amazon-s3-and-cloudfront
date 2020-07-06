@@ -1,7 +1,7 @@
 <?php
 namespace Aws\Crypto;
 
-use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use \LogicException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use Aws\Crypto\Cipher\CipherMethod;

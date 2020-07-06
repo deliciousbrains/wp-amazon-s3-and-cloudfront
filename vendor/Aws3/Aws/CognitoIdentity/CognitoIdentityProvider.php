@@ -2,7 +2,7 @@
 namespace Aws\CognitoIdentity;
 
 use Aws\Credentials\Credentials;
-use GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 class CognitoIdentityProvider
 {

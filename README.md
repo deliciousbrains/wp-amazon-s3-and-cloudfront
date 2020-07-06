@@ -91,7 +91,7 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ### WP Offload Media Lite 2.3.2 - 2019-12-09 ###
 * Improvement: Reduced database queries when external object cache available
-* Bug fix: Uncaught Error: Call to undefined function DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\choose_handler()
+* Bug fix: Uncaught Error: Call to undefined function DeliciousBrains\WP_Offload_Media\Gcp\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\choose_handler()
 * Bug fix: SVG files not automatically offloaded
 * Tested: PHP 7.4
 

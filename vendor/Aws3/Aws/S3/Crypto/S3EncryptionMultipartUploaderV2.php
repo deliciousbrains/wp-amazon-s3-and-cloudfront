@@ -7,7 +7,7 @@ use Aws\Crypto\MetadataEnvelope;
 use Aws\Crypto\Cipher\CipherBuilderTrait;
 use Aws\S3\MultipartUploader;
 use Aws\S3\S3ClientInterface;
-use GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Encapsulates the execution of a multipart upload of an encrypted object to S3.

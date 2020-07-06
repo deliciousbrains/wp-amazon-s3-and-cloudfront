@@ -1,9 +1,9 @@
 <?php
 namespace Aws\Crypto;
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\AppendStream;
-use GuzzleHttp\Psr7\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\AppendStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 
 trait EncryptionTrait
 {

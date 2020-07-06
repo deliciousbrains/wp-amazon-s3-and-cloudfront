@@ -4,7 +4,7 @@ namespace Aws\S3;
 use Aws\Api\ApiProvider;
 use Aws\Api\Service;
 use Aws\CommandInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

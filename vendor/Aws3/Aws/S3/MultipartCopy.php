@@ -5,7 +5,7 @@ namespace Aws\S3;
 use Aws\Arn\ArnParser;
 use Aws\Multipart\AbstractUploadManager;
 use Aws\ResultInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 class MultipartCopy extends AbstractUploadManager
 {

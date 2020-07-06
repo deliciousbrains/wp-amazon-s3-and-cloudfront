@@ -3,7 +3,7 @@ namespace Aws;
 
 use Aws\Signature\SignatureV4;
 use Aws\Endpoint\EndpointProvider;
-use GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

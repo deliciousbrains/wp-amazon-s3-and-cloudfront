@@ -3,7 +3,7 @@ namespace Aws\Api\Serializer;
 
 use Aws\Api\Service;
 use Aws\CommandInterface;
-use GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

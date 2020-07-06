@@ -6,7 +6,7 @@ use Aws\CommandInterface;
 use Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 /**
  * @internal Decorates a parser and validates the x-amz-crc32 header.

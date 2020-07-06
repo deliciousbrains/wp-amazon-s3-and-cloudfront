@@ -3,9 +3,9 @@ namespace Aws\S3;
 
 use Aws\AwsClientInterface;
 use Aws\S3\Exception\DeleteMultipleObjectsException;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromisorInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Efficiently deletes many objects from a single Amazon S3 bucket using an

@@ -4,7 +4,7 @@ namespace Aws\Credentials;
 use Aws\Exception\CredentialsException;
 use Aws\Result;
 use Aws\Sts\StsClient;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Credential provider that provides credentials via assuming a role

@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
 /**
  * Expands URI templates. Userland implementation of PECL uri_template.

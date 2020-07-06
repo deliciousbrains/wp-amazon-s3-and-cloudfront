@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use GuzzleHttp\RequestOptions;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

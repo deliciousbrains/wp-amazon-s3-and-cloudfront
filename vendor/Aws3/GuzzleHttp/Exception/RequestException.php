@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception;
 
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
@@ -124,7 +124,7 @@ class RequestException extends TransferException
      */
     public static function getResponseBodySummary(ResponseInterface $response)
     {
-        return \GuzzleHttp\Psr7\get_message_body_summary($response);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\get_message_body_summary($response);
     }
 
     /**

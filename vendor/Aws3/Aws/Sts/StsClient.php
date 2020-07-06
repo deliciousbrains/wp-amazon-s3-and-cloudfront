@@ -11,21 +11,21 @@ use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
  * This client is used to interact with the **AWS Security Token Service (AWS STS)**.
  *
  * @method \Aws\Result assumeRole(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleAsync(array $args = [])
  * @method \Aws\Result assumeRoleWithSAML(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleWithSAMLAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleWithSAMLAsync(array $args = [])
  * @method \Aws\Result assumeRoleWithWebIdentity(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleWithWebIdentityAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise assumeRoleWithWebIdentityAsync(array $args = [])
  * @method \Aws\Result decodeAuthorizationMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise decodeAuthorizationMessageAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise decodeAuthorizationMessageAsync(array $args = [])
  * @method \Aws\Result getAccessKeyInfo(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getAccessKeyInfoAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getAccessKeyInfoAsync(array $args = [])
  * @method \Aws\Result getCallerIdentity(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getCallerIdentityAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getCallerIdentityAsync(array $args = [])
  * @method \Aws\Result getFederationToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getFederationTokenAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getFederationTokenAsync(array $args = [])
  * @method \Aws\Result getSessionToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
  */
 class StsClient extends AwsClient
 {

@@ -6,8 +6,8 @@ use Aws\Retry\ConfigurationInterface;
 use Aws\Retry\QuotaManager;
 use Aws\Retry\RateLimiter;
 use Aws\Retry\RetryHelperTrait;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

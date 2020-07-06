@@ -2,15 +2,15 @@
 namespace Aws\Handler\GuzzleV5;
 
 use Exception;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Event\EndEvent;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\ResponseInterface as GuzzleResponse;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Psr7\Response as Psr7Response;
-use GuzzleHttp\Stream\Stream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Event\EndEvent;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Message\ResponseInterface as GuzzleResponse;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Response as Psr7Response;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Stream\Stream;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface as Psr7Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Psr7StreamInterface;
 
@@ -53,7 +53,7 @@ class GuzzleHandler
      * @param Psr7Request $request
      * @param array $options
      * @return Promise\Promise|Promise\PromiseInterface
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\GuzzleException
      */
     public function __invoke(Psr7Request $request, array $options = [])
     {

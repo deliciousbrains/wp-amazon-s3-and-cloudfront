@@ -10,9 +10,9 @@ use Aws\Crypto\MetadataEnvelope;
 use Aws\Crypto\MaterialsProvider;
 use Aws\Crypto\Cipher\CipherBuilderTrait;
 use Aws\S3\S3Client;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 /**
  * Provides a wrapper for an S3Client that supplies functionality to encrypt

@@ -7,7 +7,7 @@ use Aws\Multipart\AbstractUploader;
 use Aws\Multipart\UploadState;
 use Aws\PhpHash;
 use Aws\ResultInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
 
 /**

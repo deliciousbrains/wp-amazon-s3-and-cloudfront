@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Promise;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Get the global task queue used for promise resolution.
@@ -10,7 +10,7 @@ namespace GuzzleHttp\Promise;
  *
  * <code>
  * while ($eventLoop->isRunning()) {
- *     GuzzleHttp\Promise\queue()->run();
+ *     DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\queue()->run();
  * }
  * </code>
  *

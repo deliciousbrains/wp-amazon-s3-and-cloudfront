@@ -9,7 +9,7 @@ use Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
 use Aws\ClientSideMonitoring\ConfigurationProvider;
 use Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
 use Aws\Signature\SignatureProvider;
-use GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 
 /**
  * Default AWS client implementation
@@ -95,7 +95,7 @@ class AwsClient implements AwsClientInterface
      *   the following keys: retries: (bool) Set to false to disable reporting
      *   on retries attempted; http: (bool) Set to true to enable collecting
      *   statistics from lower level HTTP adapters (e.g., values returned in
-     *   GuzzleHttp\TransferStats). HTTP handlers must support an
+     *   DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats). HTTP handlers must support an
      *   `http_stats_receiver` option for this to have an effect; timer: (bool)
      *   Set to true to enable a command timer that reports the total wall clock
      *   time spent on an operation in seconds.

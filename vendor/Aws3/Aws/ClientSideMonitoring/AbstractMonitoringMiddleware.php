@@ -7,7 +7,7 @@ use Aws\Exception\AwsException;
 use Aws\MonitoringEventsInterface;
 use Aws\ResponseContainerInterface;
 use Aws\ResultInterface;
-use GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 

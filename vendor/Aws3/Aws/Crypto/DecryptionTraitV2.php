@@ -1,8 +1,8 @@
 <?php
 namespace Aws\Crypto;
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\LimitStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 
 trait DecryptionTraitV2

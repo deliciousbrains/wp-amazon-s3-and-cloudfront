@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception;
 
 use Throwable;
 

@@ -1,8 +1,8 @@
 <?php
 namespace Aws;
 
-use GuzzleHttp\Promise\PromisorInterface;
-use GuzzleHttp\Promise\EachPromise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise;
 
 /**
  * Sends and iterator of commands concurrently using a capped pool size.
@@ -72,7 +72,7 @@ class CommandPool implements PromisorInterface
     }
 
     /**
-     * @return \GuzzleHttp\Promise\PromiseInterface
+     * @return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
      */
     public function promise()
     {

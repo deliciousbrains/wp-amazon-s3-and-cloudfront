@@ -4,7 +4,7 @@ namespace Aws\S3;
 use Aws\AwsClientInterface;
 use Aws\CommandInterface;
 use Aws\ResultInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 interface S3ClientInterface extends AwsClientInterface

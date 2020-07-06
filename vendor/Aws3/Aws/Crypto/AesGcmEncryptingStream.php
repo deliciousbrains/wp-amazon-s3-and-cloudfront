@@ -3,8 +3,8 @@ namespace Aws\Crypto;
 
 use Aws\Crypto\Polyfill\AesGcm;
 use Aws\Crypto\Polyfill\Key;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use \RuntimeException;
 

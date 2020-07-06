@@ -1,10 +1,10 @@
 <?php
-namespace GuzzleHttp;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use GuzzleHttp\Handler\CurlHandler;
-use GuzzleHttp\Handler\CurlMultiHandler;
-use GuzzleHttp\Handler\Proxy;
-use GuzzleHttp\Handler\StreamHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlMultiHandler;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\Proxy;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\StreamHandler;
 
 /**
  * Expands a URI template
@@ -116,7 +116,7 @@ function choose_handler()
             ? Proxy::wrapStreaming($handler, new StreamHandler())
             : new StreamHandler();
     } elseif (!$handler) {
-        throw new \RuntimeException('GuzzleHttp requires cURL, the '
+        throw new \RuntimeException('DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp requires cURL, the '
             . 'allow_url_fopen ini setting, or a custom HTTP handler.');
     }
 
@@ -133,7 +133,7 @@ function default_user_agent()
     static $defaultAgent = '';
 
     if (!$defaultAgent) {
-        $defaultAgent = 'GuzzleHttp/' . Client::VERSION;
+        $defaultAgent = 'DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp/' . Client::VERSION;
         if (extension_loaded('curl') && function_exists('curl_version')) {
             $defaultAgent .= ' curl/' . \curl_version()['version'];
         }

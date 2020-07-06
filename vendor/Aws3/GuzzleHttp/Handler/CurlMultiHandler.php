@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Utils;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise as P;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**

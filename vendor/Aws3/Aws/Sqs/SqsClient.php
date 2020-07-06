@@ -4,53 +4,53 @@ namespace Aws\Sqs;
 use Aws\AwsClient;
 use Aws\CommandInterface;
 use Aws\Sqs\Exception\SqsException;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7\UriResolver;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 
 /**
  * Client used to interact Amazon Simple Queue Service (Amazon SQS)
  *
  * @method \Aws\Result addPermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise addPermissionAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise addPermissionAsync(array $args = [])
  * @method \Aws\Result changeMessageVisibility(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise changeMessageVisibilityAsync(array $args = [])
  * @method \Aws\Result changeMessageVisibilityBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityBatchAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise changeMessageVisibilityBatchAsync(array $args = [])
  * @method \Aws\Result createQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise createQueueAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise createQueueAsync(array $args = [])
  * @method \Aws\Result deleteMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteMessageAsync(array $args = [])
  * @method \Aws\Result deleteMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageBatchAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteMessageBatchAsync(array $args = [])
  * @method \Aws\Result deleteQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteQueueAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise deleteQueueAsync(array $args = [])
  * @method \Aws\Result getQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueAttributesAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getQueueAttributesAsync(array $args = [])
  * @method \Aws\Result getQueueUrl(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueUrlAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getQueueUrlAsync(array $args = [])
  * @method \Aws\Result listDeadLetterSourceQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listDeadLetterSourceQueuesAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listDeadLetterSourceQueuesAsync(array $args = [])
  * @method \Aws\Result listQueueTags(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listQueueTagsAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listQueueTagsAsync(array $args = [])
  * @method \Aws\Result listQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listQueuesAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listQueuesAsync(array $args = [])
  * @method \Aws\Result purgeQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise purgeQueueAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise purgeQueueAsync(array $args = [])
  * @method \Aws\Result receiveMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise receiveMessageAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise receiveMessageAsync(array $args = [])
  * @method \Aws\Result removePermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
  * @method \Aws\Result sendMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise sendMessageAsync(array $args = [])
  * @method \Aws\Result sendMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageBatchAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise sendMessageBatchAsync(array $args = [])
  * @method \Aws\Result setQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise setQueueAttributesAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise setQueueAttributesAsync(array $args = [])
  * @method \Aws\Result tagQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise tagQueueAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise tagQueueAsync(array $args = [])
  * @method \Aws\Result untagQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise untagQueueAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise untagQueueAsync(array $args = [])
  */
 class SqsClient extends AwsClient
 {

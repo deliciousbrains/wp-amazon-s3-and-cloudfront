@@ -5,8 +5,8 @@ use Aws\AbstractConfigurationProvider;
 use Aws\CacheInterface;
 use Aws\ClientSideMonitoring\Exception\ConfigurationException;
 use Aws\ConfigurationProviderInterface;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * A configuration provider is a function that accepts no arguments and returns

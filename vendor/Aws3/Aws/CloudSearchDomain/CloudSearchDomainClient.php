@@ -3,19 +3,19 @@ namespace Aws\CloudSearchDomain;
 
 use Aws\AwsClient;
 use Aws\CommandInterface;
-use GuzzleHttp\Psr7\Uri;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 /**
  * This client is used to search and upload documents to an **Amazon CloudSearch** Domain.
  *
  * @method \Aws\Result search(array $args = [])
- * @method \GuzzleHttp\Promise\Promise searchAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise searchAsync(array $args = [])
  * @method \Aws\Result suggest(array $args = [])
- * @method \GuzzleHttp\Promise\Promise suggestAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise suggestAsync(array $args = [])
  * @method \Aws\Result uploadDocuments(array $args = [])
- * @method \GuzzleHttp\Promise\Promise uploadDocumentsAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise uploadDocumentsAsync(array $args = [])
  */
 class CloudSearchDomainClient extends AwsClient
 {

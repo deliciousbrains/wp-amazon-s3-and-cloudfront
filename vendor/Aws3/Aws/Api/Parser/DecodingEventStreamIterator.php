@@ -4,7 +4,7 @@ namespace Aws\Api\Parser;
 
 use \Iterator;
 use Aws\Api\DateTimeResult;
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 use Aws\Api\Parser\Exception\ParserException;
 

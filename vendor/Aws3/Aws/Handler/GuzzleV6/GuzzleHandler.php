@@ -2,12 +2,12 @@
 namespace Aws\Handler\GuzzleV6;
 
 use Exception;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\TransferStats;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface as Psr7Request;
 
 /**
@@ -37,7 +37,7 @@ class GuzzleHandler
         $request = $request->withHeader(
             'User-Agent',
             $request->getHeaderLine('User-Agent')
-                . ' ' . \GuzzleHttp\default_user_agent()
+                . ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\default_user_agent()
         );
 
         return $this->client->sendAsync($request, $this->parseOptions($options))

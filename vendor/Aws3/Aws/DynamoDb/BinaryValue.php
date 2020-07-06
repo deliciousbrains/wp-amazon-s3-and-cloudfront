@@ -1,7 +1,7 @@
 <?php
 namespace Aws\DynamoDb;
 
-use GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 
 /**
  * Special object to represent a DynamoDB binary (B) value.

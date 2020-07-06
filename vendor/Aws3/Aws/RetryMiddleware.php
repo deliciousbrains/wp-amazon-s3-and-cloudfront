@@ -3,10 +3,10 @@ namespace Aws;
 
 use Aws\Exception\AwsException;
 use Aws\Retry\RetryHelperTrait;
-use GuzzleHttp\Exception\RequestException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Middleware that retries failures. V1 implemention that supports 'legacy' mode.
