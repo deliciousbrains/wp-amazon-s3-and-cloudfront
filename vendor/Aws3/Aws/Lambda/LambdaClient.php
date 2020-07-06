@@ -58,7 +58,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise getProvisionedConcurrencyConfigAsync(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result invoke(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise invokeAsync(array $args = [])
- * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result invokeAsync(array $args = [])
+ * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result\invokeAsync(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise invokeAsyncAsync(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result listAliases(array $args = [])
  * @method \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise listAliasesAsync(array $args = [])

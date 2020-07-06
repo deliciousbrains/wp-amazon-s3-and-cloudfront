@@ -2,7 +2,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
-use Aws\S3\UseArnRegion\Exception\ConfigurationException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {

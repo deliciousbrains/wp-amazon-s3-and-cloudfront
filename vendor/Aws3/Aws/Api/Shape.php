@@ -18,19 +18,19 @@ class Shape extends AbstractModel
     public static function create(array $definition, ShapeMap $shapeMap)
     {
         static $map = [
-            'structure' => 'Aws\Api\StructureShape',
-            'map'       => 'Aws\Api\MapShape',
-            'list'      => 'Aws\Api\ListShape',
-            'timestamp' => 'Aws\Api\TimestampShape',
-            'integer'   => 'Aws\Api\Shape',
-            'double'    => 'Aws\Api\Shape',
-            'float'     => 'Aws\Api\Shape',
-            'long'      => 'Aws\Api\Shape',
-            'string'    => 'Aws\Api\Shape',
-            'byte'      => 'Aws\Api\Shape',
-            'character' => 'Aws\Api\Shape',
-            'blob'      => 'Aws\Api\Shape',
-            'boolean'   => 'Aws\Api\Shape'
+            'structure' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape',
+            'map'       => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\MapShape',
+            'list'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ListShape',
+            'timestamp' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape',
+            'integer'   => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'double'    => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'float'     => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'long'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'string'    => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'byte'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'character' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'blob'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape',
+            'boolean'   => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape'
         ];
 
         if (isset($definition['shape'])) {

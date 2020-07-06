@@ -52,7 +52,7 @@ class ClientResolver
             'type'     => 'value',
             'valid'    => ['string'],
             'doc'      => 'Exception class to create when an error occurs.',
-            'default'  => 'Aws\Exception\AwsException',
+            'default'  => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException',
             'internal' => true
         ],
         'scheme' => [

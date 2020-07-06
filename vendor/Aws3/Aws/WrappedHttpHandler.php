@@ -47,7 +47,7 @@ class WrappedHttpHandler
         callable $httpHandler,
         callable $parser,
         callable $errorParser,
-        $exceptionClass = 'Aws\Exception\AwsException',
+        $exceptionClass = 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException',
         $collectStats = false
     ) {
         $this->httpHandler = $httpHandler;

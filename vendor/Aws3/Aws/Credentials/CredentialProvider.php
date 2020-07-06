@@ -2,16 +2,16 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
-use Aws\Api\DateTimeResult;
-use Aws\CacheInterface;
-use Aws\Exception\CredentialsException;
-use Aws\Sts\StsClient;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\StsClient;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 
 /**
  * Credential providers are functions that accept no arguments and return a
- * promise that is fulfilled with an {@see \Aws\Credentials\CredentialsInterface}
- * or rejected with an {@see \Aws\Exception\CredentialsException}.
+ * promise that is fulfilled with an {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface}
+ * or rejected with an {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException}.
  *
  * <code>
  * use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialProvider;
@@ -503,7 +503,7 @@ class CredentialProvider
             if (!is_readable($filename)) {
                 return self::reject("Cannot read process credentials from $filename");
             }
-            $data = \Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
             if ($data === false) {
                 return self::reject("Invalid credentials file: $filename");
             }
@@ -639,14 +639,14 @@ class CredentialProvider
      */
     private static function loadProfiles($filename)
     {
-        $profileData = \Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
+        $profileData = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
 
         // If loading .aws/credentials, also load .aws/config when AWS_SDK_LOAD_NONDEFAULT_CONFIG is set
         if ($filename === self::getHomeDir() . '/.aws/credentials'
             && getenv('AWS_SDK_LOAD_NONDEFAULT_CONFIG')
         ) {
             $configFilename = self::getHomeDir() . '/.aws/config';
-            $configProfileData = \Aws\parse_ini_file($configFilename, true, INI_SCANNER_RAW);
+            $configProfileData = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($configFilename, true, INI_SCANNER_RAW);
             foreach ($configProfileData as $name => $profile) {
                 // standardize config profile names
                 $name = str_replace('profile ', '', $name);
@@ -667,11 +667,11 @@ class CredentialProvider
         $credFile = self::getHomeDir() . '/.aws/credentials';
         $configFile = self::getHomeDir() . '/.aws/config';
         if (file_exists($credFile)) {
-            $profiles = \Aws\parse_ini_file($credFile, true, INI_SCANNER_RAW);
+            $profiles = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($credFile, true, INI_SCANNER_RAW);
         }
 
         if (file_exists($configFile)) {
-        $configProfileData = \Aws\parse_ini_file($configFile, true, INI_SCANNER_RAW);
+        $configProfileData = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($configFile, true, INI_SCANNER_RAW);
             foreach ($configProfileData as $name => $profile) {
                 // standardize config profile names
                 $name = str_replace('profile ', '', $name);

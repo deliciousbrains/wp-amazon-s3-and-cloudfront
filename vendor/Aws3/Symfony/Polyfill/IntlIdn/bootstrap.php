@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\Polyfill\Intl\Idn as p;
+use DeliciousBrains\WP_Offload_Media\Aws3\Symfony\Polyfill\Intl\Idn as p;
 
 if (extension_loaded('intl')) {
     return;

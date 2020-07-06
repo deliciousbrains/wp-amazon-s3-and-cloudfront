@@ -322,7 +322,7 @@ function guzzle_major_version()
         return $cache;
     }
 
-    if (defined('\GuzzleHttp\ClientInterface::VERSION')) {
+    if (defined('DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION')) {
         $version = (string) ClientInterface::VERSION;
         if ($version[0] === '6') {
             return $cache = 6;

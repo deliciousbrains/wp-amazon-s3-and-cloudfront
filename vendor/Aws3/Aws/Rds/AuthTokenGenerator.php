@@ -1,9 +1,9 @@
 <?php
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Rds;
 
-use Aws\Credentials\CredentialsInterface;
-use Aws\Credentials\Credentials;
-use Aws\Signature\SignatureV4;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;

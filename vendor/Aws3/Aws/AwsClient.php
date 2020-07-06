@@ -293,7 +293,7 @@ class AwsClient implements AwsClientInterface
         $klass = get_class($this);
 
         if ($klass === __CLASS__) {
-            return ['', 'Aws\Exception\AwsException'];
+            return ['', 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException'];
         }
 
         $service = substr($klass, strrpos($klass, '\\') + 1, -6);

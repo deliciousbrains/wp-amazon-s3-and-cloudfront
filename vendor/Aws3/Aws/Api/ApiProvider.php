@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException;
  * You can wrap your calls to an API provider with the
  * {@see ApiProvider::resolve} method to ensure that API data is created. If the
  * API data is not created, then the resolve() method will throw a
- * {@see DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException}.
+ * {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException}.
  *
  *     use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider;
  *     $provider = ApiProvider::defaultProvider();
@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException;
  *     $data = ApiProvider::resolve($provider, 'api', 'elasticfood', '2020-01-01');
  *
  * You can compose multiple providers into a single provider using
- * {@see DeliciousBrains\WP_Offload_Media\Aws3\Aws\or_chain}. This method accepts providers as arguments and
+ * {@see \DeliciousBrains\WP_Offload_Media\Aws3\Aws\or_chain}. This method accepts providers as arguments and
  * returns a new function that will invoke each provider until a non-null value
  * is returned.
  *

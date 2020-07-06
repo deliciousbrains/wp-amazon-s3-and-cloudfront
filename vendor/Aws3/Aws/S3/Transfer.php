@@ -2,8 +2,8 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use Iterator;
@@ -292,7 +292,7 @@ class Transfer implements PromisorInterface
     private function createUploadPromise()
     {
         // Map each file into a promise that performs the actual transfer.
-        $files = \Aws\map($this->getUploadsIterator(), function ($file) {
+        $files = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\map($this->getUploadsIterator(), function ($file) {
             return (filesize($file) >= $this->mupThreshold)
                 ? $this->uploadMultipart($file)
                 : $this->upload($file);

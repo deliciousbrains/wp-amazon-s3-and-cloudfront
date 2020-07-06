@@ -78,10 +78,10 @@ class Service extends AbstractModel
     public static function createSerializer(Service $api, $endpoint)
     {
         static $mapping = [
-            'json'      => 'Aws\Api\Serializer\JsonRpcSerializer',
-            'query'     => 'Aws\Api\Serializer\QuerySerializer',
-            'rest-json' => 'Aws\Api\Serializer\RestJsonSerializer',
-            'rest-xml'  => 'Aws\Api\Serializer\RestXmlSerializer'
+            'json'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\JsonRpcSerializer',
+            'query'     => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\QuerySerializer',
+            'rest-json' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\RestJsonSerializer',
+            'rest-xml'  => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\RestXmlSerializer'
         ];
 
         $proto = $api->getProtocol();
@@ -112,11 +112,11 @@ class Service extends AbstractModel
     public static function createErrorParser($protocol, Service $api = null)
     {
         static $mapping = [
-            'json'      => 'Aws\Api\ErrorParser\JsonRpcErrorParser',
-            'query'     => 'Aws\Api\ErrorParser\XmlErrorParser',
-            'rest-json' => 'Aws\Api\ErrorParser\RestJsonErrorParser',
-            'rest-xml'  => 'Aws\Api\ErrorParser\XmlErrorParser',
-            'ec2'       => 'Aws\Api\ErrorParser\XmlErrorParser'
+            'json'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser\JsonRpcErrorParser',
+            'query'     => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser\XmlErrorParser',
+            'rest-json' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser\RestJsonErrorParser',
+            'rest-xml'  => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser\XmlErrorParser',
+            'ec2'       => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ErrorParser\XmlErrorParser'
         ];
 
         if (isset($mapping[$protocol])) {
@@ -136,10 +136,10 @@ class Service extends AbstractModel
     public static function createParser(Service $api)
     {
         static $mapping = [
-            'json'      => 'Aws\Api\Parser\JsonRpcParser',
-            'query'     => 'Aws\Api\Parser\QueryParser',
-            'rest-json' => 'Aws\Api\Parser\RestJsonParser',
-            'rest-xml'  => 'Aws\Api\Parser\RestXmlParser'
+            'json'      => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\JsonRpcParser',
+            'query'     => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\QueryParser',
+            'rest-json' => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\RestJsonParser',
+            'rest-xml'  => 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\RestXmlParser'
         ];
 
         $proto = $api->getProtocol();
