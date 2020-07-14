@@ -155,7 +155,7 @@ class Lexer
             }
         }
         eof:
-        $tokens[] = ['type' => self::T_EOF, 'pos' => strlen($input), 'value' => null];
+        $tokens[] = ['type' => self::T_EOF, 'pos' => mb_strlen($input, 'UTF-8'), 'value' => null];
         return $tokens;
     }
     /**

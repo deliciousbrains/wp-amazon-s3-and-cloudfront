@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
@@ -54,7 +55,12 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
     {
-        $this->source = '/' . ltrim($source, '/');
+        if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser::isArn($source)) {
+            $this->source = '';
+        } else {
+            $this->source = "/";
+        }
+        $this->source .= ltrim($source, '/');
         parent::__construct($client, array_change_key_case($config) + ['source_metadata' => null]);
     }
     /**

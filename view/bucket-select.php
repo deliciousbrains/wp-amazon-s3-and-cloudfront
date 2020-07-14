@@ -1,10 +1,11 @@
 <?php
 /* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
-$provider         = $this->get_provider();
+$provider         = $this->get_storage_provider();
 $provider_regions = $provider->get_regions();
 $region_required  = $provider->region_required();
+$bucket_defined   = defined( strtoupper( str_replace( '-', '_', $prefix ) . '_BUCKET' ) ) ? true : (bool) $this->get_defined_setting( 'bucket', false );
 
-$bucket_mode = empty( $_GET['bucket_mode'] ) ? 'manual' : $_GET['bucket_mode'];
+$bucket_mode = empty( $_GET['bucket_mode'] ) || $bucket_defined ? 'manual' : $_GET['bucket_mode'];
 $bucket_mode = in_array( $bucket_mode, array( 'manual', 'select', 'create' ) ) ? $bucket_mode : 'manual';
 
 $mode_args = array(
@@ -79,15 +80,32 @@ $create_mode = $this->get_plugin_page_url( array_merge( $mode_args, array( 'buck
 						<?php _e( 'Bucket:', 'amazon-s3-and-cloudfront' ); ?>
 					</td>
 					<td>
-						<input type="text" id="<?php echo $prefix; ?>-bucket-manual-name" class="as3cf-bucket-name" name="bucket_name" placeholder="<?php _e( 'Existing bucket name', 'amazon-s3-and-cloudfront' ); ?>" value="<?php echo $selected_bucket; ?>">
+						<?php
+						$disabled = '';
+						if ( $bucket_defined ) {
+							$disabled = ' disabled="disabled"';
+							echo '<span class="as3cf-defined-in-config">' . __( 'defined in wp-config.php', 'amazon-s3-and-cloudfront' ) . '</span>';
+						}
+						?>
+						<input
+							type="text"
+							id="<?php echo $prefix; ?>-bucket-manual-name"
+							class="as3cf-bucket-name"
+							name="bucket_name"
+							placeholder="<?php _e( 'Existing bucket name', 'amazon-s3-and-cloudfront' ); ?>"
+							value="<?php echo $selected_bucket; ?>"
+							<?php echo $disabled; ?>
+						>
 						<p class="as3cf-invalid-bucket-name"></p>
 					</td>
 				</tr>
 			</table>
 			<p class="bucket-actions actions manual">
-				<button id="<?php echo $prefix; ?>-bucket-manual-save" type="submit" class="bucket-action-save button button-primary"><?php _e( 'Save Bucket Setting', 'amazon-s3-and-cloudfront' ); ?></button>
-				<span><a href="<?php echo $select_mode; ?>" id="<?php echo $prefix; ?>-bucket-action-browse" class="bucket-action-browse"><?php _e( 'Browse existing buckets', 'amazon-s3-and-cloudfront' ); ?></a></span>
-				<span><a href="<?php echo $create_mode; ?>" id="<?php echo $prefix; ?>-bucket-action-create" class="bucket-action-create"><?php _e( 'Create new bucket', 'amazon-s3-and-cloudfront' ); ?></a></span>
+				<button id="<?php echo $prefix; ?>-bucket-manual-save" type="submit" class="bucket-action-save button button-primary"><?php $bucket_defined ? _e( 'Next', 'amazon-s3-and-cloudfront' ) : _e( 'Save Bucket Setting', 'amazon-s3-and-cloudfront' ); ?></button>
+				<?php if ( ! $bucket_defined ) { ?>
+					<span><a href="<?php echo $select_mode; ?>" id="<?php echo $prefix; ?>-bucket-action-browse" class="bucket-action-browse"><?php _e( 'Browse existing buckets', 'amazon-s3-and-cloudfront' ); ?></a></span>
+					<span><a href="<?php echo $create_mode; ?>" id="<?php echo $prefix; ?>-bucket-action-create" class="bucket-action-create"><?php _e( 'Create new bucket', 'amazon-s3-and-cloudfront' ); ?></a></span>
+				<?php } ?>
 			</p>
 		</div>
 	<?php } elseif ( 'select' === $bucket_mode ) { ?>

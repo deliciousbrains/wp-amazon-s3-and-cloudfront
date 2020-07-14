@@ -18,6 +18,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iam;
 
 use InvalidArgumentException;
+use BadMethodCallException;
 /**
  * Helper class for creating valid IAM policies
  *
@@ -47,6 +48,38 @@ class PolicyBuilder
     /**
      * Create a PolicyBuilder.
      *
+     * To use conditions in the bindings, the version of the policy must be set
+     * to 3.
+     *
+     * @see https://cloud.google.com/iam/docs/policies#versions Policy versioning
+     * @see https://cloud-dot-devsite.googleplex.com/storage/docs/access-control/using-iam-permissions#conditions-iam
+     *   Using Cloud IAM Conditions on buckets
+     *
+     * Example:
+     * ```
+     * $policy = [
+     *     'etag' => 'AgIc==',
+     *     'version' => 3,
+     *     'bindings' => [
+     *         [
+     *             'role' => 'roles/admin',
+     *             'members' => [
+     *                 'user:admin@domain.com',
+     *                 'user2:admin@domain.com'
+     *             ],
+     *             'condition' => [
+     *                 'title' => 'match-prefix',
+     *                 'description' => 'Applies to objects matching a prefix',
+     *                 'expression' =>
+     *                     'resource.name.startsWith("projects/_/buckets/bucket-name/objects/prefix-a-")'
+     *             ]
+     *         ]
+     *     ],
+     * ];
+     *
+     * $builder = new PolicyBuilder($policy);
+     * ```
+     *
      * @param  array $policy A policy array
      * @throws InvalidArgumentException
      */
@@ -74,6 +107,10 @@ class PolicyBuilder
      *         'role' => 'roles/admin',
      *         'members' => [
      *             'user:admin@domain.com'
+     *         ],
+     *         'condition' => [
+     *             'expression' =>
+     *                 'request.time < timestamp("2020-07-01T00:00:00.000Z")'
      *         ]
      *     ]
      * ]);
@@ -85,14 +122,18 @@ class PolicyBuilder
      */
     public function setBindings(array $bindings = [])
     {
-        $this->bindings = [];
-        foreach ($bindings as $binding) {
-            $this->addBinding($binding['role'], $binding['members']);
-        }
+        $this->bindings = $bindings;
         return $this;
     }
     /**
      * Add a new binding to the policy.
+     *
+     * This method will fail with an InvalidOpereationException if it is
+     * called on a Policy with a version greater than 1 as that indicates
+     * a more complicated policy than this method is prepared to handle.
+     * Changes to such policies must be made manually by the setBindings()
+     * method.
+     *
      *
      * Example:
      * ```
@@ -103,14 +144,23 @@ class PolicyBuilder
      * @param  array  $members An array of members to assign to the binding
      * @return PolicyBuilder
      * @throws InvalidArgumentException
+     * @throws BadMethodCallException if the policy's version is greater than 1.
+     * @deprecated
      */
     public function addBinding($role, array $members)
     {
+        $this->validatePolicyVersion();
         $this->bindings[] = ['role' => $role, 'members' => $members];
         return $this;
     }
     /**
      * Remove a binding from the policy.
+     *
+     * This method will fail with a BadMethodCallException if it is
+     * called on a Policy with a version greater than 1 as that indicates
+     * a more complicated policy than this method is prepared to handle.
+     * Changes to such policies must be made manually by the setBindings()
+     * method.
      *
      * Example:
      * ```
@@ -130,9 +180,12 @@ class PolicyBuilder
      * @param  array  $members An array of members to remove from the role
      * @return PolicyBuilder
      * @throws InvalidArgumentException
+     * @throws BadMethodCallException if the policy's version is greater than 1.
+     * @deprecated
      */
     public function removeBinding($role, array $members)
     {
+        $this->validatePolicyVersion();
         $bindings = $this->bindings;
         foreach ((array) $bindings as $i => $binding) {
             if ($binding['role'] == $role) {
@@ -200,5 +253,23 @@ class PolicyBuilder
     public function result()
     {
         return array_filter(['etag' => $this->etag, 'bindings' => $this->bindings, 'version' => $this->version]);
+    }
+    private function validatePolicyVersion()
+    {
+        if (isset($this->version) && $this->version > 1) {
+            throw new \BadMethodCallException("Helper methods cannot be " . "invoked on policies with version {$this->version}.");
+        }
+        $this->validateConditions();
+    }
+    private function validateConditions()
+    {
+        if (!$this->bindings) {
+            return;
+        }
+        foreach ($this->bindings as $binding) {
+            if (isset($binding['condition'])) {
+                throw new \BadMethodCallException("Helper methods cannot " . "be invoked on policies containing conditions.");
+            }
+        }
     }
 }

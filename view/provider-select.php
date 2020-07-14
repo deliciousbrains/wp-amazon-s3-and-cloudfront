@@ -1,6 +1,6 @@
 <?php
-/* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
-$current_provider                   = $this->get_provider();
+/* @var Amazon_S3_And_CloudFront|Amazon_S3_And_CloudFront_Pro $this */
+$current_provider                   = $this->get_storage_provider();
 $provider_defined                   = (bool) defined( 'AS3CF_PROVIDER' ) || $this->get_defined_setting( 'provider', false );
 $key_defined                        = $this->get_defined_setting( 'access-key-id', false );
 $secret_defined                     = $this->get_defined_setting( 'secret-access-key', false );
@@ -10,7 +10,7 @@ $key_file_defined                   = $this->get_defined_setting( 'key-file', fa
 $key_file_path_settings_constant    = ( $key_file_path_defined || $key_file_defined ) ? $this->settings_constant() : false;
 $use_server_roles_defined           = $this->get_defined_setting( 'use-server-roles', false );
 $use_server_roles_settings_constant = $use_server_roles_defined ? $this->settings_constant() : false;
-$providers                          = $this->get_provider_classes();
+$providers                          = $this->get_provider_classes( 'storage' );
 $media_counts                       = $this->media_counts();
 $media_offloaded_string             = empty( $media_counts['offloaded'] ) ? '' : number_format( $media_counts['offloaded'] );
 ?>
@@ -25,9 +25,9 @@ $media_offloaded_string             = empty( $media_counts['offloaded'] ) ? '' :
 
 	<table>
 		<?php
-		/* @var \DeliciousBrains\WP_Offload_Media\Providers\Provider $provider_class */
+		/* @var \DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider $provider_class */
 		foreach ( $providers as $provider_key => $provider_class ) {
-			/* @var \DeliciousBrains\WP_Offload_Media\Providers\Provider $provider */
+			/* @var \DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider $provider */
 			$provider                = new $provider_class( $this );
 			$provider_selected       = $provider_key === $current_provider->get_provider_key_name();
 			$provider_selected_class = $provider_selected ? ' as3cf-provider-selected' : '';

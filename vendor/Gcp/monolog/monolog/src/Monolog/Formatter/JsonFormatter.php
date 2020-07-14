@@ -143,6 +143,9 @@ class JsonFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if ($data instanceof Exception || $data instanceof Throwable) {
             return $this->normalizeException($data);
         }
+        if (is_resource($data)) {
+            return parent::normalize($data);
+        }
         return $data;
     }
     /**

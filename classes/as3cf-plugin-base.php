@@ -117,6 +117,13 @@ abstract class AS3CF_Plugin_Base {
 			$saved_settings = get_site_option( static::SETTINGS_KEY );
 			$this->settings = $this->filter_settings( $saved_settings );
 
+			// Now that we have merged database and defined settings, sanitize them before use.
+			if ( ! empty( $this->settings ) ) {
+				foreach ( $this->settings as $key => $val ) {
+					$this->settings[ $key ] = $this->sanitize_setting( $key, $val );
+				}
+			}
+
 			// If defined settings keys have changed since last time settings were saved to database, re-save to remove the new keys.
 			if ( ! empty( $saved_settings ) && ! empty( $this->defined_settings ) && ! empty( array_intersect_key( $saved_settings, $this->defined_settings ) ) ) {
 				$this->save_settings();
@@ -320,6 +327,24 @@ abstract class AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * List of settings that should be treated as paths.
+	 *
+	 * @return array
+	 */
+	function get_path_format_settings() {
+		return array();
+	}
+
+	/**
+	 * List of settings that should be treated as directory paths.
+	 *
+	 * @return array
+	 */
+	function get_prefix_format_settings() {
+		return array();
+	}
+
+	/**
 	 * Sanitize a setting value, maybe.
 	 *
 	 * @param string $key
@@ -342,6 +367,19 @@ abstract class AS3CF_Plugin_Base {
 			}
 		} else {
 			$value = sanitize_text_field( $value );
+
+			// Make sure path setting is absolute and not just "/".
+			// But not on Windows as it can have various forms of path, e.g. C:\Sites and \\shared\sites.
+			if ( '/' === DIRECTORY_SEPARATOR && in_array( $key, $this->get_path_format_settings() ) ) {
+				$value = trim( AS3CF_Utils::unleadingslashit( $value ) );
+				$value = empty( $value ) ? '' : AS3CF_Utils::leadingslashit( $value );
+			}
+
+			// Make sure prefix setting is relative with trailing slash for visibility.
+			if ( in_array( $key, $this->get_prefix_format_settings() ) ) {
+				$value = trim( untrailingslashit( $value ) );
+				$value = empty( $value ) ? '' : AS3CF_Utils::trailingslash_prefix( $value );
+			}
 		}
 
 		return $value;

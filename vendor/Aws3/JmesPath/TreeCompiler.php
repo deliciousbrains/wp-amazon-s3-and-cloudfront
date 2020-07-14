@@ -21,7 +21,7 @@ class TreeCompiler
     {
         $this->vars = [];
         $this->source = $this->indentation = '';
-        $this->write("<?php\n")->write('use JmesPath\\TreeInterpreter as Ti;')->write('use JmesPath\\FnDispatcher as Fn;')->write('use JmesPath\\Utils;')->write('')->write('function %s(Ti $interpreter, $value) {', $fnName)->indent()->dispatch($ast)->write('')->write('return $value;')->outdent()->write('}');
+        $this->write("<?php\n")->write('use JmesPath\\TreeInterpreter as Ti;')->write('use JmesPath\\FnDispatcher as Fd;')->write('use JmesPath\\Utils;')->write('')->write('function %s(Ti $interpreter, $value) {', $fnName)->indent()->dispatch($ast)->write('')->write('return $value;')->outdent()->write('}');
         return $this->source;
     }
     /**
@@ -159,7 +159,7 @@ class TreeCompiler
             $this->dispatch($arg);
             $this->write('%s[] = $value;', $args)->write('$value = %s;', $value);
         }
-        return $this->write('$value = Fn::getInstance()->__invoke("%s", %s);', $node['value'], $args);
+        return $this->write('$value = Fd::getInstance()->__invoke("%s", %s);', $node['value'], $args);
     }
     private function visit_slice(array $node)
     {

@@ -25,7 +25,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Ps
  */
 class GuzzleHandler
 {
-    private static $validOptions = ['proxy' => true, 'verify' => true, 'timeout' => true, 'debug' => true, 'connect_timeout' => true, 'stream' => true, 'delay' => true, 'sink' => true];
+    private static $validOptions = ['proxy' => true, 'expect' => true, 'cert' => true, 'verify' => true, 'timeout' => true, 'debug' => true, 'connect_timeout' => true, 'stream' => true, 'delay' => true, 'sink' => true];
     /** @var ClientInterface */
     private $client;
     /**
@@ -37,9 +37,9 @@ class GuzzleHandler
     }
     /**
      * @param Psr7Request $request
-     * @param array       $options
-     *
-     * @return Promise\Promise
+     * @param array $options
+     * @return Promise\Promise|Promise\PromiseInterface
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
     {

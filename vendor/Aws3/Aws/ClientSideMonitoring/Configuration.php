@@ -6,16 +6,19 @@ class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Client
 {
     private $clientId;
     private $enabled;
+    private $host;
     private $port;
     /**
      * Constructs a new Configuration object with the specified CSM options set.
      *
      * @param mixed $enabled
+     * @param string $host
      * @param string|int $port
      * @param string $clientId
      */
-    public function __construct($enabled, $port, $clientId = '')
+    public function __construct($enabled, $host, $port, $clientId = '')
     {
+        $this->host = $host;
         $this->port = filter_var($port, FILTER_VALIDATE_INT);
         if ($this->port === false) {
             throw new \InvalidArgumentException("CSM 'port' value must be an integer!");
@@ -39,6 +42,13 @@ class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Client
         return $this->clientId;
     }
     /**
+     * /{@inheritdoc}
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+    /**
      * {@inheritdoc}
      */
     public function getPort()
@@ -50,6 +60,6 @@ class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Client
      */
     public function toArray()
     {
-        return ['client_id' => $this->getClientId(), 'enabled' => $this->isEnabled(), 'port' => $this->getPort()];
+        return ['client_id' => $this->getClientId(), 'enabled' => $this->isEnabled(), 'host' => $this->getHost(), 'port' => $this->getPort()];
     }
 }

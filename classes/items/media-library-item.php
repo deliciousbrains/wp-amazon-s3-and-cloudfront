@@ -4,6 +4,7 @@ namespace DeliciousBrains\WP_Offload_Media\Items;
 
 use Amazon_S3_And_CloudFront;
 use WP_Error;
+use AS3CF_Utils;
 
 class Media_Library_Item extends Item {
 	private static $attachment_counts = array();
@@ -20,32 +21,43 @@ class Media_Library_Item extends Item {
 	 * @param int    $source_id         ID that source has.
 	 * @param string $source_path       Path that source uses, could be relative or absolute depending on source.
 	 * @param string $original_filename An optional filename with no path that was previously used for the item.
-	 * @param array  $private_sizes     An optional array of thumbnail sizes that should be private objects in the bucket.
+	 * @param array  $extra_info        An optional associative array of extra data to be associated with the item.
+	 *                                  Recognised keys:
+	 *                                  'private_sizes' => ['thumbnail', 'medium', ...]
+	 *                                  'private_prefix' => 'private/'
+	 *                                  For backwards compatibility, if a simple array is supplied it is treated as
+	 *                                  private thumbnail sizes that should be private objects in the bucket.
 	 * @param null   $id                Optional Item record ID.
 	 */
-	public function __construct( $provider, $region, $bucket, $path, $is_private, $source_id, $source_path, $original_filename = null, $private_sizes = array(), $id = null ) {
+	public function __construct( $provider, $region, $bucket, $path, $is_private, $source_id, $source_path, $original_filename = null, $extra_info = array(), $id = null ) {
 		// For Media Library items, the source path should be relative to the Media Library's uploads directory.
 		$uploads = wp_upload_dir();
 
 		if ( false === $uploads['error'] && 0 === strpos( $source_path, $uploads['basedir'] ) ) {
-			$source_path = ltrim( substr( $source_path, strlen( $uploads['basedir'] ) ), DIRECTORY_SEPARATOR );
+			$source_path = AS3CF_Utils::unleadingslashit( substr( $source_path, strlen( $uploads['basedir'] ) ) );
 		}
 
-		/*
-		 * We only need private sizes info at the moment, but just in case we add a bit more extra info...
-		 */
+		$private_sizes  = array();
+		$private_prefix = '';
 
 		// Ensure re-hydration is clean.
-		if ( ! empty( $private_sizes['private_sizes'] ) ) {
-			$private_sizes = $private_sizes['private_sizes'];
-		}
+		if ( ! empty( $extra_info ) && is_array( $extra_info ) ) {
+			if ( isset( $extra_info['private_sizes'] ) ) {
+				$private_sizes = $extra_info['private_sizes'];
+			}
+			if ( isset( $extra_info['private_prefix'] ) ) {
+				$private_prefix = $extra_info['private_prefix'];
+			}
 
-		if ( empty( $private_sizes ) || ! is_array( $private_sizes ) ) {
-			$private_sizes = array();
+			// Compatibility fallback for if just an array of private sizes is supplied.
+			if ( ! isset( $extra_info['private_sizes'] ) && ! isset( $extra_info['private_prefix'] ) ) {
+				$private_sizes = $extra_info;
+			}
 		}
 
 		$extra_info = array(
-			'private_sizes' => $private_sizes,
+			'private_sizes'  => $private_sizes,
+			'private_prefix' => $private_prefix,
 		);
 
 		parent::__construct( $provider, $region, $bucket, $path, $is_private, $source_id, $source_path, $original_filename, $extra_info, $id );
@@ -83,6 +95,40 @@ class Media_Library_Item extends Item {
 	}
 
 	/**
+	 * Full key (path) for given file that belongs to offloaded attachment.
+	 *
+	 * If no filename given, full sized path returned.
+	 * Path is prepended with private prefix if size associated with filename is private,
+	 * and a private prefix has been assigned to offload.
+	 *
+	 * @param string|null $filename
+	 *
+	 * @return string
+	 */
+	public function key( $filename = null ) {
+		// Public full path.
+		if ( empty( $filename ) && empty( $this->private_prefix() ) ) {
+			return parent::path();
+		}
+
+		if ( empty( $filename ) ) {
+			$filename = wp_basename( parent::path() );
+		}
+
+		if ( ! empty( $this->private_prefix() ) ) {
+			$size = \AS3CF_Utils::get_intermediate_size_from_filename( $this->source_id(), $filename );
+
+			// Private path.
+			if ( $this->is_private_size( $size ) ) {
+				return $this->private_prefix() . $this->normalized_path_dir() . $filename;
+			}
+		}
+
+		// Public path.
+		return $this->normalized_path_dir() . $filename;
+	}
+
+	/**
 	 * Get absolute file paths associated with source item.
 	 *
 	 * @param integer $id
@@ -104,6 +150,15 @@ class Media_Library_Item extends Item {
 		$extra_info = $this->extra_info();
 
 		if ( ! empty( $extra_info['private_sizes'] ) ) {
+			// There was an issue with class re-hydration that meant empty private sizes embedded itself inside its key.
+			if (
+				isset( $extra_info['private_sizes']['private_sizes'] ) &&
+				is_array( $extra_info['private_sizes']['private_sizes'] ) &&
+				empty( $extra_info['private_sizes']['private_sizes'] )
+			) {
+				unset( $extra_info['private_sizes']['private_sizes'] );
+			}
+
 			return $extra_info['private_sizes'];
 		}
 
@@ -118,11 +173,26 @@ class Media_Library_Item extends Item {
 	 * @return bool
 	 */
 	public function is_private_size( $size ) {
-		if ( ( 'original' === $size || empty( $size ) ) ) {
+		if ( empty( $size ) || in_array( $size, array( 'full', 'original' ) ) ) {
 			return $this->is_private();
 		}
 
 		return in_array( $size, $this->private_sizes() );
+	}
+
+	/**
+	 * Get the private prefix for attachment's private objects.
+	 *
+	 * @return string
+	 */
+	public function private_prefix() {
+		$extra_info = $this->extra_info();
+
+		if ( ! empty( $extra_info['private_prefix'] ) ) {
+			return \AS3CF_Utils::trailingslash_prefix( $extra_info['private_prefix'] );
+		}
+
+		return '';
 	}
 
 	/**
@@ -151,21 +221,20 @@ class Media_Library_Item extends Item {
 			// We want to count distinct relative Media Library paths
 			// and ensure type is also attachment as other post types can use the same _wp_attached_file postmeta key.
 			$sql = "
-				SELECT COUNT(DISTINCT p.`ID`) total, COUNT(DISTINCT i.`id`) offloaded, COUNT(DISTINCT m.`meta_value`) total_paths, COUNT(DISTINCT i.`source_path`) offloaded_paths
-				FROM " . $wpdb->postmeta . " AS m
-				LEFT JOIN " . $wpdb->posts . " AS p ON m.post_id = p.ID AND p.`post_type` = 'attachment'
+				SELECT COUNT(DISTINCT p.`ID`) total, COUNT(DISTINCT i.`id`) offloaded
+				FROM " . $wpdb->posts . " AS p
+				STRAIGHT_JOIN " . $wpdb->postmeta . " AS m ON p.ID = m.post_id AND m.`meta_key` = '_wp_attached_file'
 				LEFT OUTER JOIN " . static::items_table() . " AS i ON p.`ID` = i.`source_id` AND i.`source_type` = 'media-library'
-				WHERE m.`meta_key` = '_wp_attached_file'
+				WHERE p.`post_type` = 'attachment'
 			";
 
 			$result = $wpdb->get_row( $sql, ARRAY_A );
 
-			$result['not_offloaded']       = $result['total'] - $result['offloaded'];
-			$result['not_offloaded_paths'] = max( 0, $result['total_paths'] - $result['offloaded_paths'] );
+			$result['not_offloaded'] = max( $result['total'] - $result['offloaded'], 0 );
 
 			ksort( $result );
 
-			set_site_transient( $transient_key, $result, 2 * MINUTE_IN_SECONDS );
+			set_site_transient( $transient_key, $result, 5 * MINUTE_IN_SECONDS );
 
 			// One way or another we've skipped the transient.
 			self::$attachment_count_skips[ $transient_key ] = true;
@@ -222,7 +291,7 @@ class Media_Library_Item extends Item {
 		$ignored_mime_types = apply_filters( 'as3cf_ignored_mime_types', array() );
 		if ( is_array( $ignored_mime_types ) && ! empty( $ignored_mime_types ) ) {
 			$ignored_mime_types = array_map( 'sanitize_text_field', $ignored_mime_types );
-			$sql                .= ' AND posts.post_mime_type NOT IN ("' . implode( '", "', $ignored_mime_types ) . '")';
+			$sql                .= " AND posts.post_mime_type NOT IN ('" . implode( "','", $ignored_mime_types ) . "')";
 		}
 
 		if ( ! $count ) {
@@ -266,7 +335,7 @@ class Media_Library_Item extends Item {
 
 		$sql = '
 			SELECT DISTINCT items.*
-			FROM ' . static::items_table() . ' AS items
+			FROM ' . static::items_table() . ' AS items USE INDEX (uidx_source_path, uidx_original_source_path)
 			WHERE items.source_type = %s
 		';
 
@@ -279,14 +348,14 @@ class Media_Library_Item extends Item {
 		}
 
 		if ( $exact_match ) {
-			$sql .= ' AND (items.source_path IN ("' . join( '","', $paths ) . '")';
-			$sql .= ' OR items.original_source_path IN ("' . join( '","', $paths ) . '"))';
+			$sql .= " AND (items.source_path IN ('" . join( "','", $paths ) . "')";
+			$sql .= " OR items.original_source_path IN ('" . join( "','", $paths ) . "'))";
 		} else {
 			$likes = array_map( function ( $path ) {
 				$ext  = '.' . pathinfo( $path, PATHINFO_EXTENSION );
 				$path = substr_replace( $path, '%', -strlen( $ext ) );
 
-				return 'items.source_path LIKE "' . $path . '" OR items.original_source_path LIKE "' . $path . '"';
+				return "items.source_path LIKE '" . $path . "' OR items.original_source_path LIKE '" . $path . "'";
 			}, $paths );
 
 			$sql .= ' AND (' . join( ' OR ', $likes ) . ')';
@@ -345,7 +414,7 @@ class Media_Library_Item extends Item {
 				$result->post_id,
 				$this->source_path(),
 				wp_basename( $this->original_source_path() ),
-				$this->private_sizes()
+				$this->extra_info()
 			);
 			$as3cf_item->save();
 		}
@@ -401,7 +470,7 @@ class Media_Library_Item extends Item {
 
 		if ( ! empty( $provider_object ) && is_array( $provider_object ) && ! empty( $provider_object['bucket'] ) && ! empty( $provider_object['key'] ) ) {
 			$provider_object = array_merge( array(
-				'provider' => Amazon_S3_And_CloudFront::get_default_provider(),
+				'provider' => Amazon_S3_And_CloudFront::get_default_storage_provider(),
 			), $provider_object );
 		} else {
 			return false;

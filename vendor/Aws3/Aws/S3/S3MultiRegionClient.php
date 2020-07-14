@@ -255,7 +255,7 @@ class S3MultiRegionClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Mul
             };
         };
     }
-    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires)
+    public function createPresignedRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $expires, array $options = [])
     {
         if (empty($command['Bucket'])) {
             throw new \InvalidArgumentException('The S3\\MultiRegionClient' . ' cannot create presigned requests for commands without a' . ' specified bucket.');

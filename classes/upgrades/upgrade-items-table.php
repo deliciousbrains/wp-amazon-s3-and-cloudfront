@@ -162,8 +162,8 @@ class Upgrade_Items_Table extends Upgrade {
 			return $wpdb->get_var( $sql );
 		}
 
-		$sql = 'SELECT DISTINCT a.post_id AS ID, a.meta_value AS source_path, p.meta_value AS provider_object' . $sql;
-		$sql .= ' ORDER BY p.post_id, p.meta_id';
+		$sql = 'SELECT a.post_id AS ID, p.meta_id AS po_id, a.meta_value AS source_path, p.meta_value AS provider_object' . $sql;
+		$sql .= ' ORDER BY ID, po_id';
 
 		if ( $limit && $limit > 0 ) {
 			$sql .= sprintf( ' LIMIT %d', (int) $limit );

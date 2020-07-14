@@ -53,6 +53,63 @@
 		}
 	}
 
+	/**
+	 * Validate Signed URLs Key ID.
+	 *
+	 * @param {object} $input
+	 */
+	function validateSignedUrlsKeyID( $input ) {
+		var $error = $input.next( '.as3cf-validation-error' );
+		var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+		var pattern = /[^a-zA-Z0-9]/; // Letters & Numbers only at present (CloudFront).
+
+		if ( pattern.test( $input.val() ) ) {
+			$error.show();
+			$submit.prop( 'disabled', true );
+		} else {
+			$error.hide();
+			$submit.prop( 'disabled', false );
+		}
+	}
+
+	/**
+	 * Validate Signed URLs Key File Path.
+	 *
+	 * @param {object} $input
+	 */
+	function validateSignedUrlsKeyFilePath( $input ) {
+		var $error = $input.next( '.as3cf-validation-error' );
+		var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+		var pattern = /[^a-zA-Z0-9\.\-\\:\/ ]/;
+
+		if ( pattern.test( $input.val() ) ) {
+			$error.show();
+			$submit.prop( 'disabled', true );
+		} else {
+			$error.hide();
+			$submit.prop( 'disabled', false );
+		}
+	}
+
+	/**
+	 * Validate Signed URLs Object Prefix.
+	 *
+	 * @param {object} $input
+	 */
+	function validateSignedUrlsObjectPrefix( $input ) {
+		var $error = $input.next( '.as3cf-validation-error' );
+		var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+		var pattern = /[^a-zA-Z0-9\-\/ ]/;
+
+		if ( pattern.test( $input.val() ) ) {
+			$error.show();
+			$submit.prop( 'disabled', true );
+		} else {
+			$error.hide();
+			$submit.prop( 'disabled', false );
+		}
+	}
+
 	as3cf.tabs = {
 		defaultTab: 'media',
 		/**
@@ -376,6 +433,40 @@
 		$( document ).trigger( 'wp-updates-notice-added' ); // Hack to run WP Core's makeNoticesDismissible() function.
 	};
 
+	as3cf.Settings = as3cf.Settings ? as3cf.Settings : {};
+
+	/**
+	 * The object that handles locking and unlocking the Media settings.
+	 */
+	as3cf.Settings.Media = {
+		/**
+		 * Lock settings.
+		 */
+		lock: function( key ) {
+			$( '#as3cf-media-settings-locked-' + key ).show();
+			$( '.as3cf-media-settings' ).addClass( 'locked locked-' + key );
+			$( '.as3cf-media-settings.locked-' + key ).each( function() {
+				$( this ).find( 'input,button' ).prop( 'disabled', true );
+				$( this ).find( '.as3cf-settings-container' ).addClass( 'as3cf-locked-setting' );
+				$( this ).find( 'a.as3cf-change-settings' ).hide();
+			} );
+		},
+
+		/**
+		 * Unlock settings.
+		 */
+		unlock: function( key ) {
+			$( '.as3cf-media-settings.locked-' + key ).each( function() {
+				$( this ).find( 'input,button' ).filter( ':not(.disabled)' ).prop( 'disabled', false );
+				$( this ).find( '.as3cf-settings-container' ).removeClass( 'as3cf-locked-setting' );
+				$( this ).find( 'a.as3cf-change-settings' ).show();
+				$( this ).removeClass( 'locked locked-' + key );
+			} );
+			$( '#as3cf-media-settings-locked-' + key ).hide();
+		}
+
+	};
+
 	/**
 	 * Get the link to the bucket on the AWS Console and update the DOM
 	 *
@@ -538,7 +629,7 @@
 		} );
 
 		$( '.as3cf-switch' ).on( 'click', function( e ) {
-			if ( ! $( this ).hasClass( 'disabled' ) ) {
+			if ( ! $( this ).hasClass( 'disabled' ) && ! $( this ).parents().hasClass( 'locked' ) ) {
 				setCheckbox( $( this ).attr( 'id' ) );
 			}
 		} );
@@ -546,14 +637,6 @@
 		$tabs.on( 'change', '.sub-toggle', function( e ) {
 			var setting = $( this ).attr( 'id' );
 			$( '.as3cf-setting.' + setting ).toggleClass( 'hide' );
-		} );
-
-		$( '.as3cf-domain' ).on( 'change', 'input[type="radio"]', function( e ) {
-			var $selected = $( this ).closest( 'input:radio[name="domain"]:checked' );
-			var domain = $selected.val();
-			var $cloudfront = $( this ).parents( '.as3cf-domain' ).find( '.as3cf-setting.cloudfront' );
-			var cloudfrontSelected = ( 'cloudfront' === domain );
-			$cloudfront.toggleClass( 'hide', ! cloudfrontSelected );
 		} );
 
 		$( '.url-preview' ).on( 'change', 'input', function( e ) {
@@ -579,20 +662,87 @@
 			}
 		} );
 
-		// Validate custom domain
-		$( 'input[name="cloudfront"]' ).on( 'keyup', function( e ) {
-			validateCustomDomain( $( this ) );
+		// Show or hide Custom Domain input and Enable Signed URLs section based on custom domain toggle switch.
+		$( '.as3cf-enable-delivery-domain-container' ).on( 'change', 'input[type="checkbox"]', function( e ) {
+			var deliveryDomainEnabled = $( this ).is( ':checked' );
+			var $deliveryDomain = $( this ).parents( '.as3cf-enable-delivery-domain-container' ).find( '.as3cf-setting.as3cf-delivery-domain' );
+			$deliveryDomain.toggleClass( 'hide', ! deliveryDomainEnabled );
+			var $signedUrlsEnabled = $( this ).parents( '.as3cf-enable-delivery-domain-container' ).siblings( '.as3cf-enable-signed-urls-container' );
+			$signedUrlsEnabled.toggleClass( 'hide', ! deliveryDomainEnabled );
 		} );
 
 		// Re-enable submit button on domain change
-		$( 'input[name="domain"]' ).on( 'change', function( e ) {
+		$( 'input[name="enable-delivery-domain"]' ).on( 'change', function( e ) {
 			var $input = $( this );
 			var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
 
-			if ( 'cloudfront' !== $input.val() ) {
+			if ( '1' !== $input.val() ) {
 				$submit.prop( 'disabled', false );
 			} else {
-				validateCustomDomain( $input.next( '.as3cf-setting' ).find( 'input[name="cloudfront"]' ) );
+				validateCustomDomain( $input.next( '.as3cf-setting' ).find( 'input[name="delivery-domain"]' ) );
+			}
+		} );
+
+		// Validate custom domain
+		$( 'input[name="delivery-domain"]' ).on( 'keyup', function( e ) {
+			validateCustomDomain( $( this ) );
+		} );
+
+		// Show or hide Signed URLs fields based on Enable Signed URLs toggle switch.
+		$( '.as3cf-enable-signed-urls-container' ).on( 'change', 'input[type="checkbox"]', function( e ) {
+			var signedUrlsEnabled = $( this ).is( ':checked' );
+			var $signedUrls = $( this ).parents( '.as3cf-enable-signed-urls-container' ).find( '.as3cf-setting.as3cf-signed-urls' );
+			$signedUrls.toggleClass( 'hide', ! signedUrlsEnabled );
+		} );
+
+		// Validate Signed URLs Key ID.
+		$( 'input[name="signed-urls-key-id"]' ).on( 'keyup', function( e ) {
+			validateSignedUrlsKeyID( $( this ) );
+		} );
+
+		// Re-enable submit button on Signed URLs Key ID change
+		$( 'input[name="enable-signed-urls-key-id"]' ).on( 'change', function( e ) {
+			var $input = $( this );
+			var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+
+			if ( '1' !== $input.val() ) {
+				$submit.prop( 'disabled', false );
+			} else {
+				validateSignedUrlsKeyID( $input.next( '.as3cf-setting' ).find( 'input[name="signed-urls-key-id"]' ) );
+			}
+		} );
+
+		// Validate Signed URLs Key File Path.
+		$( 'input[name="signed-urls-key-file-path"]' ).on( 'keyup', function( e ) {
+			validateSignedUrlsKeyFilePath( $( this ) );
+		} );
+
+		// Re-enable submit button on Signed URLs Key File Path change
+		$( 'input[name="enable-signed-urls-key-file-path"]' ).on( 'change', function( e ) {
+			var $input = $( this );
+			var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+
+			if ( '1' !== $input.val() ) {
+				$submit.prop( 'disabled', false );
+			} else {
+				validateSignedUrlsKeyFilePath( $input.next( '.as3cf-setting' ).find( 'input[name="signed-urls-key-file-path"]' ) );
+			}
+		} );
+
+		// Validate Signed URLs Object Prefix.
+		$( 'input[name="signed-urls-object-prefix"]' ).on( 'keyup', function( e ) {
+			validateSignedUrlsObjectPrefix( $( this ) );
+		} );
+
+		// Re-enable submit button on Signed URLs Object Prefix change
+		$( 'input[name="enable-signed-urls-object-prefix"]' ).on( 'change', function( e ) {
+			var $input = $( this );
+			var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
+
+			if ( '1' !== $input.val() ) {
+				$submit.prop( 'disabled', false );
+			} else {
+				validateSignedUrlsObjectPrefix( $input.next( '.as3cf-setting' ).find( 'input[name="signed-urls-object-prefix"]' ) );
 			}
 		} );
 
@@ -662,6 +812,16 @@
 
 				return false;
 			}
+		} );
+
+		// Enable/Disable Block All Public Access button during setup depending on checkbox.
+		$( '.as3cf-change-bucket-access-prompt' ).on( 'change', '#origin-access-identity-confirmation', function( e ) {
+			$( '#block-public-access-confirmed' ).prop( 'disabled', ! $( this ).prop( 'checked' ) );
+		} );
+
+		// If there's an upgrade in progress when the page loads, ensure settings are locked.
+		$( '.as3cf-media-settings.locked.locked-upgrade' ).each( function() {
+			as3cf.Settings.Media.lock( 'upgrade' );
 		} );
 	} );
 

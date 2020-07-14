@@ -2,8 +2,10 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Exception\ConfigurationException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 /**
@@ -40,75 +42,32 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  * $config = $promise->wait();
  * </code>
  */
-class ConfigurationProvider
+class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface
 {
-    const CACHE_KEY = 'aws_cached_csm_config';
     const DEFAULT_CLIENT_ID = '';
     const DEFAULT_ENABLED = false;
+    const DEFAULT_HOST = '127.0.0.1';
     const DEFAULT_PORT = 31000;
     const ENV_CLIENT_ID = 'AWS_CSM_CLIENT_ID';
     const ENV_ENABLED = 'AWS_CSM_ENABLED';
+    const ENV_HOST = 'AWS_CSM_HOST';
     const ENV_PORT = 'AWS_CSM_PORT';
     const ENV_PROFILE = 'AWS_PROFILE';
+    public static $cacheKey = 'aws_cached_csm_config';
+    protected static $interfaceClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface::class;
+    protected static $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Exception\ConfigurationException::class;
     /**
-     * Wraps a credential provider and saves provided credentials in an
-     * instance of Aws\CacheInterface. Forwards calls when no credentials found
-     * in cache and updates cache with the results.
-     *
-     * @param callable $provider Credentials provider function to wrap
-     * @param CacheInterface $cache Cache to store credentials
-     * @param string|null $cacheKey (optional) Cache key to use
-     *
-     * @return callable
-     */
-    public static function cache(callable $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface $cache, $cacheKey = null)
-    {
-        $cacheKey = $cacheKey ?: self::CACHE_KEY;
-        return function () use($provider, $cache, $cacheKey) {
-            $found = $cache->get($cacheKey);
-            if ($found instanceof ConfigurationInterface) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($found);
-            }
-            return $provider()->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface $config) use($cache, $cacheKey) {
-                $cache->set($cacheKey, $config);
-                return $config;
-            });
-        };
-    }
-    /**
-     * Creates an aggregate credentials provider that invokes the provided
-     * variadic providers one after the other until a provider returns
-     * credentials.
-     *
-     * @return callable
-     */
-    public static function chain()
-    {
-        $links = func_get_args();
-        if (empty($links)) {
-            throw new \InvalidArgumentException('No providers in chain');
-        }
-        return function () use($links) {
-            /** @var callable $parent */
-            $parent = array_shift($links);
-            $promise = $parent();
-            while ($next = array_shift($links)) {
-                $promise = $promise->otherwise($next);
-            }
-            return $promise;
-        };
-    }
-    /**
-     * Create a default CSM config provider that first checks for environment
-     * variables, then checks for a specified profile in ~/.aws/config, then
-     * checks for the "aws_csm" profile in ~/.aws/config, and failing those uses
-     * a default fallback set of configuration options.
+     * Create a default config provider that first checks for environment
+     * variables, then checks for a specified profile in the environment-defined
+     * config file location (env variable is 'AWS_CONFIG_FILE', file location
+     * defaults to ~/.aws/config), then checks for the "default" profile in the
+     * environment-defined config file location, and failing those uses a default
+     * fallback set of configuration options.
      *
      * This provider is automatically wrapped in a memoize function that caches
      * previously provided config options.
      *
-     * @param array $config Optional array of ecs/instance profile credentials
-     *                      provider options.
+     * @param array $config
      *
      * @return callable
      */
@@ -117,7 +76,7 @@ class ConfigurationProvider
         $configProviders = [self::env(), self::ini(), self::fallback()];
         $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
         if (isset($config['csm']) && $config['csm'] instanceof CacheInterface) {
-            return self::cache($memo, $config['csm'], self::CACHE_KEY);
+            return self::cache($memo, $config['csm'], self::$cacheKey);
         }
         return $memo;
     }
@@ -132,9 +91,9 @@ class ConfigurationProvider
             // Use credentials from environment variables, if available
             $enabled = getenv(self::ENV_ENABLED);
             if ($enabled !== false) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($enabled, getenv(self::ENV_PORT) ?: self::DEFAULT_PORT, getenv(self::ENV_CLIENT_ID) ?: self::DEFAULT_CLIENT_ID));
+                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($enabled, getenv(self::ENV_HOST) ?: self::DEFAULT_HOST, getenv(self::ENV_PORT) ?: self::DEFAULT_PORT, getenv(self::ENV_CLIENT_ID) ?: self::DEFAULT_CLIENT_ID));
             }
-            return self::reject('Could not find environment variable CSM config' . ' in ' . self::ENV_ENABLED . '/' . self::ENV_PORT . '/' . self::ENV_CLIENT_ID);
+            return self::reject('Could not find environment variable CSM config' . ' in ' . self::ENV_ENABLED . '/' . self::ENV_HOST . '/' . self::ENV_PORT . '/' . self::ENV_CLIENT_ID);
         };
     }
     /**
@@ -145,45 +104,30 @@ class ConfigurationProvider
     public static function fallback()
     {
         return function () {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration(self::DEFAULT_ENABLED, self::DEFAULT_PORT, self::DEFAULT_CLIENT_ID));
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration(self::DEFAULT_ENABLED, self::DEFAULT_HOST, self::DEFAULT_PORT, self::DEFAULT_CLIENT_ID));
         };
     }
     /**
-     * Gets the environment's HOME directory if available.
-     *
-     * @return null|string
-     */
-    private static function getHomeDir()
-    {
-        // On Linux/Unix-like systems, use the HOME environment variable
-        if ($homeDir = getenv('HOME')) {
-            return $homeDir;
-        }
-        // Get the HOMEDRIVE and HOMEPATH values for Windows hosts
-        $homeDrive = getenv('HOMEDRIVE');
-        $homePath = getenv('HOMEPATH');
-        return $homeDrive && $homePath ? $homeDrive . $homePath : null;
-    }
-    /**
-     * CSM config provider that creates CSM config using an ini file stored
-     * in the current user's home directory.
+     * Config provider that creates config using a config file whose location
+     * is specified by an environment variable 'AWS_CONFIG_FILE', defaulting to
+     * ~/.aws/config if not specified
      *
      * @param string|null $profile  Profile to use. If not specified will use
-     *                              the "aws_csm" profile in "~/.aws/config".
+     *                              the "default" profile.
      * @param string|null $filename If provided, uses a custom filename rather
-     *                              than looking in the home directory.
+     *                              than looking in the default directory.
      *
      * @return callable
      */
     public static function ini($profile = null, $filename = null)
     {
-        $filename = $filename ?: self::getHomeDir() . '/.aws/config';
+        $filename = $filename ?: self::getDefaultConfigFilename();
         $profile = $profile ?: (getenv(self::ENV_PROFILE) ?: 'aws_csm');
         return function () use($profile, $filename) {
             if (!is_readable($filename)) {
                 return self::reject("Cannot read CSM config from {$filename}");
             }
-            $data = parse_ini_file($filename, true);
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true);
             if ($data === false) {
                 return self::reject("Invalid config file: {$filename}");
             }
@@ -193,6 +137,10 @@ class ConfigurationProvider
             if (!isset($data[$profile]['csm_enabled'])) {
                 return self::reject("Required CSM config values not present in \n                    INI profile '{$profile}' ({$filename})");
             }
+            // host is optional
+            if (empty($data[$profile]['csm_host'])) {
+                $data[$profile]['csm_host'] = self::DEFAULT_HOST;
+            }
             // port is optional
             if (empty($data[$profile]['csm_port'])) {
                 $data[$profile]['csm_port'] = self::DEFAULT_PORT;
@@ -201,48 +149,8 @@ class ConfigurationProvider
             if (empty($data[$profile]['csm_client_id'])) {
                 $data[$profile]['csm_client_id'] = self::DEFAULT_CLIENT_ID;
             }
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($data[$profile]['csm_enabled'], $data[$profile]['csm_port'], $data[$profile]['csm_client_id']));
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($data[$profile]['csm_enabled'], $data[$profile]['csm_host'], $data[$profile]['csm_port'], $data[$profile]['csm_client_id']));
         };
-    }
-    /**
-     * Wraps a CSM config provider and caches previously provided configuration.
-     *
-     * Ensures that cached configuration is refreshed when it expires.
-     *
-     * @param callable $provider CSM config provider function to wrap.
-     *
-     * @return callable
-     */
-    public static function memoize(callable $provider)
-    {
-        return function () use($provider) {
-            static $result;
-            static $isConstant;
-            // Constant config will be returned constantly.
-            if ($isConstant) {
-                return $result;
-            }
-            // Create the initial promise that will be used as the cached value
-            // until it expires.
-            if (null === $result) {
-                $result = $provider();
-            }
-            // Return config and set flag that provider is already set
-            return $result->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface $config) use(&$isConstant) {
-                $isConstant = true;
-                return $config;
-            });
-        };
-    }
-    /**
-     * Reject promise with standardized exception.
-     * 
-     * @param $msg
-     * @return Promise\RejectedPromise
-     */
-    private static function reject($msg)
-    {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Exception\ConfigurationException($msg));
     }
     /**
      * Unwraps a configuration object in whatever valid form it is in,
@@ -264,8 +172,9 @@ class ConfigurationProvider
             return $config;
         } elseif (is_array($config) && isset($config['enabled'])) {
             $client_id = isset($config['client_id']) ? $config['client_id'] : self::DEFAULT_CLIENT_ID;
+            $host = isset($config['host']) ? $config['host'] : self::DEFAULT_HOST;
             $port = isset($config['port']) ? $config['port'] : self::DEFAULT_PORT;
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($config['enabled'], $port, $client_id);
+            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration($config['enabled'], $host, $port, $client_id);
         }
         throw new \InvalidArgumentException('Not a valid CSM configuration ' . 'argument.');
     }

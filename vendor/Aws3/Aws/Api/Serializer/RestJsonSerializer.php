@@ -22,7 +22,7 @@ class RestJsonSerializer extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, $endpoint, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\JsonBody $jsonFormatter = null)
     {
         parent::__construct($api, $endpoint);
-        $this->contentType = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\JsonBody::getContentType($api);
+        $this->contentType = 'application/json';
         $this->jsonFormatter = $jsonFormatter ?: new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\JsonBody($api);
     }
     protected function payload(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, array $value, array &$opts)

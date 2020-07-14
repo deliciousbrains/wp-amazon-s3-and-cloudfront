@@ -160,6 +160,11 @@ abstract class RestSerializer
             $append = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\build_query($opts['query']);
             $relative .= strpos($relative, '?') ? "&{$append}" : "?{$append}";
         }
+        // If endpoint has path, remove leading '/' to preserve URI resolution.
+        $path = $this->endpoint->getPath();
+        if ($path && $relative[0] === '/') {
+            $relative = substr($relative, 1);
+        }
         // Expand path place holders using Amazon's slightly different URI
         // template syntax.
         return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver::resolve($this->endpoint, new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($relative));

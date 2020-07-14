@@ -8,9 +8,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  */
 
-// Exit if accessed directly
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 
+// Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -45,7 +45,40 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string
 		 */
 		public static function trailingslash_prefix( $string ) {
-			return ltrim( trailingslashit( $string ), '/\\' );
+			return static::unleadingslashit( trailingslashit( trim( $string ) ) );
+		}
+
+		/**
+		 * Ensure string has a leading slash, like in absolute paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function leadingslashit( $string ) {
+			return '/' . static::unleadingslashit( $string );
+		}
+
+		/**
+		 * Ensure string has no leading slash, like in relative paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function unleadingslashit( $string ) {
+			return ltrim( trim( $string ), '/\\' );
+		}
+
+		/**
+		 * Ensure string has a leading and trailing slash, like in absolute directory paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function leadingtrailingslashit( $string ) {
+			return static::leadingslashit( trailingslashit( trim( $string ) ) );
 		}
 
 		/**
@@ -267,10 +300,9 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return array
 		 */
 		public static function get_attachment_edited_keys( $attachment_id, Media_Library_Item $as3cf_item ) {
-			$prefix = trailingslashit( $as3cf_item->normalized_path_dir() );
-			$paths  = self::get_attachment_edited_file_paths( $attachment_id );
-			$paths  = array_map( function ( $path ) use ( $prefix ) {
-				return array( 'Key' => $prefix . wp_basename( $path ) );
+			$paths = self::get_attachment_edited_file_paths( $attachment_id );
+			$paths = array_map( function ( $path ) use ( $as3cf_item ) {
+				return array( 'Key' => $as3cf_item->key( wp_basename( $path ) ) );
 			}, $paths );
 
 			return $paths;
@@ -573,6 +605,108 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return $paths;
+		}
+
+		/**
+		 * Convert dimensions to size
+		 *
+		 * @param int   $attachment_id
+		 * @param array $dimensions
+		 *
+		 * @return null|string
+		 */
+		public static function convert_dimensions_to_size_name( $attachment_id, $dimensions ) {
+			$w                     = ( isset( $dimensions[0] ) && $dimensions[0] > 0 ) ? $dimensions[0] : 1;
+			$h                     = ( isset( $dimensions[1] ) && $dimensions[1] > 0 ) ? $dimensions[1] : 1;
+			$original_aspect_ratio = $w / $h;
+			$meta                  = wp_get_attachment_metadata( $attachment_id );
+
+			if ( ! isset( $meta['sizes'] ) || empty( $meta['sizes'] ) ) {
+				return null;
+			}
+
+			$sizes = $meta['sizes'];
+			uasort( $sizes, function ( $a, $b ) {
+				// Order by image area
+				return ( $a['width'] * $a['height'] ) - ( $b['width'] * $b['height'] );
+			} );
+
+			$nearest_matches = array();
+
+			foreach ( $sizes as $size => $value ) {
+				if ( $w > $value['width'] || $h > $value['height'] ) {
+					continue;
+				}
+
+				$aspect_ratio = $value['width'] / $value['height'];
+
+				if ( $aspect_ratio === $original_aspect_ratio ) {
+					return $size;
+				}
+
+				$nearest_matches[] = $size;
+			}
+
+			// Return nearest match
+			if ( ! empty( $nearest_matches ) ) {
+				return $nearest_matches[0];
+			}
+
+			return null;
+		}
+
+		/**
+		 * Maybe convert size to string
+		 *
+		 * @param int   $attachment_id
+		 * @param mixed $size
+		 *
+		 * @return null|string
+		 */
+		public static function maybe_convert_size_to_string( $attachment_id, $size ) {
+			if ( is_array( $size ) ) {
+				return static::convert_dimensions_to_size_name( $attachment_id, $size );
+			}
+
+			return $size;
+		}
+
+		/**
+		 * Encode file names according to RFC 3986 when generating urls
+		 * As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
+		 *
+		 * @param string $file
+		 *
+		 * @return string Encoded filename
+		 */
+		public static function encode_filename_in_path( $file ) {
+			$url = parse_url( $file );
+
+			if ( ! isset( $url['path'] ) ) {
+				// Can't determine path, return original
+				return $file;
+			}
+
+			if ( isset( $url['query'] ) ) {
+				// Manually strip query string, as passing $url['path'] to basename results in corrupt � characters
+				$file_name = wp_basename( str_replace( '?' . $url['query'], '', $file ) );
+			} else {
+				$file_name = wp_basename( $file );
+			}
+
+			if ( false !== strpos( $file_name, '%' ) ) {
+				// File name already encoded, return original
+				return $file;
+			}
+
+			$encoded_file_name = rawurlencode( $file_name );
+
+			if ( $file_name === $encoded_file_name ) {
+				// File name doesn't need encoding, return original
+				return $file;
+			}
+
+			return str_replace( $file_name, $encoded_file_name, $file );
 		}
 	}
 }

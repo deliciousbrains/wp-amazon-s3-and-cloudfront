@@ -2,6 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
@@ -95,6 +97,13 @@ class ObjectCopier implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\
     }
     private function getSourcePath()
     {
+        if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser::isArn($this->source['Bucket'])) {
+            try {
+                new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn($this->source['Bucket']);
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Provided ARN was a not a valid S3 access point ARN (' . $e->getMessage() . ')', 0, $e);
+            }
+        }
         $sourcePath = "/{$this->source['Bucket']}/" . rawurlencode($this->source['Key']);
         if (isset($this->source['VersionId'])) {
             $sourcePath .= "?versionId={$this->source['VersionId']}";

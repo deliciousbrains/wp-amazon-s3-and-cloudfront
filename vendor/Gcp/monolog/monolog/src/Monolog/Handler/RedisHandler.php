@@ -66,7 +66,8 @@ class RedisHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
     protected function writeCapped(array $record)
     {
         if ($this->redisClient instanceof \Redis) {
-            $this->redisClient->multi()->rpush($this->redisKey, $record["formatted"])->ltrim($this->redisKey, -$this->capSize, -1)->exec();
+            $mode = defined('\\Redis::MULTI') ? \Redis::MULTI : 1;
+            $this->redisClient->multi($mode)->rpush($this->redisKey, $record["formatted"])->ltrim($this->redisKey, -$this->capSize, -1)->exec();
         } else {
             $redisKey = $this->redisKey;
             $capSize = $this->capSize;

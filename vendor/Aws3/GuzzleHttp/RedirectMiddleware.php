@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
  * Request redirect middleware.
  *
  * Apply this middleware like other middleware using
- * {@see GuzzleHttp\Middleware::redirect()}.
+ * {@see \GuzzleHttp\Middleware::redirect()}.
  */
 class RedirectMiddleware
 {
@@ -59,7 +59,7 @@ class RedirectMiddleware
     /**
      * @param RequestInterface  $request
      * @param array             $options
-     * @param ResponseInterface|PromiseInterface $response
+     * @param ResponseInterface $response
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -81,6 +81,11 @@ class RedirectMiddleware
         }
         return $promise;
     }
+    /**
+     * Enable tracking on promise.
+     *
+     * @return PromiseInterface
+     */
     private function withTracking(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise, $uri, $statusCode)
     {
         return $promise->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response) use($uri, $statusCode) {
@@ -94,6 +99,13 @@ class RedirectMiddleware
             return $response->withHeader(self::HISTORY_HEADER, $historyHeader)->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
         });
     }
+    /**
+     * Check for too many redirects
+     *
+     * @return void
+     *
+     * @throws TooManyRedirectsException Too many redirects.
+     */
     private function guardMax(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count']) ? $options['__redirect_count'] : 0;
@@ -119,16 +131,21 @@ class RedirectMiddleware
         // not forcing RFC compliance, but rather emulating what all browsers
         // would do.
         $statusCode = $response->getStatusCode();
-        if ($statusCode == 303 || $statusCode <= 302 && $request->getBody() && !$options['allow_redirects']['strict']) {
+        if ($statusCode == 303 || $statusCode <= 302 && !$options['allow_redirects']['strict']) {
             $modify['method'] = 'GET';
             $modify['body'] = '';
         }
-        $modify['uri'] = $this->redirectUri($request, $response, $protocols);
+        $uri = $this->redirectUri($request, $response, $protocols);
+        if (isset($options['idn_conversion']) && $options['idn_conversion'] !== false) {
+            $idnOptions = $options['idn_conversion'] === true ? IDNA_DEFAULT : $options['idn_conversion'];
+            $uri = _idn_uri_convert($uri, $idnOptions);
+        }
+        $modify['uri'] = $uri;
         \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\rewind_body($request);
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
         if ($options['allow_redirects']['referer'] && $modify['uri']->getScheme() === $request->getUri()->getScheme()) {
-            $uri = $request->getUri()->withUserInfo('', '');
+            $uri = $request->getUri()->withUserInfo('');
             $modify['set_headers']['Referer'] = (string) $uri;
         } else {
             $modify['remove_headers'][] = 'Referer';

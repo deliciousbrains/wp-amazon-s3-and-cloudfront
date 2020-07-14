@@ -21,6 +21,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ServiceAccountSignerTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface;
+use InvalidArgumentException;
 /**
  * ServiceAccountCredentials supports authorization using a Google service
  * account.
@@ -72,8 +73,9 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
      *   as an associative array
      * @param string $sub an email address account to impersonate, in situations when
      *   the service account has been delegated domain wide access.
+     * @param string $targetAudience The audience for the ID token.
      */
-    public function __construct($scope, $jsonKey, $sub = null)
+    public function __construct($scope, $jsonKey, $sub = null, $targetAudience = null)
     {
         if (is_string($jsonKey)) {
             if (!file_exists($jsonKey)) {
@@ -90,7 +92,14 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
         if (!array_key_exists('private_key', $jsonKey)) {
             throw new \InvalidArgumentException('json key is missing the private_key field');
         }
-        $this->auth = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2(['audience' => self::TOKEN_CREDENTIAL_URI, 'issuer' => $jsonKey['client_email'], 'scope' => $scope, 'signingAlgorithm' => 'RS256', 'signingKey' => $jsonKey['private_key'], 'sub' => $sub, 'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI]);
+        if ($scope && $targetAudience) {
+            throw new \InvalidArgumentException('Scope and targetAudience cannot both be supplied');
+        }
+        $additionalClaims = [];
+        if ($targetAudience) {
+            $additionalClaims = ['target_audience' => $targetAudience];
+        }
+        $this->auth = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2(['audience' => self::TOKEN_CREDENTIAL_URI, 'issuer' => $jsonKey['client_email'], 'scope' => $scope, 'signingAlgorithm' => 'RS256', 'signingKey' => $jsonKey['private_key'], 'sub' => $sub, 'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI, 'additionalClaims' => $additionalClaims]);
     }
     /**
      * @param callable $httpHandler

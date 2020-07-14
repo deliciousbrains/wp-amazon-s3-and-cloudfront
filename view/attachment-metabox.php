@@ -6,7 +6,7 @@
 /** @var bool $local_file_exists */
 /** @var string $sendback */
 $provider_name       = empty( $provider_object['provider'] ) ? '' : $this->get_provider_service_name( $provider_object['provider'] );
-$is_current_provider = ! empty( $provider_object['provider'] ) && $this->get_provider()->get_provider_key_name() === $provider_object['provider'] ? true : false;
+$is_current_provider = ! empty( $provider_object['provider'] ) && $this->get_storage_provider()->get_provider_key_name() === $provider_object['provider'] ? true : false;
 $provider_class      = $is_current_provider ? '' : ' error';
 
 $is_removable       = $is_current_provider && in_array( 'remove', $available_actions );

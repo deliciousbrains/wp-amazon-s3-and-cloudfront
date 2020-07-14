@@ -485,7 +485,7 @@ abstract class Item {
 			'bucket'               => '%s',
 			'path'                 => '%s',
 			'original_path'        => '%s',
-			'is_private'           => '%s',
+			'is_private'           => '%d',
 			'source_type'          => '%s',
 			'source_id'            => '%d',
 			'source_path'          => '%s',
@@ -775,7 +775,7 @@ abstract class Item {
 	 *
 	 * @return array
 	 */
-	protected function extra_info() {
+	public function extra_info() {
 		return unserialize( $this->extra_info );
 	}
 
@@ -787,7 +787,7 @@ abstract class Item {
 	public function normalized_path_dir() {
 		$directory = dirname( $this->path );
 
-		return ( '.' === $directory ) ? '' : trailingslashit( $directory );
+		return ( '.' === $directory ) ? '' : AS3CF_Utils::trailingslash_prefix( $directory );
 	}
 
 	/**
@@ -840,6 +840,11 @@ abstract class Item {
 	public static function get_source_id_by_remote_url( $url ) {
 		global $wpdb;
 
+		/**
+		 * @var Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $as3cf
+		 */
+		global $as3cf;
+
 		$parts = AS3CF_Utils::parse_url( $url );
 		$path  = AS3CF_Utils::decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
@@ -847,6 +852,25 @@ abstract class Item {
 		if ( false !== strpos( $path, '/' ) ) {
 			$path = explode( '/', $path );
 			array_shift( $path );
+
+			// If private prefix enabled, check if first segment and remove it as path/original_path do not include it.
+			// We can't check every possible private prefix as each item may have a unique private prefix.
+			// The only way to do that is with some fancy SQL, but that's not feasible as this particular
+			// SQL query is already troublesome on some sites with badly behaved themes/plugins.
+			if ( count( $path ) && $as3cf->get_delivery_provider()->use_signed_urls_key_file() ) {
+				// We have to be able to handle multi-segment private prefixes such as "private/downloads/".
+				$private_prefixes = explode( '/', untrailingslashit( $as3cf->get_setting( 'signed-urls-object-prefix' ) ) );
+
+				foreach ( $private_prefixes as $private_prefix ) {
+					if ( $private_prefix === $path[0] ) {
+						array_shift( $path );
+					} else {
+						// As soon as we don't have a match stop looking.
+						break;
+					}
+				}
+			}
+
 			$path = implode( '/', $path );
 		}
 
@@ -865,11 +889,7 @@ abstract class Item {
 			return false;
 		}
 
-		// Only one attachment matched, return ID.
-		if ( 1 === count( $results ) ) {
-			return $results[0]->source_id;
-		}
-
+		// Regardless of whether 1 or many items found, must validate match.
 		$path = ltrim( $parts['path'], '/' );
 
 		foreach ( $results as $result ) {
@@ -880,6 +900,11 @@ abstract class Item {
 				$match_path = ltrim( substr_replace( $path, '', 0, strlen( $as3cf_item->bucket() ) ), '/' );
 			} else {
 				$match_path = $path;
+			}
+
+			// If item's private prefix matches first segment of URL path, remove it from URL path before checking match.
+			if ( ! empty( $as3cf_item->private_prefix() ) && 0 === strpos( $match_path, $as3cf_item->private_prefix() ) ) {
+				$match_path = ltrim( substr_replace( $match_path, '', 0, strlen( $as3cf_item->private_prefix() ) ), '/' );
 			}
 
 			// Exact match, return ID.

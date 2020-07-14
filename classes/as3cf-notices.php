@@ -350,8 +350,7 @@ class AS3CF_Notices {
 	 * @param string|bool $tab
 	 */
 	protected function maybe_show_notice( $notice, $dismissed_notices, $tab ) {
-		$screen = get_current_screen();
-		if ( $notice['only_show_in_settings'] && false === strpos( strval( $screen->id ), $this->as3cf->hook_suffix ) ) {
+		if ( $notice['only_show_in_settings'] && ! $this->as3cf->our_screen() ) {
 			return;
 		}
 

@@ -4,6 +4,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream;
+use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 trait DecryptionTrait
 {
     /**
@@ -50,7 +51,7 @@ trait DecryptionTrait
      *
      * @internal
      */
-    protected function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
+    public function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
     {
         $cipherOptions['Iv'] = base64_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::IV_HEADER]);
         $cipherOptions['TagLength'] = $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CRYPTO_TAG_LENGTH_HEADER] / 8;
@@ -61,7 +62,7 @@ trait DecryptionTrait
         unset($cek);
         return $decryptionSteam;
     }
-    private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
+    private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $tagLength)
     {
         $cipherTextSize = $cipherText->getSize();
         if ($cipherTextSize == null || $cipherTextSize <= 0) {
@@ -69,7 +70,7 @@ trait DecryptionTrait
         }
         return (string) new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($cipherText, $tagLength, $cipherTextSize - $tagLength);
     }
-    private function getStrippedCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $cipherText, $tagLength)
+    private function getStrippedCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $tagLength)
     {
         $cipherTextSize = $cipherText->getSize();
         if ($cipherTextSize == null || $cipherTextSize <= 0) {

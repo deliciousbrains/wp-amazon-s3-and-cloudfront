@@ -1,14 +1,15 @@
 <?php
-// TODO: Update SASS to enable modals/copy-buckets view output when relevant.
-
 /* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
-$prefix                 = $this->get_plugin_prefix_slug();
-$selected_provider      = $this->get_setting( 'provider', static::$default_provider );
-$selected_region        = $this->get_setting( 'region' );
-$selected_bucket        = $this->get_setting( 'bucket' );
-$selected_bucket_prefix = $this->get_object_prefix();
+$prefix                          = $this->get_plugin_prefix_slug();
+$selected_storage_provider       = $this->get_setting( 'provider', $this->get_default_storage_provider() );
+$selected_region                 = $this->get_setting( 'region' );
+$selected_bucket                 = $this->get_setting( 'bucket' );
+$selected_bucket_prefix          = $this->get_object_prefix();
+$selected_delivery_provider      = $this->get_setting( 'delivery-provider', $this->get_default_delivery_provider() );
+$selected_delivery_provider_name = $this->get_delivery_provider()->get_provider_service_name();
+$upgrade_lock_class              = $this->is_upgrading() ? ' locked locked-upgrade' : '';
 
-if ( $this->get_provider()->needs_access_keys() ) {
+if ( $this->get_storage_provider()->needs_access_keys() ) {
 	$storage_classes = ' as3cf-needs-access-keys';
 } else {
 	$storage_classes = ' as3cf-has-access-keys';
@@ -26,6 +27,14 @@ if ( ! empty( $_GET['action'] ) && 'change-provider' === $_GET['action'] ) {
 
 if ( ! empty( $_GET['action'] ) && 'change-bucket' === $_GET['action'] ) {
 	$storage_classes .= ' as3cf-change-bucket';
+}
+
+if ( ! empty( $_GET['action'] ) && 'change-bucket-access' === $_GET['action'] ) {
+	$storage_classes .= ' as3cf-change-bucket-access';
+}
+
+if ( ! empty( $_GET['action'] ) && 'change-delivery-provider' === $_GET['action'] ) {
+	$storage_classes .= ' as3cf-change-delivery-provider';
 }
 
 $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_classes );
@@ -53,12 +62,35 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 
 			$this->render_view( 'provider-select', compact( 'can_write' ) );
 
-			$this->render_view( 'bucket-select', array( 'prefix' => $prefix, 'selected_provider' => $selected_provider, 'selected_region' => $selected_region, 'selected_bucket' => $selected_bucket ) );
+			$this->render_view( 'bucket-select',
+				array(
+					'prefix'            => $prefix,
+					'selected_provider' => $selected_storage_provider,
+					'selected_region'   => $selected_region,
+					'selected_bucket'   => $selected_bucket,
+				)
+			);
+
+			$this->render_view( 'bucket-access-select',
+				array(
+					'prefix'            => $prefix,
+					'selected_provider' => $selected_storage_provider,
+					'selected_region'   => $selected_region,
+					'selected_bucket'   => $selected_bucket,
+				)
+			);
+
+			$this->render_view( 'delivery-provider-select',
+				array(
+					'prefix'                    => $prefix,
+					'selected_storage_provider' => $selected_storage_provider,
+				)
+			);
 
 			do_action( 'as3cf_pre_media_settings' );
 			?>
 
-			<table class="form-table as3cf-media-settings">
+			<table class="form-table as3cf-media-settings<?php echo $upgrade_lock_class; ?>">
 
 				<!-- URL Preview -->
 				<tr class="configure-url">
@@ -96,17 +128,17 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 				$this->render_view( 'provider-setting',
 					array(
 						'prefix'   => $prefix,
-						'tr_class' => "{$prefix}-provider-setting",
+						'tr_class' => "as3cf-settings-container {$prefix}-provider-setting",
 					)
 				);
 				$this->render_view( 'bucket-setting',
 					array(
 						'prefix'                 => $prefix,
-						'selected_provider'      => $selected_provider,
+						'selected_provider'      => $selected_storage_provider,
 						'selected_region'        => $selected_region,
 						'selected_bucket'        => $selected_bucket,
 						'selected_bucket_prefix' => $selected_bucket_prefix,
-						'tr_class'               => "{$prefix}-bucket-setting",
+						'tr_class'               => "as3cf-settings-container {$prefix}-bucket-setting",
 					)
 				); ?>
 
@@ -159,6 +191,7 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 							<?php _e( 'Add the Year/Month to the end of the path above just like WordPress does by default.', 'amazon-s3-and-cloudfront' ); ?>
 							<?php echo $this->settings_more_info_link( 'use-yearmonth-folders', 'media+year+month' ); ?>
 						</p>
+						<?php do_action( 'as3cf_after_setting', 'use-yearmonth-folders', __( 'Year/Month', 'amazon-s3-and-cloudfront' ) ); ?>
 					</td>
 				</tr>
 
@@ -174,13 +207,22 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 							<?php _e( 'Append a timestamp to the file\'s bucket path. Recommended when using a CDN so you don\'t have to worry about cache invalidation.', 'amazon-s3-and-cloudfront' ); ?>
 							<?php echo $this->settings_more_info_link( 'object-versioning', 'media+object+versioning' ); ?>
 						</p>
+						<?php do_action( 'as3cf_after_setting', 'object-versioning', __( 'Object Versioning', 'amazon-s3-and-cloudfront' ) ); ?>
 					</td>
 				</tr>
 
-				<!-- URL Rewriting -->
+				<!-- Delivery -->
 				<tr class="as3cf-setting-title">
-					<td colspan="2"><h3><?php _e( 'URL Rewriting', 'amazon-s3-and-cloudfront' ); ?></h3></td>
+					<td colspan="2"><h3><?php _e( 'Delivery', 'amazon-s3-and-cloudfront' ); ?></h3></td>
 				</tr>
+
+				<?php
+				$this->render_view( 'delivery-provider-setting',
+					array(
+						'prefix'   => $prefix,
+						'tr_class' => "as3cf-settings-container {$prefix}-provider-setting",
+					)
+				); ?>
 
 				<?php $args = $this->get_setting_args( 'serve-from-s3' ); ?>
 				<tr class="<?php echo $args['tr_class']; ?>">
@@ -191,14 +233,23 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 						<?php echo $args['setting_msg']; ?>
 						<h4><?php _e( 'Rewrite Media URLs', 'amazon-s3-and-cloudfront' ) ?></h4>
 						<p>
-							<?php _e( 'For Media Library files that have been copied to your bucket, rewrite the URLs so that they are served from the bucket or CDN instead of your server.', 'amazon-s3-and-cloudfront' ); ?>
+							<?php printf( __( 'For Media Library files that have been copied to your bucket, rewrite the URLs so that they are served from %s instead of your server.', 'amazon-s3-and-cloudfront' ), $selected_delivery_provider_name ); ?>
 							<?php echo $this->settings_more_info_link( 'serve-from-s3', 'media+rewrite+file+urls' ); ?>
 						</p>
 
 					</td>
 				</tr>
 
-				<?php $this->render_view( 'domain-setting' ); ?>
+				<?php
+				if ( $this->get_delivery_provider()->delivery_domain_allowed() ) {
+					$this->render_view( 'enable-delivery-domain-setting',
+						array(
+							'selected_delivery_provider'      => $selected_delivery_provider,
+							'selected_delivery_provider_name' => $selected_delivery_provider_name,
+						)
+					);
+				}
+				?>
 
 				<?php $args = $this->get_setting_args( 'force-https' ); ?>
 				<tr class="as3cf-border-bottom url-preview <?php echo $args['tr_class']; ?>">
@@ -269,7 +320,7 @@ $storage_classes = apply_filters( 'as3cf_media_tab_storage_classes', $storage_cl
 	</div>
 
 	<?php
-	if ( $this->get_provider()->needs_access_keys() ) {
+	if ( $this->get_storage_provider()->needs_access_keys() ) {
 		?>
 		<p class="as3cf-need-help">
 			<span class="dashicons dashicons-info"></span>

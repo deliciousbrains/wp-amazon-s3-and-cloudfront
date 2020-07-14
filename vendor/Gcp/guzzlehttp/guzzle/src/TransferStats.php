@@ -17,11 +17,11 @@ final class TransferStats
     private $handlerStats;
     private $handlerErrorData;
     /**
-     * @param RequestInterface  $request          Request that was sent.
-     * @param ResponseInterface $response         Response received (if any)
-     * @param float|null        $transferTime     Total handler transfer time.
-     * @param mixed             $handlerErrorData Handler error data.
-     * @param array             $handlerStats     Handler specific stats.
+     * @param RequestInterface       $request          Request that was sent.
+     * @param ResponseInterface|null $response         Response received (if any)
+     * @param float|null             $transferTime     Total handler transfer time.
+     * @param mixed                  $handlerErrorData Handler error data.
+     * @param array                  $handlerStats     Handler specific stats.
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, $transferTime = null, $handlerErrorData = null, $handlerStats = [])
     {
@@ -81,7 +81,7 @@ final class TransferStats
     /**
      * Get the estimated time the request was being transferred by the handler.
      *
-     * @return float Time in seconds.
+     * @return float|null Time in seconds.
      */
     public function getTransferTime()
     {

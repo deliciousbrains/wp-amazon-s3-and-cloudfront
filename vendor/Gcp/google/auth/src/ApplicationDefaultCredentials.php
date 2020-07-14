@@ -20,11 +20,13 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 use DomainException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\AppIdentityCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Subscriber\AuthTokenSubscriber;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client;
+use InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
 /**
  * ApplicationDefaultCredentials obtains the default credentials for
@@ -108,8 +110,9 @@ class ApplicationDefaultCredentials
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware($creds, $httpHandler);
     }
     /**
-     * Obtains the default FetchAuthTokenInterface implementation to use
-     * in this environment.
+     * Obtains an AuthTokenMiddleware which will fetch an access token to use in
+     * the Authorization header. The middleware is configured with the default
+     * FetchAuthTokenInterface implementation to use in this environment.
      *
      * If supplied, $scope is used to in creating the credentials instance if
      * this does not fallback to the Compute Engine defaults.
@@ -141,6 +144,76 @@ class ApplicationDefaultCredentials
             $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\AppIdentityCredentials($scope);
         } elseif (\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler)) {
             $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials(null, $scope);
+        }
+        if (is_null($creds)) {
+            throw new \DomainException(self::notFound());
+        }
+        if (!is_null($cache)) {
+            $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenCache($creds, $cacheConfig, $cache);
+        }
+        return $creds;
+    }
+    /**
+     * Obtains an AuthTokenMiddleware which will fetch an ID token to use in the
+     * Authorization header. The middleware is configured with the default
+     * FetchAuthTokenInterface implementation to use in this environment.
+     *
+     * If supplied, $targetAudience is used to set the "aud" on the resulting
+     * ID token.
+     *
+     * @param string $targetAudience The audience for the ID token.
+     * @param callable $httpHandler callback which delivers psr7 request
+     * @param array $cacheConfig configuration for the cache when it's present
+     * @param CacheItemPoolInterface $cache
+     *
+     * @return AuthTokenMiddleware
+     *
+     * @throws DomainException if no implementation can be obtained.
+     */
+    public static function getIdTokenMiddleware($targetAudience, callable $httpHandler = null, array $cacheConfig = null, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface $cache = null)
+    {
+        $creds = self::getIdTokenCredentials($targetAudience, $httpHandler, $cacheConfig, $cache);
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware($creds, $httpHandler);
+    }
+    /**
+     * Obtains the default FetchAuthTokenInterface implementation to use
+     * in this environment, configured with a $targetAudience for fetching an ID
+     * token.
+     *
+     * @param string $targetAudience The audience for the ID token.
+     * @param callable $httpHandler callback which delivers psr7 request
+     * @param array $cacheConfig configuration for the cache when it's present
+     * @param CacheItemPoolInterface $cache
+     *
+     * @return CredentialsLoader
+     *
+     * @throws DomainException if no implementation can be obtained.
+     * @throws InvalidArgumentException if JSON "type" key is invalid
+     */
+    public static function getIdTokenCredentials($targetAudience, callable $httpHandler = null, array $cacheConfig = null, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface $cache = null)
+    {
+        $creds = null;
+        $jsonKey = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromEnv() ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromWellKnownFile();
+        if (!$httpHandler) {
+            if (!($client = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::getHttpClient())) {
+                $client = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client();
+                \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::setHttpClient($client);
+            }
+            $httpHandler = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build($client);
+        }
+        if (!is_null($jsonKey)) {
+            if (!array_key_exists('type', $jsonKey)) {
+                throw new \InvalidArgumentException('json key is missing the type field');
+            }
+            if ($jsonKey['type'] == 'authorized_user') {
+                throw new \InvalidArgumentException('ID tokens are not supported for end user credentials');
+            }
+            if ($jsonKey['type'] != 'service_account') {
+                throw new \InvalidArgumentException('invalid value in the type field');
+            }
+            $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials(null, $jsonKey, null, $targetAudience);
+        } elseif (\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler)) {
+            $creds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials(null, null, $targetAudience);
         }
         if (is_null($creds)) {
             throw new \DomainException(self::notFound());

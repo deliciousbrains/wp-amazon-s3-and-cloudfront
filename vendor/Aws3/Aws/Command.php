@@ -29,6 +29,9 @@ class Command implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInter
         if (!isset($this->data['@http'])) {
             $this->data['@http'] = [];
         }
+        if (!isset($this->data['@context'])) {
+            $this->data['@context'] = [];
+        }
     }
     public function __clone()
     {

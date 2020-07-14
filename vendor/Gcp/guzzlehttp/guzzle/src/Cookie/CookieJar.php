@@ -78,8 +78,8 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cook
      */
     public function getCookieByName($name)
     {
-        // don't allow a null name
-        if ($name === null) {
+        // don't allow a non string name
+        if ($name === null || !is_scalar($name)) {
             return null;
         }
         foreach ($this->cookies as $cookie) {
@@ -87,6 +87,7 @@ class CookieJar implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cook
                 return $cookie;
             }
         }
+        return null;
     }
     public function toArray()
     {

@@ -10,7 +10,7 @@
  */
 
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
-use DeliciousBrains\WP_Offload_Media\Providers\Provider;
+use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
@@ -101,6 +101,7 @@ class AS3CF_Plugin_Compatibility {
 		 * /wp-includes/class-wp-image-editor.php
 		 */
 		add_action( 'as3cf_pre_upload_attachment', array( $this, 'image_editor_remove_files' ), 10, 3 );
+		add_filter( 'as3cf_get_attached_file_noop', array( $this, 'image_editor_download_file' ), 10, 4 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'image_editor_download_file' ), 10, 4 );
 		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_crop_download_file' ), 10, 4 );
@@ -343,7 +344,7 @@ class AS3CF_Plugin_Compatibility {
 			$as3cf_item->source_id(),
 			$as3cf_item->source_path(),
 			wp_basename( $as3cf_item->original_source_path() ),
-			$as3cf_item->private_sizes(),
+			$as3cf_item->extra_info(),
 			$as3cf_item->id()
 		);
 
@@ -369,7 +370,7 @@ class AS3CF_Plugin_Compatibility {
 	}
 
 	/**
-	 * Allow the WordPress Image Editor to edit files that have been copied to S3
+	 * Allow the WordPress Image Editor to edit files that have been copied to provider
 	 * but removed from the local server, by copying them back temporarily
 	 *
 	 * @param string             $url
@@ -396,12 +397,12 @@ class AS3CF_Plugin_Compatibility {
 				$as3cf_item->provider(),
 				$as3cf_item->region(),
 				$as3cf_item->bucket(),
-				dirname( $as3cf_item->path() ) . '/' . $original_filename,
+				$as3cf_item->normalized_path_dir() . $original_filename,
 				$as3cf_item->is_private(),
 				$as3cf_item->source_id(),
 				$as3cf_item->source_path(),
 				wp_basename( $as3cf_item->original_source_path() ),
-				$as3cf_item->private_sizes(),
+				$as3cf_item->extra_info(),
 				$as3cf_item->id()
 			);
 			$orig_file       = dirname( $file ) . '/' . $original_filename;
@@ -413,7 +414,7 @@ class AS3CF_Plugin_Compatibility {
 			if ( $provider_file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) {
 				// Return the file if successfully downloaded from bucket.
 				return $provider_file;
-			};
+			}
 		}
 
 		$action = filter_input( INPUT_GET, 'action' ) ?: filter_input( INPUT_POST, 'action' );
@@ -425,7 +426,7 @@ class AS3CF_Plugin_Compatibility {
 					if ( $provider_file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) {
 						// Return the file if successfully downloaded from bucket.
 						return $provider_file;
-					};
+					}
 				}
 			}
 		}
@@ -586,11 +587,13 @@ class AS3CF_Plugin_Compatibility {
 	 * @return string|bool File if downloaded, false on failure
 	 */
 	public function copy_provider_file_to_server( Media_Library_Item $as3cf_item, $file ) {
+		$filename = wp_basename( $file );
+
 		// Make sure the directory exists
 		$dir = dirname( $file );
 		if ( ! wp_mkdir_p( $dir ) ) {
 			$error_message = sprintf( __( 'The local directory %s does not exist and could not be created.', 'amazon-s3-and-cloudfront' ), $dir );
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->path(), $error_message ) );
+			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->key( $filename ), $error_message ) );
 
 			return false;
 		}
@@ -598,11 +601,11 @@ class AS3CF_Plugin_Compatibility {
 		try {
 			$this->as3cf->get_provider_client( $as3cf_item->region(), true )->get_object( array(
 				'Bucket' => $as3cf_item->bucket(),
-				'Key'    => $as3cf_item->path(),
+				'Key'    => $as3cf_item->key( $filename ),
 				'SaveAs' => $file,
 			) );
 		} catch ( Exception $e ) {
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->path(), $e->getMessage() ) );
+			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->key( $filename ), $e->getMessage() ) );
 
 			return false;
 		}
@@ -615,7 +618,7 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @param string $region
 	 *
-	 * @return Provider|null
+	 * @return Storage_Provider|null
 	 * @throws Exception
 	 */
 	protected function register_stream_wrapper( $region ) {
@@ -658,7 +661,7 @@ class AS3CF_Plugin_Compatibility {
 		$client = $this->register_stream_wrapper( $as3cf_item->region() );
 
 		if ( ! empty( $client ) ) {
-			return $client->prepare_stream_wrapper_file( $as3cf_item->region(), $as3cf_item->bucket(), $as3cf_item->path() );
+			return $client->prepare_stream_wrapper_file( $as3cf_item->region(), $as3cf_item->bucket(), $as3cf_item->key() );
 		}
 
 		return $url;
@@ -683,12 +686,12 @@ class AS3CF_Plugin_Compatibility {
 		) {
 			// Ensure each filename is encoded the same way as URL, slightly fixed up for wp_basename() manipulation compatibility.
 			if ( ! empty( $data['file'] ) ) {
-				$data['file'] = $this->as3cf->encode_filename_in_path( $data['file'] );
+				$data['file'] = AS3CF_Utils::encode_filename_in_path( $data['file'] );
 			}
 
 			if ( ! empty( $data['sizes'] ) ) {
 				$data['sizes'] = array_map( function ( $size ) {
-					$size['file'] = $this->as3cf->encode_filename_in_path( $size['file'] );
+					$size['file'] = AS3CF_Utils::encode_filename_in_path( $size['file'] );
 
 					return $size;
 				}, $data['sizes'] );
@@ -813,9 +816,9 @@ class AS3CF_Plugin_Compatibility {
 			return $image_meta;
 		}
 
-		$image_basename = $this->as3cf->encode_filename_in_path( wp_basename( $image_meta['file'] ) );
+		$image_basename = AS3CF_Utils::encode_filename_in_path( wp_basename( $image_meta['file'] ) );
 
-		if ( false === strpos( $this->as3cf->encode_filename_in_path( $as3cf_item->path() ), $image_basename ) ) {
+		if ( false === strpos( AS3CF_Utils::encode_filename_in_path( $as3cf_item->path() ), $image_basename ) ) {
 			// Not the correct attachment, abort
 			return $image_meta;
 		}
@@ -828,7 +831,7 @@ class AS3CF_Plugin_Compatibility {
 		// Ensure each size filename is encoded the same way as URL.
 		if ( ! empty( $image_meta['sizes'] ) ) {
 			$image_meta['sizes'] = array_map( function ( $size ) {
-				$size['file'] = $this->as3cf->encode_filename_in_path( $size['file'] );
+				$size['file'] = AS3CF_Utils::encode_filename_in_path( $size['file'] );
 
 				return $size;
 			}, $image_meta['sizes'] );

@@ -42,7 +42,7 @@ trait EncryptionTrait
      *
      * @internal
      */
-    protected function encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
+    public function encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
     {
         $materialsDescription = $provider->getMaterialsDescription();
         $cipherOptions = array_intersect_key($cipherOptions, self::$allowedOptions);

@@ -83,6 +83,8 @@ class StreamWrapper
     private $cache;
     /** @var string The opened protocol (e.g., "s3") */
     private $protocol = 's3';
+    /** @var bool Keeps track of whether stream has been flushed since opening */
+    private $isFlushed = false;
     /**
      * Register the 's3://' stream wrapper
      *
@@ -109,24 +111,28 @@ class StreamWrapper
     }
     public function stream_close()
     {
+        if ($this->body->getSize() === 0 && !$this->isFlushed) {
+            $this->stream_flush();
+        }
         $this->body = $this->cache = null;
     }
     public function stream_open($path, $mode, $options, &$opened_path)
     {
         $this->initProtocol($path);
+        $this->isFlushed = false;
         $this->params = $this->getBucketKey($path);
         $this->mode = rtrim($mode, 'bt');
         if ($errors = $this->validate($path, $this->mode)) {
             return $this->triggerError($errors);
         }
-        return $this->boolCall(function () use($path) {
+        return $this->boolCall(function () {
             switch ($this->mode) {
                 case 'r':
-                    return $this->openReadStream($path);
+                    return $this->openReadStream();
                 case 'a':
-                    return $this->openAppendStream($path);
+                    return $this->openAppendStream();
                 default:
-                    return $this->openWriteStream($path);
+                    return $this->openWriteStream();
             }
         });
     }
@@ -136,6 +142,7 @@ class StreamWrapper
     }
     public function stream_flush()
     {
+        $this->isFlushed = true;
         if ($this->mode == 'r') {
             return false;
         }
@@ -367,7 +374,7 @@ class StreamWrapper
      */
     public function dir_rewinddir()
     {
-        $this->boolCall(function () {
+        return $this->boolCall(function () {
             $this->objectIterator = null;
             $this->dir_opendir($this->openedPath, null);
             return true;
@@ -760,6 +767,6 @@ class StreamWrapper
     private function getSize()
     {
         $size = $this->body->getSize();
-        return $size !== null ? $size : $this->size;
+        return !empty($size) ? $size : $this->size;
     }
 }

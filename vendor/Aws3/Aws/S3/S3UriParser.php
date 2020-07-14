@@ -2,6 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
@@ -24,10 +27,18 @@ class S3UriParser
      * @param string|UriInterface $uri
      *
      * @return array
-     * @throws \InvalidArgumentException
+     * @throws \InvalidArgumentException|InvalidArnException
      */
     public function parse($uri)
     {
+        // Attempt to parse host component of uri as an ARN
+        $components = $this->parseS3UrlComponents($uri);
+        if (!empty($components)) {
+            if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser::isArn($components['host'])) {
+                $arn = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn($components['host']);
+                return ['bucket' => $components['host'], 'key' => $components['path'], 'path_style' => false, 'region' => $arn->getRegion()];
+            }
+        }
         $url = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($uri);
         if ($url->getScheme() == $this->streamWrapperScheme) {
             return $this->parseStreamWrapper($url);
@@ -43,6 +54,14 @@ class S3UriParser
         // Add the region if one was found and not the classic endpoint
         $result['region'] = $matches[2] == 'amazonaws' ? null : $matches[2];
         return $result;
+    }
+    private function parseS3UrlComponents($uri)
+    {
+        preg_match("/^([a-zA-Z0-9]*):\\/\\/([a-zA-Z0-9:-]*)\\/(.*)/", $uri, $components);
+        if (empty($components)) {
+            return [];
+        }
+        return ['scheme' => $components[1], 'host' => $components[2], 'path' => $components[3]];
     }
     private function parseStreamWrapper(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
     {

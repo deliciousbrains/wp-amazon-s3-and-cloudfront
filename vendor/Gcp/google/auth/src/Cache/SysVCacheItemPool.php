@@ -67,7 +67,7 @@ class SysVCacheItemPool implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cac
     public function __construct($options = [])
     {
         if (!extension_loaded('sysvshm')) {
-            throw \RuntimeException('sysvshm extension is required to use this ItemPool');
+            throw new \RuntimeException('sysvshm extension is required to use this ItemPool');
         }
         $this->options = $options + ['variableKey' => self::VAR_KEY, 'proj' => self::DEFAULT_PROJ, 'memsize' => self::DEFAULT_MEMSIZE, 'perm' => self::DEFAULT_PERM];
         $this->items = [];

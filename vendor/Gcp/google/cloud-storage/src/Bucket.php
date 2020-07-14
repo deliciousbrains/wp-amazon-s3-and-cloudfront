@@ -708,9 +708,14 @@ class Bucket
      *           current bucket's logs.
      *     @type string $storageClass The bucket's storage class. This defines
      *           how objects in the bucket are stored and determines the SLA and
-     *           the cost of storage. Acceptable values include
-     *           `"MULTI_REGIONAL"`, `"REGIONAL"`, `"NEARLINE"`, `"COLDLINE"`,
-     *           `"STANDARD"` and `"DURABLE_REDUCED_AVAILABILITY"`.
+     *           the cost of storage. Acceptable values include the following
+     *           strings: `"STANDARD"`, `"NEARLINE"`, `"COLDLINE"` and
+     *           `"ARCHIVE"`. Legacy values including `"MULTI_REGIONAL"`,
+     *           `"REGIONAL"` and `"DURABLE_REDUCED_AVAILABILITY"` are also
+     *           available, but should be avoided for new implementations. For
+     *           more information, refer to the
+     *           [Storage Classes](https://cloud.google.com/storage/docs/storage-classes)
+     *           documentation. **Defaults to** `"STANDARD"`.
      *     @type array $versioning The bucket's versioning configuration.
      *     @type array $website The bucket's website configuration.
      *     @type array $billing The bucket's billing configuration.
@@ -1007,11 +1012,19 @@ class Bucket
     /**
      * Manage the IAM policy for the current Bucket.
      *
-     * Please note that this method may not yet be available in your project.
+     * To request a policy with conditions, pass an array with
+     * '[requestedPolicyVersion => 3]' as argument to the policy() and
+     * reload() methods.
      *
      * Example:
      * ```
      * $iam = $bucket->iam();
+     *
+     * // Returns the stored policy, or fetches the policy if none exists.
+     * $policy = $iam->policy(['requestedPolicyVersion' => 3]);
+     *
+     * // Fetches a policy from the server.
+     * $policy = $iam->reload(['requestedPolicyVersion' => 3]);
      * ```
      *
      * @codingStandardsIgnoreStart
@@ -1019,6 +1032,7 @@ class Bucket
      * @see https://cloud.google.com/storage/docs/json_api/v1/buckets/getIamPolicy Get Bucket IAM Policy
      * @see https://cloud.google.com/storage/docs/json_api/v1/buckets/setIamPolicy Set Bucket IAM Policy
      * @see https://cloud.google.com/storage/docs/json_api/v1/buckets/testIamPermissions Test Bucket Permissions
+     * @see https://cloud.google.com/iam/docs/policies#versions policy versioning.
      * @codingStandardsIgnoreEnd
      *
      * @return Iam

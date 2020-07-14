@@ -2,8 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\GuzzleException;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
@@ -12,7 +12,10 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
  */
 interface ClientInterface
 {
-    const VERSION = '6.4.1';
+    /**
+     * @deprecated Will be removed in Guzzle 7.0.0
+     */
+    const VERSION = '6.5.1';
     /**
      * Send an HTTP request.
      *

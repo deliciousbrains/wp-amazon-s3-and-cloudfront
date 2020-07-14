@@ -75,7 +75,7 @@ abstract class AS3CF_Filter {
 			$url = $this->get_url( $attachment['attachment_id'] );
 
 			if ( $url ) {
-				$value[ $key ]['file'] = $this->get_url( $attachment['attachment_id'] );
+				$value[ $key ]['file'] = $url;
 			}
 		}
 
@@ -501,7 +501,7 @@ abstract class AS3CF_Filter {
 			return false;
 		}
 
-		$base_url = $this->as3cf->encode_filename_in_path( AS3CF_Utils::reduce_url( $this->get_base_url( $attachment_id ) ) );
+		$base_url = AS3CF_Utils::encode_filename_in_path( AS3CF_Utils::reduce_url( $this->get_base_url( $attachment_id ) ) );
 		$basename = wp_basename( $base_url );
 
 		// Add full size URL
@@ -509,10 +509,10 @@ abstract class AS3CF_Filter {
 
 		// Add additional image size URLs
 		foreach ( $meta['sizes'] as $size ) {
-			$base_urls[] = str_replace( $basename, $this->as3cf->encode_filename_in_path( $size['file'] ), $base_url );
+			$base_urls[] = str_replace( $basename, AS3CF_Utils::encode_filename_in_path( $size['file'] ), $base_url );
 		}
 
-		$url = $this->as3cf->encode_filename_in_path( AS3CF_Utils::reduce_url( $url ) );
+		$url = AS3CF_Utils::encode_filename_in_path( AS3CF_Utils::reduce_url( $url ) );
 
 		if ( in_array( $url, $base_urls ) ) {
 			// Match found, return true
@@ -590,10 +590,10 @@ abstract class AS3CF_Filter {
 			return null;
 		}
 
-		$basename = $this->as3cf->encode_filename_in_path( wp_basename( $this->as3cf->maybe_remove_query_string( $url ) ) );
+		$basename = AS3CF_Utils::encode_filename_in_path( wp_basename( $this->as3cf->maybe_remove_query_string( $url ) ) );
 
 		foreach ( $meta['sizes'] as $size => $file ) {
-			if ( $basename === $this->as3cf->encode_filename_in_path( $file['file'] ) ) {
+			if ( $basename === AS3CF_Utils::encode_filename_in_path( $file['file'] ) ) {
 				return $size;
 			}
 		}

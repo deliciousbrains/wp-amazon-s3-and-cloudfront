@@ -29,7 +29,7 @@ class DecodingEventStreamIterator implements \Iterator
     private $currentEvent;
     /** @var int Current in-order event key. */
     private $key;
-    /** @var resource|HashContext CRC32 hash context for event validation */
+    /** @var resource|\HashContext CRC32 hash context for event validation */
     private $hashContext;
     /** @var int $currentPosition */
     private $currentPosition;

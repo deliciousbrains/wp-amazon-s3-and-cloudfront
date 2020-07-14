@@ -2,8 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ConnectException;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\FulfilledPromise;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;

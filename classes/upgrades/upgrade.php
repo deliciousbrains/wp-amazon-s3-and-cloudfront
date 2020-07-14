@@ -168,6 +168,9 @@ abstract class Upgrade {
 		add_action( 'as3cf_pre_settings_render', array( $this, 'maybe_display_notices' ) );
 		add_action( 'admin_init', array( $this, 'maybe_handle_action' ) );
 
+		// Settings Tab
+		add_action( 'as3cf_pre_tab_render', array( $this, 'pre_tab_render' ) );
+
 		// Do default checks if the upgrade can be started
 		if ( $this->maybe_init() ) {
 			$this->init();
@@ -936,5 +939,27 @@ abstract class Upgrade {
 		}
 
 		return is_admin();
+	}
+
+	/**
+	 * Maybe add notices etc. at top of settings tab.
+	 *
+	 * @param string $tab
+	 *
+	 * @handles as3cf_pre_tab_render filter
+	 */
+	public function pre_tab_render( $tab ) {
+		if ( 'media' === $tab ) {
+			$title = ucwords( $this->upgrade_type ) . ' Update';
+
+			$lock_settings_args = array(
+				'message' => sprintf( __( '<strong>Settings Locked Temporarily</strong> &mdash; You can\'t change any of your settings until the "%s" has completed.', 'amazon-s3-and-cloudfront' ), $title ),
+				'id'      => 'as3cf-media-settings-locked-upgrade',
+				'inline'  => true,
+				'type'    => 'notice-warning',
+				'style'   => 'display: none',
+			);
+			$this->as3cf->render_view( 'notice', $lock_settings_args );
+		}
 	}
 }

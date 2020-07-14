@@ -8,6 +8,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 /**
@@ -16,6 +17,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface
 {
     use AwsClientTrait;
+    /** @var array */
+    private $aliases;
     /** @var array */
     private $config;
     /** @var string */
@@ -57,6 +60,16 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
      *   credentials or return null. See Aws\Credentials\CredentialProvider for
      *   a list of built-in credentials providers. If no credentials are
      *   provided, the SDK will attempt to load them from the environment.
+     * - csm:
+     *   (Aws\ClientSideMonitoring\ConfigurationInterface|array|callable) Specifies
+     *   the credentials used to sign requests. Provide an
+     *   Aws\ClientSideMonitoring\ConfigurationInterface object, a callable
+     *   configuration provider used to create client-side monitoring configuration,
+     *   `false` to disable csm, or an associative array with the following keys:
+     *   enabled: (bool) Set to true to enable client-side monitoring, defaults
+     *   to false; host: (string) the host location to send monitoring events to,
+     *   defaults to 127.0.0.1; port: (int) The port used for the host connection,
+     *   defaults to 31000; client_id: (string) An identifier for this project
      * - debug: (bool|array) Set to true to display debug information when
      *   sending requests. Alternatively, you can provide an associative array
      *   with the following keys: logfn: (callable) Function that is invoked
@@ -83,6 +96,14 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
      * - endpoint: (string) The full URI of the webservice. This is only
      *   required when connecting to a custom endpoint (e.g., a local version
      *   of S3).
+     * - endpoint_discovery: (Aws\EndpointDiscovery\ConfigurationInterface,
+     *   Aws\CacheInterface, array, callable) Settings for endpoint discovery.
+     *   Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface,
+     *   an instance Aws\CacheInterface, a callable that provides a promise for
+     *   a Configuration object, or an associative array with the following
+     *   keys: enabled: (bool) Set to true to enable endpoint discovery,
+     *   defaults to false; cache_limit: (int) The maximum number of keys in the
+     *   endpoints cache, defaults to 1000.
      * - endpoint_provider: (callable) An optional PHP callable that
      *   accepts a hash of options including a "service" and "region" key and
      *   returns NULL or a hash of endpoint data, of which the "endpoint" key
@@ -162,8 +183,10 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
         $this->defaultRequestOptions = $config['http'];
         $this->addSignatureMiddleware();
         $this->addInvocationId();
-        $this->addClientSideMonitoring($args);
         $this->addEndpointParameterMiddleware($args);
+        $this->addEndpointDiscoveryMiddleware($config, $args);
+        $this->loadAliases();
+        $this->addStreamRequestPayload();
         if (isset($args['with_resolved'])) {
             $args['with_resolved']($config);
         }
@@ -244,6 +267,13 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
             $list->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointParameterMiddleware::wrap($this->api), 'endpoint_parameter');
         }
     }
+    private function addEndpointDiscoveryMiddleware($config, $args)
+    {
+        $list = $this->getHandlerList();
+        if (!isset($args['endpoint'])) {
+            $list->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\EndpointDiscoveryMiddleware::wrap($this, $args, $config['endpoint_discovery']), 'EndpointDiscoveryMiddleware');
+        }
+    }
     private function addSignatureMiddleware()
     {
         $api = $this->getApi();
@@ -252,6 +282,9 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
         $name = $this->config['signing_name'];
         $region = $this->config['signing_region'];
         $resolver = static function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $c) use($api, $provider, $name, $region, $version) {
+            if (!empty($c['@context']['signing_region'])) {
+                $region = $c['@context']['signing_region'];
+            }
             $authType = $api->getOperation($c->getName())['authtype'];
             switch ($authType) {
                 case 'none':
@@ -270,12 +303,24 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
         // Add invocation id to each request
         $this->handlerList->prependSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::invocationId(), 'invocation-id');
     }
-    private function addClientSideMonitoring($args)
+    private function loadAliases($file = null)
     {
-        $options = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::defaultProvider($args);
-        $this->handlerList->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware::wrap($this->credentialProvider, $options, $this->region, $this->getApi()->getServiceId()), 'ApiCallMonitoringMiddleware');
-        $callAttemptMiddleware = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware::wrap($this->credentialProvider, $options, $this->region, $this->getApi()->getServiceId());
-        $this->handlerList->appendAttempt($callAttemptMiddleware, 'ApiCallAttemptMonitoringMiddleware');
+        if (!isset($this->aliases)) {
+            if (is_null($file)) {
+                $file = __DIR__ . '/data/aliases.json';
+            }
+            $aliases = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json($file);
+            $serviceId = $this->api->getServiceId();
+            $version = $this->getApi()->getApiVersion();
+            if (!empty($aliases['operations'][$serviceId][$version])) {
+                $this->aliases = array_flip($aliases['operations'][$serviceId][$version]);
+            }
+        }
+    }
+    private function addStreamRequestPayload()
+    {
+        $streamRequestPayloadMiddleware = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\StreamRequestPayloadMiddleware::wrap($this->api);
+        $this->handlerList->prependSign($streamRequestPayloadMiddleware, 'StreamRequestPayloadMiddleware');
     }
     /**
      * Returns a service model and doc model with any necessary changes
@@ -291,6 +336,18 @@ class AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientI
      */
     public static function applyDocFilters(array $api, array $docs)
     {
+        $aliases = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\load_compiled_json(__DIR__ . '/data/aliases.json');
+        $serviceId = $api['metadata']['serviceId'];
+        $version = $api['metadata']['apiVersion'];
+        // Replace names for any operations with SDK aliases
+        if (!empty($aliases['operations'][$serviceId][$version])) {
+            foreach ($aliases['operations'][$serviceId][$version] as $op => $alias) {
+                $api['operations'][$alias] = $api['operations'][$op];
+                $docs['operations'][$alias] = $docs['operations'][$op];
+                unset($api['operations'][$op], $docs['operations'][$op]);
+            }
+        }
+        ksort($api['operations']);
         return [new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service($api, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ApiProvider::defaultProvider()), new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DocModel($docs)];
     }
     /**

@@ -45,7 +45,7 @@ class StorageClient
 {
     use ArrayTrait;
     use ClientTrait;
-    const VERSION = '1.16.0';
+    const VERSION = '1.18.0';
     const FULL_CONTROL_SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
     const READ_ONLY_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only';
     const READ_WRITE_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_write';
@@ -231,10 +231,14 @@ class StorageClient
      *           current bucket's logs.
      *     @type string $storageClass The bucket's storage class. This defines
      *           how objects in the bucket are stored and determines the SLA and
-     *           the cost of storage. Acceptable values include
-     *           `"MULTI_REGIONAL"`, `"REGIONAL"`, `"NEARLINE"`, `"COLDLINE"`,
-     *           `"STANDARD"` and `"DURABLE_REDUCED_AVAILABILITY"`.
-     *           **Defaults to** `STANDARD`.
+     *           the cost of storage. Acceptable values include the following
+     *           strings: `"STANDARD"`, `"NEARLINE"`, `"COLDLINE"` and
+     *           `"ARCHIVE"`. Legacy values including `"MULTI_REGIONAL"`,
+     *           `"REGIONAL"` and `"DURABLE_REDUCED_AVAILABILITY"` are also
+     *           available, but should be avoided for new implementations. For
+     *           more information, refer to the
+     *           [Storage Classes](https://cloud.google.com/storage/docs/storage-classes)
+     *           documentation. **Defaults to** `"STANDARD"`.
      *     @type array $versioning The bucket's versioning configuration.
      *     @type array $website The bucket's website configuration.
      *     @type array $billing The bucket's billing configuration.

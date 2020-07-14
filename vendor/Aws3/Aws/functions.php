@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise;
@@ -134,9 +135,15 @@ function or_chain()
  */
 function load_compiled_json($path)
 {
+    static $compiledList = [];
     $compiledFilepath = "{$path}.php";
-    if (is_readable($compiledFilepath)) {
-        return include $compiledFilepath;
+    if (!isset($compiledList[$compiledFilepath])) {
+        if (is_readable($compiledFilepath)) {
+            $compiledList[$compiledFilepath] = (include $compiledFilepath);
+        }
+    }
+    if (isset($compiledList[$compiledFilepath])) {
+        return $compiledList[$compiledFilepath];
     }
     if (!file_exists($path)) {
         throw new \InvalidArgumentException(sprintf("File not found: %s", $path));
@@ -242,12 +249,14 @@ function describe_type($input)
  */
 function default_http_handler()
 {
-    $version = (string) \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION;
-    if ($version[0] === '5') {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV5\GuzzleHandler();
-    }
-    if ($version[0] === '6') {
+    $version = guzzle_major_version();
+    // If Guzzle 6 or 7 installed
+    if ($version === 6 || $version === 7) {
         return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV6\GuzzleHandler();
+    }
+    // If Guzzle 5 installed
+    if ($version === 5) {
+        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Handler\GuzzleV5\GuzzleHandler();
     }
     throw new \RuntimeException('Unknown Guzzle version: ' . $version);
 }
@@ -258,14 +267,42 @@ function default_http_handler()
  */
 function default_user_agent()
 {
-    $version = (string) \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION;
-    if ($version[0] === '5') {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client::getDefaultUserAgent();
-    }
-    if ($version[0] === '6') {
+    $version = guzzle_major_version();
+    // If Guzzle 6 or 7 installed
+    if ($version === 6 || $version === 7) {
         return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\default_user_agent();
     }
+    // If Guzzle 5 installed
+    if ($version === 5) {
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client::getDefaultUserAgent();
+    }
     throw new \RuntimeException('Unknown Guzzle version: ' . $version);
+}
+/**
+ * Get the major version of guzzle that is installed.
+ *
+ * @internal This function is internal and should not be used outside aws/aws-sdk-php.
+ * @return int
+ * @throws \RuntimeException
+ */
+function guzzle_major_version()
+{
+    static $cache = null;
+    if (null !== $cache) {
+        return $cache;
+    }
+    if (defined('DeliciousBrains\\WP_Offload_Media\\Aws3\\GuzzleHttp\\ClientInterface::VERSION')) {
+        $version = (string) \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface::VERSION;
+        if ($version[0] === '6') {
+            return $cache = 6;
+        }
+        if ($version[0] === '5') {
+            return $cache = 5;
+        }
+    } elseif (method_exists(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client::class, 'sendRequest')) {
+        return $cache = 7;
+    }
+    throw new \RuntimeException('Unable to determine what Guzzle version is installed.');
 }
 /**
  * Serialize a request for a command but do not send it.
@@ -341,4 +378,51 @@ function manifest($service = null)
 function is_valid_hostname($hostname)
 {
     return preg_match("/^([a-z\\d](-*[a-z\\d])*)(\\.([a-z\\d](-*[a-z\\d])*))*\\.?\$/i", $hostname) && preg_match("/^.{1,253}\$/", $hostname) && preg_match("/^[^\\.]{1,63}(\\.[^\\.]{0,63})*\$/", $hostname);
+}
+/**
+ * Ignores '#' full line comments, which parse_ini_file no longer does
+ * in PHP 7+.
+ *
+ * @param $filename
+ * @param bool $process_sections
+ * @param int $scanner_mode
+ * @return array|bool
+ */
+function parse_ini_file($filename, $process_sections = false, $scanner_mode = INI_SCANNER_NORMAL)
+{
+    return parse_ini_string(preg_replace('/^#.*\\n/m', "", file_get_contents($filename)), $process_sections, $scanner_mode);
+}
+/**
+ * Outputs boolean value of input for a select range of possible values,
+ * null otherwise
+ *
+ * @param $input
+ * @return bool|null
+ */
+function boolean_value($input)
+{
+    if (is_bool($input)) {
+        return $input;
+    }
+    if ($input === 0) {
+        return false;
+    }
+    if ($input === 1) {
+        return true;
+    }
+    if (is_string($input)) {
+        switch (strtolower($input)) {
+            case "true":
+            case "on":
+            case "1":
+                return true;
+                break;
+            case "false":
+            case "off":
+            case "0":
+                return false;
+                break;
+        }
+    }
+    return null;
 }

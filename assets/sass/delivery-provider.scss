@@ -1,0 +1,28 @@
+.as3cf-delivery-provider-select {
+	.as3cf-delivery-provider-select-options {
+		margin-bottom: 30px;
+
+		.as3cf-delivery-provider-sub-option {
+			margin-left: 25px;
+
+			.as3cf-setting {
+				display: none;
+				margin-left: 25px;
+			}
+
+			&.selected {
+				.as3cf-setting {
+					display: block;
+				}
+			}
+		}
+
+		.as3cf-delivery-provider-sub-option-container > .as3cf-delivery-provider-sub-option {
+			display: none;
+		}
+
+		.as3cf-delivery-provider-sub-option-container.selected > .as3cf-delivery-provider-sub-option {
+			display: block;
+		}
+	}
+}

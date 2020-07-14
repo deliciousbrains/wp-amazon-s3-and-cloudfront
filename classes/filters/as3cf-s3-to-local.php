@@ -113,7 +113,27 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 * @return bool|int
 	 */
 	public function get_attachment_id_from_url( $url ) {
+		// Result for sized URL already cached in request, return it.
+		if ( isset( $this->query_cache[ $url ] ) ) {
+			return $this->query_cache[ $url ];
+		}
+
+		$post_id = Media_Library_Item::get_source_id_by_remote_url( $url );
+
+		if ( $post_id ) {
+			$this->query_cache[ $url ] = $post_id;
+
+			return $post_id;
+		}
+
 		$full_url = AS3CF_Utils::remove_size_from_filename( $url );
+
+		// If we've already tried to find this URL above because it didn't have a size suffix, cache and return.
+		if ( $url === $full_url ) {
+			$this->query_cache[ $url ] = $post_id;
+
+			return $post_id;
+		}
 
 		// Result for URL already cached in request whether found or not, return it.
 		if ( isset( $this->query_cache[ $full_url ] ) ) {
@@ -160,7 +180,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 * @return string
 	 */
 	protected function normalize_find_value( $url ) {
-		return $this->as3cf->encode_filename_in_path( $url );
+		return AS3CF_Utils::encode_filename_in_path( $url );
 	}
 
 	/**

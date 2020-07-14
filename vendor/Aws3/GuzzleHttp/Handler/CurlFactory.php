@@ -2,8 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LazyOpenStream;
@@ -14,6 +14,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  */
 class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactoryInterface
 {
+    const CURL_VERSION_STR = 'curl_version';
+    const LOW_CURL_VERSION_NUMBER = '7.21.2';
     /** @var array */
     private $handles = [];
     /** @var int Total number of idle handles to keep in cache */
@@ -97,13 +99,15 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\H
     private static function invokeStats(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy)
     {
         $curlStats = curl_getinfo($easy->handle);
+        $curlStats['appconnect_time'] = curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME);
         $stats = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
         call_user_func($easy->options['on_stats'], $stats);
     }
     private static function finishError(callable $handler, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlFactoryInterface $factory)
     {
         // Get error information and release the handle to the factory.
-        $ctx = ['errno' => $easy->errno, 'error' => curl_error($easy->handle)] + curl_getinfo($easy->handle);
+        $ctx = ['errno' => $easy->errno, 'error' => curl_error($easy->handle), 'appconnect_time' => curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME)] + curl_getinfo($easy->handle);
+        $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
         $factory->release($easy);
         // Retry when nothing is present or when curl failed to rewind.
         if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
@@ -119,7 +123,11 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\H
         if ($easy->onHeadersException) {
             return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for(new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
         }
-        $message = sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see http://curl.haxx.se/libcurl/c/libcurl-errors.html');
+        if (version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
+            $message = sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see https://curl.haxx.se/libcurl/c/libcurl-errors.html');
+        } else {
+            $message = sprintf('cURL error %s: %s (%s) for %s', $ctx['errno'], $ctx['error'], 'see https://curl.haxx.se/libcurl/c/libcurl-errors.html', $easy->request->getUri());
+        }
         // Create a connection exception if it was a specific error code.
         $error = isset($connectionErrors[$easy->errno]) ? new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ConnectException($message, $easy->request, null, $ctx) : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException($message, $easy->request, $easy->response, null, $ctx);
         return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($error);
@@ -326,11 +334,14 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\H
             $conf[CURLOPT_SSLCERT] = $cert;
         }
         if (isset($options['ssl_key'])) {
-            $sslKey = $options['ssl_key'];
-            if (is_array($sslKey)) {
-                $conf[CURLOPT_SSLKEYPASSWD] = $sslKey[1];
-                $sslKey = $sslKey[0];
+            if (is_array($options['ssl_key'])) {
+                if (count($options['ssl_key']) === 2) {
+                    list($sslKey, $conf[CURLOPT_SSLKEYPASSWD]) = $options['ssl_key'];
+                } else {
+                    list($sslKey) = $options['ssl_key'];
+                }
             }
+            $sslKey = isset($sslKey) ? $sslKey : $options['ssl_key'];
             if (!file_exists($sslKey)) {
                 throw new \InvalidArgumentException("SSL private key not found: {$sslKey}");
             }

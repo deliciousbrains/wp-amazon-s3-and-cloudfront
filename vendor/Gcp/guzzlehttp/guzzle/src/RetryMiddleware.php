@@ -40,11 +40,11 @@ class RetryMiddleware
      *
      * @param int $retries
      *
-     * @return int
+     * @return int milliseconds.
      */
     public static function exponentialDelay($retries)
     {
-        return (int) pow(2, $retries - 1);
+        return (int) pow(2, $retries - 1) * 1000;
     }
     /**
      * @param RequestInterface $request
@@ -60,6 +60,11 @@ class RetryMiddleware
         $fn = $this->nextHandler;
         return $fn($request, $options)->then($this->onFulfilled($request, $options), $this->onRejected($request, $options));
     }
+    /**
+     * Execute fulfilled closure
+     *
+     * @return mixed
+     */
     private function onFulfilled(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $req, array $options)
     {
         return function ($value) use($req, $options) {
@@ -69,6 +74,11 @@ class RetryMiddleware
             return $this->doRetry($req, $options, $value);
         };
     }
+    /**
+     * Execute rejected closure
+     *
+     * @return callable
+     */
     private function onRejected(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $req, array $options)
     {
         return function ($reason) use($req, $options) {
@@ -78,6 +88,9 @@ class RetryMiddleware
             return $this->doRetry($req, $options);
         };
     }
+    /**
+     * @return self
+     */
     private function doRetry(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);

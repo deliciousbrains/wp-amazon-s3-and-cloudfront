@@ -2,9 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
@@ -13,7 +13,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
 {
     /** @var RequestInterface */
     private $request;
-    /** @var ResponseInterface */
+    /** @var ResponseInterface|null */
     private $response;
     /** @var array */
     private $handlerContext;
@@ -86,34 +86,16 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
      */
     public static function getResponseBodySummary(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response)
     {
-        $body = $response->getBody();
-        if (!$body->isSeekable() || !$body->isReadable()) {
-            return null;
-        }
-        $size = $body->getSize();
-        if ($size === 0) {
-            return null;
-        }
-        $summary = $body->read(120);
-        $body->rewind();
-        if ($size > 120) {
-            $summary .= ' (truncated...)';
-        }
-        // Matches any printable character, including unicode characters:
-        // letters, marks, numbers, punctuation, spacing, and separators.
-        if (preg_match('/[^\\pL\\pM\\pN\\pP\\pS\\pZ\\n\\r\\t]/', $summary)) {
-            return null;
-        }
-        return $summary;
+        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\get_message_body_summary($response);
     }
     /**
-     * Obfuscates URI if there is an username and a password present
+     * Obfuscates URI if there is a username and a password present
      *
      * @param UriInterface $uri
      *
      * @return UriInterface
      */
-    private static function obfuscateUri($uri)
+    private static function obfuscateUri(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface $uri)
     {
         $userInfo = $uri->getUserInfo();
         if (false !== ($pos = strpos($userInfo, ':'))) {

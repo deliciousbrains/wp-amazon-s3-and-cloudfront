@@ -15,7 +15,7 @@
 			<li><?php echo wptexturize( __( 'Assets addon - Serve your CSS & JS from CloudFront or another CDN', 'amazon-s3-and-cloudfront' ) ); // xss ok ?></li>
 			<li><?php echo wptexturize( __( 'WooCommerce integration', 'amazon-s3-and-cloudfront' ) ); // xss ok ?></li>
 			<li><?php echo wptexturize( __( 'Easy Digital Downloads integration', 'amazon-s3-and-cloudfront' ) ); // xss ok ?></li>
-			<li><?php echo wptexturize( __( 'PriorityExpert™ email support', 'amazon-s3-and-cloudfront' ) ); // xss ok ?></li>
+			<li><?php echo wptexturize( __( 'Priority email support', 'amazon-s3-and-cloudfront' ) ); // xss ok ?></li>
 		</ul>
 
 		<p>

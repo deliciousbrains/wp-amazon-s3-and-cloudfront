@@ -4,7 +4,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\JmesPath;
 
 class Utils
 {
-    static $typeMap = ['boolean' => 'boolean', 'string' => 'string', 'NULL' => 'null', 'double' => 'number', 'float' => 'number', 'integer' => 'number'];
+    public static $typeMap = ['boolean' => 'boolean', 'string' => 'string', 'NULL' => 'null', 'double' => 'number', 'float' => 'number', 'integer' => 'number'];
     /**
      * Returns true if the value is truthy
      *
@@ -179,7 +179,7 @@ class Utils
     private static function sliceIndices($subject, $start, $stop, $step)
     {
         $type = gettype($subject);
-        $len = $type == 'string' ? strlen($subject) : count($subject);
+        $len = $type == 'string' ? mb_strlen($subject, 'UTF-8') : count($subject);
         list($start, $stop, $step) = self::adjustSlice($len, $start, $stop, $step);
         $result = [];
         if ($step > 0) {
@@ -191,6 +191,6 @@ class Utils
                 $result[] = $subject[$i];
             }
         }
-        return $type == 'string' ? implode($result, '') : $result;
+        return $type == 'string' ? implode('', $result) : $result;
     }
 }

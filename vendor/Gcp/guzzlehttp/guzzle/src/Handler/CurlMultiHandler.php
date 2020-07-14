@@ -2,9 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise as P;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promise;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 /**
  * Returns an asynchronous response using curl_multi_* functions.
@@ -23,12 +23,15 @@ class CurlMultiHandler
     private $active;
     private $handles = [];
     private $delays = [];
+    private $options = [];
     /**
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
+     * - options: An associative array of CURLMOPT_* options and
+     *   corresponding values for curl_multi_setopt()
      *
      * @param array $options
      */
@@ -42,11 +45,19 @@ class CurlMultiHandler
         } else {
             $this->selectTimeout = 1;
         }
+        $this->options = isset($options['options']) ? $options['options'] : [];
     }
     public function __get($name)
     {
         if ($name === '_mh') {
-            return $this->_mh = curl_multi_init();
+            $this->_mh = curl_multi_init();
+            foreach ($this->options as $option => $value) {
+                // A warning is raised in case of a wrong option.
+                curl_multi_setopt($this->_mh, $option, $value);
+            }
+            // Further calls to _mh will return the value directly, without entering the
+            // __get() method at all.
+            return $this->_mh;
         }
         throw new \BadMethodCallException();
     }

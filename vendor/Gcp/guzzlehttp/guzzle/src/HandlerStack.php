@@ -2,14 +2,16 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of
  * an HTTP handler function.
  */
 class HandlerStack
 {
-    /** @var callable */
+    /** @var callable|null */
     private $handler;
     /** @var array */
     private $stack = [];
@@ -53,6 +55,8 @@ class HandlerStack
      *
      * @param RequestInterface $request
      * @param array            $options
+     *
+     * @return ResponseInterface|PromiseInterface
      */
     public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options)
     {

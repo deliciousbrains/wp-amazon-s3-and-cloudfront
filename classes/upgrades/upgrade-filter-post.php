@@ -112,12 +112,12 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	/**
 	 * Upgrade attachment.
 	 *
-	 * @throws Batch_Limits_Exceeded_Exception
-	 * @throws Too_Many_Errors_Exception
-	 *
 	 * @param mixed $attachment
 	 *
 	 * @return bool
+	 * @throws Batch_Limits_Exceeded_Exception
+	 * @throws Too_Many_Errors_Exception
+	 *
 	 */
 	protected function upgrade_item( $attachment ) {
 		$limit            = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_sql_limit', 100000 );
@@ -275,7 +275,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	protected function maybe_add_encoded_url_pairs( $url_pairs ) {
 		foreach ( $url_pairs as $url_pair ) {
 			$file_name         = wp_basename( $url_pair['old_url'] );
-			$encoded_file_name = $this->as3cf->encode_filename_in_path( $file_name );
+			$encoded_file_name = AS3CF_Utils::encode_filename_in_path( $file_name );
 
 			if ( $file_name !== $encoded_file_name ) {
 				$url_pair['old_url'] = str_replace( $file_name, $encoded_file_name, $url_pair['old_url'] );

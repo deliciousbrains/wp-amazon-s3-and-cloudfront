@@ -27,6 +27,8 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		// Widgets
 		add_filter( 'widget_form_callback', array( $this, 'filter_widget_display' ), 10, 2 );
 		add_filter( 'widget_display_callback', array( $this, 'filter_widget_display' ), 10, 2 );
+		// Edit Media page
+		add_filter( 'set_url_scheme', array( $this, 'set_url_scheme' ), 10, 3 );
 	}
 
 	/**
@@ -200,35 +202,19 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 * @return bool|int
 	 */
 	protected function get_attachment_id_from_url( $url ) {
-		global $wpdb;
+		$results = $this->get_attachment_ids_from_urls( array( $url ) );
 
-		$full_url = AS3CF_Utils::remove_scheme( AS3CF_Utils::remove_size_from_filename( $url ) );
-
-		if ( isset( $this->query_cache[ $full_url ] ) ) {
-			// ID already cached, return
-			return $this->query_cache[ $full_url ];
-		}
-
-		$path = AS3CF_Utils::decode_filename_in_path( ltrim( str_replace( $this->get_bare_upload_base_urls(), '', $full_url ), '/' ) );
-
-		$sql = $wpdb->prepare( "
-			SELECT post_id FROM {$wpdb->postmeta}
-			WHERE meta_key = %s
-			AND meta_value = %s
-		", '_wp_attached_file', $path );
-
-		$result = $wpdb->get_var( $sql );
-
-		if ( is_null( $result ) ) {
-			// Attachment ID not found, return false
-			$this->query_cache[ $full_url ] = false;
-
+		if ( empty( $results ) ) {
 			return false;
 		}
 
-		$this->query_cache[ $full_url ] = (int) $result;
+		foreach ( $results as $result ) {
+			if ( $result ) {
+				return $result;
+			}
+		}
 
-		return (int) $result;
+		return false;
 	}
 
 	/**
@@ -249,11 +235,22 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 			$urls = array( $urls );
 		}
 
+		$query_set = array();
 		$paths     = array();
 		$full_urls = array();
 
+		// Quickly parse given URLs to add versions without size as we should lookup with size info first as that could be the "full" size.
 		foreach ( $urls as $url ) {
-			$full_url = AS3CF_Utils::remove_scheme( AS3CF_Utils::remove_size_from_filename( $url ) );
+			$query_set[]  = $url;
+			$size_removed = AS3CF_Utils::remove_size_from_filename( $url );
+
+			if ( $url !== $size_removed ) {
+				$query_set[] = $size_removed;
+			}
+		}
+
+		foreach ( $query_set as $url ) {
+			$full_url = AS3CF_Utils::remove_scheme( $url );
 
 			if ( isset( $this->query_cache[ $full_url ] ) ) {
 				// ID already cached, use it.
@@ -296,9 +293,9 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 			}
 
 			// No more attachment IDs found, set remaining results as false.
-			if ( count( $urls ) !== count( $results ) ) {
-				foreach ( $full_urls as $full_url => $sizes ) {
-					foreach ( $sizes as $url ) {
+			if ( count( $query_set ) !== count( $results ) ) {
+				foreach ( $full_urls as $full_url => $schema_urls ) {
+					foreach ( $schema_urls as $url ) {
 						if ( ! array_key_exists( $url, $results ) ) {
 							$this->query_cache[ $full_url ] = false;
 							$results[ $url ]                = false;
@@ -330,7 +327,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 * @return string
 	 */
 	protected function normalize_replace_value( $url ) {
-		return $this->as3cf->encode_filename_in_path( $url );
+		return AS3CF_Utils::encode_filename_in_path( $url );
 	}
 
 	/**
@@ -373,5 +370,43 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Might need to re-fix remote URL's schema if WordPress core has substituted in HTTP but HTTPS is required.
+	 *
+	 * @param string $url
+	 * @param string $scheme
+	 * @param string $orig_scheme
+	 *
+	 * @return string
+	 */
+	public function set_url_scheme( $url, $scheme, $orig_scheme ) {
+		if (
+			$this->as3cf->get_setting( 'force-https' ) &&
+			$this->should_filter_content() &&
+			! $this->url_needs_replacing( $url ) &&
+			'http' === $scheme && empty( $orig_scheme )
+		) {
+			// Check that it's one of ours and not external.
+			$parts = AS3CF_Utils::parse_url( $url );
+
+			if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) || 'http' !== $parts['scheme'] ) {
+				return $url;
+			}
+
+			$ours = false;
+			if ( $this->as3cf->get_setting( 'enable-delivery-domain' ) && $this->as3cf->get_setting( 'delivery-domain', '' ) === $parts['host'] ) {
+				$ours = true;
+			} elseif ( false !== strpos( $parts['host'], $this->as3cf->get_storage_provider()->get_domain() ) ) {
+				$ours = true;
+			}
+
+			if ( $ours ) {
+				return substr_replace( $url, 'https', 0, 4 );
+			}
+		}
+
+		return $url;
 	}
 }

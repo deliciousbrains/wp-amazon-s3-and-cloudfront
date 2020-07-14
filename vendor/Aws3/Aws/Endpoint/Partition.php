@@ -4,6 +4,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint;
 
 use ArrayAccess;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationProvider as S3ConfigurationProvider;
 use InvalidArgumentException as Iae;
 /**
  * Default implementation of an AWS partition.
@@ -11,6 +13,7 @@ use InvalidArgumentException as Iae;
 final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionInterface
 {
     use HasDataTrait;
+    private $stsLegacyGlobalRegions = ['ap-northeast-1', 'ap-south-1', 'ap-southeast-1', 'ap-southeast-2', 'aws-global', 'ca-central-1', 'eu-central-1', 'eu-north-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2'];
     /**
      * The partition constructor accepts the following options:
      *
@@ -48,6 +51,14 @@ final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media
     {
         return $this->data['partition'];
     }
+    /**
+     * @internal
+     * @return mixed
+     */
+    public function getDnsSuffix()
+    {
+        return $this->data['dnsSuffix'];
+    }
     public function isRegionMatch($region, $service)
     {
         if (isset($this->data['regions'][$region]) || isset($this->data['services'][$service]['endpoints'][$region])) {
@@ -74,12 +85,13 @@ final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media
         $service = isset($args['service']) ? $args['service'] : '';
         $region = isset($args['region']) ? $args['region'] : '';
         $scheme = isset($args['scheme']) ? $args['scheme'] : 'https';
-        $data = $this->getEndpointData($service, $region);
+        $options = isset($args['options']) ? $args['options'] : [];
+        $data = $this->getEndpointData($service, $region, $options);
         return ['endpoint' => "{$scheme}://" . $this->formatEndpoint(isset($data['hostname']) ? $data['hostname'] : '', $service, $region), 'signatureVersion' => $this->getSignatureVersion($data), 'signingRegion' => isset($data['credentialScope']['region']) ? $data['credentialScope']['region'] : $region, 'signingName' => isset($data['credentialScope']['service']) ? $data['credentialScope']['service'] : $service];
     }
-    private function getEndpointData($service, $region)
+    private function getEndpointData($service, $region, $options)
     {
-        $resolved = $this->resolveRegion($service, $region);
+        $resolved = $this->resolveRegion($service, $region, $options);
         $data = isset($this->data['services'][$service]['endpoints'][$resolved]) ? $this->data['services'][$service]['endpoints'][$resolved] : [];
         $data += isset($this->data['services'][$service]['defaults']) ? $this->data['services'][$service]['defaults'] : [];
         $data += isset($this->data['defaults']) ? $this->data['defaults'] : [];
@@ -91,9 +103,9 @@ final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media
         $possibilities = array_intersect($supportedBySdk, isset($data['signatureVersions']) ? $data['signatureVersions'] : ['v4']);
         return array_shift($possibilities);
     }
-    private function resolveRegion($service, $region)
+    private function resolveRegion($service, $region, $options)
     {
-        if ($this->isServicePartitionGlobal($service)) {
+        if ($this->isServicePartitionGlobal($service) || $this->isStsLegacyEndpointUsed($service, $region, $options) || $this->isS3LegacyEndpointUsed($service, $region, $options)) {
             return $this->getPartitionEndpoint($service);
         }
         return $region;
@@ -101,6 +113,32 @@ final class Partition implements \ArrayAccess, \DeliciousBrains\WP_Offload_Media
     private function isServicePartitionGlobal($service)
     {
         return isset($this->data['services'][$service]['isRegionalized']) && false === $this->data['services'][$service]['isRegionalized'] && isset($this->data['services'][$service]['partitionEndpoint']);
+    }
+    /**
+     * STS legacy endpoints used for valid regions unless option is explicitly
+     * set to 'regional'
+     *
+     * @param string $service
+     * @param string $region
+     * @param array $options
+     * @return bool
+     */
+    private function isStsLegacyEndpointUsed($service, $region, $options)
+    {
+        return $service === 'sts' && in_array($region, $this->stsLegacyGlobalRegions) && (empty($options['sts_regional_endpoints']) || \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider::unwrap($options['sts_regional_endpoints'])->getEndpointsType() !== 'regional');
+    }
+    /**
+     * S3 legacy us-east-1 endpoint used for valid regions unless option is explicitly
+     * set to 'regional'
+     *
+     * @param string $service
+     * @param string $region
+     * @param array $options
+     * @return bool
+     */
+    private function isS3LegacyEndpointUsed($service, $region, $options)
+    {
+        return $service === 's3' && $region === 'us-east-1' && (empty($options['s3_us_east_1_regional_endpoint']) || \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationProvider::unwrap($options['s3_us_east_1_regional_endpoint'])->getEndpointsType() !== 'regional');
     }
     private function getPartitionEndpoint($service)
     {

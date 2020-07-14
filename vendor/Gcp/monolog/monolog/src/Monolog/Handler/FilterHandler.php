@@ -113,7 +113,9 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
                 $filtered[] = $record;
             }
         }
-        $this->getHandler($filtered[count($filtered) - 1])->handleBatch($filtered);
+        if (count($filtered) > 0) {
+            $this->getHandler($filtered[count($filtered) - 1])->handleBatch($filtered);
+        }
     }
     /**
      * Return the nested handler

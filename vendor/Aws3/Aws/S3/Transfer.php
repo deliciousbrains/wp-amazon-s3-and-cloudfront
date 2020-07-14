@@ -31,7 +31,8 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
      * the path to a directory on disk to upload, an s3 scheme URI that contains
      * the bucket and key (e.g., "s3://bucket/key"), or an \Iterator object
      * that yields strings containing filenames that are the path to a file on
-     * disk or an s3 scheme URI. The "/key" portion of an s3 URI is optional.
+     * disk or an s3 scheme URI. The bucket portion of the s3 URI may be an S3
+     * access point ARN. The "/key" portion of an s3 URI is optional.
      *
      * When providing an iterator for the $source argument, you must also
      * provide a 'base_dir' key value pair in the $options argument.
@@ -107,7 +108,9 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
             if ($options['debug'] === true) {
                 $options['debug'] = fopen('php://output', 'w');
             }
-            $this->addDebugToBefore($options['debug']);
+            if (is_resource($options['debug'])) {
+                $this->addDebugToBefore($options['debug']);
+            }
         }
     }
     /**
