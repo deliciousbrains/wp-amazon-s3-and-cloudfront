@@ -273,6 +273,17 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	}
 
 	/**
+	 * Backwards compat alias function for `get_storage_provider()`.
+	 *
+	 * @return Provider
+	 *
+	 * @deprecated Use get_storage_provider
+	 */
+	public function get_provider() {
+		return $this->get_storage_provider();
+	}
+
+	/**
 	 * @param Storage_Provider|string|null $storage_provider
 	 *
 	 * @throws Exception

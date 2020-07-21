@@ -172,8 +172,6 @@ class AWS_Provider extends Storage_Provider {
 	public function __construct( \AS3CF_Plugin_Base $as3cf ) {
 		parent::__construct( $as3cf );
 
-		$this->disable_csm();
-
 		// Autoloader.
 		require_once $as3cf->get_plugin_sdks_dir_path() . '/Aws3/aws-autoloader.php';
 	}
@@ -214,17 +212,6 @@ class AWS_Provider extends Storage_Provider {
 	}
 
 	/**
-	 * Disable AWS CSM which tries to check ~/.aws/config causing issues if open_basedir in effect.
-	 *
-	 * @see https://github.com/aws/aws-sdk-php/issues/1659
-	 */
-	private function disable_csm() {
-		if ( apply_filters( 'as3cf_disable_aws_csm', true ) ) {
-			putenv( 'AWS_CSM_ENABLED=false' );
-		}
-	}
-
-	/**
 	 * Returns default args array for the client.
 	 *
 	 * @return array
@@ -234,6 +221,8 @@ class AWS_Provider extends Storage_Provider {
 			'signature_version' => static::SIGNATURE_VERSION,
 			'version'           => static::API_VERSION,
 			'region'            => $this->default_region,
+			'csm'               => apply_filters( 'as3cf_disable_aws_csm', true ) ? false : true,
+			'use_arn_region'    => apply_filters( 'as3cf_disable_aws_use_arn_region', true ) ? false : true,
 		);
 	}
 

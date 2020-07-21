@@ -79,21 +79,8 @@ class AWS_CloudFront extends Delivery_Provider {
 	public function __construct( \AS3CF_Plugin_Base $as3cf ) {
 		parent::__construct( $as3cf );
 
-		$this->disable_csm();
-
 		// Autoloader.
 		require_once $as3cf->get_plugin_sdks_dir_path() . '/Aws3/aws-autoloader.php';
-	}
-
-	/**
-	 * Disable AWS CSM which tries to check ~/.aws/config causing issues if open_basedir in effect.
-	 *
-	 * @see https://github.com/aws/aws-sdk-php/issues/1659
-	 */
-	private function disable_csm() {
-		if ( apply_filters( 'as3cf_disable_aws_csm', true ) ) {
-			putenv( 'AWS_CSM_ENABLED=false' );
-		}
 	}
 
 	/**
@@ -103,7 +90,7 @@ class AWS_CloudFront extends Delivery_Provider {
 	 */
 	public function features_description() {
 		return sprintf(
-			__(  'Fast, Private Media Supported with <a href="%s" target="_blank">upgrade</a>', 'amazon-s3-and-cloudfront' ),
+			__( 'Fast, Private Media Supported with <a href="%s" target="_blank">upgrade</a>', 'amazon-s3-and-cloudfront' ),
 			$this->as3cf->dbrains_url( '/wp-offload-media/upgrade/', array(
 				'utm_campaign' => 'WP+Offload+S3',
 			) )

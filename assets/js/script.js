@@ -80,7 +80,7 @@
 	function validateSignedUrlsKeyFilePath( $input ) {
 		var $error = $input.next( '.as3cf-validation-error' );
 		var $submit = $( '#' + $activeTab.attr( 'id' ) + ' form button[type="submit"]' );
-		var pattern = /[^a-zA-Z0-9\.\-\\:\/ ]/;
+		var pattern = /[^a-zA-Z0-9\.\-\\:\/ _]/;
 
 		if ( pattern.test( $input.val() ) ) {
 			$error.show();
@@ -463,6 +463,13 @@
 				$( this ).removeClass( 'locked locked-' + key );
 			} );
 			$( '#as3cf-media-settings-locked-' + key ).hide();
+		},
+
+		/**
+		 * Settings locked?
+		 */
+		locked: function() {
+			return $( '.as3cf-media-settings' ).hasClass( 'locked' );
 		}
 
 	};
@@ -610,7 +617,7 @@
 
 		// Prompt user with dialog if leaving the settings page with unsaved changes
 		$( window ).on( 'beforeunload.as3cf-settings', function() {
-			if ( $.isEmptyObject( savedSettings ) ) {
+			if ( $.isEmptyObject( savedSettings ) || as3cf.Settings.Media.locked() ) {
 				return;
 			}
 

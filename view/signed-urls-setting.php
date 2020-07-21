@@ -69,7 +69,7 @@ $prefix = $this->get_plugin_prefix_slug();
 				<?php echo $key_file_path_args['disabled_attr']; ?>
 			/>
 			<span class="as3cf-validation-error" style="display: none;">
-			<?php _e( 'Invalid character. Letters, numbers, periods, hyphens, colons, spaces and slashes are allowed.', 'amazon-s3-and-cloudfront' ); ?>
+			<?php _e( 'Invalid character. Letters, numbers, periods, hyphens, colons, spaces, underscores and slashes are allowed.', 'amazon-s3-and-cloudfront' ); ?>
 		</span>
 		</p>
 	</div>
