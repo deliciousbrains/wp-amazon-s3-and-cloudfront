@@ -1,5 +1,5 @@
 {
-  "name": "deliciousbrains/wp-amazon-s3-and-cloudfront",
+  "name": "arvatoaws-labs/wp-amazon-s3-and-cloudfront",
   "type": "wordpress-plugin",
   "homepage": "https://github.com/deliciousbrains/wp-amazon-s3-and-cloudfront",
   "license": "GPL-3.0-only",
