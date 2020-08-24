@@ -539,7 +539,7 @@ abstract class Item {
 			$result = $wpdb->update( static::items_table(), $this->key_values(), array( 'id' => $this->id ), $this->formats(), array( '%d' ) );
 		}
 
-		if ( $result ) {
+		if ( $result !== false ) {
 			// Now that the item has an ID it should be (re)cached.
 			static::add_to_object_cache( $this );
 		} else {
