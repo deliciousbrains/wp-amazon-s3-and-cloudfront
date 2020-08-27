@@ -12,9 +12,11 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\QuotaManager;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddlewareV2;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Configuration;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\ConfigurationInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\ConfigurationProvider as UseArnRegionConfigurationProvider;
@@ -263,21 +265,19 @@ class S3Client extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient impl
      */
     public function __construct(array $args)
     {
-        if (!isset($args['s3_us_east_1_regional_endpoint'])) {
-            $args['s3_us_east_1_regional_endpoint'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationProvider::defaultProvider();
-        } elseif ($args['s3_us_east_1_regional_endpoint'] instanceof CacheInterface) {
+        if (!isset($args['s3_us_east_1_regional_endpoint']) || $args['s3_us_east_1_regional_endpoint'] instanceof CacheInterface) {
             $args['s3_us_east_1_regional_endpoint'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationProvider::defaultProvider($args);
         }
         parent::__construct($args);
         $stack = $this->getHandlerList();
         $stack->appendInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\SSECMiddleware::wrap($this->getEndpoint()->getScheme()), 's3.ssec');
-        $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ApplyChecksumMiddleware::wrap(), 's3.checksum');
+        $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\ApplyChecksumMiddleware::wrap($this->getApi()), 's3.checksum');
         $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::contentType(['PutObject', 'UploadPart']), 's3.content_type');
         // Use the bucket style middleware when using a "bucket_endpoint" (for cnames)
         if ($this->getConfig('bucket_endpoint')) {
             $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BucketEndpointMiddleware::wrap(), 's3.bucket_endpoint');
         } else {
-            $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3EndpointMiddleware::wrap($this->getRegion(), ['dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint')]), 's3.endpoint_middleware');
+            $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3EndpointMiddleware::wrap($this->getRegion(), $this->getConfig('endpoint_provider'), ['dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint')]), 's3.endpoint_middleware');
         }
         $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BucketEndpointArnMiddleware::wrap($this->getApi(), $this->getRegion(), ['use_arn_region' => $this->getConfig('use_arn_region'), 'dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint'), 'endpoint' => isset($args['endpoint']) ? $args['endpoint'] : null]), 's3.bucket_endpoint_arn');
         $stack->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\PutObjectUrlMiddleware::wrap(), 's3.put_object_url');
@@ -455,32 +455,49 @@ class S3Client extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient impl
         };
     }
     /** @internal */
-    public static function _applyRetryConfig($value, $_, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
+    public static function _applyRetryConfig($value, $args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
-        if (!$value) {
-            return;
+        if ($value) {
+            $config = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationProvider::unwrap($value);
+            if ($config->getMode() === 'legacy') {
+                $maxRetries = $config->getMaxAttempts() - 1;
+                $decider = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::createDefaultDecider($maxRetries);
+                $decider = function ($retries, $command, $request, $result, $error) use($decider, $maxRetries) {
+                    $maxRetries = null !== $command['@retries'] ? $command['@retries'] : $maxRetries;
+                    if ($decider($retries, $command, $request, $result, $error)) {
+                        return true;
+                    }
+                    if ($error instanceof AwsException && $retries < $maxRetries) {
+                        if ($error->getResponse() && $error->getResponse()->getStatusCode() >= 400) {
+                            return strpos($error->getResponse()->getBody(), 'Your socket connection to the server') !== false;
+                        }
+                        if ($error->getPrevious() instanceof RequestException) {
+                            // All commands except CompleteMultipartUpload are
+                            // idempotent and may be retried without worry if a
+                            // networking error has occurred.
+                            return $command->getName() !== 'CompleteMultipartUpload';
+                        }
+                    }
+                    return false;
+                };
+                $delay = [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::class, 'exponentialDelay'];
+                $list->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::retry($decider, $delay), 'retry');
+            } else {
+                $defaultDecider = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddlewareV2::createDefaultDecider(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\QuotaManager(), $config->getMaxAttempts());
+                $list->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddlewareV2::wrap($config, ['collect_stats' => $args['stats']['retries'], 'decider' => function ($attempts, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, $result) use($defaultDecider, $config) {
+                    $isRetryable = $defaultDecider($attempts, $cmd, $result);
+                    if (!$isRetryable && $result instanceof AwsException && $attempts < $config->getMaxAttempts()) {
+                        if (!empty($result->getResponse()) && strpos($result->getResponse()->getBody(), 'Your socket connection to the server') !== false) {
+                            $isRetryable = false;
+                        }
+                        if ($result->getPrevious() instanceof RequestException && $cmd->getName() !== 'CompleteMultipartUpload') {
+                            $isRetryable = true;
+                        }
+                    }
+                    return $isRetryable;
+                }]), 'retry');
+            }
         }
-        $decider = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::createDefaultDecider($value);
-        $decider = function ($retries, $command, $request, $result, $error) use($decider, $value) {
-            $maxRetries = null !== $command['@retries'] ? $command['@retries'] : $value;
-            if ($decider($retries, $command, $request, $result, $error)) {
-                return true;
-            }
-            if ($error instanceof AwsException && $retries < $maxRetries) {
-                if ($error->getResponse() && $error->getResponse()->getStatusCode() >= 400) {
-                    return strpos($error->getResponse()->getBody(), 'Your socket connection to the server') !== false;
-                }
-                if ($error->getPrevious() instanceof RequestException) {
-                    // All commands except CompleteMultipartUpload are
-                    // idempotent and may be retried without worry if a
-                    // networking error has occurred.
-                    return $command->getName() !== 'CompleteMultipartUpload';
-                }
-            }
-            return false;
-        };
-        $delay = [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware::class, 'exponentialDelay'];
-        $list->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::retry($decider, $delay), 'retry');
     }
     /** @internal */
     public static function _applyApiProvider($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)

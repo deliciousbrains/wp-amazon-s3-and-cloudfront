@@ -2,12 +2,10 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlHandler;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\CurlMultiHandler;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\Proxy;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler\StreamHandler;
-use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * Expands a URI template
  *
@@ -88,8 +86,8 @@ function debug_resource($value = null)
  *
  * The returned handler is not wrapped by any default middlewares.
  *
- * @throws \RuntimeException if no viable Handler is available.
  * @return callable Returns the best handler for the given system.
+ * @throws \RuntimeException if no viable Handler is available.
  */
 function choose_handler()
 {
@@ -293,52 +291,4 @@ function json_encode($value, $options = 0, $depth = 512)
         throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\InvalidArgumentException('json_encode error: ' . json_last_error_msg());
     }
     return $json;
-}
-/**
- * Wrapper for the hrtime() or microtime() functions
- * (depending on the PHP version, one of the two is used)
- *
- * @return float|mixed UNIX timestamp
- * @internal
- */
-function _current_time()
-{
-    return function_exists('hrtime') ? hrtime(true) / 1000000000.0 : microtime(true);
-}
-/**
- * @param int $options
- *
- * @return UriInterface
- *
- * @internal
- */
-function _idn_uri_convert(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri, $options = 0)
-{
-    if ($uri->getHost()) {
-        $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
-        $asciiHost = $idnaVariant === 0 ? idn_to_ascii($uri->getHost(), $options) : idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
-        if ($asciiHost === false) {
-            $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
-            $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
-                return substr($name, 0, 11) === 'IDNA_ERROR_';
-            });
-            $errors = [];
-            foreach ($errorConstants as $errorConstant) {
-                if ($errorBitSet & constant($errorConstant)) {
-                    $errors[] = $errorConstant;
-                }
-            }
-            $errorMessage = 'IDN conversion failed';
-            if ($errors) {
-                $errorMessage .= ' (errors: ' . implode(', ', $errors) . ')';
-            }
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\InvalidArgumentException($errorMessage);
-        } else {
-            if ($uri->getHost() !== $asciiHost) {
-                // Replace URI only if the ASCII version is different
-                $uri = $uri->withHost($asciiHost);
-            }
-        }
-    }
-    return $uri;
 }

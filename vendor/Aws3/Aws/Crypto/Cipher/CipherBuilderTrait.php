@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CryptoException;
 trait CipherBuilderTrait
 {
     /**
@@ -59,7 +60,7 @@ trait CipherBuilderTrait
             case 'AES/CBC/PKCS5Padding':
                 return 'cbc';
             default:
-                throw new \RuntimeException('Unrecognized or unsupported' . ' AESName for reverse lookup.');
+                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CryptoException('Unrecognized or unsupported' . ' AESName for reverse lookup.');
         }
     }
 }

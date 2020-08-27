@@ -49,9 +49,9 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
      *   result of executing a HeadObject command on the copy source.
      *
      * @param S3ClientInterface $client Client used for the upload.
-     * @param string            $source Location of the data to be copied
+     * @param string $source Location of the data to be copied
      *                                  (in the form /<bucket>/<key>).
-     * @param array             $config Configuration used to perform the upload.
+     * @param array $config Configuration used to perform the upload.
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
     {
@@ -97,7 +97,8 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
         foreach ($params as $k => $v) {
             $data[$k] = $v;
         }
-        $data['CopySource'] = $this->source;
+        list($bucket, $key) = explode('/', ltrim($this->source, '/'), 2);
+        $data['CopySource'] = '/' . $bucket . '/' . rawurlencode(implode('/', array_map('urlencode', explode('/', $key))));
         $data['PartNumber'] = $partNumber;
         $defaultPartSize = $this->determinePartSize();
         $startByte = $defaultPartSize * ($partNumber - 1);

@@ -29,10 +29,7 @@ trait MetadataParserTrait
                 break;
             case 'timestamp':
                 try {
-                    if (!empty($shape['timestampFormat']) && $shape['timestampFormat'] === 'unixTimestamp') {
-                        $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromEpoch($value);
-                    }
-                    $value = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult($value);
+                    $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromTimestamp($value, !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : null);
                     break;
                 } catch (\Exception $e) {
                     // If the value cannot be parsed, then do not add it to the

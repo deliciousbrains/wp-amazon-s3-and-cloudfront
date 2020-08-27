@@ -8,6 +8,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
@@ -31,7 +32,7 @@ class StreamHandler
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
-        $startTime = isset($options['on_stats']) ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\_current_time() : null;
+        $startTime = isset($options['on_stats']) ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::currentTime() : null;
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
@@ -58,7 +59,7 @@ class StreamHandler
     private function invokeStats(array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, $startTime, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, $error = null)
     {
         if (isset($options['on_stats'])) {
-            $stats = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats($request, $response, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\_current_time() - $startTime, $error, []);
+            $stats = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats($request, $response, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::currentTime() - $startTime, $error, []);
             call_user_func($options['on_stats'], $stats);
         }
     }

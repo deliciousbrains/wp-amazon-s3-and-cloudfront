@@ -138,7 +138,7 @@ class RedirectMiddleware
         $uri = $this->redirectUri($request, $response, $protocols);
         if (isset($options['idn_conversion']) && $options['idn_conversion'] !== false) {
             $idnOptions = $options['idn_conversion'] === true ? IDNA_DEFAULT : $options['idn_conversion'];
-            $uri = _idn_uri_convert($uri, $idnOptions);
+            $uri = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::idnUriConvert($uri, $idnOptions);
         }
         $modify['uri'] = $uri;
         \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\rewind_body($request);

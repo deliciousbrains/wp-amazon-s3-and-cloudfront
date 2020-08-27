@@ -2,10 +2,12 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CryptoException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\StreamDecoratorTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
-use RuntimeException;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\AesGcm;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\Key;
 /**
  * @internal Represents a stream of data to be gcm decrypted.
  */
@@ -30,9 +32,6 @@ class AesGcmDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $key, $initializationVector, $tag, $aad = '', $tagLength = 128, $keySize = 256)
     {
-        if (version_compare(PHP_VERSION, '7.1', '<')) {
-            throw new \RuntimeException('AES-GCM decryption is only supported in PHP 7.1 or greater');
-        }
         $this->cipherText = $cipherText;
         $this->key = $key;
         $this->initializationVector = $initializationVector;
@@ -55,7 +54,15 @@ class AesGcmDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
     }
     public function createStream()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(openssl_decrypt((string) $this->cipherText, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad));
+        if (version_compare(PHP_VERSION, '7.1', '<')) {
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\AesGcm::decrypt((string) $this->cipherText, $this->initializationVector, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\Key($this->key), $this->aad, $this->tag, $this->keySize));
+        } else {
+            $result = \openssl_decrypt((string) $this->cipherText, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad);
+            if ($result === false) {
+                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CryptoException('The requested object could not be' . ' decrypted due to an invalid authentication tag.');
+            }
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($result);
+        }
     }
     public function isWritable()
     {

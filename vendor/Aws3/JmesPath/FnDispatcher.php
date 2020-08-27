@@ -42,7 +42,7 @@ class FnDispatcher
     {
         $this->validate('avg', $args, [['array']]);
         $sum = $this->reduce('avg:0', $args[0], ['number'], function ($a, $b) {
-            return $a + $b;
+            return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::add($a, $b);
         });
         return $args[0] ? $sum / count($args[0]) : null;
     }
@@ -150,7 +150,7 @@ class FnDispatcher
     {
         $this->validate('sum', $args, [['array']]);
         $fn = function ($a, $b) {
-            return $a + $b;
+            return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Utils::add($a, $b);
         };
         return $this->reduce('sum:0', $args[0], ['number'], $fn);
     }

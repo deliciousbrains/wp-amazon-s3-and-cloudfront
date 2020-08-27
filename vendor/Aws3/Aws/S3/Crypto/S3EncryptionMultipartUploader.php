@@ -11,10 +11,19 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 /**
  * Encapsulates the execution of a multipart upload of an encrypted object to S3.
+ *
+ * Legacy implementation using older encryption workflow. Use
+ * S3EncryptionMultipartUploaderV2 if possible.
+ *
+ * @deprecated
  */
 class S3EncryptionMultipartUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader
 {
-    use EncryptionTrait, CipherBuilderTrait, CryptoParamsTrait;
+    use CipherBuilderTrait;
+    use CryptoParamsTrait;
+    use EncryptionTrait;
+    use UserAgentTrait;
+    const CRYPTO_VERSION = '1n';
     /**
      * Returns if the passed cipher name is supported for encryption by the SDK.
      *
@@ -39,7 +48,8 @@ class S3EncryptionMultipartUploader extends \DeliciousBrains\WP_Offload_Media\Aw
      * - @CipherOptions: (array) Cipher options for encrypting data. A Cipher
      *   is required. Accepts the following options:
      *       - Cipher: (string) cbc|gcm
-     *            See also: AbstractCryptoClient::$supportedCiphers
+     *            See also: AbstractCryptoClient::$supportedCiphers. Note that
+     *            cbc is deprecated and gcm should be used when possible.
      *       - KeySize: (int) 128|192|256
      *            See also: MaterialsProvider::$supportedKeySizes
      *       - Aad: (string) Additional authentication data. This option is
@@ -90,6 +100,7 @@ class S3EncryptionMultipartUploader extends \DeliciousBrains\WP_Offload_Media\Aw
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
     {
+        $this->appendUserAgent($client, 'S3CryptoV' . self::CRYPTO_VERSION);
         $this->client = $client;
         $config['params'] = [];
         if (!empty($config['bucket'])) {

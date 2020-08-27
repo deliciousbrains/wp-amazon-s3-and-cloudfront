@@ -218,11 +218,14 @@ class AWS_Provider extends Storage_Provider {
 	 */
 	protected function default_client_args() {
 		return array(
-			'signature_version' => static::SIGNATURE_VERSION,
-			'version'           => static::API_VERSION,
-			'region'            => $this->default_region,
-			'csm'               => apply_filters( 'as3cf_disable_aws_csm', true ) ? false : true,
-			'use_arn_region'    => apply_filters( 'as3cf_disable_aws_use_arn_region', true ) ? false : true,
+			'signature_version'              => static::SIGNATURE_VERSION,
+			'version'                        => static::API_VERSION,
+			'region'                         => $this->default_region,
+			'csm'                            => apply_filters( 'as3cf_disable_aws_csm', true ) ? false : true,
+			'use_arn_region'                 => apply_filters( 'as3cf_disable_aws_use_arn_region', true ) ? false : true,
+			's3_us_east_1_regional_endpoint' => apply_filters( 'as3cf_aws_s3_us_east_1_regional_endpoint', 'legacy' ),
+			'endpoint_discovery'             => apply_filters( 'as3cf_disable_aws_endpoint_discovery', true ) ? array( 'enabled' => false ) : array( 'enabled' => true ),
+			'sts_regional_endpoints'         => apply_filters( 'as3cf_aws_sts_regional_endpoints', 'legacy' ),
 		);
 	}
 

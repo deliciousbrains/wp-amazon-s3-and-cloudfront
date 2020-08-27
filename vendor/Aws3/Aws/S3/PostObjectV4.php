@@ -42,7 +42,7 @@ class PostObjectV4
         $this->formAttributes = ['action' => $this->generateUri(), 'method' => 'POST', 'enctype' => 'multipart/form-data'];
         $credentials = $this->client->getCredentials()->wait();
         if ($securityToken = $credentials->getSecurityToken()) {
-            array_push($options, ['x-amz-security-token' => $securityToken]);
+            $options[] = ['x-amz-security-token' => $securityToken];
             $formInputs['X-Amz-Security-Token'] = $securityToken;
         }
         // setup basic policy

@@ -156,7 +156,7 @@ class StreamWrapper
         if (!isset($params['ContentType']) && ($type = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($params['Key']))) {
             $params['ContentType'] = $type;
         }
-        $this->clearCacheKey("s3://{$params['Bucket']}/{$params['Key']}");
+        $this->clearCacheKey("{$this->protocol}://{$params['Bucket']}/{$params['Key']}");
         return $this->boolCall(function () use($params) {
             return (bool) $this->getClient()->putObject($params);
         });

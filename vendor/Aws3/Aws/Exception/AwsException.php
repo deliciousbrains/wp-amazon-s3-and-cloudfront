@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasDataTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
@@ -26,6 +27,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
     private $requestId;
     private $errorType;
     private $errorCode;
+    private $errorShape;
     private $connectionError;
     private $transferInfo;
     private $errorMessage;
@@ -45,6 +47,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
         $this->requestId = isset($context['request_id']) ? $context['request_id'] : null;
         $this->errorType = isset($context['type']) ? $context['type'] : null;
         $this->errorCode = isset($context['code']) ? $context['code'] : null;
+        $this->errorShape = isset($context['error_shape']) ? $context['error_shape'] : null;
         $this->connectionError = !empty($context['connection_error']);
         $this->result = isset($context['result']) ? $context['result'] : null;
         $this->transferInfo = isset($context['transfer_stats']) ? $context['transfer_stats'] : [];
@@ -157,6 +160,15 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
     public function getAwsErrorCode()
     {
         return $this->errorCode;
+    }
+    /**
+     * Get the AWS error shape.
+     *
+     * @return Shape|null Returns null if no response was received
+     */
+    public function getAwsErrorShape()
+    {
+        return $this->errorShape;
     }
     /**
      * Get all transfer information as an associative array if no $name

@@ -98,10 +98,10 @@ class PartitionEndpointProvider
         $prefixGroups = $prefixData['prefix-groups'];
         foreach ($data["partitions"] as $index => $partition) {
             foreach ($prefixGroups as $current => $old) {
-                $serviceData = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.{$current}", $partition);
+                $serviceData = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.\"{$current}\"", $partition);
                 if (!empty($serviceData)) {
                     foreach ($old as $prefix) {
-                        if (empty(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.{$prefix}", $partition))) {
+                        if (empty(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search("services.\"{$prefix}\"", $partition))) {
                             $data["partitions"][$index]["services"][$prefix] = $serviceData;
                         }
                     }

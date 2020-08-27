@@ -46,6 +46,7 @@ abstract class AbstractErrorParser
                     if ($data['code'] == $error['name'] && $error instanceof StructureShape) {
                         $modeledError = $error;
                         $data['body'] = $this->extractPayload($modeledError, $response);
+                        $data['error_shape'] = $modeledError;
                         foreach ($error->getMembers() as $name => $member) {
                             switch ($member['location']) {
                                 case 'header':

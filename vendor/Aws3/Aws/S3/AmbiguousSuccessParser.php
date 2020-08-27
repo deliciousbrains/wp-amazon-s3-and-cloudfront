@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
@@ -15,7 +16,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
  */
 class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
 {
-    private static $ambiguousSuccesses = ['UploadPartCopy' => true, 'CopyObject' => true, 'CompleteMultipartUpload' => true];
+    private static $ambiguousSuccesses = ['UploadPart' => true, 'UploadPartCopy' => true, 'CopyObject' => true, 'CompleteMultipartUpload' => true];
     /** @var callable */
     private $errorParser;
     /** @var string */
@@ -30,7 +31,11 @@ class AmbiguousSuccessParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
     {
         if (200 === $response->getStatusCode() && isset(self::$ambiguousSuccesses[$command->getName()])) {
             $errorParser = $this->errorParser;
-            $parsed = $errorParser($response);
+            try {
+                $parsed = $errorParser($response);
+            } catch (ParserException $e) {
+                $parsed = ['code' => 'ConnectionError', 'message' => "An error connecting to the service occurred" . " while performing the " . $command->getName() . " operation."];
+            }
             if (isset($parsed['code']) && isset($parsed['message'])) {
                 throw new $this->exceptionClass($parsed['message'], $command, ['connection_error' => true]);
             }

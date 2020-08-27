@@ -6,11 +6,16 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\Cbc;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 /**
+ * Legacy abstract encryption client. New workflows should use
+ * AbstractCryptoClientV2.
+ *
+ * @deprecated
  * @internal
  */
 abstract class AbstractCryptoClient
 {
     public static $supportedCiphers = ['cbc', 'gcm'];
+    public static $supportedKeyWraps = [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\KmsMaterialsProvider::WRAP_ALGORITHM_NAME];
     /**
      * Returns if the passed cipher name is supported for encryption by the SDK.
      *
@@ -83,8 +88,8 @@ abstract class AbstractCryptoClient
      *
      * @param string $cipherText Plain-text data to be decrypted using the
      *                           materials, algorithm, and data provided.
-     * @param MaterialsProvider $provider A provider to supply and encrypt
-     *                                    materials used in encryption.
+     * @param MaterialsProviderInterface $provider A provider to supply and encrypt
+     *                                             materials used in encryption.
      * @param MetadataEnvelope $envelope A storage envelope for encryption
      *                                   metadata to be read from.
      * @param array $cipherOptions Additional verification options.
@@ -93,5 +98,5 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
+    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
 }

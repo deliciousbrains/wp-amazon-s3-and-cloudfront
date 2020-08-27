@@ -7,7 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope;
 class HeadersMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataStrategyInterface
 {
     /**
-     * Places the information in the MetadataEnvelope in to the Meatadata for
+     * Places the information in the MetadataEnvelope in to the metadata for
      * the PutObject request of the encrypted object.
      *
      * @param MetadataEnvelope $envelope Encryption data to save according to
@@ -25,7 +25,7 @@ class HeadersMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\
         return $args;
     }
     /**
-     * Generates a MetadataEnvelope according to the Metadata headers from the
+     * Generates a MetadataEnvelope according to the metadata headers from the
      * GetObject result.
      *
      * @param array $args Arguments from Command and Result that contains

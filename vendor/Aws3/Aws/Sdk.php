@@ -47,6 +47,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionBackup(array $args = [])
  * @method \Aws\Batch\BatchClient createBatch(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionBatch(array $args = [])
+ * @method \Aws\Braket\BraketClient createBraket(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionBraket(array $args = [])
  * @method \Aws\Budgets\BudgetsClient createBudgets(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionBudgets(array $args = [])
  * @method \Aws\Chime\ChimeClient createChime(array $args = [])
@@ -75,6 +77,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionCloudWatchEvents(array $args = [])
  * @method \Aws\CloudWatchLogs\CloudWatchLogsClient createCloudWatchLogs(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionCloudWatchLogs(array $args = [])
+ * @method \Aws\CodeArtifact\CodeArtifactClient createCodeArtifact(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionCodeArtifact(array $args = [])
  * @method \Aws\CodeBuild\CodeBuildClient createCodeBuild(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionCodeBuild(array $args = [])
  * @method \Aws\CodeCommit\CodeCommitClient createCodeCommit(array $args = [])
@@ -201,8 +205,14 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionGuardDuty(array $args = [])
  * @method \Aws\Health\HealthClient createHealth(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionHealth(array $args = [])
+ * @method \Aws\Honeycode\HoneycodeClient createHoneycode(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionHoneycode(array $args = [])
+ * @method \Aws\IVS\IVSClient createIVS(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIVS(array $args = [])
  * @method \Aws\Iam\IamClient createIam(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionIam(array $args = [])
+ * @method \Aws\IdentityStore\IdentityStoreClient createIdentityStore(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIdentityStore(array $args = [])
  * @method \Aws\ImportExport\ImportExportClient createImportExport(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionImportExport(array $args = [])
  * @method \Aws\Inspector\InspectorClient createInspector(array $args = [])
@@ -221,6 +231,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionIoTJobsDataPlane(array $args = [])
  * @method \Aws\IoTSecureTunneling\IoTSecureTunnelingClient createIoTSecureTunneling(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionIoTSecureTunneling(array $args = [])
+ * @method \Aws\IoTSiteWise\IoTSiteWiseClient createIoTSiteWise(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionIoTSiteWise(array $args = [])
  * @method \Aws\IoTThingsGraph\IoTThingsGraphClient createIoTThingsGraph(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionIoTThingsGraph(array $args = [])
  * @method \Aws\Iot\IotClient createIot(array $args = [])
@@ -265,6 +277,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionMachineLearning(array $args = [])
  * @method \Aws\Macie\MacieClient createMacie(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMacie(array $args = [])
+ * @method \Aws\Macie2\Macie2Client createMacie2(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionMacie2(array $args = [])
  * @method \Aws\ManagedBlockchain\ManagedBlockchainClient createManagedBlockchain(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionManagedBlockchain(array $args = [])
  * @method \Aws\MarketplaceCatalog\MarketplaceCatalogClient createMarketplaceCatalog(array $args = [])
@@ -409,6 +423,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  * @method \Aws\MultiRegionClient createMultiRegionSupport(array $args = [])
  * @method \Aws\Swf\SwfClient createSwf(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionSwf(array $args = [])
+ * @method \Aws\Synthetics\SyntheticsClient createSynthetics(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionSynthetics(array $args = [])
  * @method \Aws\Textract\TextractClient createTextract(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionTextract(array $args = [])
  * @method \Aws\TranscribeService\TranscribeServiceClient createTranscribeService(array $args = [])
@@ -444,7 +460,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  */
 class Sdk
 {
-    const VERSION = '3.133.40';
+    const VERSION = '3.150.1';
     /** @var array Arguments for creating clients */
     private $args;
     /**

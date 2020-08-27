@@ -33,7 +33,7 @@ class Parser
         \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Lexer::T_FILTER => true,
     ];
     /**
-     * @param Lexer $lexer Lexer used to tokenize expressions
+     * @param Lexer|null $lexer Lexer used to tokenize expressions
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Lexer $lexer = null)
     {

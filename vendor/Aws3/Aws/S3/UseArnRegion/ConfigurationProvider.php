@@ -66,7 +66,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
      */
     public static function defaultProvider(array $config = [])
     {
-        $configProviders = [self::env(), self::ini(), self::fallback()];
+        $configProviders = [self::env()];
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+            $configProviders[] = self::ini();
+        }
+        $configProviders[] = self::fallback();
         $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
         if (isset($config['use_arn_region']) && $config['use_arn_region'] instanceof CacheInterface) {
             return self::cache($memo, $config['use_arn_region'], self::$cacheKey);

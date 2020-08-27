@@ -4,7 +4,7 @@ Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google 
 Requires at least: 4.9
 Tested up to: 5.5
 Requires PHP: 5.5
-Stable tag: 2.4.1
+Stable tag: 2.4.2
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -80,6 +80,14 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 2.4.2 - 2020-08-27 =
+* Improvement: Updated AWS PHP SDK to v3.150.1
+* Bug fix: Image thumbnail URLs in custom HTML not rewritten to delivery provider URLs
+* Bug fix: Background processes do not start when PHP memory limit in gigabytes
+* Bug fix: PHP Fatal error: require(): Failed opening required '.../vendor/Aws3/Aws/Sts/StsClient.php'
+* Bug fix: AWS SDK "Warning: is_readable(): open_basedir restriction in effect" message from Regional Endpoint check
+* Bug fix: Bottom and right button borders in settings page are clipped when focused
 
 = WP Offload Media Lite 2.4.1 - 2020-07-21 =
 * Bug fix: Fatal Error with EWWW Image Optimizer 5.5 or earlier installed

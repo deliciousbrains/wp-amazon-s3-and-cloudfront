@@ -19,8 +19,8 @@ class CompilerRuntime
     private $cacheDir;
     private $interpreter;
     /**
-     * @param string $dir Directory used to store compiled PHP files.
-     * @param Parser $parser JMESPath parser to utilize
+     * @param string|null $dir Directory used to store compiled PHP files.
+     * @param Parser|null $parser JMESPath parser to utilize
      * @throws \RuntimeException if the cache directory cannot be created
      */
     public function __construct($dir = null, \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser $parser = null)
@@ -43,7 +43,7 @@ class CompilerRuntime
      *                           is similar to data returned from json_decode
      *                           using associative arrays rather than objects.
      *
-     * @return mixed|null Returns the matching data or null
+     * @return mixed Returns the matching data or null
      * @throws \RuntimeException
      */
     public function __invoke($expression, $data)

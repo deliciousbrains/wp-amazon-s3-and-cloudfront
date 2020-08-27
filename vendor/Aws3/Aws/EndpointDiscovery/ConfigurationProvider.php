@@ -69,7 +69,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
      */
     public static function defaultProvider(array $config = [])
     {
-        $configProviders = [self::env(), self::ini(), self::fallback()];
+        $configProviders = [self::env()];
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+            $configProviders[] = self::ini();
+        }
+        $configProviders[] = self::fallback($config);
         $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
         if (isset($config['endpoint_discovery']) && $config['endpoint_discovery'] instanceof CacheInterface) {
             return self::cache($memo, $config['endpoint_discovery'], self::$cacheKey);
@@ -97,14 +101,30 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
         };
     }
     /**
-     * Fallback config options when other sources are not set.
+     * Fallback config options when other sources are not set. Will check the
+     * service model for any endpoint discovery required operations, and enable
+     * endpoint discovery in that case. If no required operations found, will use
+     * the class default values.
      *
+     * @param array $config
      * @return callable
      */
-    public static function fallback()
+    public static function fallback($config = [])
     {
-        return function () {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration(self::DEFAULT_ENABLED, self::DEFAULT_CACHE_LIMIT));
+        $enabled = self::DEFAULT_ENABLED;
+        if (!empty($config['api_provider']) && !empty($config['service']) && !empty($config['version'])) {
+            $provider = $config['api_provider'];
+            $apiData = $provider('api', $config['service'], $config['version']);
+            if (!empty($apiData['operations'])) {
+                foreach ($apiData['operations'] as $operation) {
+                    if (!empty($operation['endpointdiscovery']['required'])) {
+                        $enabled = true;
+                    }
+                }
+            }
+        }
+        return function () use($enabled) {
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($enabled, self::DEFAULT_CACHE_LIMIT));
         };
     }
     /**

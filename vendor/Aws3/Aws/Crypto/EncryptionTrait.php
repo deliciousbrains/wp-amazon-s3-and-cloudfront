@@ -71,7 +71,6 @@ trait EncryptionTrait
         $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::KEY_WRAP_ALGORITHM_HEADER] = $provider->getWrapAlgorithmName();
         $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_CRYPTO_SCHEME_HEADER] = $aesName;
         $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::UNENCRYPTED_CONTENT_LENGTH_HEADER] = strlen($plaintext);
-        $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::UNENCRYPTED_CONTENT_MD5_HEADER] = base64_encode(md5($plaintext));
         $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER] = json_encode($materialsDescription);
         if (!empty($cipherOptions['Tag'])) {
             $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CRYPTO_TAG_LENGTH_HEADER] = strlen($cipherOptions['Tag']) * 8;
@@ -99,6 +98,9 @@ trait EncryptionTrait
             case 'gcm':
                 $cipherOptions['TagLength'] = 16;
                 $cipherTextStream = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesGcmEncryptingStream($plaintext, $cek, $cipherOptions['Iv'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : null, $cipherOptions['TagLength'], $cipherOptions['KeySize']);
+                if (!empty($cipherOptions['Aad'])) {
+                    trigger_error("'Aad' has been supplied for content encryption" . " with " . $cipherTextStream->getAesName() . ". The" . " PHP SDK encryption client can decrypt an object" . " encrypted in this way, but other AWS SDKs may not be" . " able to.", E_USER_WARNING);
+                }
                 $appendStream = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\AppendStream([$cipherTextStream->createStream()]);
                 $cipherOptions['Tag'] = $cipherTextStream->getTag();
                 $appendStream->addStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($cipherOptions['Tag']));

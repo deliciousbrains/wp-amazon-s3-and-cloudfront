@@ -250,7 +250,10 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 		}
 
 		foreach ( $query_set as $url ) {
-			$full_url = AS3CF_Utils::remove_scheme( $url );
+			// Path to search for in query set should be based on bare URL.
+			$bare_url = AS3CF_Utils::remove_scheme( $url );
+			// There can be multiple URLs in the query set that belong to the same full URL for the Media Library item.
+			$full_url = AS3CF_Utils::remove_size_from_filename( $bare_url );
 
 			if ( isset( $this->query_cache[ $full_url ] ) ) {
 				// ID already cached, use it.
@@ -259,7 +262,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 				continue;
 			}
 
-			$path = AS3CF_Utils::decode_filename_in_path( ltrim( str_replace( $this->get_bare_upload_base_urls(), '', $full_url ), '/' ) );
+			$path = AS3CF_Utils::decode_filename_in_path( ltrim( str_replace( $this->get_bare_upload_base_urls(), '', $bare_url ), '/' ) );
 
 			$paths[ $path ]           = $full_url;
 			$full_urls[ $full_url ][] = $url;

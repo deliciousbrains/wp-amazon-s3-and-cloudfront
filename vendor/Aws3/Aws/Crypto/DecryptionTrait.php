@@ -34,12 +34,13 @@ trait DecryptionTrait
     protected abstract function buildCipherMethod($cipherName, $iv, $keySize);
     /**
      * Builds an AesStreamInterface using cipher options loaded from the
-     * MetadataEnvelope and MaterialsProvider.
+     * MetadataEnvelope and MaterialsProvider. Can decrypt data from both the
+     * legacy and V2 encryption client workflows.
      *
      * @param string $cipherText Plain-text data to be encrypted using the
      *                           materials, algorithm, and data provided.
-     * @param MaterialsProvider $provider A provider to supply and encrypt
-     *                                    materials used in encryption.
+     * @param MaterialsProviderInterface $provider A provider to supply and encrypt
+     *                                             materials used in encryption.
      * @param MetadataEnvelope $envelope A storage envelope for encryption
      *                                   metadata to be read from.
      * @param array $cipherOptions Additional verification options.
@@ -51,7 +52,7 @@ trait DecryptionTrait
      *
      * @internal
      */
-    public function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
+    public function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = [])
     {
         $cipherOptions['Iv'] = base64_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::IV_HEADER]);
         $cipherOptions['TagLength'] = $envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CRYPTO_TAG_LENGTH_HEADER] / 8;

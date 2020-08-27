@@ -47,8 +47,11 @@ class EndpointDiscoveryMiddleware
         if (isset($op['endpointdiscovery'])) {
             $config = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationProvider::unwrap($this->config);
             $isRequired = !empty($op['endpointdiscovery']['required']);
-            // Continue only if required by operation or enabled by config
-            if ($isRequired || $config->isEnabled()) {
+            if ($isRequired && !$config->isEnabled()) {
+                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException('This operation ' . 'requires the use of endpoint discovery, but this has ' . 'been disabled in the configuration. Enable endpoint ' . 'discovery or use a different operation.');
+            }
+            // Continue only if enabled by config
+            if ($config->isEnabled()) {
                 if (isset($op['endpointoperation'])) {
                     throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException('This operation is ' . 'contradictorily marked both as using endpoint discovery ' . 'and being the endpoint discovery operation. Please ' . 'verify the accuracy of your model files.');
                 }

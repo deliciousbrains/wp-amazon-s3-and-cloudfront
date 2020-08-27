@@ -2,7 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-abstract class MaterialsProvider
+abstract class MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface
 {
     private static $supportedKeySizes = [128 => true, 192 => true, 256 => true];
     /**

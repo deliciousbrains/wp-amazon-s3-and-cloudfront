@@ -2,9 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Handler;
 
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise as P;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Returns an asynchronous response using curl_multi_* functions.
@@ -85,7 +85,7 @@ class CurlMultiHandler
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
-            $currentTime = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\_current_time();
+            $currentTime = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
@@ -126,7 +126,7 @@ class CurlMultiHandler
         if (empty($easy->options['delay'])) {
             curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\_current_time() + $easy->options['delay'] / 1000;
+            $this->delays[$id] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::currentTime() + $easy->options['delay'] / 1000;
         }
     }
     /**
@@ -165,7 +165,7 @@ class CurlMultiHandler
     }
     private function timeToNext()
     {
-        $currentTime = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\_current_time();
+        $currentTime = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::currentTime();
         $nextTime = PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {
