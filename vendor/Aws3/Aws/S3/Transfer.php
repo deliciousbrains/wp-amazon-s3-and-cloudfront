@@ -277,6 +277,7 @@ class Transfer implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Prom
     {
         $args = $this->s3Args;
         $args['Key'] = $this->createS3Key($filename);
+        $filename = $filename instanceof \SplFileInfo ? $filename->getPathname() : $filename;
         return (new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader($this->client, $filename, ['bucket' => $args['Bucket'], 'key' => $args['Key'], 'before_initiate' => $this->before, 'before_upload' => $this->before, 'before_complete' => $this->before, 'concurrency' => $this->concurrency]))->promise();
     }
     private function createS3Key($filename)

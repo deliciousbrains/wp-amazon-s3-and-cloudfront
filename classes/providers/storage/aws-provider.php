@@ -174,6 +174,10 @@ class AWS_Provider extends Storage_Provider {
 
 		// Autoloader.
 		require_once $as3cf->get_plugin_sdks_dir_path() . '/Aws3/aws-autoloader.php';
+
+		if ( ! function_exists( 'idn_to_ascii' ) && ! defined( 'IDNA_DEFAULT' ) ) {
+			define( 'IDNA_DEFAULT', 0 );
+		}
 	}
 
 	/**
@@ -226,6 +230,7 @@ class AWS_Provider extends Storage_Provider {
 			's3_us_east_1_regional_endpoint' => apply_filters( 'as3cf_aws_s3_us_east_1_regional_endpoint', 'legacy' ),
 			'endpoint_discovery'             => apply_filters( 'as3cf_disable_aws_endpoint_discovery', true ) ? array( 'enabled' => false ) : array( 'enabled' => true ),
 			'sts_regional_endpoints'         => apply_filters( 'as3cf_aws_sts_regional_endpoints', 'legacy' ),
+			'use_aws_shared_config_files'    => apply_filters( 'as3cf_aws_use_shared_config_files', false ),
 		);
 	}
 

@@ -1270,8 +1270,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		$objects_to_remove = array();
+		$paths_to_remove   = array_unique( $paths );
 
-		foreach ( $paths as $size => $path ) {
+		foreach ( $paths_to_remove as $size => $path ) {
 			$objects_to_remove[] = array(
 				'Key' => $as3cf_item->key( wp_basename( $path ) ),
 			);
@@ -1381,7 +1382,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * @throws Exception
 	 */
 	public function upload_attachment( $post_id, $data = null, $file_path = null, $force_new_provider_client = false, $remove_local_files = true ) {
-		static $offloaded = array();
+		static $offloaded_path_filesizes = array();
+		static $offloaded_size_paths = array();
 
 		$return_metadata = null;
 		if ( is_null( $data ) ) {
@@ -1404,6 +1406,21 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		if ( false !== $pre ) {
 			return $data;
+		}
+
+		// If $file_path was passed in with a non-null value, ensure it's a string
+		if ( ! is_null( $file_path ) && ! is_string( $file_path ) ) {
+			$error_msg = sprintf( __( 'Media Library item ID %d. Provided path is not a string', 'amazon-s3-and-cloudfront' ), $post_id );
+
+			return $this->return_upload_error( $error_msg );
+		}
+
+		// Ensure WordPress own post meta for relative URL is a string
+		$attached_file_meta = get_post_meta( $post_id, '_wp_attached_file', true );
+		if ( ! is_string( $attached_file_meta ) ) {
+			$error_msg = sprintf( __( 'Media Library item with ID %d has damaged meta data', 'amazon-s3-and-cloudfront' ), $post_id );
+
+			return $this->return_upload_error( $error_msg );
 		}
 
 		if ( is_null( $file_path ) ) {
@@ -1447,8 +1464,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 				// If original offloaded in same process, skip offloading anything it's already processed.
 				// Otherwise, do not need to offload full file if duplicate and file missing.
-				if ( ! empty( $offloaded[ $duplicate_item->id() ] ) ) {
-					$offloaded[ $old_item->id() ] = $offloaded[ $duplicate_item->id() ];
+				if ( ! empty( $offloaded_path_filesizes[ $duplicate_item->id() ] ) ) {
+					$offloaded_path_filesizes[ $old_item->id() ] = $offloaded_path_filesizes[ $duplicate_item->id() ];
+					$offloaded_size_paths[ $old_item->id() ]     = $offloaded_size_paths[ $duplicate_item->id() ];
 				} elseif ( ! file_exists( $file_path ) ) {
 					$offload_full = false;
 				}
@@ -1459,7 +1477,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		// If not already offloaded in request, check full file exists locally before attempting offload.
 		if ( $offload_full ) {
-			if ( $old_item && ! empty( $offloaded[ $old_item->id() ][ $file_path ] ) ) {
+			if ( $old_item && ! empty( $offloaded_path_filesizes[ $old_item->id() ][ $file_path ] ) ) {
 				$offload_full = false;
 			} elseif ( ! file_exists( $file_path ) ) {
 				$error_msg = sprintf( __( 'File %s does not exist', 'amazon-s3-and-cloudfront' ), $file_path );
@@ -1474,13 +1492,12 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		// Are there any files not already offloaded if full already offloaded in this request?
 		if ( false === $offload_full ) {
 			if ( empty( $file_paths ) ) {
+				// Item does not have any additional files, we're done.
 				return $return_metadata;
 			}
 
-			$offloaded_file_paths = empty( $offloaded[ $old_item->id() ] ) ? array() : $offloaded[ $old_item->id() ];
-			unset( $offloaded_file_paths[ $file_path ] );
-
-			if ( ! empty( $offloaded_file_paths ) && empty( array_diff( $file_paths, array_keys( $offloaded_file_paths ) ) ) ) {
+			if ( ! empty( $offloaded_size_paths[ $old_item->id() ] ) && empty( array_diff_key( $file_paths, $offloaded_size_paths[ $old_item->id() ] ) ) ) {
+				// Item's additional files all offloaded, we're done.
 				return $return_metadata;
 			}
 		}
@@ -1545,7 +1562,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		$acl        = apply_filters( 'wps3_upload_acl', $acl, $type, $data, $post_id, $this ); // Old naming convention, will be deprecated soon
 		$acl        = apply_filters( 'as3cf_upload_acl', $acl, $data, $post_id );
-		$is_private = ( ! empty( $acl ) && $this->get_storage_provider()->get_private_acl() === $acl ) ? true : false;
+		$is_private = ! empty( $acl ) && $this->get_storage_provider()->get_private_acl() === $acl;
 
 		$args = array(
 			'Bucket'       => $bucket,
@@ -1593,8 +1610,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		do_action( 'as3cf_upload_attachment_pre_remove', $post_id, $as3cf_item, $as3cf_item->normalized_path_dir(), $args );
 
-		$new_offloads    = array();
-		$files_to_remove = array();
+		$new_offload_path_filesizes = array();
+		$new_offload_size_paths     = array();
+		$files_to_remove            = array();
 
 		$provider_client = $this->get_provider_client( $as3cf_item->region(), $force_new_provider_client );
 
@@ -1606,8 +1624,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				// May raise exception, so don't offload anything else if there's an error.
 				$provider_client->upload_object( $args );
 
-				$new_offloads[ $file_path ] = $filesize; // Note: pre `as3cf_object_meta` filter value.
-				$files_to_remove[]          = $file_path; // Note: pre `as3cf_object_meta` filter value.
+				$new_offload_path_filesizes[ $file_path ] = $filesize; // Note: pre `as3cf_object_meta` filter value.
+				$new_offload_size_paths['original']       = $file_path;
+				$files_to_remove[]                        = $file_path; // Note: pre `as3cf_object_meta` filter value.
 			} catch ( Exception $e ) {
 				$error_msg = sprintf( __( 'Error offloading %s to provider: %s', 'amazon-s3-and-cloudfront' ), $file_path, $e->getMessage() );
 
@@ -1637,6 +1656,16 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				if ( ! empty( $acl ) && $this->use_acl_for_intermediate_size( $post_id, $size, $bucket, $as3cf_item ) ) {
 					$additional_images[ $size ]['ACL'] = $acl;
 				}
+			} else {
+				// If the previous offload of file path was private, this size also needs to be private.
+				// This is a case of first (in process) offload wins, duplicate file paths should have same access.
+				if ( ! empty( $private_sizes ) ) {
+					$duplicate_private = array_intersect( $private_sizes, array_keys( array_intersect( $file_paths, array( $file_path ) ) ) );
+
+					if ( ! empty( $duplicate_private ) ) {
+						$private_sizes[] = $size;
+					}
+				}
 			}
 		}
 
@@ -1644,7 +1673,22 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		foreach ( $additional_images as $size => $image ) {
 			// If this file has already been offloaded during this request, skip actual offload.
-			if ( $old_item && ! empty( $offloaded[ $old_item->id() ][ $image['SourceFile'] ] ) ) {
+			if ( $old_item && ! empty( $offloaded_path_filesizes[ $old_item->id() ][ $image['SourceFile'] ] ) ) {
+				// We still have to record whether this size is private based on previous offload of the source file.
+				// We also need to ensure this file is marked as possibly needing removal from server, and size has been processed.
+				if ( ! empty( $private_sizes ) ) {
+					$duplicate_private = array_intersect( $private_sizes, array_keys( array_intersect( $file_paths, array( $image['SourceFile'] ) ) ) );
+
+					if ( ! empty( $duplicate_private ) ) {
+						$private_sizes[] = $size;
+					}
+				}
+
+				// Processed file, but not this duplicate size, so file may have been re-created by WordPress.
+				if ( file_exists( $image['SourceFile'] ) ) {
+					$files_to_remove[] = $image['SourceFile'];
+				}
+				$new_offload_size_paths[ $size ] = $image['SourceFile'];
 				continue;
 			}
 
@@ -1669,10 +1713,11 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			try {
 				// May raise exception, but for sizes we'll just log it and maybe try again later if called.
 				$provider_client->upload_object( $args );
-				$files_to_remove[] = $image['SourceFile']; // Note: pre `as3cf_object_meta` filter value.
+				$files_to_remove[]               = $image['SourceFile']; // Note: pre `as3cf_object_meta` filter value.
+				$new_offload_size_paths[ $size ] = $image['SourceFile'];
 
 				// May raise exception, we'll log that, and carry on anyway.
-				$new_offloads[ $image['SourceFile'] ] = (int) filesize( $image['SourceFile'] ); // Note: pre `as3cf_object_meta` filter value.
+				$new_offload_path_filesizes[ $image['SourceFile'] ] = (int) filesize( $image['SourceFile'] ); // Note: pre `as3cf_object_meta` filter value.
 			} catch ( Exception $e ) {
 				$upload_errors[] = $this->return_upload_error( sprintf( __( 'Error offloading %s to provider: %s', 'amazon-s3-and-cloudfront' ), $args['SourceFile'], $e->getMessage() ) );
 			}
@@ -1705,8 +1750,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$files_to_remove = array_unique( $files_to_remove );
 
 			$filesize_total = 0;
-			if ( ! empty( $old_item ) && ! empty( $offloaded[ $old_item->id() ] ) ) {
-				$filesize_total = array_sum( $offloaded[ $old_item->id() ] );
+			if ( ! empty( $old_item ) && ! empty( $offloaded_path_filesizes[ $old_item->id() ] ) ) {
+				$filesize_total = array_sum( $offloaded_path_filesizes[ $old_item->id() ] );
 			}
 			// Delete the files and record original file's size before removal.
 			$this->remove_local_files( $files_to_remove, $post_id, $filesize_total );
@@ -1750,10 +1795,12 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$as3cf_item->save();
 
 		// Keep track of individual files offloaded during this request.
-		if ( empty( $offloaded[ $as3cf_item->id() ] ) ) {
-			$offloaded[ $as3cf_item->id() ] = $new_offloads;
+		if ( empty( $offloaded_path_filesizes[ $as3cf_item->id() ] ) ) {
+			$offloaded_path_filesizes[ $as3cf_item->id() ] = $new_offload_path_filesizes;
+			$offloaded_size_paths[ $as3cf_item->id() ]     = $new_offload_size_paths;
 		} else {
-			$offloaded[ $as3cf_item->id() ] += $new_offloads;
+			$offloaded_path_filesizes[ $as3cf_item->id() ] += $new_offload_path_filesizes;
+			$offloaded_size_paths[ $as3cf_item->id() ]     += $new_offload_size_paths;
 		}
 
 		// Keep track of attachments uploaded by this instance.

@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 3.151.6 - 2020-09-03
+
+* `Aws\GuardDuty` - GuardDuty findings triggered by failed events now include the error code name within the AwsApiCallAction section.
+* `Aws\MediaPackage` - Enables inserting a UTCTiming XML tag in the output manifest of a DASH endpoint which a media player will use to help with time synchronization.
+* `Aws\SFN` - This release of the AWS Step Functions SDK introduces support for payloads up to 256KB for Standard and Express workflows
+* `Aws\kendra` - Amazon Kendra now returns confidence scores for both 'answer' and 'question and answer' query responses.
+
+## 3.151.5 - 2020-09-02
+
+* `Aws\Credentials` - Web identity credential provider now clears cached path for web identity token if token file fails to load.
+* `Aws\EC2` - This release adds a new transit gateway attachment state and resource type.
+* `Aws\Macie2` - This release of the Amazon Macie API introduces additional statistics for the size and count of Amazon S3 objects that Macie can analyze as part of a classification job.
+
+## 3.151.4 - 2020-09-01
+
+* `Aws\CodeGuruReviewer` - Add support for repository analysis based code reviews
+* `Aws\S3` - Fixes an issue where a stream would be created that uploaded a file name instead of the file for a multipart upload
+* `Aws\SecurityHub` - Added a PatchSummary object for security findings. The PatchSummary object provides details about the patch compliance status of an instance.
+
 ## 3.151.3 - 2020-08-31
 
 * `Aws\Backup` - Documentation updates for Cryo

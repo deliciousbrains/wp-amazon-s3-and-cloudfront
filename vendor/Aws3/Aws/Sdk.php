@@ -462,7 +462,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
  */
 class Sdk
 {
-    const VERSION = '3.151.3';
+    const VERSION = '3.151.6';
     /** @var array Arguments for creating clients */
     private $args;
     /**

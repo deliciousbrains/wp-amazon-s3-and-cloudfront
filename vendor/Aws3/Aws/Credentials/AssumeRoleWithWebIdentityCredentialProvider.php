@@ -73,6 +73,12 @@ class AssumeRoleWithWebIdentityCredentialProvider
             while ($result == null) {
                 try {
                     $token = file_get_contents($this->tokenFile);
+                    if (false === $token) {
+                        clearstatcache(true, dirname($this->tokenFile) . "/" . readlink($this->tokenFile));
+                        clearstatcache(true, dirname($this->tokenFile) . "/" . dirname(readlink($this->tokenFile)));
+                        clearstatcache(true, $this->tokenFile);
+                        $token = file_get_contents($this->tokenFile);
+                    }
                 } catch (\Exception $exception) {
                     throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException("Error reading WebIdentityTokenFile from " . $this->tokenFile, 0, $exception);
                 }

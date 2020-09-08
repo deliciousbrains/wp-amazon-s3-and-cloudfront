@@ -4,7 +4,7 @@
 **Requires at least:** 4.9  
 **Tested up to:** 5.5  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.4.3  
+**Stable tag:** 2.4.4  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -88,6 +88,14 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.4.4 - 2020-09-08 ###
+* Improvement: Updated AWS PHP SDK to v3.151.6
+* Bug fix: Files for duplicate thumbnail sizes not removed from server after initial offload
+* Bug fix: PHP Fatal error: Class 'DeliciousBrains\WP_Offload_Media\Aws3\Symfony\Polyfill\Intl\Idn\Idn' not found
+* Bug fix: PHP Recoverable fatal error: Object of class WP_Error could not be converted to string in .../wp-includes/post.php on line 504
+* Bug fix: PHP message: PHP Warning: is_readable(): open_basedir restriction in effect
+* Bug fix: URLs not rewritten for RSS feed enclosures
 
 ### WP Offload Media Lite 2.4.3 - 2020-09-01 ###
 * Improvement: Updated AWS PHP SDK to v3.151.3
