@@ -63,7 +63,7 @@ var test = {};
 				return;
 			}
 			var $detailsHtml = this.$el.find( '.attachment-info .details' );
-			var html = this.generateDetails( response, [ 'provider_name', 'region', 'bucket', 'key', 'acl' ] );
+			var html = this.generateDetails( response, [ 'provider_name', 'region', 'bucket', 'key', 'acl', 'is_verified' ] );
 			$detailsHtml.append( html );
 		},
 
@@ -87,6 +87,16 @@ var test = {};
 								value: value
 							} );
 						}
+					}
+
+					if ( 'is_verified' === key ) {
+						value = Boolean( parseInt( value ) );
+
+						if ( value ) {
+							return;
+						}
+
+						value = as3cf_media.strings[ 'not_verified' ];
 					}
 
 					html += template( {

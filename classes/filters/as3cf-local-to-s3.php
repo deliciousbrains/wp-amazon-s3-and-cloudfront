@@ -202,7 +202,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 *
 	 * @return bool|int
 	 */
-	protected function get_attachment_id_from_url( $url ) {
+	public function get_attachment_id_from_url( $url ) {
 		$results = $this->get_attachment_ids_from_urls( array( $url ) );
 
 		if ( empty( $results ) ) {

@@ -47,6 +47,16 @@ class AS3CF_Plugin_Compatibility {
 	private $removed_files = array();
 
 	/**
+	 * @var bool
+	 */
+	protected $generate_attachment_metadata_done = false;
+
+	/**
+	 * @var bool
+	 */
+	protected $wait_for_generate_attachment_metadata = false;
+
+	/**
 	 * @param Amazon_S3_And_CloudFront $as3cf
 	 */
 	function __construct( $as3cf ) {
@@ -118,6 +128,7 @@ class AS3CF_Plugin_Compatibility {
 		 * Regenerate Thumbnails v3+ and other REST-API using plugins that need a local file.
 		 */
 		add_filter( 'rest_dispatch_request', array( $this, 'rest_dispatch_request_copy_back_to_local' ), 10, 4 );
+		add_filter( 'as3cf_wait_for_generate_attachment_metadata', array( $this, 'wait_for_generate_attachment_metadata' ) );
 
 		/*
 		 * WP-CLI Compatibility
@@ -171,6 +182,8 @@ class AS3CF_Plugin_Compatibility {
 			$this,
 			'prevent_copy_back_to_local_after_remove',
 		), 10, 4 );
+
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ) );
 	}
 
 	/**
@@ -217,6 +230,37 @@ class AS3CF_Plugin_Compatibility {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Handler for wp_generate_attachment_metadata. Updates class
+	 * member variable when the filter has fired.
+	 *
+	 * @handles wp_generate_attachment_metadata
+	 *
+	 * @param $metadata
+	 *
+	 * @return mixed
+	 */
+	public function wp_generate_attachment_metadata( $metadata ) {
+		$this->generate_attachment_metadata_done = true;
+		return $metadata;
+	}
+
+	/**
+	 * Are we waiting for the wp_generate_attachment_metadata filter and
+	 * if so, has it run yet?
+	 *
+	 * @handles as3cf_wait_for_generate_attachment_metadata
+	 *
+	 * @return bool
+	 */
+	public function wait_for_generate_attachment_metadata() {
+		if ( ! $this->wait_for_generate_attachment_metadata ) {
+			return false;
+		}
+
+		return ! $this->generate_attachment_metadata_done;
 	}
 
 	/**
@@ -983,6 +1027,8 @@ class AS3CF_Plugin_Compatibility {
 			foreach ( $routes as $match_route ) {
 				if ( preg_match( '@' . $match_route . '@i', $route ) ) {
 					$this->enable_get_attached_file_copy_back_to_local();
+					$this->wait_for_generate_attachment_metadata = true;
+					$this->generate_attachment_metadata_done     = false;
 					break;
 				}
 			}

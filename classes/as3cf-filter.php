@@ -582,7 +582,7 @@ abstract class AS3CF_Filter {
 	 *
 	 * @return null|string
 	 */
-	protected function get_size_string_from_url( $attachment_id, $url ) {
+	public function get_size_string_from_url( $attachment_id, $url ) {
 		$meta = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
 
 		if ( empty( $meta['sizes'] ) ) {
@@ -848,8 +848,8 @@ abstract class AS3CF_Filter {
 	 *
 	 * @return string
 	 */
-	protected function remove_aws_query_strings( $content, $base_url = '' ) {
-		$pattern = '\?[^\s"<\?]*(?:X-Amz-Algorithm|AWSAccessKeyId)=[^\s"<\?]+';
+	public static function remove_aws_query_strings( $content, $base_url = '' ) {
+		$pattern = '\?[^\s"<\?]*(?:X-Amz-Algorithm|AWSAccessKeyId|Key-Pair-Id)=[^\s"<\?]+';
 		$group   = 0;
 
 		if ( ! is_string( $content ) ) {

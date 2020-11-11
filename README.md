@@ -4,7 +4,7 @@
 **Requires at least:** 4.9  
 **Tested up to:** 5.5  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.4.4  
+**Stable tag:** 2.5  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -88,6 +88,13 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.5 - 2020-11-11 ###
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-5-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* Improvement: [Error notice shown](https://deliciousbrains.com/wp-offload-media/doc/missing-table-error-notice/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting) when plugin's required custom table(s) missing
+* Improvement: [Diagnostic Info](https://deliciousbrains.com/wp-offload-media/doc/missing-table-error-notice/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting#diagnostic-info) shows status of plugin's required custom tables
+* Bug fix: wp_get_original_image_path function does not return provider URL when local files removed
+* Bug fix: File missing notices recorded in debug.log when regenerating thumbnails and Remove Files From Server turned on
 
 ### WP Offload Media Lite 2.4.4 - 2020-09-08 ###
 * Improvement: Updated AWS PHP SDK to v3.151.6

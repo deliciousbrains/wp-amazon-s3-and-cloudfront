@@ -3,9 +3,11 @@
 		margin: 0;
 		padding: 0;
 	}
+
 	a, a:hover {
 		text-decoration: none;
 	}
+
 	.s3-details {
 		padding: 6px 0;
 
@@ -22,19 +24,27 @@
 				width: 20%;
 				white-space: nowrap;
 			}
+
 			.s3-value {
 				font-weight: bold;
 				float: left;
 				width: 80%;
+
+				.more-info {
+					font-weight: lighter;
+				}
 			}
+
 			input.error {
 				color: #a00;
 			}
 		}
+
 		.not-copied {
 			color: #666;
 		}
 	}
+
 	.s3-actions {
 		padding: 10px;
 		clear: both;
@@ -56,6 +66,7 @@
 
 			a.local-warning {
 				color: #a00;
+
 				&:hover {
 					color: #f00;
 				}

@@ -112,6 +112,21 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		}
 
 		/**
+		 * Is the given size recognized as the full sized image?
+		 *
+		 * @param string|null $size
+		 *
+		 * @return bool
+		 */
+		public static function is_full_size( $size ) {
+			if ( empty( $size ) || in_array( $size, array( 'full', 'original' ) ) ) {
+				return true;
+			}
+
+			return false;
+		}
+
+		/**
 		 * Reduce the given URL down to the simplest version of itself.
 		 *
 		 * Useful for matching against the full version of the URL in a full-text search

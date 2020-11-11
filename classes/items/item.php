@@ -8,6 +8,10 @@ use WP_Error;
 
 abstract class Item {
 	const ITEMS_TABLE = 'as3cf_items';
+	const ORIGINATORS = array(
+		'standard'      => 0,
+		'metadata-tool' => 1,
+	);
 
 	protected static $source_type = 'media-library';
 	protected static $source_table = 'posts';
@@ -41,6 +45,8 @@ abstract class Item {
 	private $source_path;
 	private $original_source_path;
 	private $extra_info;
+	private $originator;
+	private $is_verified;
 
 	/**
 	 * Item constructor.
@@ -54,9 +60,24 @@ abstract class Item {
 	 * @param string $source_path       Path that source uses, could be relative or absolute depending on source.
 	 * @param string $original_filename An optional filename with no path that was previously used for the item.
 	 * @param array  $extra_info        An optional array of extra data specific to the source type.
-	 * @param null   $id                Optional Item record ID.
+	 * @param int    $id                Optional Item record ID.
+	 * @param int    $originator        Optional originator of record from ORIGINATORS const.
+	 * @param bool   $is_verified       Optional flag as to whether Item's objects are known to exist.
 	 */
-	public function __construct( $provider, $region, $bucket, $path, $is_private, $source_id, $source_path, $original_filename = null, $extra_info = array(), $id = null ) {
+	public function __construct(
+		$provider,
+		$region,
+		$bucket,
+		$path,
+		$is_private,
+		$source_id,
+		$source_path,
+		$original_filename = null,
+		$extra_info = array(),
+		$id = null,
+		$originator = 0,
+		$is_verified = true
+	) {
 		$this->provider    = $provider;
 		$this->region      = $region;
 		$this->bucket      = $bucket;
@@ -65,6 +86,8 @@ abstract class Item {
 		$this->source_id   = $source_id;
 		$this->source_path = $source_path;
 		$this->extra_info  = serialize( $extra_info );
+		$this->originator  = $originator;
+		$this->is_verified = $is_verified;
 
 		if ( empty( $original_filename ) ) {
 			$this->original_path        = $path;
@@ -394,7 +417,7 @@ abstract class Item {
 
 		$sql = "
 				CREATE TABLE {$table_name} (
-				id BIGINT(20) NOT NULL AUTO_INCREMENT,
+				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				provider VARCHAR(18) NOT NULL,
 				region VARCHAR(255) NOT NULL,
 				bucket VARCHAR(255) NOT NULL,
@@ -402,17 +425,20 @@ abstract class Item {
 				original_path VARCHAR(1024) NOT NULL,
 				is_private BOOLEAN NOT NULL DEFAULT 0,
 				source_type VARCHAR(18) NOT NULL,
-				source_id BIGINT(20) NOT NULL,
+				source_id BIGINT(20) UNSIGNED NOT NULL,
 				source_path VARCHAR(1024) NOT NULL,
 				original_source_path VARCHAR(1024) NOT NULL,
 				extra_info LONGTEXT,
+				originator TINYINT UNSIGNED NOT NULL DEFAULT 0,
+				is_verified BOOLEAN NOT NULL DEFAULT 1,
 				PRIMARY KEY  (id),
 				UNIQUE KEY uidx_path (path(190), id),
 				UNIQUE KEY uidx_original_path (original_path(190), id),
 				UNIQUE KEY uidx_source_path (source_path(190), id),
 				UNIQUE KEY uidx_original_source_path (original_source_path(190), id),
 				UNIQUE KEY uidx_source (source_type, source_id),
-				UNIQUE KEY uidx_provider_bucket (provider, bucket(190), id)
+				UNIQUE KEY uidx_provider_bucket (provider, bucket(190), id),
+				UNIQUE KEY uidx_is_verified_originator (is_verified, originator, id)
 				) $charset_collate;
 				";
 		dbDelta( $sql );
@@ -438,6 +464,8 @@ abstract class Item {
 			'source_path'          => $this->source_path,
 			'original_source_path' => $this->original_source_path,
 			'extra_info'           => $this->extra_info,
+			'originator'           => $this->originator,
+			'is_verified'          => $this->is_verified,
 		);
 
 		if ( $include_id && ! empty( $this->id ) ) {
@@ -491,6 +519,8 @@ abstract class Item {
 			'source_path'          => '%s',
 			'original_source_path' => '%s',
 			'extra_info'           => '%s',
+			'originator'           => '%d',
+			'is_verified'          => '%d',
 		);
 
 		if ( $include_id && ! empty( $this->id ) ) {
@@ -600,7 +630,9 @@ abstract class Item {
 			$object->source_path,
 			wp_basename( $object->original_source_path ),
 			$extra_info,
-			$object->id
+			$object->id,
+			$object->originator,
+			$object->is_verified
 		);
 
 		if ( $add_to_object_cache ) {
@@ -744,6 +776,15 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's is_private value
+	 *
+	 * @param bool $private
+	 */
+	public function set_is_private( $private ) {
+		$this->is_private = (bool) $private;
+	}
+
+	/**
 	 * Getter for item's source_id value.
 	 *
 	 * @return integer
@@ -777,6 +818,42 @@ abstract class Item {
 	 */
 	public function extra_info() {
 		return unserialize( $this->extra_info );
+	}
+
+	/**
+	 * Setter for extra_info value
+	 *
+	 * @param array $extra_info
+	 */
+	protected function set_extra_info( $extra_info ) {
+		$this->extra_info = serialize( $extra_info );
+	}
+
+	/**
+	 * Getter for item's originator value.
+	 *
+	 * @return integer
+	 */
+	public function originator() {
+		return $this->originator;
+	}
+
+	/**
+	 * Getter for item's is_verified value.
+	 *
+	 * @return bool
+	 */
+	public function is_verified() {
+		return (bool) $this->is_verified;
+	}
+
+	/**
+	 * Setter for item's is_verified value
+	 *
+	 * @param bool $is_verified
+	 */
+	public function set_is_verified( $is_verified ) {
+		$this->is_verified = (bool) $is_verified;
 	}
 
 	/**
@@ -890,7 +967,7 @@ abstract class Item {
 		}
 
 		// Regardless of whether 1 or many items found, must validate match.
-		$path = ltrim( $parts['path'], '/' );
+		$path = AS3CF_Utils::decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
 		foreach ( $results as $result ) {
 			$as3cf_item = static::create( $result );
@@ -924,10 +1001,12 @@ abstract class Item {
 	 * @param integer $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
 	 * @param integer $limit       Maximum number of source_ids to return. Required if not counting.
 	 * @param bool    $count       Just return a count of matching source_ids? Negates $limit, default false.
+	 * @param int     $originator  Optionally restrict to only records with given originator type from ORIGINATORS const.
+	 * @param bool    $is_verified Optionally restrict to only records that either are or are not verified.
 	 *
 	 * @return array|int
 	 */
-	public static function get_source_ids( $upper_bound, $limit, $count = false ) {
+	public static function get_source_ids( $upper_bound, $limit, $count = false, $originator = null, $is_verified = null ) {
 		global $wpdb;
 
 		$args = array( static::$source_type );
@@ -943,6 +1022,30 @@ abstract class Item {
 		if ( ! empty( $upper_bound ) ) {
 			$sql    .= ' AND source_id < %d';
 			$args[] = $upper_bound;
+		}
+
+		// If an originator type given, check that it is valid before continuing and using.
+		if ( null !== $originator ) {
+			if ( is_int( $originator ) && in_array( $originator, self::ORIGINATORS ) ) {
+				$sql    .= ' AND originator = %d';
+				$args[] = $originator;
+			} else {
+				\AS3CF_Error::log( __METHOD__ . ' called with invalid originator: ' . $originator );
+
+				return $count ? 0 : array();
+			}
+		}
+
+		// If an is_verified value given, check that it is valid before continuing and using.
+		if ( null !== $is_verified ) {
+			if ( is_bool( $is_verified ) ) {
+				$sql    .= ' AND is_verified = %d';
+				$args[] = (int) $is_verified;
+			} else {
+				\AS3CF_Error::log( __METHOD__ . ' called with invalid is_verified: ' . $is_verified );
+
+				return $count ? 0 : array();
+			}
 		}
 
 		if ( ! $count ) {
