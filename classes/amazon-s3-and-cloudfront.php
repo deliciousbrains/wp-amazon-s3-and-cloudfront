@@ -3898,6 +3898,14 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				}
 			}
 
+			if ( 'access-key-id' === $var && 'db' !== $_POST['authmethod'] ) {
+				continue;
+			}
+
+			if ( 'secret-access-key' === $var && 'db' !== $_POST['authmethod'] ) {
+				continue;
+			}
+
 			if ( 'use-server-roles' === $var && 'server-role' !== $_POST['authmethod'] ) {
 				continue;
 			}

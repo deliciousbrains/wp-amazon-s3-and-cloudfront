@@ -2,9 +2,9 @@
 Contributors: bradt, deliciousbrains, ianmjones
 Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront
 Requires at least: 4.9
-Tested up to: 5.5
+Tested up to: 5.6
 Requires PHP: 5.5
-Stable tag: 2.5
+Stable tag: 2.5.1
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -80,6 +80,13 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 2.5.1- 2020-11-25 =
+* New: WordPress 5.6 compatible
+* New: PHP 8.0 compatible
+* Bug fix: Unexpectedly asked to select bucket after saving settings when legacy access key named constants defined
+* Bug fix: srcset missing for some images
+* Bug fix: Error saving item during Metadata upgrade in some cases
 
 = WP Offload Media Lite 2.5 - 2020-11-11 =
 * [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-5-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)

@@ -540,7 +540,7 @@
 			var n = o.name,
 				v = o.value;
 			n = n.replace( '[]', '' );
-			data[ n ] = undefined === data[ n ] ? v : $.isArray( data[ n ] ) ? data[ n ].concat( v ) : [ data[ n ], v ];
+			data[ n ] = undefined === data[ n ] ? v : Array.isArray( data[ n ] ) ? data[ n ].concat( v ) : [ data[ n ], v ];
 		} );
 
 		// Overwrite the save action stored in the form
@@ -661,7 +661,7 @@
 		} );
 
 		// Don't allow 'enter' key to submit form on text input settings
-		$( '.as3cf-setting input[type="text"]' ).keypress( function( event ) {
+		$( '.as3cf-setting input[type="text"]' ).on( 'keypress', function( event ) {
 			if ( 13 === event.which ) {
 				event.preventDefault();
 
@@ -813,7 +813,7 @@
 		} );
 
 		// Don't allow 'enter' key to submit form on text input settings
-		$( '.as3cf-bucket-container input[type="text"]' ).keypress( function( event ) {
+		$( '.as3cf-bucket-container input[type="text"]' ).on( 'keypress', function( event ) {
 			if ( 13 === event.which ) {
 				event.preventDefault();
 

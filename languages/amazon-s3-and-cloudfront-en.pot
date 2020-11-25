@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: amazon-s3-and-cloudfront\n"
 "Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
-"POT-Creation-Date: 2020-11-11 11:45+0000\n"
+"POT-Creation-Date: 2020-11-25 13:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -157,7 +157,7 @@ msgid "-- not shown --"
 msgstr ""
 
 #: classes/amazon-s3-and-cloudfront.php:3400
-#: classes/amazon-s3-and-cloudfront.php:5777
+#: classes/amazon-s3-and-cloudfront.php:5785
 msgid "Settings saved."
 msgstr ""
 
@@ -225,36 +225,36 @@ msgstr ""
 msgid "Key File not valid JSON."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3907
-#: classes/amazon-s3-and-cloudfront.php:3921
-#: classes/amazon-s3-and-cloudfront.php:3930
+#: classes/amazon-s3-and-cloudfront.php:3915
+#: classes/amazon-s3-and-cloudfront.php:3929
+#: classes/amazon-s3-and-cloudfront.php:3938
 msgctxt "missing form field"
 msgid " not provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3973
+#: classes/amazon-s3-and-cloudfront.php:3981
 msgctxt "Show the media library tab"
 msgid "Media Library"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3974
+#: classes/amazon-s3-and-cloudfront.php:3982
 msgctxt "Show the addons tab"
 msgid "Addons"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3975
+#: classes/amazon-s3-and-cloudfront.php:3983
 msgctxt "Show the support tab"
 msgid "Support"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4151
+#: classes/amazon-s3-and-cloudfront.php:4159
 #, php-format
 msgid ""
 "<strong>WP Offload Media</strong> &mdash; The file %s has been given %s "
 "permissions in the bucket."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4170
+#: classes/amazon-s3-and-cloudfront.php:4178
 msgid ""
 "<strong>WP Offload Media Requirement Missing</strong> &mdash; Looks like you "
 "don't have an image manipulation library installed on this server and "
@@ -262,7 +262,7 @@ msgid ""
 "Please setup GD or ImageMagick."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4194
+#: classes/amazon-s3-and-cloudfront.php:4202
 #, php-format
 msgid ""
 "<strong>Missing Table</strong> &mdash; One or more required database tables "
@@ -270,18 +270,18 @@ msgid ""
 "details. %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5016
+#: classes/amazon-s3-and-cloudfront.php:5024
 #, php-format
 msgid ""
 "<a href=\"%s\">Define your access keys</a> to enable write access to the "
 "bucket"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5023
+#: classes/amazon-s3-and-cloudfront.php:5031
 msgid "Quick Start Guide"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5025
+#: classes/amazon-s3-and-cloudfront.php:5033
 #, php-format
 msgid ""
 "Looks like we don't have write access to this bucket. It's likely that the "
@@ -290,7 +290,7 @@ msgid ""
 "correctly."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5027
+#: classes/amazon-s3-and-cloudfront.php:5035
 #, php-format
 msgid ""
 "Looks like we don't have access to the buckets. It's likely that the user "
@@ -298,39 +298,39 @@ msgid ""
 "Please see our %s for instructions on setting up permissions correctly."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5195
+#: classes/amazon-s3-and-cloudfront.php:5203
 msgid "WP Offload Media Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5196
+#: classes/amazon-s3-and-cloudfront.php:5204
 msgid ""
 "WP Offload Media Lite and WP Offload Media cannot both be active. We've "
 "automatically deactivated WP Offload Media Lite."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5198
+#: classes/amazon-s3-and-cloudfront.php:5206
 msgid "WP Offload Media Lite Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5199
+#: classes/amazon-s3-and-cloudfront.php:5207
 msgid ""
 "WP Offload Media Lite and WP Offload Media cannot both be active. We've "
 "automatically deactivated WP Offload Media."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5253
+#: classes/amazon-s3-and-cloudfront.php:5261
 msgid "More&nbsp;info&nbsp;&raquo;"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5333
+#: classes/amazon-s3-and-cloudfront.php:5341
 msgid "this doc"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5335
+#: classes/amazon-s3-and-cloudfront.php:5343
 msgid "WP Offload Media Feature Removed"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5336
+#: classes/amazon-s3-and-cloudfront.php:5344
 #, php-format
 msgid ""
 "You had the \"Always non-SSL\" option selected in your settings, but we've "
@@ -341,68 +341,68 @@ msgid ""
 "to the old behavior."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5371
+#: classes/amazon-s3-and-cloudfront.php:5379
 msgid "Offload"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5475
+#: classes/amazon-s3-and-cloudfront.php:5483
 msgid "No"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5480
+#: classes/amazon-s3-and-cloudfront.php:5488
 msgctxt "Storage provider key name"
 msgid "Storage Provider"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5481
+#: classes/amazon-s3-and-cloudfront.php:5489
 msgctxt "Storage provider name"
 msgid "Storage Provider"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5482
+#: classes/amazon-s3-and-cloudfront.php:5490
 msgctxt "Bucket name"
 msgid "Bucket"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5483
+#: classes/amazon-s3-and-cloudfront.php:5491
 msgctxt "Path to file in bucket"
 msgid "Path"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5484
+#: classes/amazon-s3-and-cloudfront.php:5492
 msgctxt "Location of bucket"
 msgid "Region"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5485
+#: classes/amazon-s3-and-cloudfront.php:5493
 msgctxt "Access control list of the file in bucket"
 msgid "Access"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5486
+#: classes/amazon-s3-and-cloudfront.php:5494
 msgid "URL"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5487
+#: classes/amazon-s3-and-cloudfront.php:5495
 msgctxt "Whether or not metadata has been verified"
 msgid "Verified"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5740
+#: classes/amazon-s3-and-cloudfront.php:5748
 msgid "Assets Pull"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5741
+#: classes/amazon-s3-and-cloudfront.php:5749
 msgid ""
 "An addon for WP Offload Media to serve your site's JS, CSS, and other "
 "enqueued assets from Amazon CloudFront or another CDN."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5745
+#: classes/amazon-s3-and-cloudfront.php:5753
 msgid "Feature"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5791
+#: classes/amazon-s3-and-cloudfront.php:5799
 #, php-format
 msgid ""
 "<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of "
@@ -413,7 +413,7 @@ msgid ""
 "plugin, it should be safe to deactivate and delete it. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:5823
+#: classes/amazon-s3-and-cloudfront.php:5831
 #, php-format
 msgid ""
 "<strong>WP Offload Media Settings Moved</strong> &mdash; You now define your "

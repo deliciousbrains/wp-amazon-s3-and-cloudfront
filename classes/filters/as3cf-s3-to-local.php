@@ -22,6 +22,8 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		add_filter( 'as3cf_filter_post_provider_to_local', array( $this, 'filter_post' ) );
 		// Widgets
 		add_filter( 'widget_update_callback', array( $this, 'filter_widget_save' ), 10, 4 );
+		// Srcset handling
+		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'image_file_matches_image_meta' ), 10, 4 );
 	}
 
 	/**
@@ -214,5 +216,26 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 */
 	protected function pre_replace_content( $content ) {
 		return $content;
+	}
+
+	/**
+	 * Determines if the image meta data is for the image source file.
+	 *
+	 * @handles wp_image_file_matches_image_meta
+	 *
+	 * @param bool   $match
+	 * @param string $image_location
+	 * @param array  $image_meta
+	 * @param int    $attachment_id
+	 *
+	 * @return bool
+	 */
+	public function image_file_matches_image_meta( $match, $image_location, $image_meta, $attachment_id ) {
+		// If already matched or the URL is local, there's nothing for us to do.
+		if ( $match || ! $this->url_needs_replacing( $image_location ) ) {
+			return $match;
+		}
+
+		return $this->attachment_id_matches_src( $attachment_id, $image_location );
 	}
 }
