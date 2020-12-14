@@ -31,6 +31,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\PubSub\Topic;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\ConnectionInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\IamBucket;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
@@ -268,6 +269,95 @@ class Bucket
         $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
         $response = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data])->upload();
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
+    }
+    /**
+     * Asynchronously uploads an object.
+     *
+     * Please note this method does not support resumable or streaming uploads.
+     *
+     * Example:
+     * ```
+     * $promise = $bucket->uploadAsync('Lorem Ipsum', ['name' => 'keyToData']);
+     * $object = $promise->wait();
+     * ```
+     *
+     * ```
+     * // Upload multiple objects to a bucket asynchronously.
+     * $promises = [];
+     * $objects = ['key1' => 'Lorem', 'key2' => 'Ipsum', 'key3' => 'Gypsum'];
+     *
+     * foreach ($objects as $k => $v) {
+     *     $promises[] = $bucket->uploadAsync($v, ['name' => $k])
+     *         ->then(function (StorageObject $object) {
+     *             echo $object->name() . PHP_EOL;
+     *         }, function(\Exception $e) {
+     *             throw new Exception('An error has occurred in the matrix.', null, $e);
+     *         });
+     * }
+     *
+     * foreach ($promises as $promise) {
+     *     $promise->wait();
+     * }
+     * ```
+     *
+     * @see https://cloud.google.com/storage/docs/json_api/v1/objects/insert Objects insert API documentation.
+     * @see https://cloud.google.com/storage/docs/encryption#customer-supplied Customer-supplied encryption keys.
+     * @see https://github.com/google/php-crc32 crc32c PHP extension for hardware-accelerated validation hashes.
+     * @see https://github.com/guzzle/promises Learn more about Guzzle Promises
+     *
+     * @param string|resource|StreamInterface|null $data The data to be uploaded.
+     * @param array $options [optional] {
+     *     Configuration options.
+     *
+     *     @type string $name The name of the destination. Required when data is
+     *           of type string or null.
+     *     @type bool|string $validate Indicates whether or not validation will
+     *           be applied using md5 or crc32c hashing functionality. If
+     *           enabled, and the calculated hash does not match that of the
+     *           upstream server, the upload will be rejected. Available options
+     *           are `true`, `false`, `md5` and `crc32`. If true, either md5 or
+     *           crc32c will be chosen based on your platform. If false, no
+     *           validation hash will be sent. Choose either `md5` or `crc32` to
+     *           force a hash method regardless of performance implications. In
+     *           PHP versions earlier than 7.4, performance will be very
+     *           adversely impacted by using crc32c unless you install the
+     *           `crc32c` PHP extension. **Defaults to** `true`.ß
+     *     @type string $predefinedAcl Predefined ACL to apply to the object.
+     *           Acceptable values include, `"authenticatedRead"`,
+     *           `"bucketOwnerFullControl"`, `"bucketOwnerRead"`, `"private"`,
+     *           `"projectPrivate"`, and `"publicRead"`.
+     *     @type array $metadata The full list of available options are outlined
+     *           at the [JSON API docs](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request-body).
+     *     @type array $metadata.metadata User-provided metadata, in key/value pairs.
+     *     @type string $encryptionKey A base64 encoded AES-256 customer-supplied
+     *           encryption key. If you would prefer to manage encryption
+     *           utilizing the Cloud Key Management Service (KMS) please use the
+     *           `$metadata.kmsKeyName` setting. Please note if using KMS the
+     *           key ring must use the same location as the bucket.
+     *     @type string $encryptionKeySHA256 Base64 encoded SHA256 hash of the
+     *           customer-supplied encryption key. This value will be calculated
+     *           from the `encryptionKey` on your behalf if not provided, but
+     *           for best performance it is recommended to pass in a cached
+     *           version of the already calculated SHA.
+     * }
+     * @return PromiseInterface<StorageObject>
+     * @throws \InvalidArgumentException
+     * @experimental The experimental flag means that while we believe this method
+     *      or class is ready for use, it may change before release in backwards-
+     *      incompatible ways. Please use with caution, and test thoroughly when
+     *      upgrading.
+     */
+    public function uploadAsync($data, array $options = [])
+    {
+        if ($this->isObjectNameRequired($data) && !isset($options['name'])) {
+            throw new \InvalidArgumentException('A name is required when data is of type string or null.');
+        }
+        $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
+        $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
+        $promise = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => false])->uploadAsync();
+        return $promise->then(function (array $response) use($encryptionKey, $encryptionKeySHA256) {
+            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
+        });
     }
     /**
      * Get a resumable uploader which can provide greater control over the
@@ -1171,6 +1261,86 @@ class Bucket
         $signingHelper = $this->pluck('helper', $options, false) ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper::getHelper();
         $resource = sprintf('/%s', $this->identity['bucket']);
         return $signingHelper->sign($this->connection, $expires, $resource, null, $options);
+    }
+    /**
+     * Create a signed upload policy for uploading objects.
+     *
+     * This method generates and signs a policy document. You can use policy
+     * documents to allow visitors to a website to upload files to Google Cloud
+     * Storage without giving them direct write access.
+     *
+     * Google Cloud PHP does not support v2 post policies.
+     *
+     * Example:
+     * ```
+     * $policy = $bucket->generateSignedPostPolicyV4($objectName, new \DateTime('tomorrow'), [
+     *     'conditions' => [
+     *         ['content-length-range', 0, 255]
+     *     ],
+     *     'fields' => [
+     *          'x-goog-meta-hello' => 'world',
+     *          'success_action_redirect' => 'https://google.com'
+     *     ]
+     * ]);
+     *
+     * echo '<form action="' . $policy['url'] . '" method="post" enctype="multipart/form-data">';
+     * foreach ($policy['fields'] as $name => $value) {
+     *     echo '<input type="hidden" name="' . $name . '" value="' . $value . '">';
+     * }
+     *
+     * echo 'Upload a file!<br>';
+     * echo '<input type="file" name="file">';
+     * echo '<button type="submit">Submit!</button>';
+     * echo '</form>';
+     * ```
+     *
+     * @see https://cloud.google.com/storage/docs/xml-api/post-object#policydocument Policy Documents
+     *
+     * @param string $objectName The path to the file in Google Cloud Storage,
+     *        relative to the bucket.
+     * @param Timestamp|\DateTimeInterface|int $expires Specifies when the URL
+     *        will expire. May provide an instance of {@see Google\Cloud\Core\Timestamp},
+     *        [http://php.net/datetimeimmutable](`\DateTimeImmutable`), or a
+     *        UNIX timestamp as an integer.
+     * @param array $options [optional] {
+     *     Configuration options
+     *
+     *     @type string $bucketBoundHostname The hostname for the bucket, for
+     *           instance `cdn.example.com`. May be used for Google Cloud Load
+     *           Balancers or for custom bucket CNAMEs. **Defaults to**
+     *           `storage.googleapis.com`.
+     *     @type array $conditions A list of arrays containing policy matching
+     *           conditions (e.g. `eq`, `starts-with`, `content-length-range`).
+     *     @type array $fields Additional form fields (do not include
+     *           `x-goog-signature`, `file`, `policy` or fields with an
+     *           `x-ignore` prefix), given as key/value pairs.
+     *     @type bool $forceOpenssl If true, OpenSSL will be used regardless of
+     *           whether phpseclib is available. **Defaults to** `false`.
+     *     @type array $keyFile Keyfile data to use in place of the keyfile with
+     *           which the client was constructed. If `$options.keyFilePath` is
+     *           set, this option is ignored.
+     *     @type string $keyFilePath A path to a valid Keyfile to use in place
+     *           of the keyfile with which the client was constructed.
+     *     @type string $scheme Either `http` or `https`. Only used if a custom
+     *           hostname is provided via `$options.bucketBoundHostname`. If a
+     *           custom bucketBoundHostname is provided, **defaults to** `http`.
+     *           In all other cases, **defaults to** `https`.
+     *     @type string|array $scopes One or more authentication scopes to be
+     *           used with a key file. This option is ignored unless
+     *           `$options.keyFile` or `$options.keyFilePath` is set.
+     *     @type bool $virtualHostedStyle If `true`, URL will be of form
+     *           `mybucket.storage.googleapis.com`. If `false`,
+     *           `storage.googleapis.com/mybucket`. **Defaults to** `false`.
+     * }
+     * @return array An associative array, containing (string) `uri` and
+     *        (array) `fields` keys.
+     */
+    public function generateSignedPostPolicyV4($objectName, $expires, array $options = [])
+    {
+        // May be overridden for testing.
+        $signingHelper = $this->pluck('helper', $options, false) ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper::getHelper();
+        $resource = sprintf('/%s/%s', $this->identity['bucket'], $objectName);
+        return $signingHelper->v4PostPolicy($this->connection, $expires, $resource, $options);
     }
     /**
      * Determines if an object name is required.

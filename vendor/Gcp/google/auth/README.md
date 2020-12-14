@@ -2,6 +2,7 @@
 
 <dl>
   <dt>Homepage</dt><dd><a href="http://www.github.com/google/google-auth-library-php">http://www.github.com/google/google-auth-library-php</a></dd>
+  <dt>Reference Docs</dt><dd><a href="https://googleapis.github.io/google-auth-library-php/master/">https://googleapis.github.io/google-auth-library-php/master/</a></dd>
   <dt>Authors</dt>
     <dd><a href="mailto:temiola@google.com">Tim Emiola</a></dd>
     <dd><a href="mailto:stanleycheung@google.com">Stanley Cheung</a></dd>

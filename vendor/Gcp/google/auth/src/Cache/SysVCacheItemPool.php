@@ -53,16 +53,15 @@ class SysVCacheItemPool implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cac
     /**
      * Create a SystemV shared memory based CacheItemPool.
      *
-     * @param array $options [optional] {
-     *     Configuration options.
-     *
-     *     @type int $variableKey The variable key for getting the data from
-     *           the shared memory. **Defaults to** 1.
-     *     @type string $proj The project identifier for ftok. This needs to
-     *           be a one character string. **Defaults to** 'A'.
-     *     @type int $memsize The memory size in bytes for shm_attach.
-     *           **Defaults to** 10000.
-     *     @type int $perm The permission for shm_attach. **Defaults to** 0600.
+     * @param array $options [optional] Configuration options.
+     * @param int $options.variableKey The variable key for getting the data from
+     *        the shared memory. **Defaults to** 1.
+     * @param $options.proj string The project identifier for ftok. This needs to
+     *        be a one character string. **Defaults to** 'A'.
+     * @param $options.memsize int The memory size in bytes for shm_attach.
+     *        **Defaults to** 10000.
+     * @param $options.perm int The permission for shm_attach. **Defaults to**
+     *        0600.
      */
     public function __construct($options = [])
     {
@@ -74,9 +73,6 @@ class SysVCacheItemPool implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cac
         $this->deferredItems = [];
         $this->sysvKey = ftok(__FILE__, $this->options['proj']);
     }
-    /**
-     * {@inheritdoc}
-     */
     public function getItem($key)
     {
         $this->loadItems();

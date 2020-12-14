@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -26,5 +27,8 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog;
  */
 interface ResettableInterface
 {
+    /**
+     * @return void
+     */
     public function reset();
 }

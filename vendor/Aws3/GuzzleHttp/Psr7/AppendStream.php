@@ -54,7 +54,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     }
     public function getContents()
     {
-        return copy_to_string($this);
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToString($this);
     }
     /**
      * Closes each attached stream.
@@ -85,6 +85,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
             $stream->detach();
         }
         $this->streams = [];
+        return null;
     }
     public function tell()
     {

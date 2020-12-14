@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -52,18 +53,18 @@ class DeduplicationHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog
     /**
      * @param HandlerInterface $handler            Handler.
      * @param string           $deduplicationStore The file/path where the deduplication log should be kept
-     * @param int              $deduplicationLevel The minimum logging level for log records to be looked at for deduplication purposes
+     * @param string|int       $deduplicationLevel The minimum logging level for log records to be looked at for deduplication purposes
      * @param int              $time               The period (in seconds) during which duplicate entries should be suppressed after a given log is sent through
      * @param bool             $bubble             Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler, $deduplicationStore = null, $deduplicationLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, $time = 60, $bubble = true)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler, ?string $deduplicationStore = null, $deduplicationLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, int $time = 60, bool $bubble = true)
     {
         parent::__construct($handler, 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble, false);
         $this->deduplicationStore = $deduplicationStore === null ? sys_get_temp_dir() . '/monolog-dedup-' . substr(md5(__FILE__), 0, 20) . '.log' : $deduplicationStore;
         $this->deduplicationLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($deduplicationLevel);
         $this->time = $time;
     }
-    public function flush()
+    public function flush() : void
     {
         if ($this->bufferSize === 0) {
             return;
@@ -86,7 +87,7 @@ class DeduplicationHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog
             $this->collectLogs();
         }
     }
-    private function isDuplicate(array $record)
+    private function isDuplicate(array $record) : bool
     {
         if (!file_exists($this->deduplicationStore)) {
             return false;
@@ -109,18 +110,21 @@ class DeduplicationHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog
         }
         return false;
     }
-    private function collectLogs()
+    private function collectLogs() : void
     {
         if (!file_exists($this->deduplicationStore)) {
-            return false;
+            return;
         }
         $handle = fopen($this->deduplicationStore, 'rw+');
+        if (!$handle) {
+            throw new \RuntimeException('Failed to open file for reading and writing: ' . $this->deduplicationStore);
+        }
         flock($handle, LOCK_EX);
-        $validLogs = array();
+        $validLogs = [];
         $timestampValidity = time() - $this->time;
         while (!feof($handle)) {
             $log = fgets($handle);
-            if (substr($log, 0, 10) >= $timestampValidity) {
+            if ($log && substr($log, 0, 10) >= $timestampValidity) {
                 $validLogs[] = $log;
             }
         }
@@ -133,7 +137,7 @@ class DeduplicationHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog
         fclose($handle);
         $this->gc = false;
     }
-    private function appendRecord(array $record)
+    private function appendRecord(array $record) : void
     {
         file_put_contents($this->deduplicationStore, $record['datetime']->getTimestamp() . ':' . $record['level_name'] . ':' . preg_replace('{[\\r\\n].*}', '', $record['message']) . "\n", FILE_APPEND);
     }

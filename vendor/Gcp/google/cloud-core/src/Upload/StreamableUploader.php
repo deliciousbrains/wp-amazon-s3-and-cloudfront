@@ -19,6 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
 /**
  * Uploader that is a special case of the ResumableUploader where we can write
@@ -61,5 +62,21 @@ class StreamableUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cl
         // reset the buffer with the remaining contents
         $this->rangeStart += $writeSize;
         return json_decode($response->getBody(), true);
+    }
+    /**
+     * Currently only the MultiPartUploader supports async.
+     *
+     * Any calls to this will throw a generic Google Exception.
+     *
+     * @return PromiseInterface
+     * @throws GoogleException
+     * @experimental The experimental flag means that while we believe this method
+     *      or class is ready for use, it may change before release in backwards-
+     *      incompatible ways. Please use with caution, and test thoroughly when
+     *      upgrading.
+     */
+    public function uploadAsync()
+    {
+        throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('Currently only the MultiPartUploader supports async.');
     }
 }

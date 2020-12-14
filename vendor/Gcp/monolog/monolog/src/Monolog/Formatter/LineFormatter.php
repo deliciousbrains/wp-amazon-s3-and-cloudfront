@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -21,43 +22,43 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
  */
 class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter
 {
-    const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n";
+    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n";
     protected $format;
     protected $allowInlineLineBreaks;
     protected $ignoreEmptyContextAndExtra;
     protected $includeStacktraces;
     /**
-     * @param string $format                     The format of the message
-     * @param string $dateFormat                 The format of the timestamp: one supported by DateTime::format
-     * @param bool   $allowInlineLineBreaks      Whether to allow inline line breaks in log entries
-     * @param bool   $ignoreEmptyContextAndExtra
+     * @param string|null $format                     The format of the message
+     * @param string|null $dateFormat                 The format of the timestamp: one supported by DateTime::format
+     * @param bool        $allowInlineLineBreaks      Whether to allow inline line breaks in log entries
+     * @param bool        $ignoreEmptyContextAndExtra
      */
-    public function __construct($format = null, $dateFormat = null, $allowInlineLineBreaks = false, $ignoreEmptyContextAndExtra = false)
+    public function __construct(?string $format = null, ?string $dateFormat = null, bool $allowInlineLineBreaks = false, bool $ignoreEmptyContextAndExtra = false)
     {
-        $this->format = $format ?: static::SIMPLE_FORMAT;
+        $this->format = $format === null ? static::SIMPLE_FORMAT : $format;
         $this->allowInlineLineBreaks = $allowInlineLineBreaks;
         $this->ignoreEmptyContextAndExtra = $ignoreEmptyContextAndExtra;
         parent::__construct($dateFormat);
     }
-    public function includeStacktraces($include = true)
+    public function includeStacktraces(bool $include = true)
     {
         $this->includeStacktraces = $include;
         if ($this->includeStacktraces) {
             $this->allowInlineLineBreaks = true;
         }
     }
-    public function allowInlineLineBreaks($allow = true)
+    public function allowInlineLineBreaks(bool $allow = true)
     {
         $this->allowInlineLineBreaks = $allow;
     }
-    public function ignoreEmptyContextAndExtra($ignore = true)
+    public function ignoreEmptyContextAndExtra(bool $ignore = true)
     {
         $this->ignoreEmptyContextAndExtra = $ignore;
     }
     /**
      * {@inheritdoc}
      */
-    public function format(array $record)
+    public function format(array $record) : string
     {
         $vars = parent::format($record);
         $output = $this->format;
@@ -94,7 +95,7 @@ class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         }
         return $output;
     }
-    public function formatBatch(array $records)
+    public function formatBatch(array $records) : string
     {
         $message = '';
         foreach ($records as $record) {
@@ -102,29 +103,24 @@ class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         }
         return $message;
     }
-    public function stringify($value)
+    public function stringify($value) : string
     {
         return $this->replaceNewlines($this->convertToString($value));
     }
-    protected function normalizeException($e)
+    /**
+     * @suppress PhanParamSignatureMismatch
+     */
+    protected function normalizeException(\Throwable $e, int $depth = 0) : string
     {
-        // TODO 2.0 only check for Throwable
-        if (!$e instanceof \Exception && !$e instanceof \Throwable) {
-            throw new \InvalidArgumentException('Exception/Throwable expected, got ' . gettype($e) . ' / ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e));
-        }
-        $previousText = '';
+        $str = $this->formatException($e);
         if ($previous = $e->getPrevious()) {
             do {
-                $previousText .= ', ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($previous) . '(code: ' . $previous->getCode() . '): ' . $previous->getMessage() . ' at ' . $previous->getFile() . ':' . $previous->getLine();
+                $str .= "\n[previous exception] " . $this->formatException($previous);
             } while ($previous = $previous->getPrevious());
-        }
-        $str = '[object] (' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e) . '(code: ' . $e->getCode() . '): ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine() . $previousText . ')';
-        if ($this->includeStacktraces) {
-            $str .= "\n[stacktrace]\n" . $e->getTraceAsString() . "\n";
         }
         return $str;
     }
-    protected function convertToString($data)
+    protected function convertToString($data) : string
     {
         if (null === $data || is_bool($data)) {
             return var_export($data, true);
@@ -132,12 +128,9 @@ class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if (is_scalar($data)) {
             return (string) $data;
         }
-        if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
-            return $this->toJson($data, true);
-        }
-        return str_replace('\\/', '/', $this->toJson($data, true));
+        return $this->toJson($data, true);
     }
-    protected function replaceNewlines($str)
+    protected function replaceNewlines(string $str) : string
     {
         if ($this->allowInlineLineBreaks) {
             if (0 === strpos($str, '{')) {
@@ -145,6 +138,30 @@ class LineFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
             }
             return $str;
         }
-        return str_replace(array("\r\n", "\r", "\n"), ' ', $str);
+        return str_replace(["\r\n", "\r", "\n"], ' ', $str);
+    }
+    private function formatException(\Throwable $e) : string
+    {
+        $str = '[object] (' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($e) . '(code: ' . $e->getCode();
+        if ($e instanceof \SoapFault) {
+            if (isset($e->faultcode)) {
+                $str .= ' faultcode: ' . $e->faultcode;
+            }
+            if (isset($e->faultactor)) {
+                $str .= ' faultactor: ' . $e->faultactor;
+            }
+            if (isset($e->detail)) {
+                if (is_string($e->detail)) {
+                    $str .= ' detail: ' . $e->detail;
+                } elseif (is_object($e->detail) || is_array($e->detail)) {
+                    $str .= ' detail: ' . $this->toJson($e->detail, true);
+                }
+            }
+        }
+        $str .= '): ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine() . ')';
+        if ($this->includeStacktraces) {
+            $str .= "\n[stacktrace]\n" . $e->getTraceAsString() . "\n";
+        }
+        return $str;
     }
 }

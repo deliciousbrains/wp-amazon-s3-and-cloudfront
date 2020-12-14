@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -29,20 +30,19 @@ abstract class MemoryProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\
      * @param bool $realUsage     Set this to true to get the real size of memory allocated from system.
      * @param bool $useFormatting If true, then format memory size to human readable string (MB, KB, B depending on size)
      */
-    public function __construct($realUsage = true, $useFormatting = true)
+    public function __construct(bool $realUsage = true, bool $useFormatting = true)
     {
-        $this->realUsage = (bool) $realUsage;
-        $this->useFormatting = (bool) $useFormatting;
+        $this->realUsage = $realUsage;
+        $this->useFormatting = $useFormatting;
     }
     /**
      * Formats bytes into a human readable string if $this->useFormatting is true, otherwise return $bytes as is
      *
      * @param  int        $bytes
-     * @return string|int Formatted string if $this->useFormatting is true, otherwise return $bytes as is
+     * @return string|int Formatted string if $this->useFormatting is true, otherwise return $bytes as int
      */
-    protected function formatBytes($bytes)
+    protected function formatBytes(int $bytes)
     {
-        $bytes = (int) $bytes;
         if (!$this->useFormatting) {
             return $bytes;
         }

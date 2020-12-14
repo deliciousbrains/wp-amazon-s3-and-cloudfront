@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -21,7 +22,7 @@ class ScalarFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Form
     /**
      * {@inheritdoc}
      */
-    public function format(array $record)
+    public function format(array $record) : array
     {
         foreach ($record as $key => $value) {
             $record[$key] = $this->normalizeValue($value);

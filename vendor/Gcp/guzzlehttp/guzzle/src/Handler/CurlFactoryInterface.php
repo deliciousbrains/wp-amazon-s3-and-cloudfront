@@ -11,16 +11,13 @@ interface CurlFactoryInterface
      * @param RequestInterface $request Request
      * @param array            $options Transfer options
      *
-     * @return EasyHandle
      * @throws \RuntimeException when an option cannot be applied
      */
-    public function create(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options);
+    public function create(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : EasyHandle;
     /**
      * Release an easy handle, allowing it to be reused or closed.
      *
      * This function must call unset on the easy handle's "handle" property.
-     *
-     * @param EasyHandle $easy
      */
-    public function release(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy);
+    public function release(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy) : void;
 }

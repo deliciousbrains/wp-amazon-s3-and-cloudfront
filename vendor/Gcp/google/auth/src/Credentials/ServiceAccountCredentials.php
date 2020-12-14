@@ -18,7 +18,9 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ProjectIdProviderInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ServiceAccountSignerTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface;
 use InvalidArgumentException;
@@ -55,7 +57,7 @@ use InvalidArgumentException;
  *
  *   $res = $client->get('myproject/taskqueues/myqueue');
  */
-class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface
+class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ProjectIdProviderInterface
 {
     use ServiceAccountSignerTrait;
     /**
@@ -64,6 +66,20 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
      * @var OAuth2
      */
     protected $auth;
+    /**
+     * The quota project associated with the JSON credentials
+     *
+     * @var string
+     */
+    protected $quotaProject;
+    /*
+     * @var string|null
+     */
+    protected $projectId;
+    /*
+     * @var array|null
+     */
+    private $lastReceivedJwtAccessToken;
     /**
      * Create a new ServiceAccountCredentials.
      *
@@ -92,6 +108,9 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
         if (!array_key_exists('private_key', $jsonKey)) {
             throw new \InvalidArgumentException('json key is missing the private_key field');
         }
+        if (array_key_exists('quota_project_id', $jsonKey)) {
+            $this->quotaProject = (string) $jsonKey['quota_project_id'];
+        }
         if ($scope && $targetAudience) {
             throw new \InvalidArgumentException('Scope and targetAudience cannot both be supplied');
         }
@@ -100,6 +119,7 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
             $additionalClaims = ['target_audience' => $targetAudience];
         }
         $this->auth = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\OAuth2(['audience' => self::TOKEN_CREDENTIAL_URI, 'issuer' => $jsonKey['client_email'], 'scope' => $scope, 'signingAlgorithm' => 'RS256', 'signingKey' => $jsonKey['private_key'], 'sub' => $sub, 'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI, 'additionalClaims' => $additionalClaims]);
+        $this->projectId = isset($jsonKey['project_id']) ? $jsonKey['project_id'] : null;
     }
     /**
      * @param callable $httpHandler
@@ -130,7 +150,21 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
      */
     public function getLastReceivedToken()
     {
-        return $this->auth->getLastReceivedToken();
+        // If self-signed JWTs are being used, fetch the last received token
+        // from memory. Else, fetch it from OAuth2
+        return $this->useSelfSignedJwt() ? $this->lastReceivedJwtAccessToken : $this->auth->getLastReceivedToken();
+    }
+    /**
+     * Get the project ID from the service account keyfile.
+     *
+     * Returns null if the project ID does not exist in the keyfile.
+     *
+     * @param callable $httpHandler Not used by this credentials type.
+     * @return string|null
+     */
+    public function getProjectId(callable $httpHandler = null)
+    {
+        return $this->projectId;
     }
     /**
      * Updates metadata with the authorization token.
@@ -138,20 +172,23 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
      * @param array $metadata metadata hashmap
      * @param string $authUri optional auth uri
      * @param callable $httpHandler callback which delivers psr7 request
-     *
      * @return array updated metadata hashmap
      */
     public function updateMetadata($metadata, $authUri = null, callable $httpHandler = null)
     {
         // scope exists. use oauth implementation
-        $scope = $this->auth->getScope();
-        if (!is_null($scope)) {
+        if (!$this->useSelfSignedJwt()) {
             return parent::updateMetadata($metadata, $authUri, $httpHandler);
         }
         // no scope found. create jwt with the auth uri
         $credJson = array('private_key' => $this->auth->getSigningKey(), 'client_email' => $this->auth->getIssuer());
         $jwtCreds = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountJwtAccessCredentials($credJson);
-        return $jwtCreds->updateMetadata($metadata, $authUri, $httpHandler);
+        $updatedMetadata = $jwtCreds->updateMetadata($metadata, $authUri, $httpHandler);
+        if ($lastReceivedToken = $jwtCreds->getLastReceivedToken()) {
+            // Keep self-signed JWTs in memory as the last received token
+            $this->lastReceivedJwtAccessToken = $lastReceivedToken;
+        }
+        return $updatedMetadata;
     }
     /**
      * @param string $sub an email address account to impersonate, in situations when
@@ -172,5 +209,18 @@ class ServiceAccountCredentials extends \DeliciousBrains\WP_Offload_Media\Gcp\Go
     public function getClientName(callable $httpHandler = null)
     {
         return $this->auth->getIssuer();
+    }
+    /**
+     * Get the quota project used for this API request
+     *
+     * @return string|null
+     */
+    public function getQuotaProject()
+    {
+        return $this->quotaProject;
+    }
+    private function useSelfSignedJwt()
+    {
+        return is_null($this->auth->getScope());
     }
 }

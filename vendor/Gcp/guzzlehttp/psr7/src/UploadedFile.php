@@ -61,6 +61,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
      * Depending on the value set file or stream variable
      *
      * @param mixed $streamOrFile
+     *
      * @throws InvalidArgumentException
      */
     private function setStreamOrFile($streamOrFile)
@@ -77,6 +78,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
     }
     /**
      * @param int $error
+     *
      * @throws InvalidArgumentException
      */
     private function setError($error)
@@ -91,6 +93,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
     }
     /**
      * @param int $size
+     *
      * @throws InvalidArgumentException
      */
     private function setSize($size)
@@ -118,6 +121,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
     }
     /**
      * @param string|null $clientFilename
+     *
      * @throws InvalidArgumentException
      */
     private function setClientFilename($clientFilename)
@@ -129,6 +133,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
     }
     /**
      * @param string|null $clientMediaType
+     *
      * @throws InvalidArgumentException
      */
     private function setClientMediaType($clientMediaType)
@@ -168,6 +173,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
     }
     /**
      * {@inheritdoc}
+     *
      * @throws RuntimeException if the upload was not successful.
      */
     public function getStream()
@@ -183,7 +189,9 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
      *
      * @see http://php.net/is_uploaded_file
      * @see http://php.net/move_uploaded_file
+     *
      * @param string $targetPath Path to which to move the uploaded file.
+     *
      * @throws RuntimeException if the upload was not successful.
      * @throws InvalidArgumentException if the $path specified is invalid.
      * @throws RuntimeException on any error during the move operation, or on
@@ -198,7 +206,7 @@ class UploadedFile implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mes
         if ($this->file) {
             $this->moved = php_sapi_name() == 'cli' ? rename($this->file, $targetPath) : move_uploaded_file($this->file, $targetPath);
         } else {
-            copy_to_stream($this->getStream(), new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
+            \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::copyToStream($this->getStream(), new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
             $this->moved = true;
         }
         if (false === $this->moved) {

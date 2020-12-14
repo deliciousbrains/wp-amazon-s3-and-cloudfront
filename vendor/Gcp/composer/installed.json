@@ -1,26 +1,26 @@
 [
     {
         "name": "firebase\/php-jwt",
-        "version": "v5.1.0",
-        "version_normalized": "5.1.0.0",
+        "version": "v5.2.0",
+        "version_normalized": "5.2.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/firebase\/php-jwt.git",
-            "reference": "4566062c68f76f43d44f1643f4970fe89757d4c6"
+            "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/firebase\/php-jwt\/zipball\/4566062c68f76f43d44f1643f4970fe89757d4c6",
-            "reference": "4566062c68f76f43d44f1643f4970fe89757d4c6",
+            "url": "https:\/\/api.github.com\/repos\/firebase\/php-jwt\/zipball\/feb0e820b8436873675fd3aca04f3728eb2185cb",
+            "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
         "require-dev": {
-            "phpunit\/phpunit": "^4.8|^5"
+            "phpunit\/phpunit": ">=4.8 <=9"
         },
-        "time": "2020-02-24T23:15:03+00:00",
+        "time": "2020-03-25T18:49:23+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -45,43 +45,47 @@
             }
         ],
         "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
-        "homepage": "https:\/\/github.com\/firebase\/php-jwt"
+        "homepage": "https:\/\/github.com\/firebase\/php-jwt",
+        "keywords": [
+            "jwt",
+            "php"
+        ]
     },
     {
         "name": "google\/auth",
-        "version": "v1.7.1",
-        "version_normalized": "1.7.1.0",
+        "version": "v1.14.3",
+        "version_normalized": "1.14.3.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-auth-library-php.git",
-            "reference": "39e243a7d8320b1889ab8bb4cd6f98f7af83c582"
+            "reference": "c1503299c779af0cbc99b43788f75930988852cf"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/39e243a7d8320b1889ab8bb4cd6f98f7af83c582",
-            "reference": "39e243a7d8320b1889ab8bb4cd6f98f7af83c582",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/c1503299c779af0cbc99b43788f75930988852cf",
+            "reference": "c1503299c779af0cbc99b43788f75930988852cf",
             "shasum": ""
         },
         "require": {
             "firebase\/php-jwt": "~2.0|~3.0|~4.0|~5.0",
-            "guzzlehttp\/guzzle": "~5.3.1|~6.0",
+            "guzzlehttp\/guzzle": "^5.3.1|^6.2.1|^7.0",
             "guzzlehttp\/psr7": "^1.2",
             "php": ">=5.4",
             "psr\/cache": "^1.0",
             "psr\/http-message": "^1.0"
         },
         "require-dev": {
-            "friendsofphp\/php-cs-fixer": "^1.11",
             "guzzlehttp\/promises": "0.1.1|^1.3",
             "kelvinmo\/simplejwt": "^0.2.5",
             "phpseclib\/phpseclib": "^2",
             "phpunit\/phpunit": "^4.8.36|^5.7",
-            "sebastian\/comparator": ">=1.2.3"
+            "sebastian\/comparator": ">=1.2.3",
+            "squizlabs\/php_codesniffer": "^3.5"
         },
         "suggest": {
             "phpseclib\/phpseclib": "May be used in place of OpenSSL for signing strings or for token management. Please require version ^2."
         },
-        "time": "2020-02-12T20:54:50+00:00",
+        "time": "2020-10-16T21:33:48+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -103,22 +107,22 @@
     },
     {
         "name": "google\/cloud-core",
-        "version": "v1.35.0",
-        "version_normalized": "1.35.0.0",
+        "version": "v1.40.0",
+        "version_normalized": "1.40.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-cloud-php-core.git",
-            "reference": "e24a49fb1df51d6cff38c97450feffae82661c2d"
+            "reference": "1f45457d796c3807bc4b19c3d7b7e89a2f59d63c"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/e24a49fb1df51d6cff38c97450feffae82661c2d",
-            "reference": "e24a49fb1df51d6cff38c97450feffae82661c2d",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/1f45457d796c3807bc4b19c3d7b7e89a2f59d63c",
+            "reference": "1f45457d796c3807bc4b19c3d7b7e89a2f59d63c",
             "shasum": ""
         },
         "require": {
             "google\/auth": "^1.6",
-            "guzzlehttp\/guzzle": "^5.3|^6.0",
+            "guzzlehttp\/guzzle": "^5.3|^6.0|^7.0",
             "guzzlehttp\/promises": "^1.3",
             "guzzlehttp\/psr7": "^1.2",
             "monolog\/monolog": "^1.1|^2.0",
@@ -139,7 +143,7 @@
             "opis\/closure": "May be used to serialize closures to process jobs in the batch daemon. Please require version ^3.",
             "symfony\/lock": "Required for the Spanner cached based session pool. Please require the following commit: 3.3.x-dev#1ba6ac9"
         },
-        "time": "2020-02-11T23:07:13+00:00",
+        "time": "2020-10-30T21:33:33+00:00",
         "bin": [
             "bin\/google-cloud-batch"
         ],
@@ -166,21 +170,21 @@
     },
     {
         "name": "google\/cloud-storage",
-        "version": "v1.18.0",
-        "version_normalized": "1.18.0.0",
+        "version": "v1.23.0",
+        "version_normalized": "1.23.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/googleapis\/google-cloud-php-storage.git",
-            "reference": "201b69aa6f24b60718dc0bd0c1bdc6963ade0e99"
+            "reference": "42f7dfb248318aa152b4491b72279035df0d0900"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/201b69aa6f24b60718dc0bd0c1bdc6963ade0e99",
-            "reference": "201b69aa6f24b60718dc0bd0c1bdc6963ade0e99",
+            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/42f7dfb248318aa152b4491b72279035df0d0900",
+            "reference": "42f7dfb248318aa152b4491b72279035df0d0900",
             "shasum": ""
         },
         "require": {
-            "google\/cloud-core": "^1.35",
+            "google\/cloud-core": "^1.39",
             "google\/crc32": "^0.1.0"
         },
         "require-dev": {
@@ -195,7 +199,7 @@
             "google\/cloud-pubsub": "May be used to register a topic to receive bucket notifications.",
             "phpseclib\/phpseclib": "May be used in place of OpenSSL for creating signed Cloud Storage URLs. Please require version ^2."
         },
-        "time": "2020-02-11T23:07:13+00:00",
+        "time": "2020-09-08T20:52:20+00:00",
         "type": "library",
         "extra": {
             "component": {
@@ -263,39 +267,45 @@
     },
     {
         "name": "guzzlehttp\/guzzle",
-        "version": "6.5.2",
-        "version_normalized": "6.5.2.0",
+        "version": "7.2.0",
+        "version_normalized": "7.2.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/guzzle\/guzzle.git",
-            "reference": "43ece0e75098b7ecd8d13918293029e555a50f82"
+            "reference": "0aa74dfb41ae110835923ef10a9d803a22d50e79"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/43ece0e75098b7ecd8d13918293029e555a50f82",
-            "reference": "43ece0e75098b7ecd8d13918293029e555a50f82",
+            "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/0aa74dfb41ae110835923ef10a9d803a22d50e79",
+            "reference": "0aa74dfb41ae110835923ef10a9d803a22d50e79",
             "shasum": ""
         },
         "require": {
             "ext-json": "*",
-            "guzzlehttp\/promises": "^1.0",
-            "guzzlehttp\/psr7": "^1.6.1",
-            "php": ">=5.5"
+            "guzzlehttp\/promises": "^1.4",
+            "guzzlehttp\/psr7": "^1.7",
+            "php": "^7.2.5 || ^8.0",
+            "psr\/http-client": "^1.0"
+        },
+        "provide": {
+            "psr\/http-client-implementation": "1.0"
         },
         "require-dev": {
             "ext-curl": "*",
-            "phpunit\/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
+            "php-http\/client-integration-tests": "^3.0",
+            "phpunit\/phpunit": "^8.5.5 || ^9.3.5",
             "psr\/log": "^1.1"
         },
         "suggest": {
+            "ext-curl": "Required for CURL handler support",
             "ext-intl": "Required for Internationalized Domain Name (IDN) support",
             "psr\/log": "Required for using the Log middleware"
         },
-        "time": "2019-12-23T11:57:10+00:00",
+        "time": "2020-10-10T11:47:56+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "6.5-dev"
+                "dev-master": "7.1-dev"
             }
         },
         "installation-source": "dist",
@@ -316,6 +326,11 @@
                 "name": "Michael Dowling",
                 "email": "mtdowling@gmail.com",
                 "homepage": "https:\/\/github.com\/mtdowling"
+            },
+            {
+                "name": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
+                "email": "mark.sagikazar@gmail.com",
+                "homepage": "https:\/\/sagikazarmark.hu"
             }
         ],
         "description": "Guzzle is a PHP HTTP client library",
@@ -326,32 +341,52 @@
             "framework",
             "http",
             "http client",
+            "psr-18",
+            "psr-7",
             "rest",
             "web service"
+        ],
+        "funding": [
+            {
+                "url": "https:\/\/github.com\/GrahamCampbell",
+                "type": "github"
+            },
+            {
+                "url": "https:\/\/github.com\/Nyholm",
+                "type": "github"
+            },
+            {
+                "url": "https:\/\/github.com\/alexeyshockov",
+                "type": "github"
+            },
+            {
+                "url": "https:\/\/github.com\/gmponos",
+                "type": "github"
+            }
         ]
     },
     {
         "name": "guzzlehttp\/promises",
-        "version": "v1.3.1",
-        "version_normalized": "1.3.1.0",
+        "version": "1.4.0",
+        "version_normalized": "1.4.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/guzzle\/promises.git",
-            "reference": "a59da6cf61d80060647ff4d3eb2c03a2bc694646"
+            "reference": "60d379c243457e073cff02bc323a2a86cb355631"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/promises\/zipball\/a59da6cf61d80060647ff4d3eb2c03a2bc694646",
-            "reference": "a59da6cf61d80060647ff4d3eb2c03a2bc694646",
+            "url": "https:\/\/api.github.com\/repos\/guzzle\/promises\/zipball\/60d379c243457e073cff02bc323a2a86cb355631",
+            "reference": "60d379c243457e073cff02bc323a2a86cb355631",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.5.0"
+            "php": ">=5.5"
         },
         "require-dev": {
-            "phpunit\/phpunit": "^4.0"
+            "symfony\/phpunit-bridge": "^4.4 || ^5.1"
         },
-        "time": "2016-12-20T10:07:11+00:00",
+        "time": "2020-09-30T07:37:28+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -385,17 +420,17 @@
     },
     {
         "name": "guzzlehttp\/psr7",
-        "version": "1.6.1",
-        "version_normalized": "1.6.1.0",
+        "version": "1.7.0",
+        "version_normalized": "1.7.0.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/guzzle\/psr7.git",
-            "reference": "239400de7a173fe9901b9ac7c06497751f00727a"
+            "reference": "53330f47520498c0ae1f61f7e2c90f55690c06a3"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/239400de7a173fe9901b9ac7c06497751f00727a",
-            "reference": "239400de7a173fe9901b9ac7c06497751f00727a",
+            "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/53330f47520498c0ae1f61f7e2c90f55690c06a3",
+            "reference": "53330f47520498c0ae1f61f7e2c90f55690c06a3",
             "shasum": ""
         },
         "require": {
@@ -408,16 +443,16 @@
         },
         "require-dev": {
             "ext-zlib": "*",
-            "phpunit\/phpunit": "~4.8.36 || ^5.7.27 || ^6.5.8"
+            "phpunit\/phpunit": "~4.8.36 || ^5.7.27 || ^6.5.14 || ^7.5.20 || ^8.5.8 || ^9.3.10"
         },
         "suggest": {
-            "zendframework\/zend-httphandlerrunner": "Emit PSR-7 responses"
+            "laminas\/laminas-httphandlerrunner": "Emit PSR-7 responses"
         },
-        "time": "2019-07-01T23:21:34+00:00",
+        "time": "2020-09-30T07:37:11+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "1.6-dev"
+                "dev-master": "1.7-dev"
             }
         },
         "installation-source": "dist",
@@ -458,22 +493,22 @@
     },
     {
         "name": "monolog\/monolog",
-        "version": "1.25.3",
-        "version_normalized": "1.25.3.0",
+        "version": "2.1.1",
+        "version_normalized": "2.1.1.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/Seldaek\/monolog.git",
-            "reference": "fa82921994db851a8becaf3787a9e73c5976b6f1"
+            "reference": "f9eee5cec93dfb313a38b6b288741e84e53f02d5"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/fa82921994db851a8becaf3787a9e73c5976b6f1",
-            "reference": "fa82921994db851a8becaf3787a9e73c5976b6f1",
+            "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/f9eee5cec93dfb313a38b6b288741e84e53f02d5",
+            "reference": "f9eee5cec93dfb313a38b6b288741e84e53f02d5",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.3.0",
-            "psr\/log": "~1.0"
+            "php": ">=7.2",
+            "psr\/log": "^1.0.1"
         },
         "provide": {
             "psr\/log-implementation": "1.0.0"
@@ -481,34 +516,37 @@
         "require-dev": {
             "aws\/aws-sdk-php": "^2.4.9 || ^3.0",
             "doctrine\/couchdb": "~1.0@dev",
-            "graylog2\/gelf-php": "~1.0",
-            "jakub-onderka\/php-parallel-lint": "0.9",
+            "elasticsearch\/elasticsearch": "^6.0",
+            "graylog2\/gelf-php": "^1.4.2",
             "php-amqplib\/php-amqplib": "~2.4",
             "php-console\/php-console": "^3.1.3",
-            "phpunit\/phpunit": "~4.5",
-            "phpunit\/phpunit-mock-objects": "2.3.0",
+            "php-parallel-lint\/php-parallel-lint": "^1.0",
+            "phpspec\/prophecy": "^1.6.1",
+            "phpunit\/phpunit": "^8.5",
+            "predis\/predis": "^1.1",
+            "rollbar\/rollbar": "^1.3",
             "ruflin\/elastica": ">=0.90 <3.0",
-            "sentry\/sentry": "^0.13",
             "swiftmailer\/swiftmailer": "^5.3|^6.0"
         },
         "suggest": {
             "aws\/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
             "doctrine\/couchdb": "Allow sending log messages to a CouchDB server",
+            "elasticsearch\/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
             "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
-            "ext-mongo": "Allow sending log messages to a MongoDB server",
+            "ext-mbstring": "Allow to work properly with unicode symbols",
+            "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
             "graylog2\/gelf-php": "Allow sending log messages to a GrayLog2 server",
-            "mongodb\/mongodb": "Allow sending log messages to a MongoDB server via PHP Driver",
+            "mongodb\/mongodb": "Allow sending log messages to a MongoDB server (via library)",
             "php-amqplib\/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
             "php-console\/php-console": "Allow sending log messages to Google Chrome",
             "rollbar\/rollbar": "Allow sending log messages to Rollbar",
-            "ruflin\/elastica": "Allow sending log messages to an Elastic Search server",
-            "sentry\/sentry": "Allow sending log messages to a Sentry server"
+            "ruflin\/elastica": "Allow sending log messages to an Elastic Search server"
         },
-        "time": "2019-12-20T14:15:16+00:00",
+        "time": "2020-07-23T08:41:23+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "2.0.x-dev"
+                "dev-master": "2.x-dev"
             }
         },
         "installation-source": "dist",
@@ -534,6 +572,16 @@
             "log",
             "logging",
             "psr-3"
+        ],
+        "funding": [
+            {
+                "url": "https:\/\/github.com\/Seldaek",
+                "type": "github"
+            },
+            {
+                "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/monolog\/monolog",
+                "type": "tidelift"
+            }
         ]
     },
     {
@@ -582,6 +630,57 @@
             "cache",
             "psr",
             "psr-6"
+        ]
+    },
+    {
+        "name": "psr\/http-client",
+        "version": "1.0.1",
+        "version_normalized": "1.0.1.0",
+        "source": {
+            "type": "git",
+            "url": "https:\/\/github.com\/php-fig\/http-client.git",
+            "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https:\/\/api.github.com\/repos\/php-fig\/http-client\/zipball\/2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
+            "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^7.0 || ^8.0",
+            "psr\/http-message": "^1.0"
+        },
+        "time": "2020-06-29T06:28:15+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.0.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Client\\": "src\/"
+            }
+        },
+        "notification-url": "https:\/\/packagist.org\/downloads\/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "PHP-FIG",
+                "homepage": "http:\/\/www.php-fig.org\/"
+            }
+        ],
+        "description": "Common interface for HTTP clients",
+        "homepage": "https:\/\/github.com\/php-fig\/http-client",
+        "keywords": [
+            "http",
+            "http-client",
+            "psr",
+            "psr-18"
         ]
     },
     {
@@ -638,23 +737,23 @@
     },
     {
         "name": "psr\/log",
-        "version": "1.1.2",
-        "version_normalized": "1.1.2.0",
+        "version": "1.1.3",
+        "version_normalized": "1.1.3.0",
         "source": {
             "type": "git",
             "url": "https:\/\/github.com\/php-fig\/log.git",
-            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801"
+            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc"
         },
         "dist": {
             "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/446d54b4cb6bf489fc9d75f55843658e6f25d801",
-            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801",
+            "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/0f73288fd15629204f9d42b7055f72dacbe811fc",
+            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-        "time": "2019-11-01T11:05:21+00:00",
+        "time": "2020-03-23T09:12:05+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {

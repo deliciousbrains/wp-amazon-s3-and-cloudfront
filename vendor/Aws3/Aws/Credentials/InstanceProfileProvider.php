@@ -5,6 +5,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidJsonException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sdk;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\TransferException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
@@ -63,8 +64,8 @@ class InstanceProfileProvider
             while ($this->secureMode && is_null($token)) {
                 try {
                     $token = (yield $this->request(self::TOKEN_PATH, 'PUT', ['x-aws-ec2-metadata-token-ttl-seconds' => 21600]));
-                } catch (RequestException $e) {
-                    if (empty($e->getResponse()) || !in_array($e->getResponse()->getStatusCode(), [400, 500, 502, 503, 504])) {
+                } catch (TransferException $e) {
+                    if (!method_exists($e, 'getResponse') || empty($e->getResponse()) || !in_array($e->getResponse()->getStatusCode(), [400, 500, 502, 503, 504])) {
                         $this->secureMode = false;
                     } else {
                         $this->handleRetryableException($e, [], $this->createErrorMessage('Error retrieving metadata token'));
@@ -81,7 +82,7 @@ class InstanceProfileProvider
             while (!$this->profile) {
                 try {
                     $this->profile = (yield $this->request(self::CRED_PATH, 'GET', $headers));
-                } catch (RequestException $e) {
+                } catch (TransferException $e) {
                     // 401 indicates insecure flow not supported, switch to
                     // attempting secure mode for subsequent calls
                     if (!empty($this->getExceptionStatusCode($e)) && $this->getExceptionStatusCode($e) === 401) {
@@ -99,7 +100,7 @@ class InstanceProfileProvider
                     $result = $this->decodeResult($json);
                 } catch (InvalidJsonException $e) {
                     $this->handleRetryableException($e, ['blacklist' => [401, 403]], $this->createErrorMessage('Invalid JSON response, retries exhausted'));
-                } catch (RequestException $e) {
+                } catch (TransferException $e) {
                     // 401 indicates insecure flow not supported, switch to
                     // attempting secure mode for subsequent calls
                     if (!empty($this->getExceptionStatusCode($e)) && $this->getExceptionStatusCode($e) === 401) {
@@ -140,7 +141,7 @@ class InstanceProfileProvider
             return (string) $response->getBody();
         })->otherwise(function (array $reason) {
             $reason = $reason['exception'];
-            if ($reason instanceof \GuzzleHttp\Exception\RequestException) {
+            if ($reason instanceof TransferException) {
                 throw $reason;
             }
             $msg = $reason->getMessage();

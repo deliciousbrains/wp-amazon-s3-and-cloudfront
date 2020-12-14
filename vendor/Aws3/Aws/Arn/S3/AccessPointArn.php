@@ -3,12 +3,13 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn as BaseAccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
 /**
  * @internal
  */
-class AccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface
+class AccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface
 {
     /**
      * Validation specific to AccessPointArn

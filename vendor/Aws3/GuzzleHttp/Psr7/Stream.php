@@ -67,8 +67,10 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\
     public function __toString()
     {
         try {
-            $this->seek(0);
-            return (string) stream_get_contents($this->stream);
+            if ($this->isSeekable()) {
+                $this->seek(0);
+            }
+            return $this->getContents();
         } catch (\Exception $e) {
             return '';
         }

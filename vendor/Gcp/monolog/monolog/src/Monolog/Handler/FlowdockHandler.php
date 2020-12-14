@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -32,13 +33,12 @@ class FlowdockHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      */
     protected $apiToken;
     /**
-     * @param string   $apiToken
-     * @param bool|int $level    The minimum logging level at which this handler will be triggered
-     * @param bool     $bubble   Whether the messages that are handled can bubble up the stack or not
+     * @param string|int $level  The minimum logging level at which this handler will be triggered
+     * @param bool       $bubble Whether the messages that are handled can bubble up the stack or not
      *
      * @throws MissingExtensionException if OpenSSL is missing
      */
-    public function __construct($apiToken, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
+    public function __construct(string $apiToken, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
     {
         if (!extension_loaded('openssl')) {
             throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP extension is required to use the FlowdockHandler');
@@ -49,7 +49,7 @@ class FlowdockHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * {@inheritdoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
     {
         if (!$formatter instanceof FlowdockFormatter) {
             throw new \InvalidArgumentException('The FlowdockHandler requires an instance of Monolog\\Formatter\\FlowdockFormatter to function correctly');
@@ -58,10 +58,8 @@ class FlowdockHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     }
     /**
      * Gets the default formatter.
-     *
-     * @return FormatterInterface
      */
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter() : FormatterInterface
     {
         throw new \InvalidArgumentException('The FlowdockHandler must be configured (via setFormatter) with an instance of Monolog\\Formatter\\FlowdockFormatter to function correctly');
     }
@@ -70,39 +68,30 @@ class FlowdockHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      *
      * @param array $record
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         parent::write($record);
         $this->closeSocket();
     }
     /**
      * {@inheritdoc}
-     *
-     * @param  array  $record
-     * @return string
      */
-    protected function generateDataStream($record)
+    protected function generateDataStream(array $record) : string
     {
         $content = $this->buildContent($record);
         return $this->buildHeader($content) . $content;
     }
     /**
      * Builds the body of API call
-     *
-     * @param  array  $record
-     * @return string
      */
-    private function buildContent($record)
+    private function buildContent(array $record) : string
     {
         return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($record['formatted']['flowdock']);
     }
     /**
      * Builds the header of the API Call
-     *
-     * @param  string $content
-     * @return string
      */
-    private function buildHeader($content)
+    private function buildHeader(string $content) : string
     {
         $header = "POST /v1/messages/team_inbox/" . $this->apiToken . " HTTP/1.1\r\n";
         $header .= "Host: api.flowdock.com\r\n";

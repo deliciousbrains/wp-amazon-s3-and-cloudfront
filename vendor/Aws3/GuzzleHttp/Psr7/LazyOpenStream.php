@@ -30,6 +30,6 @@ class LazyOpenStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\
      */
     protected function createStream()
     {
-        return stream_for(try_fopen($this->filename, $this->mode));
+        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::tryFopen($this->filename, $this->mode));
     }
 }

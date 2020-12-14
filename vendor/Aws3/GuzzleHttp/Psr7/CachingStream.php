@@ -109,7 +109,7 @@ class CachingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\M
     private function cacheEntireStream()
     {
         $target = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\FnStream(['write' => 'strlen']);
-        copy_to_stream($this, $target);
+        \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToStream($this, $target);
         return $this->tell();
     }
 }

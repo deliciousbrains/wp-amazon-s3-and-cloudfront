@@ -59,9 +59,9 @@ trait DecryptionTrait
         $cek = $provider->decryptCek(base64_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_KEY_V2_HEADER]), json_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true));
         $cipherOptions['KeySize'] = strlen($cek) * 8;
         $cipherOptions['Cipher'] = $this->getCipherFromAesName($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_CRYPTO_SCHEME_HEADER]);
-        $decryptionSteam = $this->getDecryptingStream($cipherText, $cek, $cipherOptions);
+        $decryptionStream = $this->getDecryptingStream($cipherText, $cek, $cipherOptions);
         unset($cek);
-        return $decryptionSteam;
+        return $decryptionStream;
     }
     private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $tagLength)
     {

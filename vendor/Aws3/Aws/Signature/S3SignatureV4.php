@@ -10,12 +10,17 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 class S3SignatureV4 extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Signature\SignatureV4
 {
     /**
-     * Always add a x-amz-content-sha-256 for data integrity.
+     * S3-specific signing logic
+     *
+     * @param RequestInterface $request
+     * @param CredentialsInterface $credentials
+     * @return \GuzzleHttp\Psr7\Request|RequestInterface
      */
     public function signRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\CredentialsInterface $credentials)
     {
+        // Always add a x-amz-content-sha-256 for data integrity
         if (!$request->hasHeader('x-amz-content-sha256')) {
-            $request = $request->withHeader('X-Amz-Content-Sha256', $this->getPayload($request));
+            $request = $request->withHeader('x-amz-content-sha256', $this->getPayload($request));
         }
         return parent::signRequest($request, $credentials);
     }

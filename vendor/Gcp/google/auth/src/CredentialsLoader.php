@@ -20,17 +20,17 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\InsecureCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\UserRefreshCredentials;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface;
 /**
  * CredentialsLoader contains the behaviour used to locate and find default
  * credentials files on the file system.
  */
-abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface
+abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\UpdateMetadataInterface
 {
     const TOKEN_CREDENTIAL_URI = 'https://oauth2.googleapis.com/token';
     const ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS';
     const WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json';
     const NON_WINDOWS_WELL_KNOWN_PATH_BASE = '.config';
-    const AUTH_METADATA_KEY = 'authorization';
     /**
      * @param string $cause
      * @return string
@@ -50,13 +50,28 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
         return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
     /**
+     * Returns the currently available major Guzzle version.
+     *
+     * @return int
+     */
+    private static function getGuzzleMajorVersion()
+    {
+        if (defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
+            return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::MAJOR_VERSION;
+        }
+        if (defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::VERSION')) {
+            return (int) substr(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::VERSION, 0, 1);
+        }
+        throw new \Exception('Version not supported');
+    }
+    /**
      * Load a JSON key from the path specified in the environment.
      *
      * Load a JSON key from the path specified in the environment
      * variable GOOGLE_APPLICATION_CREDENTIALS. Return null if
      * GOOGLE_APPLICATION_CREDENTIALS is not specified.
      *
-     * @return array JSON key | null
+     * @return array|null JSON key | null
      */
     public static function fromEnv()
     {
@@ -75,12 +90,13 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
      * Load a JSON key from a well known path.
      *
      * The well known path is OS dependent:
-     * - windows: %APPDATA%/gcloud/application_default_credentials.json
-     * - others: $HOME/.config/gcloud/application_default_credentials.json
      *
-     * If the file does not exists, this returns null.
+     * * windows: %APPDATA%/gcloud/application_default_credentials.json
+     * * others: $HOME/.config/gcloud/application_default_credentials.json
      *
-     * @return array JSON key | null
+     * If the file does not exist, this returns null.
+     *
+     * @return array|null JSON key | null
      */
     public static function fromWellKnownFile()
     {
@@ -101,21 +117,26 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
      * Create a new Credentials instance.
      *
      * @param string|array $scope the scope of the access request, expressed
-     *   either as an Array or as a space-delimited String.
+     *        either as an Array or as a space-delimited String.
      * @param array $jsonKey the JSON credentials.
+     * @param string|array $defaultScope The default scope to use if no
+     *   user-defined scopes exist, expressed either as an Array or as a
+     *   space-delimited string.
      *
      * @return ServiceAccountCredentials|UserRefreshCredentials
      */
-    public static function makeCredentials($scope, array $jsonKey)
+    public static function makeCredentials($scope, array $jsonKey, $defaultScope = null)
     {
         if (!array_key_exists('type', $jsonKey)) {
             throw new \InvalidArgumentException('json key is missing the type field');
         }
         if ($jsonKey['type'] == 'service_account') {
+            // Do not pass $defaultScope to ServiceAccountCredentials
             return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials($scope, $jsonKey);
         }
         if ($jsonKey['type'] == 'authorized_user') {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\UserRefreshCredentials($scope, $jsonKey);
+            $anyScope = $scope ?: $defaultScope;
+            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\UserRefreshCredentials($anyScope, $jsonKey);
         }
         throw new \InvalidArgumentException('invalid value in the type field');
     }
@@ -123,30 +144,24 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
      * Create an authorized HTTP Client from an instance of FetchAuthTokenInterface.
      *
      * @param FetchAuthTokenInterface $fetcher is used to fetch the auth token
-     * @param array $httpClientOptoins (optional) Array of request options to apply.
+     * @param array $httpClientOptions (optional) Array of request options to apply.
      * @param callable $httpHandler (optional) http client to fetch the token.
      * @param callable $tokenCallback (optional) function to be called when a new token is fetched.
-     *
      * @return \GuzzleHttp\Client
      */
     public static function makeHttpClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface $fetcher, array $httpClientOptions = [], callable $httpHandler = null, callable $tokenCallback = null)
     {
-        $version = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::VERSION;
-        switch ($version[0]) {
-            case '5':
-                $client = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client($httpClientOptions);
-                $client->setDefaultOption('auth', 'google_auth');
-                $subscriber = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Subscriber\AuthTokenSubscriber($fetcher, $httpHandler, $tokenCallback);
-                $client->getEmitter()->attach($subscriber);
-                return $client;
-            case '6':
-                $middleware = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware($fetcher, $httpHandler, $tokenCallback);
-                $stack = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\HandlerStack::create();
-                $stack->push($middleware);
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client(['handler' => $stack, 'auth' => 'google_auth'] + $httpClientOptions);
-            default:
-                throw new \Exception('Version not supported');
+        if (self::getGuzzleMajorVersion() === 5) {
+            $client = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client($httpClientOptions);
+            $client->setDefaultOption('auth', 'google_auth');
+            $subscriber = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Subscriber\AuthTokenSubscriber($fetcher, $httpHandler, $tokenCallback);
+            $client->getEmitter()->attach($subscriber);
+            return $client;
         }
+        $middleware = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware\AuthTokenMiddleware($fetcher, $httpHandler, $tokenCallback);
+        $stack = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\HandlerStack::create();
+        $stack->push($middleware);
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client(['handler' => $stack, 'auth' => 'google_auth'] + $httpClientOptions);
     }
     /**
      * Create a new instance of InsecureCredentials.
@@ -161,6 +176,7 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
      * export a callback function which updates runtime metadata.
      *
      * @return array updateMetadata function
+     * @deprecated
      */
     public function getUpdateMetadataFunc()
     {
@@ -172,11 +188,14 @@ abstract class CredentialsLoader implements \DeliciousBrains\WP_Offload_Media\Gc
      * @param array $metadata metadata hashmap
      * @param string $authUri optional auth uri
      * @param callable $httpHandler callback which delivers psr7 request
-     *
      * @return array updated metadata hashmap
      */
     public function updateMetadata($metadata, $authUri = null, callable $httpHandler = null)
     {
+        if (isset($metadata[self::AUTH_METADATA_KEY])) {
+            // Auth metadata has already been set
+            return $metadata;
+        }
         $result = $this->fetchAuthToken($httpHandler);
         if (!isset($result['access_token'])) {
             return $metadata;

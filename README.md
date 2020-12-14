@@ -4,7 +4,7 @@
 **Requires at least:** 4.9  
 **Tested up to:** 5.6  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.5.1  
+**Stable tag:** 2.6dev  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.

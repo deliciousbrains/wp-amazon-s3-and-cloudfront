@@ -18,6 +18,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle5HttpHandler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle6HttpHandler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
@@ -184,7 +185,7 @@ class RequestWrapper
      *           **Defaults to** `3`.
      *     @type callable $restRetryFunction Sets the conditions for whether or
      *           not a request should attempt to retry. Function signature should
-     *           match: `function (\Exception $ex) : bool`.
+     *           match: `function (\Exception $ex, int $retryAttempt) : bool`.
      *     @type callable $restDelayFunction Executes a delay, defaults to
      *           utilizing `usleep`. Function signature should match:
      *           `function (int $delay) : void`.
@@ -211,7 +212,7 @@ class RequestWrapper
                 $retryOptions['calcDelayFunction'] = [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff::class, 'calculateDelay'];
             }
             return $asyncHttpHandler($this->applyHeaders($request), $this->getRequestOptions($options))->then(null, function (\Exception $ex) use($fn, $retryAttempt, $retryOptions) {
-                $shouldRetry = $retryOptions['retryFunction']($ex);
+                $shouldRetry = $retryOptions['retryFunction']($ex, $retryAttempt);
                 if ($shouldRetry === false || $retryAttempt >= $retryOptions['retries']) {
                     throw $this->convertToGoogleException($ex);
                 }
@@ -233,32 +234,35 @@ class RequestWrapper
     {
         $headers = ['User-Agent' => 'gcloud-php/' . $this->componentVersion, 'x-goog-api-client' => 'gl-php/' . PHP_VERSION . ' gccl/' . $this->componentVersion];
         if ($this->shouldSignRequest) {
-            $headers['Authorization'] = 'Bearer ' . $this->getToken();
+            $quotaProject = $this->quotaProject;
+            $token = null;
+            if ($this->accessToken) {
+                $token = $this->accessToken;
+            } else {
+                $credentialsFetcher = $this->getCredentialsFetcher();
+                $token = $this->fetchCredentials($credentialsFetcher)['access_token'];
+                if ($credentialsFetcher instanceof GetQuotaProjectInterface) {
+                    $quotaProject = $credentialsFetcher->getQuotaProject();
+                }
+            }
+            $headers['Authorization'] = 'Bearer ' . $token;
+            if ($quotaProject) {
+                $headers['X-Goog-User-Project'] = [$quotaProject];
+            }
         }
         return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\modify_request($request, ['set_headers' => $headers]);
     }
     /**
-     * Gets the access token.
-     *
-     * @return string
-     */
-    private function getToken()
-    {
-        if ($this->accessToken) {
-            return $this->accessToken;
-        }
-        return $this->fetchCredentials()['access_token'];
-    }
-    /**
      * Fetches credentials.
      *
+     * @param FetchAuthTokenInterface $credentialsFetcher
      * @return array
      */
-    private function fetchCredentials()
+    private function fetchCredentials(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface $credentialsFetcher)
     {
         $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($this->retries, $this->getRetryFunction());
         try {
-            return $backoff->execute([$this->getCredentialsFetcher(), 'fetchAuthToken'], [$this->authHttpHandler]);
+            return $backoff->execute([$credentialsFetcher, 'fetchAuthToken'], [$this->authHttpHandler]);
         } catch (\Exception $ex) {
             throw $this->convertToGoogleException($ex);
         }

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -10,14 +11,14 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
-use RollbarNotifier;
-use Exception;
+use DeliciousBrains\WP_Offload_Media\Gcp\Rollbar\RollbarLogger;
+use Throwable;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 /**
  * Sends errors to Rollbar
  *
  * If the context data contains a `payload` key, that is used as an array
- * of payload options to RollbarNotifier's report_message/report_exception methods.
+ * of payload options to RollbarLogger's log method.
  *
  * Rollbar's context info will contain the context + extra keys from the log record
  * merged, and then on top of that a few keys:
@@ -32,12 +33,10 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 class RollbarHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
 {
     /**
-     * Rollbar notifier
-     *
-     * @var RollbarNotifier
+     * @var RollbarLogger
      */
-    protected $rollbarNotifier;
-    protected $levelMap = array(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 'debug', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 'warning', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 'error', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 'critical');
+    protected $rollbarLogger;
+    protected $levelMap = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 'debug', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 'warning', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 'error', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 'critical'];
     /**
      * Records whether any log records have been added since the last flush of the rollbar notifier
      *
@@ -46,19 +45,19 @@ class RollbarHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
     private $hasRecords = false;
     protected $initialized = false;
     /**
-     * @param RollbarNotifier $rollbarNotifier RollbarNotifier object constructed with valid token
-     * @param int             $level           The minimum logging level at which this handler will be triggered
-     * @param bool            $bubble          Whether the messages that are handled can bubble up the stack or not
+     * @param RollbarLogger $rollbarLogger RollbarLogger object constructed with valid token
+     * @param string|int    $level         The minimum logging level at which this handler will be triggered
+     * @param bool          $bubble        Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct(\RollbarNotifier $rollbarNotifier, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, $bubble = true)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Rollbar\RollbarLogger $rollbarLogger, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, bool $bubble = true)
     {
-        $this->rollbarNotifier = $rollbarNotifier;
+        $this->rollbarLogger = $rollbarLogger;
         parent::__construct($level, $bubble);
     }
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         if (!$this->initialized) {
             // __destructor() doesn't get called on Fatal errors
@@ -66,33 +65,28 @@ class RollbarHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
             $this->initialized = true;
         }
         $context = $record['context'];
-        $payload = array();
-        if (isset($context['payload'])) {
-            $payload = $context['payload'];
-            unset($context['payload']);
-        }
-        $context = array_merge($context, $record['extra'], array('level' => $this->levelMap[$record['level']], 'monolog_level' => $record['level_name'], 'channel' => $record['channel'], 'datetime' => $record['datetime']->format('U')));
-        if (isset($context['exception']) && $context['exception'] instanceof Exception) {
-            $payload['level'] = $context['level'];
+        $context = array_merge($context, $record['extra'], ['level' => $this->levelMap[$record['level']], 'monolog_level' => $record['level_name'], 'channel' => $record['channel'], 'datetime' => $record['datetime']->format('U')]);
+        if (isset($context['exception']) && $context['exception'] instanceof Throwable) {
             $exception = $context['exception'];
             unset($context['exception']);
-            $this->rollbarNotifier->report_exception($exception, $context, $payload);
+            $toLog = $exception;
         } else {
-            $this->rollbarNotifier->report_message($record['message'], $context['level'], $context, $payload);
+            $toLog = $record['message'];
         }
+        $this->rollbarLogger->log($context['level'], $toLog, $context);
         $this->hasRecords = true;
     }
-    public function flush()
+    public function flush() : void
     {
         if ($this->hasRecords) {
-            $this->rollbarNotifier->flush();
+            $this->rollbarLogger->flush();
             $this->hasRecords = false;
         }
     }
     /**
      * {@inheritdoc}
      */
-    public function close()
+    public function close() : void
     {
         $this->flush();
     }

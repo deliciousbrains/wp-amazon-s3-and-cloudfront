@@ -45,7 +45,7 @@ class StorageClient
 {
     use ArrayTrait;
     use ClientTrait;
-    const VERSION = '1.18.0';
+    const VERSION = '1.23.0';
     const FULL_CONTROL_SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
     const READ_ONLY_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only';
     const READ_WRITE_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_write';
@@ -59,6 +59,9 @@ class StorageClient
      * @param array $config [optional] {
      *     Configuration options.
      *
+     *     @type string $apiEndpoint The hostname with optional port to use in
+     *           place of the default service endpoint. Example:
+     *           `foobar.com` or `foobar.com:1234`.
      *     @type string $projectId The project ID from the Google Developer's
      *           Console.
      *     @type CacheItemPoolInterface $authCache A cache used storing access
@@ -81,6 +84,8 @@ class StorageClient
      *     @type int $retries Number of retries for a failed request.
      *           **Defaults to** `3`.
      *     @type array $scopes Scopes to be used for the request.
+     *     @type string $quotaProject Specifies a user project to bill for
+     *           access charges associated with the request.
      * }
      */
     public function __construct(array $config = [])

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -18,15 +19,13 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor;
  */
 class MemoryUsageProcessor extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\MemoryProcessor
 {
-    /**
-     * @param  array $record
-     * @return array
-     */
-    public function __invoke(array $record)
+    public function __invoke(array $record) : array
     {
-        $bytes = memory_get_usage($this->realUsage);
-        $formatted = $this->formatBytes($bytes);
-        $record['extra']['memory_usage'] = $formatted;
+        $usage = memory_get_usage($this->realUsage);
+        if ($this->useFormatting) {
+            $usage = $this->formatBytes($usage);
+        }
+        $record['extra']['memory_usage'] = $usage;
         return $record;
     }
 }

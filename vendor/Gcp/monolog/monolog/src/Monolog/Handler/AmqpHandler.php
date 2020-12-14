@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -11,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\JsonFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\PhpAmqpLib\Message\AMQPMessage;
 use DeliciousBrains\WP_Offload_Media\Gcp\PhpAmqpLib\Channel\AMQPChannel;
@@ -27,18 +29,18 @@ class AmqpHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     protected $exchangeName;
     /**
      * @param AMQPExchange|AMQPChannel $exchange     AMQPExchange (php AMQP ext) or PHP AMQP lib channel, ready for use
-     * @param string                   $exchangeName
-     * @param int                      $level
+     * @param string|null              $exchangeName Optional exchange name, for AMQPChannel (PhpAmqpLib) only
+     * @param string|int               $level        The minimum logging level at which this handler will be triggered
      * @param bool                     $bubble       Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct($exchange, $exchangeName = 'log', $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
+    public function __construct($exchange, ?string $exchangeName = null, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
     {
-        if ($exchange instanceof AMQPExchange) {
-            $exchange->setName($exchangeName);
-        } elseif ($exchange instanceof AMQPChannel) {
-            $this->exchangeName = $exchangeName;
-        } else {
+        if ($exchange instanceof AMQPChannel) {
+            $this->exchangeName = (string) $exchangeName;
+        } elseif (!$exchange instanceof AMQPExchange) {
             throw new \InvalidArgumentException('PhpAmqpLib\\Channel\\AMQPChannel or AMQPExchange instance required');
+        } elseif ($exchangeName) {
+            @trigger_error('The $exchangeName parameter can only be passed when using PhpAmqpLib, if using an AMQPExchange instance configure it beforehand', E_USER_DEPRECATED);
         }
         $this->exchange = $exchange;
         parent::__construct($level, $bubble);
@@ -46,12 +48,12 @@ class AmqpHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     /**
      * {@inheritDoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         $data = $record["formatted"];
         $routingKey = $this->getRoutingKey($record);
         if ($this->exchange instanceof AMQPExchange) {
-            $this->exchange->publish($data, $routingKey, 0, array('delivery_mode' => 2, 'content_type' => 'application/json'));
+            $this->exchange->publish($data, $routingKey, 0, ['delivery_mode' => 2, 'content_type' => 'application/json']);
         } else {
             $this->exchange->basic_publish($this->createAmqpMessage($data), $this->exchangeName, $routingKey);
         }
@@ -59,7 +61,7 @@ class AmqpHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     /**
      * {@inheritDoc}
      */
-    public function handleBatch(array $records)
+    public function handleBatch(array $records) : void
     {
         if ($this->exchange instanceof AMQPExchange) {
             parent::handleBatch($records);
@@ -77,32 +79,20 @@ class AmqpHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     }
     /**
      * Gets the routing key for the AMQP exchange
-     *
-     * @param  array  $record
-     * @return string
      */
-    protected function getRoutingKey(array $record)
+    protected function getRoutingKey(array $record) : string
     {
-        $routingKey = sprintf(
-            '%s.%s',
-            // TODO 2.0 remove substr call
-            substr($record['level_name'], 0, 4),
-            $record['channel']
-        );
+        $routingKey = sprintf('%s.%s', $record['level_name'], $record['channel']);
         return strtolower($routingKey);
     }
-    /**
-     * @param  string      $data
-     * @return AMQPMessage
-     */
-    private function createAmqpMessage($data)
+    private function createAmqpMessage(string $data) : AMQPMessage
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\PhpAmqpLib\Message\AMQPMessage((string) $data, array('delivery_mode' => 2, 'content_type' => 'application/json'));
+        return new \DeliciousBrains\WP_Offload_Media\Gcp\PhpAmqpLib\Message\AMQPMessage($data, ['delivery_mode' => 2, 'content_type' => 'application/json']);
     }
     /**
      * {@inheritDoc}
      */
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter() : FormatterInterface
     {
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\JsonFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\JsonFormatter::BATCH_MODE_JSON, false);
     }

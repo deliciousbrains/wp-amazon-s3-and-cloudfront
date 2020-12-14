@@ -6,6 +6,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
+use Exception;
 /**
  * Returns promises that are rejected or fulfilled using a queue of
  * Aws\ResultInterface and Aws\Exception\AwsException objects.
@@ -41,10 +42,10 @@ class MockHandler implements \Countable
     public function append()
     {
         foreach (func_get_args() as $value) {
-            if ($value instanceof ResultInterface || $value instanceof AwsException || is_callable($value)) {
+            if ($value instanceof ResultInterface || $value instanceof Exception || is_callable($value)) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected an Aws\\ResultInterface or Aws\\Exception\\AwsException.');
+                throw new \InvalidArgumentException('Expected an Aws\\ResultInterface or Exception.');
             }
         }
     }

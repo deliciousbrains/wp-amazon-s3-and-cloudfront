@@ -39,7 +39,7 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\
             $this->updateHostFromUri();
         }
         if ($body !== '' && $body !== null) {
-            $this->stream = stream_for($body);
+            $this->stream = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::streamFor($body);
         }
     }
     public function getRequestTarget()

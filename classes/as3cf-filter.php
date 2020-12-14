@@ -938,6 +938,92 @@ abstract class AS3CF_Filter {
 	}
 
 	/**
+	 * Get an array of bare base_urls that can be used for uploaded items.
+	 *
+	 * @param bool $refresh Refresh cached domains, default false.
+	 *
+	 * @return array
+	 */
+	public function get_bare_upload_base_urls( $refresh = false ) {
+		static $base_urls = array();
+
+		if ( $refresh || empty( $base_urls ) ) {
+			$domains = array();
+
+			// Original domain and path.
+			$uploads     = wp_upload_dir();
+			$base_url    = AS3CF_Utils::remove_scheme( $uploads['baseurl'] );
+			$orig_domain = AS3CF_Utils::parse_url( $base_url, PHP_URL_HOST );
+			$domains[]   = $orig_domain;
+			$base_urls[] = $base_url;
+
+			// Current domain and path after potential domain mapping.
+			$base_url    = $this->as3cf->maybe_fix_local_subsite_url( $uploads['baseurl'] );
+			$base_url    = AS3CF_Utils::remove_scheme( $base_url );
+			$curr_domain = AS3CF_Utils::parse_url( $base_url, PHP_URL_HOST );
+
+			if ( $curr_domain !== $orig_domain ) {
+				$domains[] = $curr_domain;
+			}
+
+			/**
+			 * Allow alteration of the local domains that can be matched on.
+			 *
+			 * @param array $domains
+			 */
+			$domains = apply_filters( 'as3cf_local_domains', $domains );
+
+			if ( ! empty( $domains ) ) {
+				foreach ( array_unique( $domains ) as $match_domain ) {
+					$base_urls[] = substr_replace( $base_url, $match_domain, 2, strlen( $curr_domain ) );
+				}
+			}
+		}
+
+		return array_unique( $base_urls );
+	}
+
+	/**
+	 * Get an array of domain names that can be used for remote items.
+	 *
+	 * @param bool $refresh Refresh cached domains, default false.
+	 *
+	 * @return array
+	 */
+	public function get_remote_domains( $refresh = false ) {
+		static $domains = array();
+
+		if ( $refresh || empty( $domains ) ) {
+			// Storage Provider's default domain.
+			$domains = array(
+				$this->as3cf->get_storage_provider()->get_domain(),
+			);
+
+			// Delivery Provider's default domain.
+			$delivery_provider = $this->as3cf->get_delivery_provider();
+			$domains[]         = $delivery_provider->get_domain();
+
+			// Delivery Provider's custom domain.
+			if ( $delivery_provider->delivery_domain_allowed() && $this->as3cf->get_setting( 'enable-delivery-domain' ) ) {
+				$delivery_domain = $this->as3cf->get_setting( 'delivery-domain' );
+
+				if ( ! empty( $delivery_domain ) ) {
+					$domains[] = trim( $delivery_domain );
+				}
+			}
+
+			/**
+			 * Allow alteration of the remote domains that can be matched on.
+			 *
+			 * @param array $domains
+			 */
+			$domains = array_unique( apply_filters( 'as3cf_remote_domains', $domains ) );
+		}
+
+		return $domains;
+	}
+
+	/**
 	 * Does URL need replacing?
 	 *
 	 * @param string $url

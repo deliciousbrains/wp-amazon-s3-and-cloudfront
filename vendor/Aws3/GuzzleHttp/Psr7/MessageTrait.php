@@ -14,7 +14,7 @@ trait MessageTrait
     private $headerNames = [];
     /** @var string */
     private $protocol = '1.1';
-    /** @var StreamInterface */
+    /** @var StreamInterface|null */
     private $stream;
     public function getProtocolVersion()
     {
@@ -92,7 +92,7 @@ trait MessageTrait
     public function getBody()
     {
         if (!$this->stream) {
-            $this->stream = stream_for('');
+            $this->stream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor('');
         }
         return $this->stream;
     }
@@ -157,7 +157,7 @@ trait MessageTrait
                 throw new \InvalidArgumentException(sprintf('Header value must be scalar or null but %s provided.', is_object($value) ? get_class($value) : gettype($value)));
             }
             return trim((string) $value, " \t");
-        }, $values);
+        }, array_values($values));
     }
     private function assertHeader($header)
     {

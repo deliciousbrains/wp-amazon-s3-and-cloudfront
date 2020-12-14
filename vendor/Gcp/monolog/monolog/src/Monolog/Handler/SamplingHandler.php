@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -25,8 +26,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  * @author Bryan Davis <bd808@wikimedia.org>
  * @author Kunal Mehta <legoktm@gmail.com>
  */
-class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler
+class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
 {
+    use ProcessableHandlerTrait;
     /**
      * @var callable|HandlerInterface $handler
      */
@@ -36,10 +38,12 @@ class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      */
     protected $factor;
     /**
+     * @psalm-param HandlerInterface|callable(array, HandlerInterface): HandlerInterface $handler
+     *
      * @param callable|HandlerInterface $handler Handler or factory callable($record|null, $samplingHandler).
-     * @param int                       $factor  Sample factor
+     * @param int                       $factor  Sample factor (e.g. 10 means every ~10th record is sampled)
      */
-    public function __construct($handler, $factor)
+    public function __construct($handler, int $factor)
     {
         parent::__construct();
         $this->handler = $handler;
@@ -48,17 +52,15 @@ class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
             throw new \RuntimeException("The given handler (" . json_encode($this->handler) . ") is not a callable nor a Monolog\\Handler\\HandlerInterface object");
         }
     }
-    public function isHandling(array $record)
+    public function isHandling(array $record) : bool
     {
         return $this->getHandler($record)->isHandling($record);
     }
-    public function handle(array $record)
+    public function handle(array $record) : bool
     {
         if ($this->isHandling($record) && mt_rand(1, $this->factor) === 1) {
             if ($this->processors) {
-                foreach ($this->processors as $processor) {
-                    $record = call_user_func($processor, $record);
-                }
+                $record = $this->processRecord($record);
             }
             $this->getHandler($record)->handle($record);
         }
@@ -74,7 +76,7 @@ class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     public function getHandler(array $record = null)
     {
         if (!$this->handler instanceof HandlerInterface) {
-            $this->handler = call_user_func($this->handler, $record, $this);
+            $this->handler = ($this->handler)($record, $this);
             if (!$this->handler instanceof HandlerInterface) {
                 throw new \RuntimeException("The factory callable should return a HandlerInterface");
             }
@@ -84,7 +86,7 @@ class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * {@inheritdoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
     {
         $this->getHandler()->setFormatter($formatter);
         return $this;
@@ -92,7 +94,7 @@ class SamplingHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * {@inheritdoc}
      */
-    public function getFormatter()
+    public function getFormatter() : FormatterInterface
     {
         return $this->getHandler()->getFormatter();
     }

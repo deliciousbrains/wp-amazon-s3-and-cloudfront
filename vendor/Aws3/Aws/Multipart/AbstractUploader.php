@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface as Client;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
@@ -46,6 +47,10 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
                 }
                 $command = $this->client->getCommand($this->info['command']['upload'], $data + $this->state->getId());
                 $command->getHandlerList()->appendSign($resultHandler, 'mup');
+                $numberOfParts = $this->getNumberOfParts($this->state->getPartSize());
+                if (isset($numberOfParts) && $partNumber > $numberOfParts) {
+                    throw new $this->config['exception_class']($this->state, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException("Maximum part number for this job exceeded, file has likely been corrupted." . "  Please restart this upload.", $command));
+                }
                 (yield $command);
                 if ($this->source->tell() > $partStartPos) {
                     continue;
@@ -102,5 +107,12 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
             throw new \InvalidArgumentException('Source stream must be readable.');
         }
         return $stream;
+    }
+    protected function getNumberOfParts($partSize)
+    {
+        if ($sourceSize = $this->source->getSize()) {
+            return ceil($sourceSize / $partSize);
+        }
+        return null;
     }
 }

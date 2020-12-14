@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -30,7 +31,7 @@ class ElasticaFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Fo
      * @param string $index Elastic Search index name
      * @param string $type  Elastic Search document type
      */
-    public function __construct($index, $type)
+    public function __construct(string $index, string $type)
     {
         // elasticsearch requires a ISO 8601 format date with optional millisecond precision.
         parent::__construct('Y-m-d\\TH:i:s.uP');
@@ -45,29 +46,20 @@ class ElasticaFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Fo
         $record = parent::format($record);
         return $this->getDocument($record);
     }
-    /**
-     * Getter index
-     * @return string
-     */
-    public function getIndex()
+    public function getIndex() : string
     {
         return $this->index;
     }
-    /**
-     * Getter type
-     * @return string
-     */
-    public function getType()
+    public function getType() : string
     {
         return $this->type;
     }
     /**
      * Convert a log message into an Elastica Document
-     *
-     * @param  array    $record Log message
+     * @param  array    $record
      * @return Document
      */
-    protected function getDocument($record)
+    protected function getDocument(array $record) : Document
     {
         $document = new \DeliciousBrains\WP_Offload_Media\Gcp\Elastica\Document();
         $document->setData($record);

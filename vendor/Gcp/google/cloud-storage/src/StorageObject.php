@@ -696,6 +696,25 @@ class StorageObject
      * ]);
      * ```
      *
+     * ```
+     * // Using Bucket-Bound hostnames
+     * // By default, a custom bucket-bound hostname will use `http` as the schema rather than `https`.
+     * // In order to get an https URI, we need to specify the proper scheme.
+     * $url = $object->signedUrl(new \DateTime('tomorrow'), [
+     *     'version' => 'v4',
+     *     'bucketBoundHostname' => 'cdn.example.com',
+     *     'scheme' => 'https'
+     * ]);
+     * ```
+     *
+     * ```
+     * // Using virtual hosted style URIs
+     * // When true, returns a URL with the hostname `<bucket>.storage.googleapis.com`.
+     * $url = $object->signedUrl(new \DateTime('tomorrow'), [
+     *     'virtualHostedStyle' => true
+     * ]);
+     * ````
+     *
      * @see https://cloud.google.com/storage/docs/access-control/signed-urls Signed URLs
      *
      * @param Timestamp|\DateTimeInterface|int $expires Specifies when the URL
@@ -705,9 +724,10 @@ class StorageObject
      * @param array $options {
      *     Configuration Options.
      *
-     *     @type string $cname The CNAME for the bucket, for instance
-     *           `https://cdn.example.com`. **Defaults to**
-     *           `https://storage.googleapis.com`.
+     *     @type string $bucketBoundHostname The hostname for the bucket, for
+     *           instance `cdn.example.com`. May be used for Google Cloud Load
+     *           Balancers or for custom bucket CNAMEs. **Defaults to**
+     *           `storage.googleapis.com`.
      *     @type string $contentMd5 The MD5 digest value in base64. If you
      *           provide this, the client must provide this HTTP header with
      *           this same value in its request. If provided, take care to
@@ -744,6 +764,10 @@ class StorageObject
      *     @type string $saveAsName The filename to prompt the user to save the
      *           file as when the signed url is accessed. This is ignored if
      *           `$options.responseDisposition` is set.
+     *     @type string $scheme Either `http` or `https`. Only used if a custom
+     *           hostname is provided via `$options.bucketBoundHostname`. If a
+     *           custom bucketBoundHostname is provided, **defaults to** `http`.
+     *           In all other cases, **defaults to** `https`.
      *     @type string|array $scopes One or more authentication scopes to be
      *           used with a key file. This option is ignored unless
      *           `$options.keyFile` or `$options.keyFilePath` is set.
@@ -751,6 +775,9 @@ class StorageObject
      *           as part of the signed URL query string. For allowed values,
      *           see [Reference Headers](https://cloud.google.com/storage/docs/xml-api/reference-headers#query).
      *     @type string $version One of "v2" or "v4". **Defaults to** `"v2"`.
+     *     @type bool $virtualHostedStyle If `true`, URL will be of form
+     *           `mybucket.storage.googleapis.com`. If `false`,
+     *           `storage.googleapis.com/mybucket`. **Defaults to** `false`.
      * }
      * @return string
      * @throws \InvalidArgumentException If the given expiration is invalid or in the past.
@@ -805,9 +832,6 @@ class StorageObject
      * @param array $options {
      *     Configuration Options.
      *
-     *     @type string $cname The CNAME for the bucket, for instance
-     *           `https://cdn.example.com`. **Defaults to**
-     *           `https://storage.googleapis.com`.
      *     @type string $contentMd5 The MD5 digest value in base64. If you
      *           provide this, the client must provide this HTTP header with
      *           this same value in its request. If provided, take care to
@@ -842,6 +866,10 @@ class StorageObject
      *     @type string $saveAsName The filename to prompt the user to save the
      *           file as when the signed url is accessed. This is ignored if
      *           `$options.responseDisposition` is set.
+     *     @type string $scheme Either `http` or `https`. Only used if a custom
+     *           hostname is provided via `$options.bucketBoundHostname`. In all
+     *           other cases, `https` is used. When a custom bucketBoundHostname
+     *           is provided, **defaults to** `http`.
      *     @type string|array $scopes One or more authentication scopes to be
      *           used with a key file. This option is ignored unless
      *           `$options.keyFile` or `$options.keyFilePath` is set.
@@ -856,7 +884,7 @@ class StorageObject
     {
         $options += ['headers' => []];
         $options['headers']['x-goog-resumable'] = 'start';
-        unset($options['cname'], $options['saveAsName'], $options['responseDisposition'], $options['responseType']);
+        unset($options['cname'], $options['bucketBoundHostname'], $options['saveAsName'], $options['responseDisposition'], $options['responseType'], $options['virtualHostedStyle']);
         return $this->signedUrl($expires, ['method' => 'POST', 'allowPost' => true] + $options);
     }
     /**

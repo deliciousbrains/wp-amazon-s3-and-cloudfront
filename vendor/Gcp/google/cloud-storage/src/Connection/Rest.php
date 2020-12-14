@@ -41,21 +41,38 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
 {
     use RestTrait;
     use UriTrait;
+    /**
+     * @deprecated
+     */
     const BASE_URI = 'https://storage.googleapis.com/storage/v1/';
+    const DEFAULT_API_ENDPOINT = 'https://storage.googleapis.com';
+    /**
+     * @deprecated
+     */
     const UPLOAD_URI = 'https://storage.googleapis.com/upload/storage/v1/b/{bucket}/o{?query*}';
+    const UPLOAD_PATH = 'upload/storage/v1/b/{bucket}/o{?query*}';
+    /**
+     * @deprecated
+     */
     const DOWNLOAD_URI = 'https://storage.googleapis.com/storage/v1/b/{bucket}/o/{object}{?query*}';
+    const DOWNLOAD_PATH = 'storage/v1/b/{bucket}/o/{object}{?query*}';
     /**
      * @var string
      */
     private $projectId;
     /**
+     * @var string
+     */
+    private $apiEndpoint;
+    /**
      * @param array $config
      */
     public function __construct(array $config = [])
     {
-        $config += ['serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json', 'componentVersion' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient::VERSION];
+        $config += ['serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json', 'componentVersion' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient::VERSION, 'apiEndpoint' => self::DEFAULT_API_ENDPOINT];
+        $this->apiEndpoint = $this->getApiEndpoint(self::DEFAULT_API_ENDPOINT, $config);
         $this->setRequestWrapper(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper($config));
-        $this->setRequestBuilder(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestBuilder($config['serviceDefinitionPath'], self::BASE_URI));
+        $this->setRequestBuilder(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestBuilder($config['serviceDefinitionPath'], $this->apiEndpoint));
         $this->projectId = $this->pluck('projectId', $config, false);
     }
     /**
@@ -222,7 +239,7 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
             $uploadType = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader::UPLOAD_TYPE_MULTIPART;
         }
         $uriParams = ['bucket' => $args['bucket'], 'query' => ['predefinedAcl' => $args['predefinedAcl'], 'uploadType' => $uploadType, 'userProject' => $args['userProject']]];
-        return new $uploaderClass($this->requestWrapper, $args['data'], $this->expandUri(self::UPLOAD_URI, $uriParams), $args['uploaderOptions']);
+        return new $uploaderClass($this->requestWrapper, $args['data'], $this->expandUri($this->apiEndpoint . self::UPLOAD_PATH, $uriParams), $args['uploaderOptions']);
     }
     /**
      * @param array $args
@@ -357,7 +374,7 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     {
         $args += ['bucket' => null, 'object' => null, 'generation' => null, 'userProject' => null];
         $requestOptions = array_intersect_key($args, ['restOptions' => null, 'retries' => null, 'restRetryFunction' => null, 'restCalcDelayFunction' => null, 'restDelayFunction' => null]);
-        $uri = $this->expandUri(self::DOWNLOAD_URI, ['bucket' => $args['bucket'], 'object' => $args['object'], 'query' => ['generation' => $args['generation'], 'alt' => 'media', 'userProject' => $args['userProject']]]);
+        $uri = $this->expandUri($this->apiEndpoint . self::DOWNLOAD_PATH, ['bucket' => $args['bucket'], 'object' => $args['object'], 'query' => ['generation' => $args['generation'], 'alt' => 'media', 'userProject' => $args['userProject']]]);
         return [new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('GET', \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\uri_for($uri)), $requestOptions];
     }
     /**
@@ -370,7 +387,7 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     private function chooseValidationMethod(array $args)
     {
         // If the user provided a hash, skip hashing.
-        if (isset($args['metadata']['md5']) || isset($args['metadata']['crc32c'])) {
+        if (isset($args['metadata']['md5Hash']) || isset($args['metadata']['crc32c'])) {
             return false;
         }
         $validate = $args['validate'];

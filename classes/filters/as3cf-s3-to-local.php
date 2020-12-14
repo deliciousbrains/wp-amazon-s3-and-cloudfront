@@ -71,12 +71,14 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 *
 	 * @return bool
 	 */
-	protected function url_needs_replacing( $url ) {
-		$uploads  = wp_upload_dir();
-		$base_url = AS3CF_Utils::remove_scheme( $uploads['baseurl'] );
+	public function url_needs_replacing( $url ) {
+		if ( str_replace( $this->get_bare_upload_base_urls(), '', $url ) !== $url ) {
+			// Local URL, no replacement needed.
+			return false;
+		}
 
-		if ( false !== strpos( $url, $base_url ) ) {
-			// Local URL, no replacement needed
+		if ( str_replace( $this->get_remote_domains(), '', $url ) === $url ) {
+			// Not a known remote URL, no replacement needed.
 			return false;
 		}
 

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -10,6 +11,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 /**
  * Used for testing purposes.
  *
@@ -64,8 +66,8 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
  */
 class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
 {
-    protected $records = array();
-    protected $recordsByLevel = array();
+    protected $records = [];
+    protected $recordsByLevel = [];
     private $skipReset = false;
     public function getRecords()
     {
@@ -73,8 +75,8 @@ class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     }
     public function clear()
     {
-        $this->records = array();
-        $this->recordsByLevel = array();
+        $this->records = [];
+        $this->recordsByLevel = [];
     }
     public function reset()
     {
@@ -82,19 +84,22 @@ class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
             $this->clear();
         }
     }
-    public function setSkipReset($skipReset)
+    public function setSkipReset(bool $skipReset)
     {
         $this->skipReset = $skipReset;
     }
-    public function hasRecords($level)
+    /**
+     * @param string|int $level Logging level value or name
+     */
+    public function hasRecords($level) : bool
     {
-        return isset($this->recordsByLevel[$level]);
+        return isset($this->recordsByLevel[\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($level)]);
     }
     /**
      * @param string|array $record Either a message string or an array containing message and optionally context keys that will be checked against all records
-     * @param int          $level  Logger::LEVEL constant value
+     * @param string|int   $level  Logging level value or name
      */
-    public function hasRecord($record, $level)
+    public function hasRecord($record, $level) : bool
     {
         if (is_string($record)) {
             $record = array('message' => $record);
@@ -109,28 +114,38 @@ class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
             return true;
         }, $level);
     }
-    public function hasRecordThatContains($message, $level)
+    /**
+     * @param string|int $level Logging level value or name
+     */
+    public function hasRecordThatContains(string $message, $level) : bool
     {
         return $this->hasRecordThatPasses(function ($rec) use($message) {
             return strpos($rec['message'], $message) !== false;
         }, $level);
     }
-    public function hasRecordThatMatches($regex, $level)
+    /**
+     * @param string|int $level Logging level value or name
+     */
+    public function hasRecordThatMatches(string $regex, $level) : bool
     {
-        return $this->hasRecordThatPasses(function ($rec) use($regex) {
+        return $this->hasRecordThatPasses(function (array $rec) use($regex) : bool {
             return preg_match($regex, $rec['message']) > 0;
         }, $level);
     }
-    public function hasRecordThatPasses($predicate, $level)
+    /**
+     * @psalm-param callable(array, int): mixed $predicate
+     *
+     * @param string|int $level Logging level value or name
+     * @return bool
+     */
+    public function hasRecordThatPasses(callable $predicate, $level)
     {
-        if (!is_callable($predicate)) {
-            throw new \InvalidArgumentException("Expected a callable for hasRecordThatSucceeds");
-        }
+        $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($level);
         if (!isset($this->recordsByLevel[$level])) {
             return false;
         }
         foreach ($this->recordsByLevel[$level] as $i => $rec) {
-            if (call_user_func($predicate, $rec, $i)) {
+            if ($predicate($rec, $i)) {
                 return true;
             }
         }
@@ -139,7 +154,7 @@ class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         $this->recordsByLevel[$record['level']][] = $record;
         $this->records[] = $record;
@@ -151,7 +166,7 @@ class TestHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\
             $level = constant('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Logger::' . strtoupper($matches[2]));
             if (method_exists($this, $genericMethod)) {
                 $args[] = $level;
-                return call_user_func_array(array($this, $genericMethod), $args);
+                return call_user_func_array([$this, $genericMethod], $args);
             }
         }
         throw new \BadMethodCallException('Call to undefined method ' . get_class($this) . '::' . $method . '()');

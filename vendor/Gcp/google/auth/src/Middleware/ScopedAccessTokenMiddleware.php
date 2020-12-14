@@ -102,7 +102,6 @@ class ScopedAccessTokenMiddleware
      *   $res = $client->get('myproject/taskqueues/myqueue');
      *
      * @param callable $handler
-     *
      * @return \Closure
      */
     public function __invoke(callable $handler)

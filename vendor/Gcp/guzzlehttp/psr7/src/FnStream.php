@@ -28,6 +28,7 @@ class FnStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message
     }
     /**
      * Lazily determine which methods are not implemented.
+     *
      * @throws \BadMethodCallException
      */
     public function __get($name)

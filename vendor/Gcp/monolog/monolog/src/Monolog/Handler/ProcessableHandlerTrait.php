@@ -15,8 +15,6 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
 /**
  * Helper trait for implementing ProcessableInterface
  *
- * This trait is present in monolog 1.x to ease forward compatibility.
- *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
 trait ProcessableHandlerTrait
@@ -29,7 +27,7 @@ trait ProcessableHandlerTrait
      * {@inheritdoc}
      * @suppress PhanTypeMismatchReturn
      */
-    public function pushProcessor($callback) : HandlerInterface
+    public function pushProcessor(callable $callback) : HandlerInterface
     {
         array_unshift($this->processors, $callback);
         return $this;

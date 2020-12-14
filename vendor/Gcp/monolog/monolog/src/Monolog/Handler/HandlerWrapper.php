@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -29,16 +30,12 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  *
  * @author Alexey Karapetov <alexey@karapetov.com>
  */
-class HandlerWrapper implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface
+class HandlerWrapper implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface
 {
     /**
      * @var HandlerInterface
      */
     protected $handler;
-    /**
-     * HandlerWrapper constructor.
-     * @param HandlerInterface $handler
-     */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler)
     {
         $this->handler = $handler;
@@ -46,53 +43,71 @@ class HandlerWrapper implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
     /**
      * {@inheritdoc}
      */
-    public function isHandling(array $record)
+    public function isHandling(array $record) : bool
     {
         return $this->handler->isHandling($record);
     }
     /**
      * {@inheritdoc}
      */
-    public function handle(array $record)
+    public function handle(array $record) : bool
     {
         return $this->handler->handle($record);
     }
     /**
      * {@inheritdoc}
      */
-    public function handleBatch(array $records)
+    public function handleBatch(array $records) : void
     {
-        return $this->handler->handleBatch($records);
+        $this->handler->handleBatch($records);
     }
     /**
      * {@inheritdoc}
      */
-    public function pushProcessor($callback)
+    public function close() : void
     {
-        $this->handler->pushProcessor($callback);
-        return $this;
+        $this->handler->close();
     }
     /**
      * {@inheritdoc}
      */
-    public function popProcessor()
+    public function pushProcessor(callable $callback) : HandlerInterface
     {
-        return $this->handler->popProcessor();
+        if ($this->handler instanceof ProcessableHandlerInterface) {
+            $this->handler->pushProcessor($callback);
+            return $this;
+        }
+        throw new \LogicException('The wrapped handler does not implement ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface::class);
     }
     /**
      * {@inheritdoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    public function popProcessor() : callable
     {
-        $this->handler->setFormatter($formatter);
-        return $this;
+        if ($this->handler instanceof ProcessableHandlerInterface) {
+            return $this->handler->popProcessor();
+        }
+        throw new \LogicException('The wrapped handler does not implement ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface::class);
     }
     /**
      * {@inheritdoc}
      */
-    public function getFormatter()
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
     {
-        return $this->handler->getFormatter();
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            $this->handler->setFormatter($formatter);
+        }
+        throw new \LogicException('The wrapped handler does not implement ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface::class);
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormatter() : FormatterInterface
+    {
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            return $this->handler->getFormatter();
+        }
+        throw new \LogicException('The wrapped handler does not implement ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface::class);
     }
     public function reset()
     {

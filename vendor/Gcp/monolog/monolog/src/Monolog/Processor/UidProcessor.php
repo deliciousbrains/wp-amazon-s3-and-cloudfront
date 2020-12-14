@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -19,22 +20,19 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
 class UidProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\ProcessorInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface
 {
     private $uid;
-    public function __construct($length = 7)
+    public function __construct(int $length = 7)
     {
-        if (!is_int($length) || $length > 32 || $length < 1) {
+        if ($length > 32 || $length < 1) {
             throw new \InvalidArgumentException('The uid length must be an integer between 1 and 32');
         }
         $this->uid = $this->generateUid($length);
     }
-    public function __invoke(array $record)
+    public function __invoke(array $record) : array
     {
         $record['extra']['uid'] = $this->uid;
         return $record;
     }
-    /**
-     * @return string
-     */
-    public function getUid()
+    public function getUid() : string
     {
         return $this->uid;
     }
@@ -42,8 +40,8 @@ class UidProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Proc
     {
         $this->uid = $this->generateUid(strlen($this->uid));
     }
-    private function generateUid($length)
+    private function generateUid(int $length) : string
     {
-        return substr(hash('md5', uniqid('', true)), 0, $length);
+        return substr(bin2hex(random_bytes((int) ceil($length / 2))), 0, $length);
     }
 }

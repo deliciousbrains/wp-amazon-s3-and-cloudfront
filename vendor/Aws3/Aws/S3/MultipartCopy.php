@@ -98,7 +98,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
             $data[$k] = $v;
         }
         list($bucket, $key) = explode('/', ltrim($this->source, '/'), 2);
-        $data['CopySource'] = '/' . $bucket . '/' . rawurlencode(implode('/', array_map('urlencode', explode('/', $key))));
+        $data['CopySource'] = '/' . $bucket . '/' . implode('/', array_map('urlencode', explode('/', rawurldecode($key))));
         $data['PartNumber'] = $partNumber;
         $defaultPartSize = $this->determinePartSize();
         $startByte = $defaultPartSize * ($partNumber - 1);

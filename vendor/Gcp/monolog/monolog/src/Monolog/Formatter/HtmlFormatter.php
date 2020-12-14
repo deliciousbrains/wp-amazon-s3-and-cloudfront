@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -24,23 +25,22 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
     /**
      * Translates Monolog log levels to html color priorities.
      */
-    protected $logLevels = array(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => '#cccccc', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => '#468847', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => '#3a87ad', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => '#c09853', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => '#f0ad4e', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => '#FF7708', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => '#C12A19', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => '#000000');
+    protected $logLevels = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => '#CCCCCC', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => '#28A745', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => '#17A2B8', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => '#FFC107', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => '#FD7E14', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => '#DC3545', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => '#821722', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => '#000000'];
     /**
-     * @param string $dateFormat The format of the timestamp: one supported by DateTime::format
+     * @param string|null $dateFormat The format of the timestamp: one supported by DateTime::format
      */
-    public function __construct($dateFormat = null)
+    public function __construct(?string $dateFormat = null)
     {
         parent::__construct($dateFormat);
     }
     /**
      * Creates an HTML table row
      *
-     * @param  string $th       Row header content
-     * @param  string $td       Row standard cell content
-     * @param  bool   $escapeTd false if td content must not be html escaped
-     * @return string
+     * @param string $th       Row header content
+     * @param string $td       Row standard cell content
+     * @param bool   $escapeTd false if td content must not be html escaped
      */
-    protected function addRow($th, $td = ' ', $escapeTd = true)
+    protected function addRow(string $th, string $td = ' ', bool $escapeTd = true) : string
     {
         $th = htmlspecialchars($th, ENT_NOQUOTES, 'UTF-8');
         if ($escapeTd) {
@@ -55,7 +55,7 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
      * @param  int    $level Error level
      * @return string
      */
-    protected function addTitle($title, $level)
+    protected function addTitle(string $title, int $level) : string
     {
         $title = htmlspecialchars($title, ENT_NOQUOTES, 'UTF-8');
         return '<h1 style="background: ' . $this->logLevels[$level] . ';color: #ffffff;padding: 5px;" class="monolog-output">' . $title . '</h1>';
@@ -63,20 +63,20 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
     /**
      * Formats a log record.
      *
-     * @param  array $record A record to format
-     * @return mixed The formatted record
+     * @param  array  $record A record to format
+     * @return string The formatted record
      */
-    public function format(array $record)
+    public function format(array $record) : string
     {
         $output = $this->addTitle($record['level_name'], $record['level']);
         $output .= '<table cellspacing="1" width="100%" class="monolog-output">';
         $output .= $this->addRow('Message', (string) $record['message']);
-        $output .= $this->addRow('Time', $record['datetime']->format($this->dateFormat));
+        $output .= $this->addRow('Time', $this->formatDate($record['datetime']));
         $output .= $this->addRow('Channel', $record['channel']);
         if ($record['context']) {
             $embeddedTable = '<table cellspacing="1" width="100%">';
             foreach ($record['context'] as $key => $value) {
-                $embeddedTable .= $this->addRow($key, $this->convertToString($value));
+                $embeddedTable .= $this->addRow((string) $key, $this->convertToString($value));
             }
             $embeddedTable .= '</table>';
             $output .= $this->addRow('Context', $embeddedTable, false);
@@ -84,7 +84,7 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         if ($record['extra']) {
             $embeddedTable = '<table cellspacing="1" width="100%">';
             foreach ($record['extra'] as $key => $value) {
-                $embeddedTable .= $this->addRow($key, $this->convertToString($value));
+                $embeddedTable .= $this->addRow((string) $key, $this->convertToString($value));
             }
             $embeddedTable .= '</table>';
             $output .= $this->addRow('Extra', $embeddedTable, false);
@@ -94,10 +94,10 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
     /**
      * Formats a set of log records.
      *
-     * @param  array $records A set of records to format
-     * @return mixed The formatted set of records
+     * @param  array  $records A set of records to format
+     * @return string The formatted set of records
      */
-    public function formatBatch(array $records)
+    public function formatBatch(array $records) : string
     {
         $message = '';
         foreach ($records as $record) {
@@ -105,15 +105,12 @@ class HtmlFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Format
         }
         return $message;
     }
-    protected function convertToString($data)
+    protected function convertToString($data) : string
     {
         if (null === $data || is_scalar($data)) {
             return (string) $data;
         }
         $data = $this->normalize($data);
-        if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
-            return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE, true);
-        }
-        return str_replace('\\/', '/', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data, null, true));
+        return \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($data, JSON_PRETTY_PRINT | \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::DEFAULT_JSON_FLAGS, true);
     }
 }

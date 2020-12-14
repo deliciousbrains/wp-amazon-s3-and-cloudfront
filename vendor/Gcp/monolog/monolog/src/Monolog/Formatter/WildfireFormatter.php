@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -20,15 +21,14 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  */
 class WildfireFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter
 {
-    const TABLE = 'table';
     /**
      * Translates Monolog log levels to Wildfire levels.
      */
-    private $logLevels = array(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 'LOG', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 'INFO', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 'INFO', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 'WARN', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 'ERROR');
+    private $logLevels = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 'LOG', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 'INFO', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 'INFO', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 'WARN', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 'ERROR', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 'ERROR'];
     /**
      * {@inheritdoc}
      */
-    public function format(array $record)
+    public function format(array $record) : string
     {
         // Retrieve the line and file if set and remove them from the formatted extra
         $file = $line = '';
@@ -41,7 +41,7 @@ class WildfireFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Fo
             unset($record['extra']['line']);
         }
         $record = $this->normalize($record);
-        $message = array('message' => $record['message']);
+        $message = ['message' => $record['message']];
         $handleError = false;
         if ($record['context']) {
             $message['context'] = $record['context'];
@@ -54,26 +54,33 @@ class WildfireFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Fo
         if (count($message) === 1) {
             $message = reset($message);
         }
-        if (isset($record['context'][self::TABLE])) {
+        if (isset($record['context']['table'])) {
             $type = 'TABLE';
             $label = $record['channel'] . ': ' . $record['message'];
-            $message = $record['context'][self::TABLE];
+            $message = $record['context']['table'];
         } else {
             $type = $this->logLevels[$record['level']];
             $label = $record['channel'];
         }
         // Create JSON object describing the appearance of the message in the console
-        $json = $this->toJson(array(array('Type' => $type, 'File' => $file, 'Line' => $line, 'Label' => $label), $message), $handleError);
+        $json = $this->toJson([['Type' => $type, 'File' => $file, 'Line' => $line, 'Label' => $label], $message], $handleError);
         // The message itself is a serialization of the above JSON object + it's length
-        return sprintf('%s|%s|', strlen($json), $json);
+        return sprintf('%d|%s|', strlen($json), $json);
     }
+    /**
+     * {@inheritdoc}
+     */
     public function formatBatch(array $records)
     {
         throw new \BadMethodCallException('Batch formatting does not make sense for the WildfireFormatter');
     }
-    protected function normalize($data, $depth = 0)
+    /**
+     * {@inheritdoc}
+     * @suppress PhanTypeMismatchReturn
+     */
+    protected function normalize($data, int $depth = 0)
     {
-        if (is_object($data) && !$data instanceof \DateTime) {
+        if (is_object($data) && !$data instanceof \DateTimeInterface) {
             return $data;
         }
         return parent::normalize($data, $depth);

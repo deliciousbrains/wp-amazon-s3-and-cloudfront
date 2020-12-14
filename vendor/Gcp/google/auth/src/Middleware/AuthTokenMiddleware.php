@@ -18,6 +18,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Middleware;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 /**
  * AuthTokenMiddleware is a Guzzle Middleware that adds an Authorization header
@@ -80,7 +81,6 @@ class AuthTokenMiddleware
      *   $res = $client->get('myproject/taskqueues/myqueue');
      *
      * @param callable $handler
-     *
      * @return \Closure
      */
     public function __invoke(callable $handler)
@@ -91,6 +91,9 @@ class AuthTokenMiddleware
                 return $handler($request, $options);
             }
             $request = $request->withHeader('authorization', 'Bearer ' . $this->fetchToken());
+            if ($quotaProject = $this->getQuotaProject()) {
+                $request = $request->withHeader(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface::X_GOOG_USER_PROJECT_HEADER, $quotaProject);
+            }
             return $handler($request, $options);
         };
     }
@@ -111,6 +114,12 @@ class AuthTokenMiddleware
         }
         if (array_key_exists('id_token', $auth_tokens)) {
             return $auth_tokens['id_token'];
+        }
+    }
+    private function getQuotaProject()
+    {
+        if ($this->fetcher instanceof GetQuotaProjectInterface) {
+            return $this->fetcher->getQuotaProject();
         }
     }
 }

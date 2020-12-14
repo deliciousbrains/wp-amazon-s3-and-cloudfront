@@ -17,6 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp;
 /**
  * Object Lifecycle Management supports common use cases like setting a Time to
  * Live (TTL) for objects, archiving older versions of objects, or "downgrading"
@@ -78,10 +79,27 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      *
      *     @type int $age Age of an object (in days). This condition is
      *           satisfied when an object reaches the specified age.
-     *     @type string $createdBefore A date in RFC 3339 format with only the
-     *           date part (for instance, "2013-01-15"). This condition is
+     *     @type \DateTimeInterface|string $createdBefore This condition is
      *           satisfied when an object is created before midnight of the
-     *           specified date in UTC.
+     *           specified date in UTC. If a string is given, it must be a date
+     *           in RFC 3339 format with only the date part (for instance,
+     *           "2013-01-15").
+     *     @type \DateTimeInterface|string $customTimeBefore This condition is
+     *           satisfied when the custom time on an object is before this date
+     *           in UTC. If a string is given, it must be a date in RFC 3339
+     *           format with only the date part (for instance, "2013-01-15").
+     *     @type int $daysSinceCustomTime Number of days elapsed since the
+     *           user-specified timestamp set on an object. The condition is
+     *           satisfied if the days elapsed is at least this number. If no
+     *           custom timestamp is specified on an object, the condition does
+     *           not apply.
+     *     @type int $daysSinceNoncurrentTime Number of days elapsed since the
+     *           noncurrent timestamp of an object. The condition is satisfied
+     *           if the days elapsed is at least this number. This condition is
+     *           relevant only for versioned objects. The value of the field
+     *           must be a nonnegative integer. If it's zero, the object version
+     *           will become eligible for Lifecycle action as soon as it becomes
+     *           noncurrent.
      *     @type bool $isLive Relevant only for versioned objects. If the value
      *           is `true`, this condition matches live objects; if the value is
      *           `false`, it matches archived objects.
@@ -90,6 +108,11 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      *           include `"MULTI_REGIONAL"`, `"REGIONAL"`, `"NEARLINE"`,
      *           `"ARCHIVE"`, `"COLDLINE"`, `"STANDARD"`, and
      *           `"DURABLE_REDUCED_AVAILABILITY"`.
+     *     @type \DateTimeInterface|string $noncurrentTimeBefore This condition
+     *           is satisfied when the noncurrent time on an object is before
+     *           this timestamp. This condition is relevant only for versioned
+     *           objects. If a string is given, it must be a date in RFC 3339
+     *           format with only the date part (for instance, "2013-01-15").
      *     @type int $numNewerVersions Relevant only for versioned objects. If
      *           the value is N, this condition is satisfied when there are at
      *           least N versions (including the live version) newer than this
@@ -99,7 +122,7 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      */
     public function addDeleteRule(array $condition)
     {
-        $this->lifecycle['rule'][] = ['action' => ['type' => 'Delete'], 'condition' => $condition];
+        $this->lifecycle['rule'][] = ['action' => ['type' => 'Delete'], 'condition' => $this->formatCondition($condition)];
         return $this;
     }
     /**
@@ -113,6 +136,24 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      * ]);
      * ```
      *
+     * ```
+     * // Using customTimeBefore rule with an object's custom time setting.
+     * $lifecycle->addSetStorageClassRule('NEARLINE', [
+     *     'customTimeBefore' => (new \DateTime())->add(
+     *         \DateInterval::createFromDateString('+10 days')
+     *     )
+     * ]);
+     *
+     * $bucket->update(['lifecycle' => $lifecycle]);
+     *
+     * $object = $bucket->object($objectName);
+     * $object->update([
+     *     'metadata' => [
+     *         'customTime' => '2020-08-17'
+     *     ]
+     * ]);
+     * ```
+     *
      * @param string $storageClass The target storage class. Values include
      *        `"MULTI_REGIONAL"`, `"REGIONAL"`, `"NEARLINE"`, `"COLDLINE"`,
      *        `"STANDARD"`, and `"DURABLE_REDUCED_AVAILABILITY"`.
@@ -121,17 +162,40 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      *
      *     @type int $age Age of an object (in days). This condition is
      *           satisfied when an object reaches the specified age.
-     *     @type string $createdBefore A date in RFC 3339 format with only the
-     *           date part (for instance, "2013-01-15"). This condition is
+     *     @type \DateTimeInterface|string $createdBefore This condition is
      *           satisfied when an object is created before midnight of the
-     *           specified date in UTC.
+     *           specified date in UTC. If a string is given, it must be a date
+     *           in RFC 3339 format with only the date part (for instance,
+     *           "2013-01-15").
+     *     @type \DateTimeInterface|string $customTimeBefore This condition is
+     *           satisfied when the custom time on an object is before this date
+     *           in UTC. If a string is given, it must be a date in RFC 3339
+     *           format with only the date part (for instance, "2013-01-15").
+     *     @type int $daysSinceCustomTime Number of days elapsed since the
+     *           user-specified timestamp set on an object. The condition is
+     *           satisfied if the days elapsed is at least this number. If no
+     *           custom timestamp is specified on an object, the condition does
+     *           not apply.
+     *     @type int $daysSinceNoncurrentTime Number of days elapsed since the
+     *           noncurrent timestamp of an object. The condition is satisfied
+     *           if the days elapsed is at least this number. This condition is
+     *           relevant only for versioned objects. The value of the field
+     *           must be a nonnegative integer. If it's zero, the object version
+     *           will become eligible for Lifecycle action as soon as it becomes
+     *           noncurrent.
      *     @type bool $isLive Relevant only for versioned objects. If the value
      *           is `true`, this condition matches live objects; if the value is
      *           `false`, it matches archived objects.
      *     @type string[] $matchesStorageClass Objects having any of the storage
      *           classes specified by this condition will be matched. Values
      *           include `"MULTI_REGIONAL"`, `"REGIONAL"`, `"NEARLINE"`,
-     *           `"COLDLINE"`, `"STANDARD"`, and `"DURABLE_REDUCED_AVAILABILITY"`.
+     *           `"ARCHIVE"`, `"COLDLINE"`, `"STANDARD"`, and
+     *           `"DURABLE_REDUCED_AVAILABILITY"`.
+     *     @type \DateTimeInterface|string $noncurrentTimeBefore This condition
+     *           is satisfied when the noncurrent time on an object is before
+     *           this timestamp. This condition is relevant only for versioned
+     *           objects. If a string is given, it must be a date in RFC 3339
+     *           format with only the date part (for instance, "2013-01-15").
      *     @type int $numNewerVersions Relevant only for versioned objects. If
      *           the value is N, this condition is satisfied when there are at
      *           least N versions (including the live version) newer than this
@@ -141,7 +205,7 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
      */
     public function addSetStorageClassRule($storageClass, array $condition)
     {
-        $this->lifecycle['rule'][] = ['action' => ['type' => 'SetStorageClass', 'storageClass' => $storageClass], 'condition' => $condition];
+        $this->lifecycle['rule'][] = ['action' => ['type' => 'SetStorageClass', 'storageClass' => $storageClass], 'condition' => $this->formatCondition($condition)];
         return $this;
     }
     /**
@@ -259,5 +323,22 @@ class Lifecycle implements \ArrayAccess, \IteratorAggregate
     public function offsetGet($offset)
     {
         return isset($this->lifecycle['rule'][$offset]) ? $this->lifecycle['rule'][$offset] : null;
+    }
+    /**
+     * Apply condition-specific formatting rules (such as date formatting) to
+     * conditions.
+     *
+     * @param array $condition
+     * @return array
+     */
+    private function formatCondition(array $condition)
+    {
+        $rfc339DateFields = ['createdBefore', 'customTimeBefore', 'noncurrentTimeBefore'];
+        foreach ($rfc339DateFields as $field) {
+            if (isset($condition[$field]) && $condition[$field] instanceof \DateTimeInterface) {
+                $condition[$field] = $condition[$field]->format('Y-m-d');
+            }
+        }
+        return $condition;
     }
 }

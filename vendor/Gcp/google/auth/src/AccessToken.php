@@ -17,6 +17,8 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 
+use DateTime;
+use Exception;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\ExpiredException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\SignatureInvalidException;
@@ -25,13 +27,16 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
+use InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib\Crypt\RSA;
 use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib\Math\BigInteger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
+use RuntimeException;
+use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\InvalidTokenException;
 use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\JWT as SimpleJWT;
 use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\Keys\KeyFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\Keys\KeySet;
-use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\InvalidTokenException;
-use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
+use UnexpectedValueException;
 /**
  * Wrapper around Google Access Tokens which provides convenience functions.
  *
@@ -41,6 +46,7 @@ class AccessToken
 {
     const FEDERATED_SIGNON_CERT_URL = 'https://www.googleapis.com/oauth2/v3/certs';
     const IAP_CERT_URL = 'https://www.gstatic.com/iap/verify/public_key-jwk';
+    const IAP_ISSUER = 'https://cloud.google.com/iap';
     const OAUTH2_ISSUER = 'accounts.google.com';
     const OAUTH2_ISSUER_HTTPS = 'https://accounts.google.com';
     const OAUTH2_REVOKE_URI = 'https://oauth2.googleapis.com/revoke';
@@ -68,39 +74,64 @@ class AccessToken
      * accepted.  By default, the id token must have been issued to this OAuth2 client.
      *
      * @param string $token The JSON Web Token to be verified.
-     * @param array $options [optional] {
-     *     Configuration options.
-     *
-     *     @type string $audience The indended recipient of the token.
-     *     @type string $certsLocation The location (remote or local) from which
+     * @param array $options [optional] Configuration options.
+     * @param string $options.audience The indended recipient of the token.
+     * @param string $options.issuer The intended issuer of the token.
+     * @param string $options.cacheKey The cache key of the cached certs. Defaults to
+     *        the sha1 of $certsLocation if provided, otherwise is set to
+     *        "federated_signon_certs_v3".
+     * @param string $options.certsLocation The location (remote or local) from which
      *        to retrieve certificates, if not cached. This value should only be
      *        provided in limited circumstances in which you are sure of the
      *        behavior.
-     *     @type string $cacheKey The cache key of the cached certs. Defaults to
-     *        the sha1 of $certsLocation if provided, otherwise is set to
-     *        "federated_signon_certs_v3".
-     * }
+     * @param bool $options.throwException Whether the function should throw an
+     *        exception if the verification fails. This is useful for
+     *        determining the reason verification failed.
      * @return array|bool the token payload, if successful, or false if not.
-     * @throws \InvalidArgumentException If certs could not be retrieved from a local file.
-     * @throws \InvalidArgumentException If received certs are in an invalid format.
-     * @throws \RuntimeException If certs could not be retrieved from a remote location.
+     * @throws InvalidArgumentException If certs could not be retrieved from a local file.
+     * @throws InvalidArgumentException If received certs are in an invalid format.
+     * @throws InvalidArgumentException If the cert alg is not supported.
+     * @throws RuntimeException If certs could not be retrieved from a remote location.
+     * @throws UnexpectedValueException If the token issuer does not match.
+     * @throws UnexpectedValueException If the token audience does not match.
      */
     public function verify($token, array $options = [])
     {
         $audience = isset($options['audience']) ? $options['audience'] : null;
+        $issuer = isset($options['issuer']) ? $options['issuer'] : null;
         $certsLocation = isset($options['certsLocation']) ? $options['certsLocation'] : self::FEDERATED_SIGNON_CERT_URL;
         $cacheKey = isset($options['cacheKey']) ? $options['cacheKey'] : $this->getCacheKeyFromCertLocation($certsLocation);
+        $throwException = isset($options['throwException']) ? $options['throwException'] : false;
+        // for backwards compatibility
         // Check signature against each available cert.
         $certs = $this->getCerts($certsLocation, $cacheKey, $options);
         $alg = $this->determineAlg($certs);
-        switch ($alg) {
-            case 'ES256':
-                return $this->verifyEs256($token, $certs, $audience);
-            case 'RS256':
-                return $this->verifyRs256($token, $certs, $audience);
-            default:
-                throw new \InvalidArgumentException('unrecognized "alg" in certs, expected ES256 or RS256');
+        if (!in_array($alg, ['RS256', 'ES256'])) {
+            throw new \InvalidArgumentException('unrecognized "alg" in certs, expected ES256 or RS256');
         }
+        try {
+            if ($alg == 'RS256') {
+                return $this->verifyRs256($token, $certs, $audience, $issuer);
+            }
+            return $this->verifyEs256($token, $certs, $audience, $issuer);
+        } catch (ExpiredException $e) {
+            // firebase/php-jwt 3+
+        } catch (\ExpiredException $e) {
+            // firebase/php-jwt 2
+        } catch (SignatureInvalidException $e) {
+            // firebase/php-jwt 3+
+        } catch (\SignatureInvalidException $e) {
+            // firebase/php-jwt 2
+        } catch (InvalidTokenException $e) {
+            // simplejwt
+        } catch (DomainException $e) {
+        } catch (InvalidArgumentException $e) {
+        } catch (UnexpectedValueException $e) {
+        }
+        if ($throwException) {
+            throw $e;
+        }
+        return false;
     }
     /**
      * Identifies the expected algorithm to verify by looking at the "alg" key
@@ -129,13 +160,14 @@ class AccessToken
      *
      * @param string $token The JSON Web Token to be verified.
      * @param array $certs Certificate array according to the JWK spec (see
-     *                     https://tools.ietf.org/html/rfc7517).
+     *        https://tools.ietf.org/html/rfc7517).
      * @param string|null $audience If set, returns false if the provided
-     *                              audience does not match the "aud" claim on
-     *                              the JWT.
+     *        audience does not match the "aud" claim on the JWT.
+     * @param string|null $issuer If set, returns false if the provided
+     *        issuer does not match the "iss" claim on the JWT.
      * @return array|bool the token payload, if successful, or false if not.
      */
-    private function verifyEs256($token, array $certs, $audience = null)
+    private function verifyEs256($token, array $certs, $audience = null, $issuer = null)
     {
         $this->checkSimpleJwt();
         $jwkset = new \DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\Keys\KeySet();
@@ -143,30 +175,33 @@ class AccessToken
             $jwkset->add(\DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\Keys\KeyFactory::create($cert, 'php'));
         }
         // Validate the signature using the key set and ES256 algorithm.
-        try {
-            $jwt = $this->callSimpleJwtDecode([$token, $jwkset, 'ES256']);
-        } catch (InvalidTokenException $e) {
-            return false;
-        }
-        if ($aud = $jwt->getClaim('aud')) {
-            if ($audience && $aud != $audience) {
-                return false;
+        $jwt = $this->callSimpleJwtDecode([$token, $jwkset, 'ES256']);
+        $payload = $jwt->getClaims();
+        if (isset($payload['aud'])) {
+            if ($audience && $payload['aud'] != $audience) {
+                throw new \UnexpectedValueException('Audience does not match');
             }
         }
-        return $jwt->getClaims();
+        // @see https://cloud.google.com/iap/docs/signed-headers-howto#verifying_the_jwt_payload
+        $issuer = $issuer ?: self::IAP_ISSUER;
+        if (!isset($payload['iss']) || $payload['iss'] !== $issuer) {
+            throw new \UnexpectedValueException('Issuer does not match');
+        }
+        return $payload;
     }
     /**
      * Verifies an RS256-signed JWT.
      *
      * @param string $token The JSON Web Token to be verified.
      * @param array $certs Certificate array according to the JWK spec (see
-     *                     https://tools.ietf.org/html/rfc7517).
+     *        https://tools.ietf.org/html/rfc7517).
      * @param string|null $audience If set, returns false if the provided
-     *                              audience does not match the "aud" claim on
-     *                              the JWT.
+     *        audience does not match the "aud" claim on the JWT.
+     * @param string|null $issuer If set, returns false if the provided
+     *        issuer does not match the "iss" claim on the JWT.
      * @return array|bool the token payload, if successful, or false if not.
      */
-    private function verifyRs256($token, array $certs, $audience = null)
+    private function verifyRs256($token, array $certs, $audience = null, $issuer = null)
     {
         $this->checkAndInitializePhpsec();
         $keys = [];
@@ -182,29 +217,19 @@ class AccessToken
             // create an array of key IDs to certs for the JWT library
             $keys[$cert['kid']] = $rsa->getPublicKey();
         }
-        try {
-            $payload = $this->callJwtStatic('decode', [$token, $keys, ['RS256']]);
-            if (property_exists($payload, 'aud')) {
-                if ($audience && $payload->aud != $audience) {
-                    return false;
-                }
+        $payload = $this->callJwtStatic('decode', [$token, $keys, ['RS256']]);
+        if (property_exists($payload, 'aud')) {
+            if ($audience && $payload->aud != $audience) {
+                throw new \UnexpectedValueException('Audience does not match');
             }
-            // support HTTP and HTTPS issuers
-            // @see https://developers.google.com/identity/sign-in/web/backend-auth
-            $issuers = [self::OAUTH2_ISSUER, self::OAUTH2_ISSUER_HTTPS];
-            if (!isset($payload->iss) || !in_array($payload->iss, $issuers)) {
-                return false;
-            }
-            return (array) $payload;
-        } catch (ExpiredException $e) {
-        } catch (\ExpiredException $e) {
-            // (firebase/php-jwt 2)
-        } catch (SignatureInvalidException $e) {
-        } catch (\SignatureInvalidException $e) {
-            // (firebase/php-jwt 2)
-        } catch (\DomainException $e) {
         }
-        return false;
+        // support HTTP and HTTPS issuers
+        // @see https://developers.google.com/identity/sign-in/web/backend-auth
+        $issuers = $issuer ? [$issuer] : [self::OAUTH2_ISSUER, self::OAUTH2_ISSUER_HTTPS];
+        if (!isset($payload->iss) || !in_array($payload->iss, $issuers)) {
+            throw new \UnexpectedValueException('Issuer does not match');
+        }
+        return (array) $payload;
     }
     /**
      * Revoke an OAuth2 access token or refresh token. This method will revoke the current access
@@ -212,7 +237,7 @@ class AccessToken
      *
      * @param string|array $token The token (access token or a refresh token) that should be revoked.
      * @param array $options [optional] Configuration options.
-     * @return boolean Returns True if the revocation was successful, otherwise False.
+     * @return bool Returns True if the revocation was successful, otherwise False.
      */
     public function revoke($token, array $options = [])
     {
@@ -235,9 +260,10 @@ class AccessToken
      * are PEM encoded certificates.
      *
      * @param string $location The location from which to retrieve certs.
+     * @param string $cacheKey The key under which to cache the retrieved certs.
      * @param array $options [optional] Configuration options.
      * @return array
-     * @throws \InvalidArgumentException If received certs are in an invalid format.
+     * @throws InvalidArgumentException If received certs are in an invalid format.
      */
     private function getCerts($location, $cacheKey, array $options = [])
     {
@@ -269,8 +295,8 @@ class AccessToken
      * @param $url string location
      * @param array $options [optional] Configuration options.
      * @return array certificates
-     * @throws \InvalidArgumentException If certs could not be retrieved from a local file.
-     * @throws \RuntimeException If certs could not be retrieved from a remote location.
+     * @throws InvalidArgumentException If certs could not be retrieved from a local file.
+     * @throws RuntimeException If certs could not be retrieved from a remote location.
      */
     private function retrieveCertsFromLocation($url, array $options = [])
     {

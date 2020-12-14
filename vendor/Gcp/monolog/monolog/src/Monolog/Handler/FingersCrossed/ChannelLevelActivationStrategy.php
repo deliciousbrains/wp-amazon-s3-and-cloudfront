@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -33,18 +34,24 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  */
 class ChannelLevelActivationStrategy implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\ActivationStrategyInterface
 {
+    /**
+     * @var int
+     */
     private $defaultActionLevel;
+    /**
+     * @var array
+     */
     private $channelToActionLevel;
     /**
-     * @param int   $defaultActionLevel   The default action level to be used if the record's category doesn't match any
-     * @param array $channelToActionLevel An array that maps channel names to action levels.
+     * @param int|string $defaultActionLevel   The default action level to be used if the record's category doesn't match any
+     * @param array      $channelToActionLevel An array that maps channel names to action levels.
      */
-    public function __construct($defaultActionLevel, $channelToActionLevel = array())
+    public function __construct($defaultActionLevel, array $channelToActionLevel = [])
     {
         $this->defaultActionLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($defaultActionLevel);
         $this->channelToActionLevel = array_map('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Logger::toMonologLevel', $channelToActionLevel);
     }
-    public function isHandlerActivated(array $record)
+    public function isHandlerActivated(array $record) : bool
     {
         if (isset($this->channelToActionLevel[$record['channel']])) {
             return $record['level'] >= $this->channelToActionLevel[$record['channel']];

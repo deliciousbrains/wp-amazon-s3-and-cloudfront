@@ -62,9 +62,9 @@ trait DecryptionTraitV2
         $options['@CipherOptions']['KeySize'] = strlen($cek) * 8;
         $options['@CipherOptions']['Cipher'] = $this->getCipherFromAesName($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_CRYPTO_SCHEME_HEADER]);
         $this->validateOptionsAndEnvelope($options, $envelope);
-        $decryptionSteam = $this->getDecryptingStream($cipherText, $cek, $options['@CipherOptions']);
+        $decryptionStream = $this->getDecryptingStream($cipherText, $cek, $options['@CipherOptions']);
         unset($cek);
-        return $decryptionSteam;
+        return $decryptionStream;
     }
     private function getTagFromCiphertextStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $tagLength)
     {

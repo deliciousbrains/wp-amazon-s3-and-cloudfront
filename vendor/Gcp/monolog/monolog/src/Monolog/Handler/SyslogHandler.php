@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -29,13 +30,13 @@ class SyslogHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     protected $ident;
     protected $logopts;
     /**
-     * @param string $ident
-     * @param mixed  $facility
-     * @param int    $level    The minimum logging level at which this handler will be triggered
-     * @param bool   $bubble   Whether the messages that are handled can bubble up the stack or not
-     * @param int    $logopts  Option flags for the openlog() call, defaults to LOG_PID
+     * @param string     $ident
+     * @param string|int $facility Either one of the names of the keys in $this->facilities, or a LOG_* facility constant
+     * @param string|int $level    The minimum logging level at which this handler will be triggered
+     * @param bool       $bubble   Whether the messages that are handled can bubble up the stack or not
+     * @param int        $logopts  Option flags for the openlog() call, defaults to LOG_PID
      */
-    public function __construct($ident, $facility = LOG_USER, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true, $logopts = LOG_PID)
+    public function __construct(string $ident, $facility = LOG_USER, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true, int $logopts = LOG_PID)
     {
         parent::__construct($facility, $level, $bubble);
         $this->ident = $ident;
@@ -44,14 +45,14 @@ class SyslogHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     /**
      * {@inheritdoc}
      */
-    public function close()
+    public function close() : void
     {
         closelog();
     }
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         if (!openlog($this->ident, $this->logopts, $this->facility)) {
             throw new \LogicException('Can\'t open syslog for ident "' . $this->ident . '" and facility "' . $this->facility . '"');

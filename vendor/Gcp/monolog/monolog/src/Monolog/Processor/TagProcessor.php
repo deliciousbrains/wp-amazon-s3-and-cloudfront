@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -18,19 +19,21 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor;
 class TagProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\ProcessorInterface
 {
     private $tags;
-    public function __construct(array $tags = array())
+    public function __construct(array $tags = [])
     {
         $this->setTags($tags);
     }
-    public function addTags(array $tags = array())
+    public function addTags(array $tags = []) : self
     {
         $this->tags = array_merge($this->tags, $tags);
+        return $this;
     }
-    public function setTags(array $tags = array())
+    public function setTags(array $tags = []) : self
     {
         $this->tags = $tags;
+        return $this;
     }
-    public function __invoke(array $record)
+    public function __invoke(array $record) : array
     {
         $record['extra']['tags'] = $this->tags;
         return $record;

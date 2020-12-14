@@ -281,7 +281,7 @@ class ClientResolver
     public static function _apply_debug($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)
     {
         if ($value !== false) {
-            $list->interpose(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\TraceMiddleware($value === true ? [] : $value));
+            $list->interpose(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\TraceMiddleware($value === true ? [] : $value, $args['api']));
         }
     }
     public static function _apply_stats($value, array &$args, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList $list)

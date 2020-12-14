@@ -35,11 +35,12 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
         }
         // Return a fulfilled promise and immediately invoke any callbacks.
         if ($this->state === self::FULFILLED) {
-            return $onFulfilled ? promise_for($this->result)->then($onFulfilled) : promise_for($this->result);
+            $promise = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::promiseFor($this->result);
+            return $onFulfilled ? $promise->then($onFulfilled) : $promise;
         }
         // It's either cancelled or rejected, so return a rejected promise
         // and immediately invoke any callbacks.
-        $rejection = rejection_for($this->result);
+        $rejection = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($this->result);
         return $onRejected ? $rejection->then(null, $onRejected) : $rejection;
     }
     public function otherwise(callable $onRejected)
@@ -49,14 +50,15 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
     public function wait($unwrap = true)
     {
         $this->waitIfPending();
-        $inner = $this->result instanceof PromiseInterface ? $this->result->wait($unwrap) : $this->result;
+        if ($this->result instanceof PromiseInterface) {
+            return $this->result->wait($unwrap);
+        }
         if ($unwrap) {
-            if ($this->result instanceof PromiseInterface || $this->state === self::FULFILLED) {
-                return $inner;
-            } else {
-                // It's rejected so "unwrap" and throw an exception.
-                throw exception_for($inner);
+            if ($this->state === self::FULFILLED) {
+                return $this->result;
             }
+            // It's rejected so "unwrap" and throw an exception.
+            throw \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::exceptionFor($this->result);
         }
     }
     public function getState()
@@ -81,6 +83,7 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
             }
         }
         // Reject the promise only if it wasn't rejected in a then callback.
+        /** @psalm-suppress RedundantCondition */
         if ($this->state === self::PENDING) {
             $this->reject(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\CancellationException('Promise has been cancelled'));
         }
@@ -117,15 +120,15 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
         }
         // If the value was not a settled promise or a thenable, then resolve
         // it in the task queue using the correct ID.
-        if (!method_exists($value, 'then')) {
+        if (!is_object($value) || !method_exists($value, 'then')) {
             $id = $state === self::FULFILLED ? 1 : 2;
             // It's a success, so resolve the handlers in the queue.
-            queue()->add(static function () use($id, $value, $handlers) {
+            \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue()->add(static function () use($id, $value, $handlers) {
                 foreach ($handlers as $handler) {
                     self::callHandler($id, $value, $handler);
                 }
             });
-        } elseif ($value instanceof Promise && $value->getState() === self::PENDING) {
+        } elseif ($value instanceof Promise && \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::pending($value)) {
             // We can just merge our handlers onto the next promise.
             $value->handlers = array_merge($value->handlers, $handlers);
         } else {
@@ -147,8 +150,6 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
      * @param int   $index   1 (resolve) or 2 (reject).
      * @param mixed $value   Value to pass to the callback.
      * @param array $handler Array of handler data (promise and callbacks).
-     *
-     * @return array Returns the next group to resolve.
      */
     private static function callHandler($index, $value, array $handler)
     {
@@ -156,12 +157,20 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
         $promise = $handler[0];
         // The promise may have been cancelled or resolved before placing
         // this thunk in the queue.
-        if ($promise->getState() !== self::PENDING) {
+        if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::settled($promise)) {
             return;
         }
         try {
             if (isset($handler[$index])) {
-                $promise->resolve($handler[$index]($value));
+                /*
+                 * If $f throws an exception, then $handler will be in the exception
+                 * stack trace. Since $handler contains a reference to the callable
+                 * itself we get a circular reference. We clear the $handler
+                 * here to avoid that memory leak.
+                 */
+                $f = $handler[$index];
+                unset($handler);
+                $promise->resolve($f($value));
             } elseif ($index === 1) {
                 // Forward resolution values as-is.
                 $promise->resolve($value);
@@ -184,10 +193,11 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
         } elseif ($this->waitList) {
             $this->invokeWaitList();
         } else {
-            // If there's not wait function, then reject the promise.
+            // If there's no wait function, then reject the promise.
             $this->reject('Cannot wait on a promise that has ' . 'no internal wait function. You must provide a wait ' . 'function when constructing the promise to be able to ' . 'wait on a promise.');
         }
-        queue()->run();
+        \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue()->run();
+        /** @psalm-suppress RedundantCondition */
         if ($this->state === self::PENDING) {
             $this->reject('Invoking the wait callback did not resolve the promise');
         }
@@ -215,16 +225,12 @@ class Promise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promis
         $waitList = $this->waitList;
         $this->waitList = null;
         foreach ($waitList as $result) {
-            while (true) {
+            do {
                 $result->waitIfPending();
-                if ($result->result instanceof Promise) {
-                    $result = $result->result;
-                } else {
-                    if ($result->result instanceof PromiseInterface) {
-                        $result->result->wait(false);
-                    }
-                    break;
-                }
+                $result = $result->result;
+            } while ($result instanceof Promise);
+            if ($result instanceof PromiseInterface) {
+                $result->wait(false);
             }
         }
     }

@@ -9,17 +9,17 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise;
 class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromisorInterface
 {
     private $pending = [];
-    /** @var \Iterator */
+    /** @var \Iterator|null */
     private $iterable;
-    /** @var callable|int */
+    /** @var callable|int|null */
     private $concurrency;
-    /** @var callable */
+    /** @var callable|null */
     private $onFulfilled;
-    /** @var callable */
+    /** @var callable|null */
     private $onRejected;
-    /** @var Promise */
+    /** @var Promise|null */
     private $aggregate;
-    /** @var bool */
+    /** @var bool|null */
     private $mutex;
     /**
      * Configuration hash can include the following key value pairs:
@@ -39,12 +39,12 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
      *   allowed number of outstanding concurrently executing promises,
      *   creating a capped pool of promises. There is no limit by default.
      *
-     * @param mixed    $iterable Promises or values to iterate.
-     * @param array    $config   Configuration options
+     * @param mixed $iterable Promises or values to iterate.
+     * @param array $config   Configuration options
      */
     public function __construct($iterable, array $config = [])
     {
-        $this->iterable = iter_for($iterable);
+        $this->iterable = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::iterFor($iterable);
         if (isset($config['concurrency'])) {
             $this->concurrency = $config['concurrency'];
         }
@@ -55,6 +55,7 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
             $this->onRejected = $config['rejected'];
         }
     }
+    /** @psalm-suppress InvalidNullableReturnType */
     public function promise()
     {
         if ($this->aggregate) {
@@ -62,13 +63,28 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
         }
         try {
             $this->createPromise();
+            /** @psalm-assert Promise $this->aggregate */
             $this->iterable->rewind();
-            $this->refillPending();
+            if (!$this->checkIfFinished()) {
+                $this->refillPending();
+            }
         } catch (\Throwable $e) {
+            /**
+             * @psalm-suppress NullReference
+             * @phpstan-ignore-next-line
+             */
             $this->aggregate->reject($e);
         } catch (\Exception $e) {
+            /**
+             * @psalm-suppress NullReference
+             * @phpstan-ignore-next-line
+             */
             $this->aggregate->reject($e);
         }
+        /**
+         * @psalm-suppress NullableReturnStatement
+         * @phpstan-ignore-next-line
+         */
         return $this->aggregate;
     }
     private function createPromise()
@@ -76,16 +92,12 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
         $this->mutex = false;
         $this->aggregate = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promise(function () {
             reset($this->pending);
-            if (empty($this->pending) && !$this->iterable->valid()) {
-                $this->aggregate->resolve(null);
-                return;
-            }
             // Consume a potentially fluctuating list of promises while
             // ensuring that indexes are maintained (precluding array_shift).
             while ($promise = current($this->pending)) {
                 next($this->pending);
                 $promise->wait();
-                if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface::PENDING) {
+                if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::settled($this->aggregate)) {
                     return;
                 }
             }
@@ -126,16 +138,21 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
         if (!$this->iterable || !$this->iterable->valid()) {
             return false;
         }
-        $promise = promise_for($this->iterable->current());
-        $idx = $this->iterable->key();
-        $this->pending[$idx] = $promise->then(function ($value) use($idx) {
+        $promise = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::promiseFor($this->iterable->current());
+        $key = $this->iterable->key();
+        // Iterable keys may not be unique, so we add the promises at the end
+        // of the pending array and retrieve the array index being used
+        $this->pending[] = null;
+        end($this->pending);
+        $idx = key($this->pending);
+        $this->pending[$idx] = $promise->then(function ($value) use($idx, $key) {
             if ($this->onFulfilled) {
-                call_user_func($this->onFulfilled, $value, $idx, $this->aggregate);
+                call_user_func($this->onFulfilled, $value, $key, $this->aggregate);
             }
             $this->step($idx);
-        }, function ($reason) use($idx) {
+        }, function ($reason) use($idx, $key) {
             if ($this->onRejected) {
-                call_user_func($this->onRejected, $reason, $idx, $this->aggregate);
+                call_user_func($this->onRejected, $reason, $key, $this->aggregate);
             }
             $this->step($idx);
         });
@@ -166,7 +183,7 @@ class EachPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Pr
     private function step($idx)
     {
         // If the promise was already resolved, then ignore this step.
-        if ($this->aggregate->getState() !== \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface::PENDING) {
+        if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::settled($this->aggregate)) {
             return;
         }
         unset($this->pending[$idx]);

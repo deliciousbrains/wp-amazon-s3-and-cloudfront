@@ -11,6 +11,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\InputValidationMiddleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\QuotaManager;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\RetryMiddleware;
@@ -46,12 +47,16 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise deleteBucketCorsAsync(array $args = [])
  * @method \Aws\Result deleteBucketEncryption(array $args = [])
  * @method \GuzzleHttp\Promise\Promise deleteBucketEncryptionAsync(array $args = [])
+ * @method \Aws\Result deleteBucketIntelligentTieringConfiguration(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteBucketIntelligentTieringConfigurationAsync(array $args = [])
  * @method \Aws\Result deleteBucketInventoryConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise deleteBucketInventoryConfigurationAsync(array $args = [])
  * @method \Aws\Result deleteBucketLifecycle(array $args = [])
  * @method \GuzzleHttp\Promise\Promise deleteBucketLifecycleAsync(array $args = [])
  * @method \Aws\Result deleteBucketMetricsConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise deleteBucketMetricsConfigurationAsync(array $args = [])
+ * @method \Aws\Result deleteBucketOwnershipControls(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteBucketOwnershipControlsAsync(array $args = [])
  * @method \Aws\Result deleteBucketPolicy(array $args = [])
  * @method \GuzzleHttp\Promise\Promise deleteBucketPolicyAsync(array $args = [])
  * @method \Aws\Result deleteBucketReplication(array $args = [])
@@ -78,6 +83,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise getBucketCorsAsync(array $args = [])
  * @method \Aws\Result getBucketEncryption(array $args = [])
  * @method \GuzzleHttp\Promise\Promise getBucketEncryptionAsync(array $args = [])
+ * @method \Aws\Result getBucketIntelligentTieringConfiguration(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getBucketIntelligentTieringConfigurationAsync(array $args = [])
  * @method \Aws\Result getBucketInventoryConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise getBucketInventoryConfigurationAsync(array $args = [])
  * @method \Aws\Result getBucketLifecycle(array $args = [])
@@ -94,6 +101,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise getBucketNotificationAsync(array $args = [])
  * @method \Aws\Result getBucketNotificationConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise getBucketNotificationConfigurationAsync(array $args = [])
+ * @method \Aws\Result getBucketOwnershipControls(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getBucketOwnershipControlsAsync(array $args = [])
  * @method \Aws\Result getBucketPolicy(array $args = [])
  * @method \GuzzleHttp\Promise\Promise getBucketPolicyAsync(array $args = [])
  * @method \Aws\Result getBucketPolicyStatus(array $args = [])
@@ -130,6 +139,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise headObjectAsync(array $args = [])
  * @method \Aws\Result listBucketAnalyticsConfigurations(array $args = [])
  * @method \GuzzleHttp\Promise\Promise listBucketAnalyticsConfigurationsAsync(array $args = [])
+ * @method \Aws\Result listBucketIntelligentTieringConfigurations(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listBucketIntelligentTieringConfigurationsAsync(array $args = [])
  * @method \Aws\Result listBucketInventoryConfigurations(array $args = [])
  * @method \GuzzleHttp\Promise\Promise listBucketInventoryConfigurationsAsync(array $args = [])
  * @method \Aws\Result listBucketMetricsConfigurations(array $args = [])
@@ -156,6 +167,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise putBucketCorsAsync(array $args = [])
  * @method \Aws\Result putBucketEncryption(array $args = [])
  * @method \GuzzleHttp\Promise\Promise putBucketEncryptionAsync(array $args = [])
+ * @method \Aws\Result putBucketIntelligentTieringConfiguration(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise putBucketIntelligentTieringConfigurationAsync(array $args = [])
  * @method \Aws\Result putBucketInventoryConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise putBucketInventoryConfigurationAsync(array $args = [])
  * @method \Aws\Result putBucketLifecycle(array $args = [])
@@ -170,6 +183,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * @method \GuzzleHttp\Promise\Promise putBucketNotificationAsync(array $args = [])
  * @method \Aws\Result putBucketNotificationConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise putBucketNotificationConfigurationAsync(array $args = [])
+ * @method \Aws\Result putBucketOwnershipControls(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise putBucketOwnershipControlsAsync(array $args = [])
  * @method \Aws\Result putBucketPolicy(array $args = [])
  * @method \GuzzleHttp\Promise\Promise putBucketPolicyAsync(array $args = [])
  * @method \Aws\Result putBucketReplication(array $args = [])
@@ -208,6 +223,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 class S3Client extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface
 {
     use S3ClientTrait;
+    /** @var array */
+    private static $mandatoryAttributes = ['Bucket', 'Key'];
     public static function getArguments()
     {
         $args = parent::getArguments();
@@ -280,6 +297,7 @@ class S3Client extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient impl
             $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3EndpointMiddleware::wrap($this->getRegion(), $this->getConfig('endpoint_provider'), ['dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint')]), 's3.endpoint_middleware');
         }
         $stack->appendBuild(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\BucketEndpointArnMiddleware::wrap($this->getApi(), $this->getRegion(), ['use_arn_region' => $this->getConfig('use_arn_region'), 'dual_stack' => $this->getConfig('use_dual_stack_endpoint'), 'accelerate' => $this->getConfig('use_accelerate_endpoint'), 'path_style' => $this->getConfig('use_path_style_endpoint'), 'endpoint' => isset($args['endpoint']) ? $args['endpoint'] : null]), 's3.bucket_endpoint_arn');
+        $stack->appendValidate(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\InputValidationMiddleware::wrap($this->getApi(), self::$mandatoryAttributes), 'input_validation_middleware');
         $stack->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\PutObjectUrlMiddleware::wrap(), 's3.put_object_url');
         $stack->appendSign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\PermanentRedirectMiddleware::wrap(), 's3.permanent_redirect');
         $stack->appendInit(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Middleware::sourceFile($this->getApi()), 's3.source_file');

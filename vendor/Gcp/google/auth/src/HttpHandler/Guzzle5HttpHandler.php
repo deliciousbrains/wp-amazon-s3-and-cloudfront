@@ -43,7 +43,6 @@ class Guzzle5HttpHandler
      *
      * @param RequestInterface $request
      * @param array $options
-     *
      * @return ResponseInterface
      */
     public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = [])
@@ -56,7 +55,6 @@ class Guzzle5HttpHandler
      *
      * @param RequestInterface $request
      * @param array $options
-     *
      * @return Promise
      */
     public function async(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = [])

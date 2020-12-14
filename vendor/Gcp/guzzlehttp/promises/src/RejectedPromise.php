@@ -13,7 +13,7 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHtt
     private $reason;
     public function __construct($reason)
     {
-        if (method_exists($reason, 'then')) {
+        if (is_object($reason) && method_exists($reason, 'then')) {
             throw new \InvalidArgumentException('You cannot create a RejectedPromise with a promise.');
         }
         $this->reason = $reason;
@@ -24,11 +24,11 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHtt
         if (!$onRejected) {
             return $this;
         }
-        $queue = queue();
+        $queue = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue();
         $reason = $this->reason;
         $p = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promise([$queue, 'run']);
         $queue->add(static function () use($p, $reason, $onRejected) {
-            if ($p->getState() === self::PENDING) {
+            if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::pending($p)) {
                 try {
                     // Return a resolved promise if onRejected does not throw.
                     $p->resolve($onRejected($reason));
@@ -50,8 +50,9 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHtt
     public function wait($unwrap = true, $defaultDelivery = null)
     {
         if ($unwrap) {
-            throw exception_for($this->reason);
+            throw \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::exceptionFor($this->reason);
         }
+        return null;
     }
     public function getState()
     {

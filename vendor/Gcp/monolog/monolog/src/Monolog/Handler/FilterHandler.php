@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -11,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 /**
  * Simple handler wrapper that filters records based on a list of levels
@@ -20,8 +22,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  * @author Hennadiy Verkh
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler
+class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Handler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
 {
+    use ProcessableHandlerTrait;
     /**
      * Handler or factory callable($record, $this)
      *
@@ -41,12 +44,14 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
      */
     protected $bubble;
     /**
+     * @psalm-param HandlerInterface|callable(?array, HandlerInterface): HandlerInterface $handler
+     *
      * @param callable|HandlerInterface $handler        Handler or factory callable($record|null, $filterHandler).
      * @param int|array                 $minLevelOrList A list of levels to accept or a minimum level if maxLevel is provided
-     * @param int                       $maxLevel       Maximum level to accept, only used if $minLevelOrList is not an array
+     * @param int|string                $maxLevel       Maximum level to accept, only used if $minLevelOrList is not an array
      * @param bool                      $bubble         Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct($handler, $minLevelOrList = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $maxLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY, $bubble = true)
+    public function __construct($handler, $minLevelOrList = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $maxLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY, bool $bubble = true)
     {
         $this->handler = $handler;
         $this->bubble = $bubble;
@@ -55,10 +60,7 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
             throw new \RuntimeException("The given handler (" . json_encode($this->handler) . ") is not a callable nor a Monolog\\Handler\\HandlerInterface object");
         }
     }
-    /**
-     * @return array
-     */
-    public function getAcceptedLevels()
+    public function getAcceptedLevels() : array
     {
         return array_flip($this->acceptedLevels);
     }
@@ -66,7 +68,7 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
      * @param int|string|array $minLevelOrList A list of levels to accept or a minimum level or level name if maxLevel is provided
      * @param int|string       $maxLevel       Maximum level or level name to accept, only used if $minLevelOrList is not an array
      */
-    public function setAcceptedLevels($minLevelOrList = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $maxLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY)
+    public function setAcceptedLevels($minLevelOrList = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $maxLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY) : self
     {
         if (is_array($minLevelOrList)) {
             $acceptedLevels = array_map('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Logger::toMonologLevel', $minLevelOrList);
@@ -78,26 +80,25 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
             }));
         }
         $this->acceptedLevels = array_flip($acceptedLevels);
+        return $this;
     }
     /**
      * {@inheritdoc}
      */
-    public function isHandling(array $record)
+    public function isHandling(array $record) : bool
     {
         return isset($this->acceptedLevels[$record['level']]);
     }
     /**
      * {@inheritdoc}
      */
-    public function handle(array $record)
+    public function handle(array $record) : bool
     {
         if (!$this->isHandling($record)) {
             return false;
         }
         if ($this->processors) {
-            foreach ($this->processors as $processor) {
-                $record = call_user_func($processor, $record);
-            }
+            $record = $this->processRecord($record);
         }
         $this->getHandler($record)->handle($record);
         return false === $this->bubble;
@@ -105,9 +106,9 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     /**
      * {@inheritdoc}
      */
-    public function handleBatch(array $records)
+    public function handleBatch(array $records) : void
     {
-        $filtered = array();
+        $filtered = [];
         foreach ($records as $record) {
             if ($this->isHandling($record)) {
                 $filtered[] = $record;
@@ -127,7 +128,7 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     public function getHandler(array $record = null)
     {
         if (!$this->handler instanceof HandlerInterface) {
-            $this->handler = call_user_func($this->handler, $record, $this);
+            $this->handler = ($this->handler)($record, $this);
             if (!$this->handler instanceof HandlerInterface) {
                 throw new \RuntimeException("The factory callable should return a HandlerInterface");
             }
@@ -137,7 +138,7 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     /**
      * {@inheritdoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter)
+    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
     {
         $this->getHandler()->setFormatter($formatter);
         return $this;
@@ -145,8 +146,12 @@ class FilterHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
     /**
      * {@inheritdoc}
      */
-    public function getFormatter()
+    public function getFormatter() : FormatterInterface
     {
         return $this->getHandler()->getFormatter();
+    }
+    public function reset()
+    {
+        $this->resetProcessors();
     }
 }

@@ -67,7 +67,6 @@ class SimpleMiddleware
      *   $res = $client->get('drive/v2/rest');
      *
      * @param callable $handler
-     *
      * @return \Closure
      */
     public function __invoke(callable $handler)

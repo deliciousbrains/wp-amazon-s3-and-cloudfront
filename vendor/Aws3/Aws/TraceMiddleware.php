@@ -2,11 +2,14 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
 /**
  * Traces state changes between middlewares.
  */
@@ -15,6 +18,8 @@ class TraceMiddleware
     private $prevOutput;
     private $prevInput;
     private $config;
+    /** @var Service */
+    private $service;
     private static $authHeaders = ['X-Amz-Security-Token' => '[TOKEN]'];
     private static $authStrings = [
         // S3Signature
@@ -51,13 +56,14 @@ class TraceMiddleware
      *   headers contained in this array will be replaced with the if
      *   "scrub_auth" is set to true.
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service = null)
     {
         $this->config = $config + ['logfn' => function ($value) {
             echo $value;
         }, 'stream_size' => 524288, 'scrub_auth' => true, 'http' => true, 'auth_strings' => [], 'auth_headers' => []];
         $this->config['auth_strings'] += self::$authStrings;
         $this->config['auth_headers'] += self::$authHeaders;
+        $this->service = $service;
     }
     public function __invoke($step, $name)
     {
@@ -109,7 +115,7 @@ class TraceMiddleware
     }
     private function commandArray(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd)
     {
-        return ['instance' => spl_object_hash($cmd), 'name' => $cmd->getName(), 'params' => $cmd->toArray()];
+        return ['instance' => spl_object_hash($cmd), 'name' => $cmd->getName(), 'params' => $this->getRedactedArray($cmd)];
     }
     private function requestArray(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null)
     {
@@ -207,5 +213,29 @@ class TraceMiddleware
             $headers = $this->config['auth_headers'] + $headers;
         }
         return $headers;
+    }
+    /**
+     * @param CommandInterface $cmd
+     * @return array
+     */
+    private function getRedactedArray(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd)
+    {
+        if (!isset($this->service["shapes"])) {
+            return $cmd->toArray();
+        }
+        $shapes = $this->service["shapes"];
+        $cmdArray = $cmd->toArray();
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($cmdArray), \RecursiveIteratorIterator::SELF_FIRST);
+        foreach ($iterator as $parameter => $value) {
+            if (isset($shapes[$parameter]['sensitive']) && $shapes[$parameter]['sensitive'] === true) {
+                $redactedValue = is_string($value) ? "[{$parameter}]" : ["[{$parameter}]"];
+                $currentDepth = $iterator->getDepth();
+                for ($subDepth = $currentDepth; $subDepth >= 0; $subDepth--) {
+                    $subIterator = $iterator->getSubIterator($subDepth);
+                    $subIterator->offsetSet($subIterator->key(), $subDepth === $currentDepth ? $redactedValue : $iterator->getSubIterator($subDepth + 1)->getArrayCopy());
+                }
+            }
+        }
+        return $iterator->getArrayCopy();
     }
 }

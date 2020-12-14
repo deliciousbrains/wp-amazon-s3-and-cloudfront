@@ -45,7 +45,7 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     public function __toString()
     {
         try {
-            return copy_to_string($this);
+            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToString($this);
         } catch (\Exception $e) {
             return '';
         }
@@ -58,6 +58,7 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     {
         $this->tellPos = false;
         $this->source = null;
+        return null;
     }
     public function getSize()
     {

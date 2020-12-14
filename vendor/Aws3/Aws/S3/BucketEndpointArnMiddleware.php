@@ -3,10 +3,12 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn as BaseAccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsAccessPointArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsArnInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidRegionException;
@@ -21,16 +23,9 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  */
 class BucketEndpointArnMiddleware
 {
-    /** @var Service */
-    private $service;
+    use EndpointRegionHelperTrait;
     /** @var callable */
     private $nextHandler;
-    /** @var string */
-    private $region;
-    /** @var $config */
-    private $config;
-    /** @var PartitionEndpointProvider */
-    private $partitionProvider;
     /** @var array */
     private $nonArnableCommands = ['CreateBucket'];
     /**
@@ -97,6 +92,10 @@ class BucketEndpointArnMiddleware
                         }
                         $endpointData = $partition(['region' => $region, 'service' => $arn->getService()]);
                         $cmd['@context']['signing_region'] = $endpointData['signingRegion'];
+                        // Update signing service for Outposts ARNs
+                        if ($arn instanceof OutpostsArnInterface) {
+                            $cmd['@context']['signing_service'] = $arn->getService();
+                        }
                     } catch (InvalidArnException $e) {
                         // Add context to ARN exception
                         throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception('Bucket parameter parsed as ARN and failed with: ' . $e->getMessage(), $cmd, [], $e);
@@ -106,49 +105,29 @@ class BucketEndpointArnMiddleware
         }
         return $nextHandler($cmd, $req);
     }
-    private function generateAccessPointHost(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn $arn, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req)
+    private function generateAccessPointHost(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn $arn, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req)
     {
-        $host = $arn->getResourceId() . '-' . $arn->getAccountId() . '.s3-accesspoint';
-        if (!empty($this->config['dual_stack'])) {
-            $host .= '.dualstack';
+        if ($arn instanceof OutpostsAccessPointArn) {
+            $accesspointName = $arn->getAccesspointName();
+        } else {
+            $accesspointName = $arn->getResourceId();
+        }
+        $host = "{$accesspointName}-" . $arn->getAccountId();
+        if ($arn instanceof OutpostsAccessPointArn) {
+            $host .= '.' . $arn->getOutpostId() . '.s3-outposts';
+        } else {
+            $host .= '.s3-accesspoint';
+            if (!empty($this->config['dual_stack'])) {
+                $host .= '.dualstack';
+            }
         }
         if (!empty($this->config['use_arn_region']->isUseArnRegion())) {
             $region = $arn->getRegion();
         } else {
             $region = $this->region;
         }
-        $host .= '.' . $region . '.' . $this->getPartitionSuffix($arn);
+        $host .= '.' . $region . '.' . $this->getPartitionSuffix($arn, $this->partitionProvider);
         return $host;
-    }
-    private function getPartitionSuffix(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface $arn)
-    {
-        $partition = $this->partitionProvider->getPartition($arn->getRegion(), $arn->getService());
-        return $partition->getDnsSuffix();
-    }
-    private function getSigningRegion($region)
-    {
-        $partition = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider()->getPartition($region, 's3');
-        $data = $partition->toArray();
-        if (isset($data['services']['s3']['endpoints'][$region]['credentialScope']['region'])) {
-            return $data['services']['s3']['endpoints'][$region]['credentialScope']['region'];
-        }
-        return $region;
-    }
-    private function isMatchingSigningRegion($arnRegion, $clientRegion)
-    {
-        $arnRegion = strtolower($arnRegion);
-        $clientRegion = $this->stripPseudoRegions(strtolower($clientRegion));
-        if ($arnRegion === $clientRegion) {
-            return true;
-        }
-        if ($this->getSigningRegion($clientRegion) === $arnRegion) {
-            return true;
-        }
-        return false;
-    }
-    private function stripPseudoRegions($region)
-    {
-        return str_replace(['fips-', '-fips'], ['', ''], $region);
     }
     /**
      * Validates an ARN, returning a partition object corresponding to the ARN
@@ -159,7 +138,11 @@ class BucketEndpointArnMiddleware
      */
     private function validateArn($arn)
     {
-        if ($arn instanceof AccessPointArn) {
+        if ($arn instanceof AccessPointArnInterface) {
+            // Dualstack is not supported with Outposts access points
+            if ($arn instanceof OutpostsAccessPointArn && !empty($this->config['dual_stack'])) {
+                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException('Dualstack is currently not supported with S3 Outposts access' . ' points. Please disable dualstack or do not supply an' . ' access point ARN.');
+            }
             // Accelerate is not supported with access points
             if (!empty($this->config['accelerate'])) {
                 throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException('Accelerate is currently not supported with access points.' . ' Please disable accelerate or do not supply an access' . ' point ARN.');
@@ -188,13 +171,11 @@ class BucketEndpointArnMiddleware
             }
             // Ensure ARN region matches client region unless
             // configured for using ARN region over client region
-            if (!$this->isMatchingSigningRegion($arn->getRegion(), $this->region)) {
-                if (empty($this->config['use_arn_region']) || !$this->config['use_arn_region']->isUseArnRegion()) {
-                    throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidRegionException('The region' . " specified in the ARN (" . $arn->getRegion() . ") does not match the client region (" . "{$this->region}).");
-                }
-            }
+            $this->validateMatchingRegion($arn);
+            // Ensure it is not resolved to fips pseudo-region for S3 Outposts
+            $this->validateFipsNotUsedWithOutposts($arn);
             return $arnPart;
         }
-        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException('Provided ARN was not' . ' a valid S3 access point ARN');
+        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException('Provided ARN was not a valid S3 access' . ' point ARN or S3 Outposts access point ARN.');
     }
 }

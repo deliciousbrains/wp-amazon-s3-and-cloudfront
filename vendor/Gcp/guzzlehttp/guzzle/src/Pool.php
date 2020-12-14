@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise as P;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\EachPromise;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromisorInterface;
@@ -16,27 +17,28 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  * When a function is yielded by the iterator, the function is provided the
  * "request_options" array that should be merged on top of any existing
  * options, and the function MUST then return a wait-able promise.
+ *
+ * @final
  */
 class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromisorInterface
 {
-    /** @var EachPromise */
+    /**
+     * @var EachPromise
+     */
     private $each;
     /**
      * @param ClientInterface $client   Client used to send the requests.
      * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
-     *     - concurrency: (int) Maximum number of requests to send concurrently
-     *     - options: Array of request options to apply to each request.
-     *     - fulfilled: (callable) Function to invoke when a request completes.
-     *     - rejected: (callable) Function to invoke when a request is rejected.
+     *                                  - concurrency: (int) Maximum number of requests to send concurrently
+     *                                  - options: Array of request options to apply to each request.
+     *                                  - fulfilled: (callable) Function to invoke when a request completes.
+     *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
     public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client, $requests, array $config = [])
     {
-        // Backwards compatibility.
-        if (isset($config['pool_size'])) {
-            $config['concurrency'] = $config['pool_size'];
-        } elseif (!isset($config['concurrency'])) {
+        if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
         }
         if (isset($config['options'])) {
@@ -45,15 +47,15 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
         } else {
             $opts = [];
         }
-        $iterable = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\iter_for($requests);
-        $requests = function () use($iterable, $client, $opts) {
+        $iterable = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::iterFor($requests);
+        $requests = static function () use($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     (yield $key => $client->sendAsync($rfn, $opts));
-                } elseif (is_callable($rfn)) {
+                } elseif (\is_callable($rfn)) {
                     (yield $key => $rfn($opts));
                 } else {
-                    throw new \InvalidArgumentException('Each value yielded by ' . 'the iterator must be a Psr7\\Http\\Message\\RequestInterface ' . 'or a callable that returns a promise that fulfills ' . 'with a Psr7\\Message\\Http\\ResponseInterface object.');
+                    throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr7\\Http\\Message\\RequestInterface or a callable that returns a promise that fulfills with a Psr7\\Message\\Http\\ResponseInterface object.');
                 }
             }
         };
@@ -61,10 +63,8 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
     }
     /**
      * Get promise
-     *
-     * @return PromiseInterface
      */
-    public function promise()
+    public function promise() : PromiseInterface
     {
         return $this->each->promise();
     }
@@ -79,36 +79,35 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
      * @param ClientInterface $client   Client used to send the requests
      * @param array|\Iterator $requests Requests to send concurrently.
      * @param array           $options  Passes through the options available in
-     *                                  {@see GuzzleHttp\Pool::__construct}
+     *                                  {@see \GuzzleHttp\Pool::__construct}
      *
      * @return array Returns an array containing the response or an exception
      *               in the same order that the requests were sent.
+     *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client, $requests, array $options = [])
+    public static function batch(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client, $requests, array $options = []) : array
     {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);
         $pool = new static($client, $requests, $options);
         $pool->promise()->wait();
-        ksort($res);
+        \ksort($res);
         return $res;
     }
     /**
      * Execute callback(s)
-     *
-     * @return void
      */
-    private static function cmpCallback(array &$options, $name, array &$results)
+    private static function cmpCallback(array &$options, string $name, array &$results) : void
     {
         if (!isset($options[$name])) {
-            $options[$name] = function ($v, $k) use(&$results) {
+            $options[$name] = static function ($v, $k) use(&$results) {
                 $results[$k] = $v;
             };
         } else {
             $currentFn = $options[$name];
-            $options[$name] = function ($v, $k) use(&$results, $currentFn) {
+            $options[$name] = static function ($v, $k) use(&$results, $currentFn) {
                 $currentFn($v, $k);
                 $results[$k] = $v;
             };

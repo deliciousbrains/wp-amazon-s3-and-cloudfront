@@ -22,6 +22,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceExce
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\UploadException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\JsonTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\LimitStream;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
@@ -151,6 +152,22 @@ class ResumableUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
             $rangeStart = $this->getRangeStart($response->getHeaderLine('Range'));
         } while ($response->getStatusCode() === 308);
         return $this->decodeResponse($response);
+    }
+    /**
+     * Currently only the MultiPartUploader supports async.
+     *
+     * Any calls to this will throw a generic Google Exception.
+     *
+     * @return PromiseInterface
+     * @throws GoogleException
+     * @experimental The experimental flag means that while we believe this method
+     *      or class is ready for use, it may change before release in backwards-
+     *      incompatible ways. Please use with caution, and test thoroughly when
+     *      upgrading.
+     */
+    public function uploadAsync()
+    {
+        throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('Currently only the MultiPartUploader supports async.');
     }
     /**
      * Fetch and decode the response body

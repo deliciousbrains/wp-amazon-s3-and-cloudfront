@@ -64,8 +64,10 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
      * Return an UploadedFile instance array.
      *
      * @param array $files A array which respect $_FILES structure
-     * @throws InvalidArgumentException for unrecognized values
+     *
      * @return array
+     *
+     * @throws InvalidArgumentException for unrecognized values
      */
     public static function normalizeFiles(array $files)
     {

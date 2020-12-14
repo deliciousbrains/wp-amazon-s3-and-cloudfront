@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -10,6 +11,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 /**
@@ -22,8 +24,8 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  */
 class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\SocketHandler
 {
-    const FLEEP_HOST = 'fleep.io';
-    const FLEEP_HOOK_URI = '/hook/';
+    protected const FLEEP_HOST = 'fleep.io';
+    protected const FLEEP_HOOK_URI = '/hook/';
     /**
      * @var string Webhook token (specifies the conversation where logs are sent)
      */
@@ -35,17 +37,17 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
      * see https://fleep.io/integrations/webhooks/
      *
      * @param  string                    $token  Webhook token
-     * @param  bool|int                  $level  The minimum logging level at which this handler will be triggered
+     * @param  string|int                $level  The minimum logging level at which this handler will be triggered
      * @param  bool                      $bubble Whether the messages that are handled can bubble up the stack or not
      * @throws MissingExtensionException
      */
-    public function __construct($token, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
+    public function __construct(string $token, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
     {
         if (!extension_loaded('openssl')) {
             throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP extension is required to use the FleepHookHandler');
         }
         $this->token = $token;
-        $connectionString = 'ssl://' . self::FLEEP_HOST . ':443';
+        $connectionString = 'ssl://' . static::FLEEP_HOST . ':443';
         parent::__construct($connectionString, $level, $bubble);
     }
     /**
@@ -55,41 +57,33 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
      *
      * @return LineFormatter
      */
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter() : FormatterInterface
     {
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter(null, null, true, true);
     }
     /**
      * Handles a log record
-     *
-     * @param array $record
      */
-    public function write(array $record)
+    public function write(array $record) : void
     {
         parent::write($record);
         $this->closeSocket();
     }
     /**
      * {@inheritdoc}
-     *
-     * @param  array  $record
-     * @return string
      */
-    protected function generateDataStream($record)
+    protected function generateDataStream(array $record) : string
     {
         $content = $this->buildContent($record);
         return $this->buildHeader($content) . $content;
     }
     /**
      * Builds the header of the API Call
-     *
-     * @param  string $content
-     * @return string
      */
-    private function buildHeader($content)
+    private function buildHeader(string $content) : string
     {
-        $header = "POST " . self::FLEEP_HOOK_URI . $this->token . " HTTP/1.1\r\n";
-        $header .= "Host: " . self::FLEEP_HOST . "\r\n";
+        $header = "POST " . static::FLEEP_HOOK_URI . $this->token . " HTTP/1.1\r\n";
+        $header .= "Host: " . static::FLEEP_HOST . "\r\n";
         $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
         $header .= "Content-Length: " . strlen($content) . "\r\n";
         $header .= "\r\n";
@@ -97,13 +91,10 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
     }
     /**
      * Builds the body of API call
-     *
-     * @param  array  $record
-     * @return string
      */
-    private function buildContent($record)
+    private function buildContent(array $record) : string
     {
-        $dataArray = array('message' => $record['formatted']);
+        $dataArray = ['message' => $record['formatted']];
         return http_build_query($dataArray);
     }
 }

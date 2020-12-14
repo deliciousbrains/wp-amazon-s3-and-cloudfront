@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -27,29 +28,23 @@ class IntrospectionProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Mo
     private $level;
     private $skipClassesPartials;
     private $skipStackFramesCount;
-    private $skipFunctions = array('call_user_func', 'call_user_func_array');
-    public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, array $skipClassesPartials = array(), $skipStackFramesCount = 0)
+    private $skipFunctions = ['call_user_func', 'call_user_func_array'];
+    /**
+     * @param string|int $level The minimum logging level at which this Processor will be triggered
+     */
+    public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, array $skipClassesPartials = [], int $skipStackFramesCount = 0)
     {
         $this->level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($level);
-        $this->skipClassesPartials = array_merge(array('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\'), $skipClassesPartials);
+        $this->skipClassesPartials = array_merge(['DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\'], $skipClassesPartials);
         $this->skipStackFramesCount = $skipStackFramesCount;
     }
-    /**
-     * @param  array $record
-     * @return array
-     */
-    public function __invoke(array $record)
+    public function __invoke(array $record) : array
     {
         // return if the level is not high enough
         if ($record['level'] < $this->level) {
             return $record;
         }
-        /*
-         * http://php.net/manual/en/function.debug-backtrace.php
-         * As of 5.3.6, DEBUG_BACKTRACE_IGNORE_ARGS option was added.
-         * Any version less than 5.3.6 must use the DEBUG_BACKTRACE_IGNORE_ARGS constant value '2'.
-         */
-        $trace = debug_backtrace(PHP_VERSION_ID < 50306 ? 2 : DEBUG_BACKTRACE_IGNORE_ARGS);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         // skip first since it's always the current method
         array_shift($trace);
         // the call_user_func call is also skipped
@@ -71,10 +66,10 @@ class IntrospectionProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Mo
         }
         $i += $this->skipStackFramesCount;
         // we should have the call source now
-        $record['extra'] = array_merge($record['extra'], array('file' => isset($trace[$i - 1]['file']) ? $trace[$i - 1]['file'] : null, 'line' => isset($trace[$i - 1]['line']) ? $trace[$i - 1]['line'] : null, 'class' => isset($trace[$i]['class']) ? $trace[$i]['class'] : null, 'function' => isset($trace[$i]['function']) ? $trace[$i]['function'] : null));
+        $record['extra'] = array_merge($record['extra'], ['file' => isset($trace[$i - 1]['file']) ? $trace[$i - 1]['file'] : null, 'line' => isset($trace[$i - 1]['line']) ? $trace[$i - 1]['line'] : null, 'class' => isset($trace[$i]['class']) ? $trace[$i]['class'] : null, 'function' => isset($trace[$i]['function']) ? $trace[$i]['function'] : null]);
         return $record;
     }
-    private function isTraceClassOrSkippedFunction(array $trace, $index)
+    private function isTraceClassOrSkippedFunction(array $trace, int $index)
     {
         if (!isset($trace[$index])) {
             return false;

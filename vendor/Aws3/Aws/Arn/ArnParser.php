@@ -3,8 +3,14 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn as S3AccessPointArn;
-use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\BucketArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsBucketArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\RegionalBucketArn;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsAccessPointArn;
 /**
+ * This class provides functionality to parse ARN strings and return a
+ * corresponding ARN object. ARN-parsing logic may be subject to change in the
+ * future, so this should not be relied upon for external customer usage.
+ *
  * @internal
  */
 class ArnParser
@@ -28,12 +34,25 @@ class ArnParser
     public static function parse($string)
     {
         $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Arn::parse($string);
-        if (substr($data['resource'], 0, 11) === 'accesspoint') {
+        $resource = self::explodeResourceComponent($data['resource']);
+        if ($resource[0] === 'outpost') {
+            if (isset($resource[2]) && $resource[2] === 'bucket') {
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsBucketArn($string);
+            }
+            if (isset($resource[2]) && $resource[2] === 'accesspoint') {
+                return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsAccessPointArn($string);
+            }
+        }
+        if ($resource[0] === 'accesspoint') {
             if ($data['service'] === 's3') {
                 return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn($string);
             }
             return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn($string);
         }
         return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Arn($data);
+    }
+    private static function explodeResourceComponent($resource)
+    {
+        return preg_split("/[\\/:]/", $resource);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -12,6 +13,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Doctrine\CouchDB\CouchDBClient;
 /**
  * CouchDB handler for Doctrine CouchDB ODM
@@ -21,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Doctrine\CouchDB\CouchDBClient;
 class DoctrineCouchDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
 {
     private $client;
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Doctrine\CouchDB\CouchDBClient $client, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Doctrine\CouchDB\CouchDBClient $client, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
     {
         $this->client = $client;
         parent::__construct($level, $bubble);
@@ -29,11 +31,11 @@ class DoctrineCouchDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monol
     /**
      * {@inheritDoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         $this->client->postDocument($record['formatted']);
     }
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter() : FormatterInterface
     {
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter();
     }

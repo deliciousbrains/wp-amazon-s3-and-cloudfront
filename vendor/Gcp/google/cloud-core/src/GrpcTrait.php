@@ -19,6 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\CredentialsWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ArrayTrait;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Duration;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\GrpcRequestWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Protobuf\NullValue;
@@ -215,6 +216,30 @@ trait GrpcTrait
     {
         list($dt, $nanos) = $this->parseTimeString($value);
         return ['seconds' => (int) $dt->format('U'), 'nanos' => (int) $nanos];
+    }
+    /**
+     * Format a duration for the API.
+     *
+     * @param string|Duration $value
+     * @return array
+     */
+    private function formatDurationForApi($value)
+    {
+        if (is_string($value)) {
+            $d = explode('.', trim($value, 's'));
+            if (count($d) < 2) {
+                $seconds = $d[0];
+                $nanos = 0;
+            } else {
+                $seconds = (int) $d[0];
+                $nanos = $this->convertFractionToNanoSeconds($d[1]);
+            }
+        } elseif ($value instanceof Duration) {
+            $d = $value->get();
+            $seconds = $d['seconds'];
+            $nanos = $d['nanos'];
+        }
+        return ['seconds' => $seconds, 'nanos' => $nanos];
     }
     /**
      * Construct a gapic client. Allows for tests to intercept.

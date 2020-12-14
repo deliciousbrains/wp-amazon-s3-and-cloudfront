@@ -47,7 +47,7 @@ trait StreamDecoratorTrait
     }
     public function getContents()
     {
-        return copy_to_string($this);
+        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::copyToString($this);
     }
     /**
      * Allow decorators to implement custom methods
@@ -119,6 +119,7 @@ trait StreamDecoratorTrait
      * Implement in subclasses to dynamically create streams when requested.
      *
      * @return StreamInterface
+     *
      * @throws \BadMethodCallException
      */
     protected function createStream()

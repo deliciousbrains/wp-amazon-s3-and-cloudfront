@@ -101,7 +101,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * The scope of the access request, expressed either as an Array or as a
      * space-delimited string.
      *
-     * @var string
+     * @var array
      */
     private $scope;
     /**
@@ -148,6 +148,12 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * @var string
      */
     private $signingKey;
+    /**
+     * The signing key id when using assertion profile. Param kid in jwt header
+     *
+     * @var string
+     */
+    private $signingKeyId;
     /**
      * The signing algorithm when using an assertion profile.
      *
@@ -257,6 +263,9 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * - signingKey
      *   Signing key when using assertion profile
      *
+     * - signingKeyId
+     *   Signing key id when using assertion profile
+     *
      * - refreshToken
      *   The refresh token associated with the access token
      *   to be refreshed.
@@ -275,7 +284,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      */
     public function __construct(array $config)
     {
-        $opts = array_merge(['expiry' => self::DEFAULT_EXPIRY_SECONDS, 'extensionParams' => [], 'authorizationUri' => null, 'redirectUri' => null, 'tokenCredentialUri' => null, 'state' => null, 'username' => null, 'password' => null, 'clientId' => null, 'clientSecret' => null, 'issuer' => null, 'sub' => null, 'audience' => null, 'signingKey' => null, 'signingAlgorithm' => null, 'scope' => null, 'additionalClaims' => []], $config);
+        $opts = array_merge(['expiry' => self::DEFAULT_EXPIRY_SECONDS, 'extensionParams' => [], 'authorizationUri' => null, 'redirectUri' => null, 'tokenCredentialUri' => null, 'state' => null, 'username' => null, 'password' => null, 'clientId' => null, 'clientSecret' => null, 'issuer' => null, 'sub' => null, 'audience' => null, 'signingKey' => null, 'signingKeyId' => null, 'signingAlgorithm' => null, 'scope' => null, 'additionalClaims' => []], $config);
         $this->setAuthorizationUri($opts['authorizationUri']);
         $this->setRedirectUri($opts['redirectUri']);
         $this->setTokenCredentialUri($opts['tokenCredentialUri']);
@@ -289,6 +298,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
         $this->setExpiry($opts['expiry']);
         $this->setAudience($opts['audience']);
         $this->setSigningKey($opts['signingKey']);
+        $this->setSigningKeyId($opts['signingKeyId']);
         $this->setSigningAlgorithm($opts['signingAlgorithm']);
         $this->setScope($opts['scope']);
         $this->setExtensionParams($opts['extensionParams']);
@@ -302,11 +312,21 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * - if present, but invalid, raises DomainException.
      * - otherwise returns the payload in the idtoken as a PHP object.
      *
-     * if $publicKey is null, the key is decoded without being verified.
+     * The behavior of this method varies depending on the version of
+     * `firebase/php-jwt` you are using. In versions lower than 3.0.0, if
+     * `$publicKey` is null, the key is decoded without being verified. In
+     * newer versions, if a public key is not given, this method will throw an
+     * `\InvalidArgumentException`.
      *
      * @param string $publicKey The public key to use to authenticate the token
      * @param array $allowed_algs List of supported verification algorithms
-     *
+     * @throws \DomainException if the token is missing an audience.
+     * @throws \DomainException if the audience does not match the one set in
+     *         the OAuth2 class instance.
+     * @throws \UnexpectedValueException If the token is invalid
+     * @throws SignatureInvalidException If the signature is invalid.
+     * @throws BeforeValidException If the token is not yet valid.
+     * @throws ExpiredException If the token has expired.
      * @return null|object
      */
     public function verifyIdToken($publicKey = null, $allowed_algs = array())
@@ -328,7 +348,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * Obtains the encoded jwt from the instance data.
      *
      * @param array $config array optional configuration parameters
-     *
      * @return string
      */
     public function toJwt(array $config = [])
@@ -354,7 +373,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
             $assertion['sub'] = $this->getSub();
         }
         $assertion += $this->getAdditionalClaims();
-        return $this->jwtEncode($assertion, $this->getSigningKey(), $this->getSigningAlgorithm());
+        return $this->jwtEncode($assertion, $this->getSigningKey(), $this->getSigningAlgorithm(), $this->getSigningKeyId());
     }
     /**
      * Generates a request for token credentials.
@@ -406,7 +425,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * Fetches the auth tokens based on the current state.
      *
      * @param callable $httpHandler callback which delivers psr7 request
-     *
      * @return array the response
      */
     public function fetchAuthToken(callable $httpHandler = null)
@@ -428,11 +446,11 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      */
     public function getCacheKey()
     {
-        if (is_string($this->scope)) {
-            return $this->scope;
-        }
         if (is_array($this->scope)) {
             return implode(':', $this->scope);
+        }
+        if ($this->audience) {
+            return $this->audience;
         }
         // If scope has not set, return null to indicate no caching.
         return null;
@@ -441,9 +459,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * Parses the fetched tokens.
      *
      * @param ResponseInterface $resp the response.
-     *
      * @return array the tokens parsed from the response body.
-     *
      * @throws \Exception
      */
     public function parseTokenResponse(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $resp)
@@ -463,12 +479,14 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
     /**
      * Updates an OAuth 2.0 client.
      *
-     * @example
-     *   client.updateToken([
+     * Example:
+     * ```
+     * $oauth->updateToken([
      *     'refresh_token' => 'n4E9O119d',
      *     'access_token' => 'FJQbwq9',
      *     'expires_in' => 3600
-     *   ])
+     * ]);
+     * ```
      *
      * @param array $config
      *  The configuration parameters related to the token.
@@ -515,9 +533,7 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * Builds the authorization Uri that the user should be redirected to.
      *
      * @param array $config configuration options that customize the return url
-     *
      * @return UriInterface the authorization Url.
-     *
      * @throws InvalidArgumentException
      */
     public function buildFullAuthorizationUri(array $config = [])
@@ -632,7 +648,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * a space-delimited String.
      *
      * @param string|array $scope
-     *
      * @throws InvalidArgumentException
      */
     public function setScope($scope)
@@ -683,7 +698,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * Sets the current grant type.
      *
      * @param $grantType
-     *
      * @throws InvalidArgumentException
      */
     public function setGrantType($grantType)
@@ -863,6 +877,24 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
     public function setSigningKey($signingKey)
     {
         $this->signingKey = $signingKey;
+    }
+    /**
+     * Gets the signing key id when using an assertion profile.
+     *
+     * @return string
+     */
+    public function getSigningKeyId()
+    {
+        return $this->signingKeyId;
+    }
+    /**
+     * Sets the signing key id when using an assertion profile.
+     *
+     * @param string $signingKeyId
+     */
+    public function setSigningKeyId($signingKeyId)
+    {
+        $this->signingKeyId = $signingKeyId;
     }
     /**
      * Gets the signing algorithm when using an assertion profile.
@@ -1064,14 +1096,28 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
     /**
      * The expiration of the last received token.
      *
-     * @return array
+     * @return array|null
      */
     public function getLastReceivedToken()
     {
         if ($token = $this->getAccessToken()) {
-            return ['access_token' => $token, 'expires_at' => $this->getExpiresAt()];
+            // the bare necessity of an auth token
+            $authToken = ['access_token' => $token, 'expires_at' => $this->getExpiresAt()];
+        } elseif ($idToken = $this->getIdToken()) {
+            $authToken = ['id_token' => $idToken, 'expires_at' => $this->getExpiresAt()];
+        } else {
+            return null;
         }
-        return null;
+        if ($expiresIn = $this->getExpiresIn()) {
+            $authToken['expires_in'] = $expiresIn;
+        }
+        if ($issuedAt = $this->getIssuedAt()) {
+            $authToken['issued_at'] = $issuedAt;
+        }
+        if ($refreshToken = $this->getRefreshToken()) {
+            $authToken['refresh_token'] = $refreshToken;
+        }
+        return $authToken;
     }
     /**
      * Get the client ID.
@@ -1090,7 +1136,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * @todo handle uri as array
      *
      * @param string $uri
-     *
      * @return null|UriInterface
      */
     private function coerceUri($uri)
@@ -1104,7 +1149,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
      * @param string $idToken
      * @param string|array|null $publicKey
      * @param array $allowedAlgs
-     *
      * @return object
      */
     private function jwtDecode($idToken, $publicKey, $allowedAlgs)
@@ -1114,19 +1158,18 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
         }
         return \JWT::decode($idToken, $publicKey, $allowedAlgs);
     }
-    private function jwtEncode($assertion, $signingKey, $signingAlgorithm)
+    private function jwtEncode($assertion, $signingKey, $signingAlgorithm, $signingKeyId = null)
     {
         if (class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\Firebase\\JWT\\JWT')) {
-            return \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT::encode($assertion, $signingKey, $signingAlgorithm);
+            return \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT::encode($assertion, $signingKey, $signingAlgorithm, $signingKeyId);
         }
-        return \JWT::encode($assertion, $signingKey, $signingAlgorithm);
+        return \JWT::encode($assertion, $signingKey, $signingAlgorithm, $signingKeyId);
     }
     /**
      * Determines if the URI is absolute based on its scheme and host or path
      * (RFC 3986).
      *
      * @param string $uri
-     *
      * @return bool
      */
     private function isAbsoluteUri($uri)
@@ -1136,7 +1179,6 @@ class OAuth2 implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchA
     }
     /**
      * @param array $params
-     *
      * @return array
      */
     private function addClientCredentials(&$params)

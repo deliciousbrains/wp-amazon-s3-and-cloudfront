@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -12,6 +13,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Aws\Sdk;
 use DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\DynamoDbClient;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\Marshaler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\ScalarFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
@@ -23,7 +25,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  */
 class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
 {
-    const DATE_FORMAT = 'Y-m-d\\TH:i:s.uO';
+    public const DATE_FORMAT = 'Y-m-d\\TH:i:s.uO';
     /**
      * @var DynamoDbClient
      */
@@ -41,12 +43,9 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      */
     protected $marshaler;
     /**
-     * @param DynamoDbClient $client
-     * @param string         $table
-     * @param int            $level
-     * @param bool           $bubble
+     * @param int|string $level
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\DynamoDbClient $client, $table, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, $bubble = true)
+    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\DynamoDbClient $client, string $table, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
     {
         if (defined('Aws\\Sdk::VERSION') && version_compare(\DeliciousBrains\WP_Offload_Media\Gcp\Aws\Sdk::VERSION, '3.0', '>=')) {
             $this->version = 3;
@@ -61,7 +60,7 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record)
+    protected function write(array $record) : void
     {
         $filtered = $this->filterEmptyFields($record['formatted']);
         if ($this->version === 3) {
@@ -69,13 +68,9 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
         } else {
             $formatted = $this->client->formatAttributes($filtered);
         }
-        $this->client->putItem(array('TableName' => $this->table, 'Item' => $formatted));
+        $this->client->putItem(['TableName' => $this->table, 'Item' => $formatted]);
     }
-    /**
-     * @param  array $record
-     * @return array
-     */
-    protected function filterEmptyFields(array $record)
+    protected function filterEmptyFields(array $record) : array
     {
         return array_filter($record, function ($value) {
             return !empty($value) || false === $value || 0 === $value;
@@ -84,7 +79,7 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * {@inheritdoc}
      */
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter() : FormatterInterface
     {
         return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\ScalarFormatter(self::DATE_FORMAT);
     }

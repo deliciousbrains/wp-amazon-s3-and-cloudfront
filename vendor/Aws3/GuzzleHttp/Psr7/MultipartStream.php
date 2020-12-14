@@ -62,7 +62,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http
             $this->addElement($stream, $element);
         }
         // Add the trailing boundary with CRLF
-        $stream->addStream(stream_for("--{$this->boundary}--\r\n"));
+        $stream->addStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor("--{$this->boundary}--\r\n"));
         return $stream;
     }
     private function addElement(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\AppendStream $stream, array $element)
@@ -72,7 +72,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http
                 throw new \InvalidArgumentException("A '{$key}' key is required");
             }
         }
-        $element['contents'] = stream_for($element['contents']);
+        $element['contents'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor($element['contents']);
         if (empty($element['filename'])) {
             $uri = $element['contents']->getMetadata('uri');
             if (substr($uri, 0, 6) !== 'php://') {
@@ -80,9 +80,9 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http
             }
         }
         list($body, $headers) = $this->createElement($element['name'], $element['contents'], isset($element['filename']) ? $element['filename'] : null, isset($element['headers']) ? $element['headers'] : []);
-        $stream->addStream(stream_for($this->getHeaders($headers)));
+        $stream->addStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor($this->getHeaders($headers)));
         $stream->addStream($body);
-        $stream->addStream(stream_for("\r\n"));
+        $stream->addStream(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor("\r\n"));
     }
     /**
      * @return array
@@ -104,7 +104,7 @@ class MultipartStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http
         // Set a default Content-Type if one was not supplied
         $type = $this->getHeader($headers, 'content-type');
         if (!$type && ($filename === '0' || $filename)) {
-            if ($type = mimetype_from_filename($filename)) {
+            if ($type = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\MimeType::fromFilename($filename)) {
                 $headers['Content-Type'] = $type;
             }
         }

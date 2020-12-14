@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 /*
  * This file is part of the Monolog package.
  *
@@ -19,23 +20,31 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class NullHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler
+class NullHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Handler
 {
     /**
-     * @param int $level The minimum logging level at which this handler will be triggered
+     * @var int
+     */
+    private $level;
+    /**
+     * @param string|int $level The minimum logging level at which this handler will be triggered
      */
     public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG)
     {
-        parent::__construct($level, false);
+        $this->level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($level);
     }
     /**
      * {@inheritdoc}
      */
-    public function handle(array $record)
+    public function isHandling(array $record) : bool
     {
-        if ($record['level'] < $this->level) {
-            return false;
-        }
-        return true;
+        return $record['level'] >= $this->level;
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function handle(array $record) : bool
+    {
+        return $record['level'] >= $this->level;
     }
 }

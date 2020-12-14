@@ -72,11 +72,14 @@ class AssumeRoleWithWebIdentityCredentialProvider
             $result = null;
             while ($result == null) {
                 try {
-                    $token = file_get_contents($this->tokenFile);
+                    $token = is_readable($this->tokenFile) ? file_get_contents($this->tokenFile) : false;
                     if (false === $token) {
                         clearstatcache(true, dirname($this->tokenFile) . "/" . readlink($this->tokenFile));
                         clearstatcache(true, dirname($this->tokenFile) . "/" . dirname(readlink($this->tokenFile)));
                         clearstatcache(true, $this->tokenFile);
+                        if (!is_readable($this->tokenFile)) {
+                            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException("Unreadable tokenfile at location {$this->tokenFile}");
+                        }
                         $token = file_get_contents($this->tokenFile);
                     }
                 } catch (\Exception $exception) {

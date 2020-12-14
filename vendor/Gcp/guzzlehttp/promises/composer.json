@@ -13,10 +13,10 @@
         }
     ],
     "require": {
-        "php": ">=5.5.0"
+        "php": ">=5.5"
     },
     "require-dev": {
-        "phpunit\/phpunit": "^4.0"
+        "symfony\/phpunit-bridge": "^4.4 || ^5.1"
     },
     "autoload": {
         "psr-4": {
@@ -26,9 +26,14 @@
             "src\/functions_include.php"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\Promise\\Tests\\": "tests\/"
+        }
+    },
     "scripts": {
-        "test": "vendor\/bin\/phpunit",
-        "test-ci": "vendor\/bin\/phpunit --coverage-text"
+        "test": "vendor\/bin\/simple-phpunit",
+        "test-ci": "vendor\/bin\/simple-phpunit --coverage-text"
     },
     "extra": {
         "branch-alias": {
