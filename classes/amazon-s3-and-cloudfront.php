@@ -570,7 +570,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		// Region
 		if ( false !== ( $region = $this->get_setting_region( $settings, $key, $default ) ) ) {
-			return $region;
+			return apply_filters( 'as3cf_setting_region', $region );
 		}
 
 		// Domain setting since 0.8
