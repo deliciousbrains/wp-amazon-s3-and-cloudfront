@@ -452,7 +452,7 @@ class Media_Library_Item extends Item {
 		}
 
 		$sql .= "
-			FROM {$wpdb->prefix}posts AS posts
+			FROM {$wpdb->posts} AS posts
 			WHERE posts.post_type = 'attachment'
 			AND posts.ID NOT IN (
 			    SELECT items.source_id

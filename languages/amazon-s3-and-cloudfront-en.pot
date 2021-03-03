@@ -1,0 +1,1466 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the amazon-s3-and-cloudfront package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: amazon-s3-and-cloudfront\n"
+"Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
+"POT-Creation-Date: 2021-03-03 11:32+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: classes/amazon-s3-and-cloudfront.php:166
+#: classes/amazon-s3-and-cloudfront.php:167
+msgid "Offload Media Lite"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:402
+#: classes/amazon-s3-and-cloudfront.php:419
+msgid "Unknown"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:491
+#: view/bucket-select.php:87
+#: view/delivery-provider-select.php:129
+#: view/delivery-provider-select.php:149
+#: view/provider-select.php:122
+#: view/signed-urls-setting.php:18
+#: view/signed-urls-setting.php:48
+#: view/signed-urls-setting.php:79
+msgid "defined in wp-config.php"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1422
+#, php-format
+msgid "Media Library item ID %d. Provided path is not a string"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1430
+#: classes/items/media-library-item.php:133
+#, php-format
+msgid "Media Library item with ID %d has damaged meta data"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1441
+#: classes/items/media-library-item.php:144
+#, php-format
+msgid "Media Library item with ID %d does not have a valid file path"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1492
+#: classes/amazon-s3-and-cloudfront.php:1717
+#, php-format
+msgid "File %s does not exist"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1521
+#, php-format
+msgid "Mime type %s is not allowed"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1532
+msgid "Already offloaded to a different provider"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:1640
+#: classes/amazon-s3-and-cloudfront.php:1731
+#, php-format
+msgid "Error offloading %s to provider: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:2854
+msgid "This action can only be performed through an admin screen."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:2856
+msgid "Cheatin&#8217; eh?"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:2858
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3182
+msgid "Error Getting Bucket Region"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3183
+#, php-format
+msgid "There was an error attempting to get the region of the bucket %s: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3286
+msgid ""
+"This is a test file to check if the user has write permission to the bucket. "
+"Delete me if found."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3292
+#, php-format
+msgid ""
+"There was an error attempting to check the permissions of the bucket %s: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3388
+msgid "Error creating bucket"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3389
+msgid "Bucket name too short."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3390
+msgid "Bucket name too long."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3391
+msgid ""
+"Invalid character. Bucket names can contain lowercase letters, numbers, "
+"periods and hyphens."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3392
+msgid "Error saving bucket"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3393
+msgid "Error fetching buckets"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3394
+msgid "Error getting URL preview: "
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3395
+msgid "The changes you made will be lost if you navigate away from this page"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3396
+msgid "Getting diagnostic info..."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3397
+msgid "Error getting diagnostic info: "
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3398
+msgctxt "placeholder for hidden access key, 39 char max"
+msgid "-- not shown --"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3400
+#: classes/amazon-s3-and-cloudfront.php:5785
+msgid "Settings saved."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3522
+msgid "Cheatin' eh?"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3595
+#, php-format
+msgid "Could not set new Delivery Provider: %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3670
+#: classes/amazon-s3-and-cloudfront.php:3800
+msgid "No bucket name provided."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3679
+msgid "Bucket name not valid."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3692
+msgid "No region provided."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3769
+#, php-format
+msgctxt "Trying to change public access setting for given provider's bucket."
+msgid "Can't change Block All Public Access setting for %s buckets."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3778
+msgid "No block public access setting provided."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3791
+msgid "Storage Provider not configured with access credentials."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3818
+msgid "Could not change Block All Public Access status for bucket."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3835
+msgid ""
+"<strong>Failed to Enable Block All Public Access</strong> &mdash; We could "
+"not enable Block All Public Access. You will need to log in to the AWS "
+"Console and do it manually."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3837
+msgid ""
+"<strong>Failed to Disable Block All Public Access</strong> &mdash; We could "
+"not disable Block All Public Access. You will need to log in to the AWS "
+"Console and do it manually."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3872
+#: view/provider-select.php:329
+msgctxt "placeholder for hidden secret access key, 39 char max"
+msgid "-- not shown --"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3895
+msgid "Key File not valid JSON."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3915
+#: classes/amazon-s3-and-cloudfront.php:3929
+#: classes/amazon-s3-and-cloudfront.php:3938
+msgctxt "missing form field"
+msgid " not provided."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3981
+msgctxt "Show the media library tab"
+msgid "Media Library"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3982
+msgctxt "Show the addons tab"
+msgid "Addons"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:3983
+msgctxt "Show the support tab"
+msgid "Support"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:4159
+#, php-format
+msgid ""
+"<strong>WP Offload Media</strong> &mdash; The file %s has been given %s "
+"permissions in the bucket."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:4178
+msgid ""
+"<strong>WP Offload Media Requirement Missing</strong> &mdash; Looks like you "
+"don't have an image manipulation library installed on this server and "
+"configured with PHP. You may run into trouble if you try to edit images. "
+"Please setup GD or ImageMagick."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:4202
+#, php-format
+msgid ""
+"<strong>Missing Table</strong> &mdash; One or more required database tables "
+"are missing, please check the Diagnostic Info in the Support tab for "
+"details. %s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5024
+#, php-format
+msgid ""
+"<a href=\"%s\">Define your access keys</a> to enable write access to the "
+"bucket"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5031
+msgid "Quick Start Guide"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5033
+#, php-format
+msgid ""
+"Looks like we don't have write access to this bucket. It's likely that the "
+"user you've provided credentials for hasn't been granted the correct "
+"permissions. Please see our %s for instructions on setting up permissions "
+"correctly."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5035
+#, php-format
+msgid ""
+"Looks like we don't have access to the buckets. It's likely that the user "
+"you've provided credentials for hasn't been granted the correct permissions. "
+"Please see our %s for instructions on setting up permissions correctly."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5203
+msgid "WP Offload Media Activation"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5204
+msgid ""
+"WP Offload Media Lite and WP Offload Media cannot both be active. We've "
+"automatically deactivated WP Offload Media Lite."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5206
+msgid "WP Offload Media Lite Activation"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5207
+msgid ""
+"WP Offload Media Lite and WP Offload Media cannot both be active. We've "
+"automatically deactivated WP Offload Media."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5261
+msgid "More&nbsp;info&nbsp;&raquo;"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5341
+msgid "this doc"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5343
+msgid "WP Offload Media Feature Removed"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5344
+#, php-format
+msgid ""
+"You had the \"Always non-SSL\" option selected in your settings, but we've "
+"removed this option in version 1.3. We'll now use HTTPS when the request is "
+"HTTPS and regular HTTP when the request is HTTP. This should work fine for "
+"your site, but please take a poke around and make sure things are working "
+"ok. See %s for more details on why we did this and how you can revert back "
+"to the old behavior."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5379
+msgid "Offload"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5483
+msgid "No"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5488
+msgctxt "Storage provider key name"
+msgid "Storage Provider"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5489
+msgctxt "Storage provider name"
+msgid "Storage Provider"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5490
+msgctxt "Bucket name"
+msgid "Bucket"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5491
+msgctxt "Path to file in bucket"
+msgid "Path"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5492
+msgctxt "Location of bucket"
+msgid "Region"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5493
+msgctxt "Access control list of the file in bucket"
+msgid "Access"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5494
+msgid "URL"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5495
+msgctxt "Whether or not metadata has been verified"
+msgid "Verified"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5748
+msgid "Assets Pull"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5749
+msgid ""
+"An addon for WP Offload Media to serve your site's JS, CSS, and other "
+"enqueued assets from Amazon CloudFront or another CDN."
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5753
+msgid "Feature"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5799
+#, php-format
+msgid ""
+"<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of "
+"version 1.6 of WP Offload Media, the <a href=\"%1$s\">Amazon Web Services</"
+"a> plugin is no longer required. We have removed the dependency by bundling "
+"a small portion of the AWS SDK into WP Offload Media. As long as none of "
+"your other active plugins or themes depend on the Amazon Web Services "
+"plugin, it should be safe to deactivate and delete it. %2$s"
+msgstr ""
+
+#: classes/amazon-s3-and-cloudfront.php:5831
+#, php-format
+msgid ""
+"<strong>WP Offload Media Settings Moved</strong> &mdash; You now define your "
+"AWS keys for WP Offload Media in the new <a href=\"%1$s\">Settings tab</a>. "
+"Saving settings in the form below will have no effect on WP Offload Media. "
+"%2$s"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:317
+msgid "deactivate"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:318
+#, php-format
+msgid "You can %s the %s plugin to get rid of this notice."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:337
+#, php-format
+msgid "%s has been disabled as it requires the %s plugin."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:341
+msgid "which is currently disabled."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:343
+msgid "It appears to be installed already."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:345
+msgctxt "Activate plugin"
+msgid "Activate it now."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:352
+#, php-format
+msgid "<a href=\"%s\">Install</a> and activate it."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:363
+#, php-format
+msgid ""
+"%s has been disabled as it requires version %s or later of the %s plugin."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:366
+#, php-format
+msgid "You currently have version %s installed."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:373
+#: classes/as3cf-compatibility-check.php:411
+#, php-format
+msgid "A valid license for %s is required to update."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:382
+msgid "Update to the latest version"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:393
+#, php-format
+msgid ""
+"%1$s has been disabled because it is not a supported addon of the %2$s "
+"plugin."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:402
+#, php-format
+msgid ""
+"%1$s has been disabled because it will not work with the version of the %2$s "
+"plugin installed. %1$s %3$s or later is required."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:405
+#, php-format
+msgid "Update %s to the latest version"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:474
+#, php-format
+msgid "The %s plugin has been deactivated."
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:620
+msgid "a PHP version less than 5.5"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:624
+msgid "no SimpleXML PHP module"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:628
+msgid "no XMLWriter PHP module"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:632
+msgid "no PHP cURL library activated"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:638
+msgid "a cURL version less than 7.16.2"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:653
+msgid "cURL compiled without"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:658
+msgid "the function curl_multi_exec disabled"
+msgstr ""
+
+#: classes/as3cf-compatibility-check.php:676
+msgid ""
+"The official Amazon&nbsp;Web&nbsp;Services SDK requires PHP 5.5+ with "
+"SimpleXML and XMLWriter modules, and cURL 7.16.2+ compiled with OpenSSL and "
+"zlib. Your server currently has"
+msgstr ""
+
+#: classes/as3cf-notices.php:430
+msgid "Error dismissing notice."
+msgstr ""
+
+#: classes/as3cf-notices.php:445
+msgid "Invalid notice ID."
+msgstr ""
+
+#: classes/as3cf-plugin-base.php:575
+msgid "Settings"
+msgstr ""
+
+#: classes/as3cf-plugin-compatibility.php:639
+#, php-format
+msgid "The local directory %s does not exist and could not be created."
+msgstr ""
+
+#: classes/as3cf-plugin-compatibility.php:640
+#: classes/as3cf-plugin-compatibility.php:652
+#: classes/upgrades/upgrade-meta-wp-error.php:81
+#, php-format
+msgid ""
+"There was an error attempting to download the file %s from the bucket: %s"
+msgstr ""
+
+#: classes/as3cf-plugin-compatibility.php:977
+#, php-format
+msgid ""
+"<strong>Warning:</strong> This site is using PHP %1$s, in a future update WP "
+"Offload Media will require PHP %2$s or later. %3$s"
+msgstr ""
+
+#: classes/items/media-library-item.php:97
+msgid "Empty Attachment ID passed to "
+msgstr ""
+
+#: classes/items/media-library-item.php:106
+msgid "Invalid Originator passed to "
+msgstr ""
+
+#: classes/providers/delivery/another-cdn.php:47
+#: classes/providers/delivery/digitalocean-spaces-cdn.php:83
+msgid "Fast, No Private Media"
+msgstr ""
+
+#: classes/providers/delivery/aws-cloudfront.php:93
+#, php-format
+msgid ""
+"Fast, Private Media Supported with <a href=\"%s\" target=\"_blank\">upgrade</"
+"a>"
+msgstr ""
+
+#: classes/providers/delivery/delivery-provider.php:94
+msgid "Signing Key ID"
+msgstr ""
+
+#: classes/providers/delivery/delivery-provider.php:112
+msgid "Signing Key File Path"
+msgstr ""
+
+#: classes/providers/delivery/delivery-provider.php:130
+msgid "Private Path"
+msgstr ""
+
+#: classes/providers/delivery/delivery-provider.php:275
+msgid "Given Signing Key File Path is invalid or could not be accessed."
+msgstr ""
+
+#: classes/providers/delivery/delivery-provider.php:285
+#: classes/providers/delivery/delivery-provider.php:290
+msgid "Could not read Signing Key File Path's contents."
+msgstr ""
+
+#: classes/providers/delivery/gcp-cdn.php:73
+msgid "Fast, Private Media Supported"
+msgstr ""
+
+#: classes/providers/delivery/storage.php:92
+msgid "Slow, Private Media Supported"
+msgstr ""
+
+#: classes/providers/storage/storage-provider.php:338
+msgid "Given Key File Path is invalid or could not be accessed."
+msgstr ""
+
+#: classes/providers/storage/storage-provider.php:348
+#: classes/providers/storage/storage-provider.php:353
+msgid "Could not read Key File Path's contents."
+msgstr ""
+
+#: classes/providers/storage/storage-provider.php:361
+msgid "Given Key File Path does not contain valid JSON."
+msgstr ""
+
+#: classes/providers/storage/storage-provider.php:511
+#, php-format
+msgid "You must first <a href=\"%s\">set your access keys</a>."
+msgstr ""
+
+#: classes/upgrades/upgrade-content-replace-urls.php:36
+msgid "and ensuring that only the local URL exists in post content."
+msgstr ""
+
+#: classes/upgrades/upgrade-content-replace-urls.php:45
+#, php-format
+msgid ""
+"<strong>Running Content Upgrade%1$s</strong><br>A find &amp; replace is "
+"running in the background to update URLs in your post content. %2$s"
+msgstr ""
+
+#: classes/upgrades/upgrade-edd-replace-urls.php:36
+msgid "and ensuring that only the local URL exists in EDD post meta."
+msgstr ""
+
+#: classes/upgrades/upgrade-file-sizes.php:49
+msgid ""
+"and updating the metadata with the sizes of files that have been removed "
+"from the server. This will allow us to serve the correct size for media "
+"items and the total space used in Multisite subsites."
+msgstr ""
+
+#: classes/upgrades/upgrade-filter-post-excerpt.php:36
+msgid "and ensuring that only the local URL exists in post excerpts."
+msgstr ""
+
+#: classes/upgrades/upgrade-filter-post-excerpt.php:45
+#, php-format
+msgid ""
+"<strong>Running Excerpts Upgrade%1$s</strong><br>A find &amp; replace is "
+"running in the background to update URLs in your post excerpts. %2$s"
+msgstr ""
+
+#: classes/upgrades/upgrade-filter-post.php:388
+#, php-format
+msgid ""
+"<strong>Paused Upgrade</strong><br>The find &amp; replace to update URLs has "
+"been paused. %s"
+msgstr ""
+
+#: classes/upgrades/upgrade-filter-post.php:397
+msgid "See our documentation"
+msgstr ""
+
+#: classes/upgrades/upgrade-filter-post.php:403
+#, php-format
+msgid ""
+"%s for details on why we&#8217;re doing this, why it runs slowly, and how to "
+"make it run faster."
+msgstr ""
+
+#: classes/upgrades/upgrade-items-table.php:48
+msgid ""
+"and updating the plugin's metadata to use a faster storage method. During "
+"the update the site's total offloaded media count may be inaccurate but will "
+"settle down shortly after completing."
+msgstr ""
+
+#: classes/upgrades/upgrade-meta-wp-error.php:49
+msgid ""
+"and rebuilding the metadata for attachments that may have been corrupted."
+msgstr ""
+
+#: classes/upgrades/upgrade-region-meta.php:47
+msgid ""
+"and updating the metadata with the bucket region it is served from. This "
+"will allow us to serve your files from the proper region subdomain <span "
+"style=\"white-space:nowrap;\">(e.g. s3-us-west-2.amazonaws.com)</span>."
+msgstr ""
+
+#: classes/upgrades/upgrade-wpos3-to-as3cf.php:36
+msgid ""
+"and updating the metadata to use key names compatible with the current "
+"version."
+msgstr ""
+
+#: classes/upgrades/upgrade.php:410
+msgid "Pause Update"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:418
+msgid "Restart Update"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:422
+msgid "Try To Run It Again"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:445
+#, php-format
+msgid ""
+"<strong>Running %1$s Update%2$s</strong> &mdash; We&#8217;re going through "
+"all the offloaded Media Library items %3$s This will be done quietly in the "
+"background, processing a small batch of Media Library items every %4$d "
+"minutes. There should be no noticeable impact on your server&#8217;s "
+"performance."
+msgstr ""
+
+#: classes/upgrades/upgrade.php:459
+#, php-format
+msgid ""
+"<strong>%1$s Update Paused%2$s</strong> &mdash; Updating Media Library %3$s "
+"has been paused."
+msgstr ""
+
+#: classes/upgrades/upgrade.php:472
+#, php-format
+msgid ""
+"<strong>Error Updating %1$s</strong> &mdash; We ran into some errors "
+"attempting to update the %2$s for all your Media Library items that have "
+"been offloaded. Please check your error log for details. (#%3$d)"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:496
+#, php-format
+msgid " (%s%% Complete)"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:629
+#, php-format
+msgid "Every %d Minutes"
+msgstr ""
+
+#: classes/upgrades/upgrade.php:956
+#, php-format
+msgid ""
+"<strong>Settings Locked Temporarily</strong> &mdash; You can't change any of "
+"your settings until the \"%s\" has completed."
+msgstr ""
+
+#: view/addon.php:11
+msgid "More Details &raquo;"
+msgstr ""
+
+#: view/addon.php:40
+msgctxt "Plugin already installed and activated"
+msgid "Installed & Activated"
+msgstr ""
+
+#: view/addon.php:42
+msgctxt "Plugin already installed"
+msgid "Installed"
+msgstr ""
+
+#: view/addon.php:43
+msgctxt "Activate plugin now"
+msgid "Activate Now"
+msgstr ""
+
+#: view/addon.php:45
+msgctxt "Install plugin now"
+msgid "Install Now"
+msgstr ""
+
+#: view/attachment-metabox.php:20
+msgid "This item has not been offloaded yet."
+msgstr ""
+
+#: view/attachment-metabox.php:56
+msgid "File does not exist on server"
+msgstr ""
+
+#: view/attachment-metabox.php:64
+msgid "File exists on server"
+msgstr ""
+
+#: view/bucket-access-select.php:11
+#: view/bucket-select.php:39
+#: view/delivery-provider-select.php:17
+#: view/provider-select.php:21
+msgid "&laquo;&nbsp;Back"
+msgstr ""
+
+#: view/bucket-access-select.php:42
+#: view/bucket-access-select.php:65
+msgid "Block All Public Access is currently disabled"
+msgstr ""
+
+#: view/bucket-access-select.php:45
+msgid ""
+"Since you're using Amazon CloudFront for delivery we recommend you enable "
+"Block All Public Access once you have set up the required Origin Access "
+"Identity and bucket policy."
+msgstr ""
+
+#: view/bucket-access-select.php:54
+#, php-format
+msgid ""
+"I have set up the required <a href=\"%1$s\">Origin Access Identity and "
+"bucket policy</a>"
+msgstr ""
+
+#: view/bucket-access-select.php:61
+#: view/bucket-access-select.php:74
+msgid "Enable \"Block All Public Access\""
+msgstr ""
+
+#: view/bucket-access-select.php:62
+msgid "Leave \"Block All Public Access\" disabled"
+msgstr ""
+
+#: view/bucket-access-select.php:68
+msgid ""
+"Since you're not using Amazon CloudFront for delivery, we recommend you keep "
+"Block All Public Access disabled unless you have a very good reason to "
+"enable it."
+msgstr ""
+
+#: view/bucket-access-select.php:73
+msgid "Leave \"Block All Public Access\" Disabled"
+msgstr ""
+
+#: view/bucket-access-select.php:81
+#: view/bucket-access-select.php:108
+msgid "Block All Public Access is currently enabled"
+msgstr ""
+
+#: view/bucket-access-select.php:84
+msgid ""
+"Since you're using Amazon CloudFront for delivery we recommend you keep "
+"Block All Public Access enabled."
+msgstr ""
+
+#: view/bucket-access-select.php:89
+#: view/bucket-access-select.php:124
+msgid "Leave \"Block All Public Access\" enabled"
+msgstr ""
+
+#: view/bucket-access-select.php:90
+#: view/bucket-access-select.php:105
+#: view/bucket-access-select.php:123
+msgid "Disable \"Block All Public Access\""
+msgstr ""
+
+#: view/bucket-access-select.php:93
+msgid "Warning: Block All Public Access is currently enabled"
+msgstr ""
+
+#: view/bucket-access-select.php:97
+#, php-format
+msgid ""
+"If you're following <a href=\"%1$s\">our documentation on setting up Amazon "
+"CloudFront for delivery</a>, you can ignore this warning and continue. If "
+"you're not planning on using Amazon CloudFront for delivery, you need to <a "
+"href=\"%2$s\">disable Block All Public Access</a>."
+msgstr ""
+
+#: view/bucket-access-select.php:104
+msgid "Continue"
+msgstr ""
+
+#: view/bucket-access-select.php:112
+msgid ""
+"You need to disable Block All Public Access so that your bucket is "
+"accessible for delivery. Block All Public Access should only been enabled "
+"when Amazon CloudFront is configured for delivery."
+msgstr ""
+
+#: view/bucket-access-select.php:115
+#, php-format
+msgid ""
+"You need to disable Block All Public Access so that %1$s can access your "
+"bucket for delivery. Block All Public Access should only been enabled when "
+"Amazon CloudFront is configured for delivery."
+msgstr ""
+
+#: view/bucket-select.php:45
+msgid "What bucket would you like to use?"
+msgstr ""
+
+#: view/bucket-select.php:58
+#: view/bucket-select.php:128
+#: view/bucket-select.php:181
+msgid "Region:"
+msgstr ""
+
+#: view/bucket-select.php:73
+#: view/bucket-select.php:143
+#: view/bucket-select.php:198
+#, php-format
+msgid "%s (defined in wp-config.php)"
+msgstr ""
+
+#: view/bucket-select.php:80
+#: view/bucket-select.php:149
+#: view/bucket-select.php:204
+#: view/bucket-setting.php:16
+msgid "Bucket:"
+msgstr ""
+
+#: view/bucket-select.php:95
+msgid "Existing bucket name"
+msgstr ""
+
+#: view/bucket-select.php:104
+#: view/delivery-provider-select.php:189
+#: view/provider-select.php:373
+msgid "Next"
+msgstr ""
+
+#: view/bucket-select.php:104
+msgid "Save Bucket Setting"
+msgstr ""
+
+#: view/bucket-select.php:106
+#: view/bucket-select.php:214
+msgid "Browse existing buckets"
+msgstr ""
+
+#: view/bucket-select.php:107
+#: view/bucket-select.php:163
+#: view/bucket-select.php:169
+msgid "Create new bucket"
+msgstr ""
+
+#: view/bucket-select.php:113
+msgid "Select bucket"
+msgstr ""
+
+#: view/bucket-select.php:152
+#: view/bucket-select.php:157
+msgid "Loading..."
+msgstr ""
+
+#: view/bucket-select.php:152
+#: view/bucket-select.php:157
+msgid "Nothing found"
+msgstr ""
+
+#: view/bucket-select.php:161
+msgid "Save Selected Bucket"
+msgstr ""
+
+#: view/bucket-select.php:162
+#: view/bucket-select.php:215
+msgid "Enter bucket name"
+msgstr ""
+
+#: view/bucket-select.php:164
+msgid "Refresh"
+msgstr ""
+
+#: view/bucket-select.php:207
+msgid "New bucket name"
+msgstr ""
+
+#: view/bucket-select.php:213
+msgid "Create New Bucket"
+msgstr ""
+
+#: view/bucket-setting.php:21
+msgid "View in provider's console"
+msgstr ""
+
+#: view/bucket-setting.php:25
+#: view/delivery-provider-setting.php:17
+#: view/provider-setting.php:17
+msgid "Change"
+msgstr ""
+
+#: view/bucket-setting.php:28
+msgid "The region that the bucket is in."
+msgstr ""
+
+#: view/bucket-setting.php:33
+msgid "Unknown Region"
+msgstr ""
+
+#: view/bucket-setting.php:54
+msgid "Block All Public Access Enabled"
+msgstr ""
+
+#: view/bucket-setting.php:55
+msgid ""
+"Public access to bucket has been blocked at either account or bucket level."
+msgstr ""
+
+#: view/bucket-setting.php:57
+msgid "Block All Public Access Disabled"
+msgstr ""
+
+#: view/bucket-setting.php:58
+msgid ""
+"Public access to bucket has not been blocked at either account or bucket "
+"level."
+msgstr ""
+
+#: view/bucket-setting.php:60
+msgid "Block All Public Access Status Unknown"
+msgstr ""
+
+#: view/bucket-setting.php:61
+msgid ""
+"Public access to bucket status unknown, please grant IAM User the s3:"
+"GetBucketPublicAccessBlock permission."
+msgstr ""
+
+#: view/bucket-setting.php:82
+#, php-format
+msgid ""
+"<strong>Block All Public Access is Enabled</strong> &mdash; If you're "
+"following <a href=\"%1$s\">our documentation on setting up Amazon CloudFront "
+"for delivery</a>, you can ignore this warning and continue. If you're not "
+"planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s"
+"\">disable Block All Public Access</a>."
+msgstr ""
+
+#: view/bucket-setting.php:114
+#, php-format
+msgid ""
+"<strong>Bucket Select Disabled</strong> &mdash; <a href=\"%s\">Define your "
+"access keys</a> to configure the bucket"
+msgstr ""
+
+#: view/debug-info.php:2
+msgid "Diagnostic Info"
+msgstr ""
+
+#: view/debug-info.php:13
+msgctxt "Download to your computer"
+msgid "Download"
+msgstr ""
+
+#: view/delivery-domain-setting.php:10
+msgid "Invalid character. Letters, numbers, periods and hyphens are allowed."
+msgstr ""
+
+#: view/delivery-provider-select.php:19
+msgid "How would you like to deliver your media?"
+msgstr ""
+
+#: view/delivery-provider-select.php:154
+msgid "CDN Name"
+msgstr ""
+
+#: view/delivery-provider-select.php:189
+msgid "Save Delivery Provider"
+msgstr ""
+
+#: view/delivery-provider-setting.php:12
+#: view/provider-setting.php:12
+msgid "Provider:"
+msgstr ""
+
+#: view/enable-delivery-domain-setting.php:15
+msgid "Custom Domain (CNAME)"
+msgstr ""
+
+#: view/enable-delivery-domain-setting.php:17
+#, php-format
+msgid ""
+"We strongly recommend you configure a subdomain of %1$s to point at your "
+"%2$s distribution. If you don't enter a subdomain of your site's domain in "
+"the field below it will negatively impact your site's SEO."
+msgstr ""
+
+#: view/enable-signed-urls-setting.php:18
+msgid "Private Media"
+msgstr ""
+
+#: view/enable-signed-urls-setting.php:20
+msgid ""
+"You can prevent public access to certain media files by enabling this option "
+"and the files will only be accessibly via signed URLs."
+msgstr ""
+
+#: view/error-access.php:4
+msgid "Access Denied to Bucket"
+msgstr ""
+
+#: view/notice.php:18
+msgid "Hide"
+msgstr ""
+
+#: view/notice.php:18
+msgid "Show"
+msgstr ""
+
+#: view/provider-select.php:24
+msgid "Storage Provider"
+msgstr ""
+
+#: view/provider-select.php:139
+#, php-format
+msgid ""
+"<strong>Warning:</strong> You have %s offloaded Media Library items, you "
+"should remove them from the bucket before changing storage provider."
+msgstr ""
+
+#: view/provider-select.php:162
+msgid "Define access keys in wp-config.php"
+msgstr ""
+
+#: view/provider-select.php:171
+#, php-format
+msgctxt "Access Keys defined in multiple defines."
+msgid ""
+"You've defined your access keys in your wp-config.php. To select a different "
+"option here, simply comment out or remove the '%1$s' defines in your wp-"
+"config.php."
+msgstr ""
+
+#: view/provider-select.php:173
+#, php-format
+msgctxt "Access Keys defined in single define."
+msgid ""
+"You've defined your access keys in your wp-config.php. To select a different "
+"option here, simply comment out or remove the '%1$s' define in your wp-"
+"config.php."
+msgstr ""
+
+#: view/provider-select.php:175
+#: view/provider-select.php:225
+#: view/provider-select.php:267
+msgctxt "joins multiple define keys in notice"
+msgid " & "
+msgstr ""
+
+#: view/provider-select.php:184
+msgid ""
+"Please check your wp-config.php file as it looks like one of your access key "
+"defines is missing or incorrect."
+msgstr ""
+
+#: view/provider-select.php:190
+msgid ""
+"Copy the following snippet <strong>near the top</strong> of your wp-config."
+"php and replace the stars with the keys."
+msgstr ""
+
+#: view/provider-select.php:216
+msgid "Define key file path in wp-config.php"
+msgstr ""
+
+#: view/provider-select.php:224
+#, php-format
+msgctxt "Key file path defined in single define."
+msgid ""
+"You've defined your key file path in your wp-config.php. To select a "
+"different option here, simply comment out or remove the '%1$s' define in "
+"your wp-config.php."
+msgstr ""
+
+#: view/provider-select.php:230
+msgid ""
+"Copy the following snippet <strong>near the top</strong> of your wp-config."
+"php and replace \"<strong>/path/to/key/file.json</strong>\"."
+msgstr ""
+
+#: view/provider-select.php:259
+#, php-format
+msgid "My server is on %s and I'd like to use IAM Roles"
+msgstr ""
+
+#: view/provider-select.php:266
+#, php-format
+msgctxt "Use Server Roles defined in single define."
+msgid ""
+"You've defined use of server roles in your wp-config.php. To select a "
+"different option here, simply comment out or remove the '%1$s' define in "
+"your wp-config.php."
+msgstr ""
+
+#: view/provider-select.php:272
+#, php-format
+msgid ""
+"If you host your WordPress site on %s, choose this option and make use of "
+"IAM Roles."
+msgstr ""
+
+#: view/provider-select.php:296
+msgid ""
+"I understand the risks but I'd like to store access keys in the database "
+"anyway (not recommended)"
+msgstr ""
+
+#: view/provider-select.php:303
+msgid ""
+"Storing your access keys in the database is less secure than the options "
+"above, but if you're ok with that, go ahead and enter your keys in the form "
+"below."
+msgstr ""
+
+#: view/provider-select.php:308
+msgid "Access Key ID"
+msgstr ""
+
+#: view/provider-select.php:323
+msgid "Secret Access Key"
+msgstr ""
+
+#: view/provider-select.php:350
+msgid ""
+"I understand the risks but I'd like to store the key file's contents in the "
+"database anyway (not recommended)"
+msgstr ""
+
+#: view/provider-select.php:357
+msgid ""
+"Storing your key file's contents in the database is less secure than the "
+"options above, but if you're ok with that, go ahead and enter your key "
+"file's JSON data in the field below."
+msgstr ""
+
+#: view/provider-select.php:373
+#: view/settings/media.php:315
+msgid "Save Changes"
+msgstr ""
+
+#: view/settings/addons.php:10
+#, php-format
+msgid ""
+"<strong>Get Addons</strong> — The following addons are available with a WP "
+"Offload Media Gold license or better.<br>Visit <a href=\"%s"
+"\">deliciousbrains.com</a> to purchase in just a few clicks."
+msgstr ""
+
+#: view/settings/media.php:108
+#, php-format
+msgid ""
+"Yikes! That's not a very SEO-friendly URL. We strongly recommend you "
+"configure a CDN to point at your bucket and configure a subdomain of %1$s to "
+"point at your CDN. %2$s"
+msgstr ""
+
+#: view/settings/media.php:124
+msgid "Storage"
+msgstr ""
+
+#: view/settings/media.php:152
+msgid "Copy Files to Bucket"
+msgstr ""
+
+#: view/settings/media.php:154
+msgid "When a file is uploaded to the Media Library, copy it to the bucket."
+msgstr ""
+
+#: view/settings/media.php:169
+msgid "Path"
+msgstr ""
+
+#: view/settings/media.php:171
+msgid "By default the path is the same as your local WordPress files."
+msgstr ""
+
+#: view/settings/media.php:189
+#: view/settings/media.php:194
+msgid "Year/Month"
+msgstr ""
+
+#: view/settings/media.php:191
+msgid ""
+"Add the Year/Month to the end of the path above just like WordPress does by "
+"default."
+msgstr ""
+
+#: view/settings/media.php:205
+#: view/settings/media.php:210
+msgid "Object Versioning"
+msgstr ""
+
+#: view/settings/media.php:207
+msgid ""
+"Append a timestamp to the file's bucket path. Recommended when using a CDN "
+"so you don't have to worry about cache invalidation."
+msgstr ""
+
+#: view/settings/media.php:216
+msgid "Delivery"
+msgstr ""
+
+#: view/settings/media.php:234
+msgid "Rewrite Media URLs"
+msgstr ""
+
+#: view/settings/media.php:236
+#, php-format
+msgid ""
+"For Media Library files that have been copied to your bucket, rewrite the "
+"URLs so that they are served from %s instead of your server."
+msgstr ""
+
+#: view/settings/media.php:261
+msgid "Force HTTPS"
+msgstr ""
+
+#: view/settings/media.php:263
+msgid ""
+"By default we use HTTPS when the request is HTTPS and regular HTTP when the "
+"request is HTTP, but you may want to force the use of HTTPS always, "
+"regardless of the request."
+msgstr ""
+
+#: view/settings/media.php:271
+msgid "Advanced Options"
+msgstr ""
+
+#: view/settings/media.php:281
+msgid "Remove Files From Server"
+msgstr ""
+
+#: view/settings/media.php:282
+msgid ""
+"Once a file has been copied to the bucket, remove it from the local server."
+msgstr ""
+
+#: view/settings/media.php:286
+msgid ""
+"<strong>Broken URLs</strong> &mdash; There will be broken URLs for files "
+"that don't exist locally. You can fix this by enabling <strong>Rewrite Media "
+"URLs</strong> to use the offloaded media."
+msgstr ""
+
+#: view/settings/media.php:297
+#, php-format
+msgid ""
+"<strong>Warning</strong> &mdash; Some plugins depend on the file being "
+"present on the local server and may not work when the file is removed. %s"
+msgstr ""
+
+#: view/settings/media.php:299
+msgid ""
+"If you have a backup system in place (as you should) that backs up your site "
+"files, media, and database, your media will no longer be backed up as it "
+"will no longer be present on the filesystem."
+msgstr ""
+
+#: view/settings/media.php:327
+#, php-format
+msgid ""
+"Need help getting your Access Keys? <a href=\"%s\">Check out the Quick Start "
+"Guide &rarr;</a>"
+msgstr ""
+
+#: view/sidebar.php:10
+msgid "Upgrade"
+msgstr ""
+
+#: view/sidebar.php:12
+msgid "Gain access to more features when you upgrade to WP Offload Media"
+msgstr ""
+
+#: view/sidebar.php:15
+msgid "Offload existing Media Library items"
+msgstr ""
+
+#: view/sidebar.php:16
+msgid "Manage offloaded files in WordPress"
+msgstr ""
+
+#: view/sidebar.php:17
+msgid "Assets addon - Serve your CSS & JS from CloudFront or another CDN"
+msgstr ""
+
+#: view/sidebar.php:18
+msgid "Private media via CloudFront"
+msgstr ""
+
+#: view/sidebar.php:19
+msgid "WooCommerce integration"
+msgstr ""
+
+#: view/sidebar.php:20
+msgid "Easy Digital Downloads integration"
+msgstr ""
+
+#: view/sidebar.php:21
+msgid "Priority email support"
+msgstr ""
+
+#: view/sidebar.php:26
+#, php-format
+msgid "Get up to 40% off your first year of WP Offload Media!"
+msgstr ""
+
+#: view/sidebar.php:32
+msgid "Get the discount"
+msgstr ""
+
+#: view/sidebar.php:35
+msgid "* Discount applied automatically."
+msgstr ""
+
+#: view/sidebar.php:39
+msgid "Created and maintained by"
+msgstr ""
+
+#: view/sidebar.php:47
+msgid "Delicious Brains Inc."
+msgstr ""
+
+#: view/signed-urls-setting.php:41
+msgid "Invalid character. Letters and numbers are allowed."
+msgstr ""
+
+#: view/signed-urls-setting.php:72
+msgid ""
+"Invalid character. Letters, numbers, periods, hyphens, colons, spaces, "
+"underscores and slashes are allowed."
+msgstr ""
+
+#: view/signed-urls-setting.php:103
+msgid ""
+"Invalid character. Letters, numbers, hyphens, spaces and forward slashes are "
+"allowed."
+msgstr ""
+
+#: view/wordpress-org-support.php:2
+msgid "As this is a free plugin, we do not provide support."
+msgstr ""
+
+#: view/wordpress-org-support.php:4
+#, php-format
+msgid ""
+"You may ask the WordPress community for help by posting to the <a href=\"%s"
+"\">WordPress.org support forum</a>. Response time can range from a few days "
+"to a few weeks and will likely be from a non-developer."
+msgstr ""
+
+#: view/wordpress-org-support.php:10
+#, php-format
+msgid ""
+"If you want a <strong>timely response via email from a developer</strong> "
+"who works on this plugin, <a href=\"%s\">upgrade</a> and send us an email."
+msgstr ""
+
+#: view/wordpress-org-support.php:12
+#, php-format
+msgid ""
+"If you've found a bug, please <a href=\"%s\">submit an issue on GitHub</a>."
+msgstr ""

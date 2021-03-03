@@ -62,7 +62,7 @@ class Upgrade_Content_Replace_URLs extends Upgrade_Filter_Post {
 	protected function upgrade_theme_mods() {
 		global $wpdb;
 
-		$mods = $wpdb->get_results( "SELECT * FROM `{$wpdb->prefix}options` WHERE option_name LIKE 'theme_mods_%'" );
+		$mods = $wpdb->get_results( "SELECT * FROM `{$wpdb->options}` WHERE option_name LIKE 'theme_mods_%'" );
 
 		foreach ( $mods as $mod ) {
 			$value = maybe_unserialize( $mod->option_value );
@@ -82,7 +82,7 @@ class Upgrade_Content_Replace_URLs extends Upgrade_Filter_Post {
 			$value = maybe_serialize( $value );
 
 			if ( $value !== $mod->option_value ) {
-				$wpdb->query( "UPDATE `{$wpdb->prefix}options` SET option_value = '{$value}' WHERE option_id = '{$mod->option_id}'" );
+				$wpdb->query( "UPDATE `{$wpdb->options}` SET option_value = '{$value}' WHERE option_id = '{$mod->option_id}'" );
 			}
 		}
 	}

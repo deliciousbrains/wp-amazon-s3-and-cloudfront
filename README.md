@@ -2,9 +2,9 @@
 **Contributors:** bradt, deliciousbrains, ianmjones  
 **Tags:** uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.9  
-**Tested up to:** 5.6  
+**Tested up to:** 5.7  
 **Requires PHP:** 5.5  
-**Stable tag:** 2.6dev  
+**Stable tag:** 2.5.3  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -89,7 +89,20 @@ This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
 
-### WP Offload Media Lite 2.5.1- 2020-11-25 ###
+### WP Offload Media Lite 2.5.3 - 2021-03-03 ###
+* New: Added DigitalOcean region San Francisco 3
+* Bug fix: Domain mapping not handled correctly when the local URL includes a port number
+* Bug fix: In some unusual configurations the upgrade routine uses incorrect name for multisite blogs table
+* Tested: WordPress 5.7
+
+### WP Offload Media Lite 2.5.2 - 2020-12-14 ###
+* New: AWS PHP SDK 3.168.0
+* New: Google Cloud Storage SDK 1.23.0
+* Improvement: Faster saving of posts with many external links
+* Improvement: Faster URL rewriting when Force HTTPS setting is being used but is not needed
+* Bug fix: PHP Fatal error on the settings page when using PHP 8.0
+
+### WP Offload Media Lite 2.5.1 - 2020-11-25 ###
 * New: WordPress 5.6 compatible
 * New: PHP 8.0 compatible
 * Bug fix: Unexpectedly asked to select bucket after saving settings when legacy access key named constants defined

@@ -809,7 +809,7 @@ abstract class Upgrade {
 		global $wpdb;
 
 		if ( is_multisite() ) {
-			return $wpdb->get_var( "SELECT MAX(blog_id) FROM {$wpdb->prefix}blogs" );
+			return $wpdb->get_var( "SELECT MAX(blog_id) FROM {$wpdb->blogs}" );
 		}
 
 		return 1;

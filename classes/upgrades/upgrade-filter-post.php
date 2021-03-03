@@ -49,7 +49,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	protected function get_highest_post_id() {
 		global $wpdb;
 
-		return (int) $wpdb->get_var( "SELECT MAX(ID) FROM {$wpdb->prefix}posts" );
+		return (int) $wpdb->get_var( "SELECT MAX(ID) FROM {$wpdb->posts}" );
 	}
 
 	/**
