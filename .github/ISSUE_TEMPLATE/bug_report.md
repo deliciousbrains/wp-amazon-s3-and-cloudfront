@@ -7,9 +7,11 @@ assignees: ''
 
 ---
 
+<!--
 **NOTE:** For WP Offload Media (Pro) please submit a support request via the plugin's "Support" tab.
 
 **Not a bug?:** For support, please raise a request at https://wordpress.org/support/plugin/amazon-s3-and-cloudfront.
+-->
 
 **Describe the bug**
 A clear and concise description of what the bug is.
