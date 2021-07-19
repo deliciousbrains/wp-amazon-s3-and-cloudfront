@@ -1516,7 +1516,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$type          = get_post_mime_type( $post_id );
 		$allowed_types = $this->get_allowed_mime_types();
 
-		// check mime type of file is in allowed provider mime types
+		// Check mime type of file is in allowed provider mime types.
+		// Note: This check is based on the item's original upload format.
 		if ( ! in_array( $type, $allowed_types ) ) {
 			$error_msg = sprintf( __( 'Mime type %s is not allowed', 'amazon-s3-and-cloudfront' ), $type );
 
@@ -1577,7 +1578,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			'Bucket'       => $bucket,
 			'Key'          => $prefix . $file_name,
 			'SourceFile'   => $file_path,
-			'ContentType'  => $type,
+			'ContentType'  => $this->get_mime_type( $file_path ),
 			'CacheControl' => 'max-age=31536000',
 			'Expires'      => date( 'D, d M Y H:i:s O', time() + 31536000 ),
 		);

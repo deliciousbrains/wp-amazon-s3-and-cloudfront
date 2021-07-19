@@ -849,7 +849,7 @@ abstract class AS3CF_Filter {
 	 * @return string
 	 */
 	public static function remove_aws_query_strings( $content, $base_url = '' ) {
-		$pattern = '\?[^\s"<\?]*(?:X-Amz-Algorithm|AWSAccessKeyId|Key-Pair-Id)=[^\s"<\?]+';
+		$pattern = '\?[^\s"<\?]*(?:X-Amz-Algorithm|AWSAccessKeyId|Key-Pair-Id|GoogleAccessId)=[^\s"<\?]+';
 		$group   = 0;
 
 		if ( ! is_string( $content ) ) {
