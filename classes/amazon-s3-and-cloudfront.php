@@ -16,6 +16,7 @@ use DeliciousBrains\WP_Offload_Media\Providers\Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\AWS_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\DigitalOcean_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\GCP_Provider;
+use DeliciousBrains\WP_Offload_Media\Providers\Storage\Linode_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Null_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade;
@@ -169,6 +170,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		static::$storage_provider_classes = apply_filters( 'as3cf_storage_provider_classes', array(
 			AWS_Provider::get_provider_key_name()          => 'DeliciousBrains\WP_Offload_Media\Providers\Storage\AWS_Provider',
 			DigitalOcean_Provider::get_provider_key_name() => 'DeliciousBrains\WP_Offload_Media\Providers\Storage\DigitalOcean_Provider',
+			Linode_Provider::get_provider_key_name()   	   => 'DeliciousBrains\WP_Offload_Media\Providers\Storage\Linode_Provider',
 			GCP_Provider::get_provider_key_name()          => 'DeliciousBrains\WP_Offload_Media\Providers\Storage\GCP_Provider',
 		) );
 

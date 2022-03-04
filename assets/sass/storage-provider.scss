@@ -61,6 +61,13 @@ $gcp_background: #ffffff;
 			}
 		}
 
+		&.as3cf-provider-linode {
+			.as3cf-provider-logo {
+				background-color: $linode_background;
+				border: 1px solid $linode_background;
+			}
+		}
+
 		&.as3cf-provider-gcp {
 			.as3cf-provider-logo {
 				background-color: $gcp_background;
