@@ -2,6 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+
 /**
  * Upgrade_EDD_Replace_URLs Class
  *
@@ -82,7 +84,12 @@ class Upgrade_EDD_Replace_URLs extends Upgrade {
 				continue;
 			}
 
-			if ( $url = $this->as3cf->get_attachment_local_url( $attachment['attachment_id'] ) ) {
+			$as3cf_item = Media_Library_Item::get_by_source_id( $attachment['attachment_id'] );
+			if ( empty( $as3cf_item ) ) {
+				continue;
+			}
+
+			if ( $url = $as3cf_item->get_local_url() ) {
 				$attachments[ $key ]['file'] = $url;
 			}
 		}

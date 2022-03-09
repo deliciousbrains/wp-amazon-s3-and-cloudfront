@@ -572,11 +572,12 @@ abstract class Storage_Provider extends Provider {
 	/**
 	 * Get object keys from multiple clients.
 	 *
-	 * @param array $regions
+	 * @param array  $regions
+	 * @param string $source_type
 	 *
 	 * @return array
 	 */
-	public static function get_keys_from_regions( array $regions ) {
+	public static function get_keys_from_regions( array $regions, $source_type ) {
 		$keys = array();
 
 		foreach ( $regions as $region ) {
@@ -591,7 +592,7 @@ abstract class Storage_Provider extends Provider {
 
 			if ( ! empty( $region_keys ) ) {
 				foreach ( $region_keys as $attachment_id => $found_keys ) {
-					$keys[ $attachment_id ] = AS3CF_Utils::validate_attachment_keys( $attachment_id, $found_keys );
+					$keys[ $attachment_id ] = AS3CF_Utils::validate_attachment_keys( $attachment_id, $found_keys, $source_type );
 				}
 			}
 		}

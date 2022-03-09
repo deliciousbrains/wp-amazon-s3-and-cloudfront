@@ -9,7 +9,11 @@
  * @since       0.8.3
  */
 
+use DeliciousBrains\WP_Offload_Media\Integrations\Media_Library;
+use DeliciousBrains\WP_Offload_Media\Items\Download_Handler;
+use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+use DeliciousBrains\WP_Offload_Media\Items\Remove_Provider_Handler;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
 
 // Exit if accessed directly
@@ -27,34 +31,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AS3CF_Plugin_Compatibility {
 
 	/**
-	 * @var Amazon_S3_And_CloudFront
-	 */
-	protected $as3cf;
-
-	/**
 	 * @var array
 	 */
 	protected static $stream_wrappers = array();
 
 	/**
-	 * @var array
+	 * @var Amazon_S3_And_CloudFront
 	 */
-	protected $compatibility_addons;
-
-	/**
-	 * @var array
-	 */
-	private $removed_files = array();
-
-	/**
-	 * @var bool
-	 */
-	protected $generate_attachment_metadata_done = false;
+	protected $as3cf;
 
 	/**
 	 * @var bool
 	 */
 	protected $wait_for_generate_attachment_metadata = false;
+
+	/**
+	 * @var array
+	 */
+	private $removed_files = array();
 
 	/**
 	 * @param Amazon_S3_And_CloudFront $as3cf
@@ -110,12 +104,12 @@ class AS3CF_Plugin_Compatibility {
 		 * WP_Image_Editor
 		 * /wp-includes/class-wp-image-editor.php
 		 */
-		add_action( 'as3cf_pre_upload_attachment', array( $this, 'image_editor_remove_files' ), 10, 3 );
+		add_filter( 'as3cf_pre_update_attachment_metadata', array( $this, 'image_editor_remove_files' ), 10, 4 );
 		add_filter( 'as3cf_get_attached_file_noop', array( $this, 'image_editor_download_file' ), 10, 4 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'image_editor_download_file' ), 10, 4 );
-		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
+		add_filter( 'as3cf_remove_local_files', array( $this, 'image_editor_remove_original_image' ), 10, 3 );
 		add_filter( 'as3cf_get_attached_file', array( $this, 'customizer_crop_download_file' ), 10, 4 );
-		add_filter( 'as3cf_upload_attachment_local_files_to_remove', array( $this, 'customizer_crop_remove_original_image' ), 10, 3 );
+		add_filter( 'as3cf_remove_local_files', array( $this, 'customizer_crop_remove_original_image' ), 10, 3 );
 		add_filter( 'wp_unique_filename', array( $this, 'customizer_crop_unique_filename' ), 10, 3 );
 
 		/*
@@ -134,7 +128,7 @@ class AS3CF_Plugin_Compatibility {
 		 * WP-CLI Compatibility
 		 */
 		if ( defined( 'WP_CLI' ) && class_exists( 'WP_CLI' ) ) {
-			WP_CLI::add_hook( 'before_invoke:media regenerate', array( $this, 'enable_get_attached_file_copy_back_to_local' ) );
+			WP_CLI::add_hook( 'before_invoke:media regenerate', array( $this, 'enable_copy_back_and_wait_for_generate_metadata' ) );
 		}
 	}
 
@@ -159,10 +153,22 @@ class AS3CF_Plugin_Compatibility {
 		if ( ( $file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) ) {
 			// Return the file if successfully downloaded from S3
 			return $file;
-		};
+		}
 
 		// Return S3 URL as a fallback
 		return $url;
+	}
+
+	/**
+	 * Enable copying back attachments from provider
+	 * and waiting for their metadata to be regenerated
+	 * before re-offloading.
+	 *
+	 * @handles WP_CLI:before_invoke:media regenerate
+	 */
+	public function enable_copy_back_and_wait_for_generate_metadata() {
+		$this->enable_get_attached_file_copy_back_to_local();
+		$this->wait_for_generate_attachment_metadata = true;
 	}
 
 	/**
@@ -238,12 +244,13 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @handles wp_generate_attachment_metadata
 	 *
-	 * @param $metadata
+	 * @param mixed $metadata
 	 *
 	 * @return mixed
 	 */
 	public function wp_generate_attachment_metadata( $metadata ) {
-		$this->generate_attachment_metadata_done = true;
+		$this->wait_for_generate_attachment_metadata = false;
+
 		return $metadata;
 	}
 
@@ -253,14 +260,16 @@ class AS3CF_Plugin_Compatibility {
 	 *
 	 * @handles as3cf_wait_for_generate_attachment_metadata
 	 *
+	 * @param bool $wait
+	 *
 	 * @return bool
 	 */
-	public function wait_for_generate_attachment_metadata() {
-		if ( ! $this->wait_for_generate_attachment_metadata ) {
-			return false;
+	public function wait_for_generate_attachment_metadata( $wait ) {
+		if ( $this->wait_for_generate_attachment_metadata ) {
+			return true;
 		}
 
-		return ! $this->generate_attachment_metadata_done;
+		return $wait;
 	}
 
 	/**
@@ -323,23 +332,30 @@ class AS3CF_Plugin_Compatibility {
 		if ( ( $file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) ) {
 			// Return the file if successfully downloaded from S3
 			return $file;
-		};
+		}
 
 		return $url;
 	}
 
 	/**
-	 * Get the file path of the original image file before an update
+	 * Get the file path of the primary image file if it exists.
 	 *
-	 * @param int    $post_id
-	 * @param string $file_path
+	 * This helper function looks at the current metadata for the Media Library item.
+	 * In various scenarios this is useful when an item's offloaded objects
+	 * and the attachment's metadata are not yet in sync.
+	 *
+	 * @param Item $as3cf_item
 	 *
 	 * @return bool|string
 	 */
-	function get_original_image_file( $post_id, $file_path ) {
-		// remove original main image after edit
-		$meta          = get_post_meta( $post_id, '_wp_attachment_metadata', true );
-		$original_file = trailingslashit( dirname( $file_path ) ) . wp_basename( $meta['file'] );
+	private function get_original_image_file( Item $as3cf_item ) {
+		if ( Media_Library_Item::source_type() !== $as3cf_item->source_type() ) {
+			return false;
+		}
+
+		$meta          = get_post_meta( $as3cf_item->source_id(), '_wp_attachment_metadata', true );
+		$original_file = trailingslashit( dirname( $as3cf_item->full_source_path() ) ) . wp_basename( $meta['file'] );
+
 		if ( file_exists( $original_file ) ) {
 			return $original_file;
 		}
@@ -351,66 +367,43 @@ class AS3CF_Plugin_Compatibility {
 	 * Allow the WordPress Image Editor to remove edited version of images
 	 * if the original image is being restored and 'IMAGE_EDIT_OVERWRITE' is set
 	 *
-	 * @param bool  $pre
-	 * @param int   $post_id
-	 * @param array $data
+	 * @param bool               $cancel     True if the upload should be cancelled
+	 * @param array              $data       Array describing the object being uploaded
+	 * @param int                $post_id    Attachment's ID
+	 * @param Media_Library_Item $as3cf_item The Media Library Item object if previously offloaded
 	 *
 	 * @return bool
 	 */
-	public function image_editor_remove_files( $pre, $post_id, $data ) {
+	public function image_editor_remove_files( $cancel, $data, $post_id, $as3cf_item ) {
 		if ( ! isset( $_POST['do'] ) || 'restore' !== $_POST['do'] ) {
-			return $pre;
+			return $cancel;
 		}
 
 		if ( ! defined( 'IMAGE_EDIT_OVERWRITE' ) || ! IMAGE_EDIT_OVERWRITE ) {
-			return $pre;
+			return $cancel;
 		}
 
-		$as3cf_item = Media_Library_Item::get_by_source_id( $post_id );
-
-		if ( ! $as3cf_item ) {
-			return $pre;
+		if ( empty( $as3cf_item ) ) {
+			return $cancel;
 		}
 
-		$this->remove_edited_image_files( $post_id, $as3cf_item );
+		$keys_to_remove = array();
+		$pattern        = '/-e[0-9]{13}(?:-[0-9]{1,4}x[0-9]{1,4})?\./';
+		$objects        = $as3cf_item->objects();
+		foreach ( $objects as $object_key => $object ) {
+			if ( preg_match( $pattern, $object['source_file'] ) ) {
+				$keys_to_remove[] = $object_key;
+				unset( $objects[ $object_key ] );
+			}
+		}
 
-		// Update object key with original filename
-		$restored_filename = wp_basename( $data['file'] );
-		$old_filename      = wp_basename( $as3cf_item->path() );
-		$item_path         = str_replace( $old_filename, $restored_filename, $as3cf_item->path() );
-
-		$as3cf_item = new Media_Library_Item(
-			$as3cf_item->provider(),
-			$as3cf_item->region(),
-			$as3cf_item->bucket(),
-			$item_path,
-			$as3cf_item->is_private(),
-			$as3cf_item->source_id(),
-			$as3cf_item->source_path(),
-			wp_basename( $as3cf_item->original_source_path() ),
-			$as3cf_item->extra_info(),
-			$as3cf_item->id()
-		);
-
+		$remove_provider_handler = $this->as3cf->get_item_handler( Remove_Provider_Handler::get_item_handler_key_name() );
+		$remove_provider_handler->handle( $as3cf_item, array( 'object_keys' => $keys_to_remove ) );
+		// TODO: Check these following statements are required.
+		$as3cf_item->set_objects( $objects );
 		$as3cf_item->save();
 
-		return true;
-	}
-
-	/**
-	 * Remove edited image files from S3.
-	 *
-	 * @param int                $attachment_id
-	 * @param Media_Library_Item $as3cf_item
-	 */
-	protected function remove_edited_image_files( $attachment_id, Media_Library_Item $as3cf_item ) {
-		$keys = AS3CF_Utils::get_attachment_edited_keys( $attachment_id, $as3cf_item );
-
-		if ( empty( $keys ) ) {
-			return;
-		}
-
-		$this->as3cf->delete_objects( $as3cf_item->region(), $as3cf_item->bucket(), $keys );
+		return $cancel;
 	}
 
 	/**
@@ -434,25 +427,11 @@ class AS3CF_Plugin_Compatibility {
 		// for the restore to be successful and edited images to be deleted from the bucket
 		// via image_editor_remove_files()
 		if ( isset( $_POST['do'] ) && 'restore' == $_POST['do'] ) {
-			$backup_sizes      = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
-			$original_filename = $backup_sizes['full-orig']['file'];
-
-			$as3cf_item_orig = new Media_Library_Item(
-				$as3cf_item->provider(),
-				$as3cf_item->region(),
-				$as3cf_item->bucket(),
-				$as3cf_item->normalized_path_dir() . $original_filename,
-				$as3cf_item->is_private(),
-				$as3cf_item->source_id(),
-				$as3cf_item->source_path(),
-				wp_basename( $as3cf_item->original_source_path() ),
-				$as3cf_item->extra_info(),
-				$as3cf_item->id()
-			);
-			$orig_file       = dirname( $file ) . '/' . $original_filename;
-
-			// Copy the original file back to the server for the restore process
-			$this->copy_provider_file_to_server( $as3cf_item_orig, $orig_file );
+			$objects = $as3cf_item->objects();
+			if ( isset( $objects['full-orig'] ) ) {
+				// Copy the original file back to the server for the restore process
+				$this->copy_provider_file_to_server( $as3cf_item, $objects['full-orig']['source_file'] );
+			}
 
 			// Copy the edited file back to the server as well, it will be cleaned up later
 			if ( $provider_file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) {
@@ -480,27 +459,26 @@ class AS3CF_Plugin_Compatibility {
 
 	/**
 	 * Allow the WordPress Image Editor to remove the main image file after it has been copied
-	 * back from S3 after it has done the edit.
+	 * back from the bucket after it has done the edit.
 	 *
-	 * @param array  $files
-	 * @param int    $post_id
-	 * @param string $file_path
+	 * @param array $files_to_remove
+	 * @param Item  $as3cf_item
+	 * @param array $item_source
 	 *
 	 * @return array
 	 */
-	function image_editor_remove_original_image( $files, $post_id, $file_path ) {
+	public function image_editor_remove_original_image( $files_to_remove, $as3cf_item, $item_source ) {
 		if ( ! $this->is_ajax() ) {
-			return $files;
+			return $files_to_remove;
 		}
 
 		if ( isset( $_POST['action'] ) && 'image-editor' === sanitize_key( $_POST['action'] ) ) { // input var okay
-			// remove original main image after edit
-			if ( ( $original_file = $this->get_original_image_file( $post_id, $file_path ) ) ) {
-				$files[] = $original_file;
+			if ( ( $original_file = $this->get_original_image_file( $as3cf_item ) ) ) {
+				$files_to_remove[] = $original_file;
 			}
 		}
 
-		return $files;
+		return $files_to_remove;
 	}
 
 	/**
@@ -538,39 +516,40 @@ class AS3CF_Plugin_Compatibility {
 			return $url;
 		}
 
-		if ( $this->as3cf->attachment_just_uploaded( $attachment_id ) ) {
+		/** @var Media_Library $media_library */
+		$media_library = $this->as3cf->get_integration_manager()->get_integration( 'mlib' );
+		if ( $media_library->item_just_uploaded( $attachment_id ) ) {
 			return $url;
 		}
 
 		if ( ( $file = $this->copy_provider_file_to_server( $as3cf_item, $file ) ) ) {
 			// Return the file if successfully downloaded from bucket.
 			return $file;
-		};
+		}
 
 		return $url;
 	}
 
 	/**
 	 * Allow the WordPress Image Editor to remove the main image file after it has been copied
-	 * back from S3 after it has done the edit.
+	 * back from the bucket after it has done the edit.
 	 *
-	 * @param array  $files
-	 * @param int    $post_id
-	 * @param string $file_path
+	 * @param array $files_to_remove
+	 * @param Item  $as3cf_item
+	 * @param array $item_source
 	 *
 	 * @return array
 	 */
-	function customizer_crop_remove_original_image( $files, $post_id, $file_path ) {
+	function customizer_crop_remove_original_image( $files_to_remove, $as3cf_item, $item_source ) {
 		if ( false === $this->is_customizer_crop_action() ) {
-			return $files;
+			return $files_to_remove;
 		}
 
-		// remove original main image after edit
-		if ( ( $original_file = $this->get_original_image_file( $_POST['id'], $file_path ) ) ) {
-			$files[] = $original_file;
+		if ( ( $original_file = $this->get_original_image_file( $as3cf_item ) ) ) {
+			$files_to_remove[] = $original_file;
 		}
 
-		return $files;
+		return $files_to_remove;
 	}
 
 	/**
@@ -595,7 +574,9 @@ class AS3CF_Plugin_Compatibility {
 				$post_id = $url;
 			}
 		} else {
-			$post_id = $this->as3cf->filter_provider->get_attachment_id_from_url( $url );
+			/** @var Media_Library $media_library */
+			$media_library = $this->as3cf->get_integration_manager()->get_integration( 'mlib' );
+			$post_id       = $media_library->get_attachment_id_from_provider_url( $url );
 		}
 
 		// Must return null if not found.
@@ -631,26 +612,11 @@ class AS3CF_Plugin_Compatibility {
 	 * @return string|bool File if downloaded, false on failure
 	 */
 	public function copy_provider_file_to_server( Media_Library_Item $as3cf_item, $file ) {
-		$filename = wp_basename( $file );
+		/** @var Download_Handler $download_handler */
+		$download_handler = $this->as3cf->get_item_handler( Download_Handler::get_item_handler_key_name() );
+		$result           = $download_handler->handle( $as3cf_item, array( 'full_source_paths' => array( $file ) ) );
 
-		// Make sure the directory exists
-		$dir = dirname( $file );
-		if ( ! wp_mkdir_p( $dir ) ) {
-			$error_message = sprintf( __( 'The local directory %s does not exist and could not be created.', 'amazon-s3-and-cloudfront' ), $dir );
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->key( $filename ), $error_message ) );
-
-			return false;
-		}
-
-		try {
-			$this->as3cf->get_provider_client( $as3cf_item->region(), true )->get_object( array(
-				'Bucket' => $as3cf_item->bucket(),
-				'Key'    => $as3cf_item->key( $filename ),
-				'SaveAs' => $file,
-			) );
-		} catch ( Exception $e ) {
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $as3cf_item->key( $filename ), $e->getMessage() ) );
-
+		if ( empty( $result ) || is_wp_error( $result ) ) {
 			return false;
 		}
 
@@ -722,11 +688,13 @@ class AS3CF_Plugin_Compatibility {
 	public function wp_get_attachment_metadata( $data, $attachment_id ) {
 		global $wp_current_filter;
 
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment_id );
 		if (
 			is_array( $wp_current_filter ) &&
 			! empty( $wp_current_filter[0] ) &&
 			'the_content' === $wp_current_filter[0] &&
-			$this->as3cf->is_attachment_served_by_provider( $attachment_id )
+			! empty( $as3cf_item ) &&
+			$as3cf_item->served_by_provider( $attachment_id )
 		) {
 			// Ensure each filename is encoded the same way as URL, slightly fixed up for wp_basename() manipulation compatibility.
 			if ( ! empty( $data['file'] ) ) {
@@ -855,7 +823,8 @@ class AS3CF_Plugin_Compatibility {
 			return $image_meta;
 		}
 
-		if ( ! ( $as3cf_item = $this->as3cf->is_attachment_served_by_provider( $attachment_id ) ) ) {
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment_id );
+		if ( ! $as3cf_item || ! $as3cf_item->served_by_provider() ) {
 			// Attachment not uploaded to S3, abort
 			return $image_meta;
 		}
@@ -901,7 +870,8 @@ class AS3CF_Plugin_Compatibility {
 			return $sources;
 		}
 
-		if ( ! ( $as3cf_item = $this->as3cf->is_attachment_served_by_provider( $attachment_id ) ) ) {
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment_id );
+		if ( ! $as3cf_item || ! $as3cf_item->served_by_provider() ) {
 			// Attachment not uploaded to S3, abort
 			return $sources;
 		}
@@ -909,7 +879,7 @@ class AS3CF_Plugin_Compatibility {
 		foreach ( $sources as $width => $source ) {
 			$filename     = wp_basename( $source['url'] );
 			$size         = $this->find_image_size_from_width( $image_meta['sizes'], $width, $filename );
-			$provider_url = $this->as3cf->get_attachment_provider_url( $attachment_id, $as3cf_item, null, $size, $image_meta );
+			$provider_url = $as3cf_item->get_provider_url( $size );
 
 			if ( false === $provider_url || is_wp_error( $provider_url ) ) {
 				// Skip URLs not offloaded to S3
@@ -958,7 +928,9 @@ class AS3CF_Plugin_Compatibility {
 		// Get parent Post ID for cropped image.
 		$post_id = filter_input( INPUT_POST, 'id', FILTER_VALIDATE_INT );
 
-		$filename = $this->as3cf->filter_unique_filename( $filename, $ext, $dir, $post_id );
+		/** @var Media_Library $media_library */
+		$media_library = $this->as3cf->get_integration_manager()->get_integration( 'mlib' );
+		$filename      = $media_library->filter_unique_filename( $filename, $ext, $dir, $post_id );
 
 		return $filename;
 	}
@@ -1026,9 +998,7 @@ class AS3CF_Plugin_Compatibility {
 		if ( ! empty( $routes ) ) {
 			foreach ( $routes as $match_route ) {
 				if ( preg_match( '@' . $match_route . '@i', $route ) ) {
-					$this->enable_get_attached_file_copy_back_to_local();
-					$this->wait_for_generate_attachment_metadata = true;
-					$this->generate_attachment_metadata_done     = false;
+					$this->enable_copy_back_and_wait_for_generate_metadata();
 					break;
 				}
 			}

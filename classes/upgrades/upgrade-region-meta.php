@@ -50,24 +50,24 @@ class Upgrade_Region_Meta extends Upgrade {
 	/**
 	 * Get the region for the bucket where an attachment is located, update the S3 meta.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 */
-	protected function upgrade_item( $attachment ) {
-		$provider_object = unserialize( $attachment->provider_object );
+	protected function upgrade_item( $item ) {
+		$provider_object = unserialize( $item->provider_object );
 		if ( false === $provider_object ) {
-			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $item->ID . ': ' . $item->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 
 		// Using Media_Library_Item::get_by_source_id falls back to legacy metadata and substitutes in defaults and potentially missing values.
-		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment->ID );
+		$as3cf_item = Media_Library_Item::get_by_source_id( $item->ID );
 
 		if ( ! $as3cf_item ) {
-			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $attachment->ID . ' from legacy offload metadata.' );
+			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $item->ID . ' from legacy offload metadata.' );
 			$this->error_count++;
 
 			return false;
@@ -76,10 +76,10 @@ class Upgrade_Region_Meta extends Upgrade {
 		// Update legacy amazonS3_info record with region required for subsequent upgrades.
 		$provider_object['region'] = $as3cf_item->region();
 
-		$result = update_post_meta( $attachment->ID, 'amazonS3_info', $provider_object );
+		$result = update_post_meta( $item->ID, 'amazonS3_info', $provider_object );
 
 		if ( false === $result ) {
-			AS3CF_Error::log( 'Error updating region in legacy offload metadata for attachment ' . $attachment->ID );
+			AS3CF_Error::log( 'Error updating region in legacy offload metadata for attachment ' . $item->ID );
 			$this->error_count++;
 
 			return false;

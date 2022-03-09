@@ -52,20 +52,20 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 	/**
 	 * Rebuild the attachment metadata for an attachment
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 */
-	protected function upgrade_item( $attachment ) {
-		$provider_object = unserialize( $attachment->provider_object );
+	protected function upgrade_item( $item ) {
+		$provider_object = unserialize( $item->provider_object );
 		if ( false === $provider_object ) {
-			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $item->ID . ': ' . $item->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 
-		$file = get_attached_file( $attachment->ID, true );
+		$file = get_attached_file( $item->ID, true );
 
 		if ( ! file_exists( $file ) ) {
 			// Copy back the file to the server if doesn't exist so we can successfully
@@ -85,11 +85,11 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 		}
 
 		// Remove corrupted meta
-		delete_post_meta( $attachment->ID, '_wp_attachment_metadata' );
+		delete_post_meta( $item->ID, '_wp_attachment_metadata' );
 
 		require_once ABSPATH . '/wp-admin/includes/image.php';
 		// Generate new attachment meta
-		wp_update_attachment_metadata( $attachment->ID, wp_generate_attachment_metadata( $attachment->ID, $file ) );
+		wp_update_attachment_metadata( $item->ID, wp_generate_attachment_metadata( $item->ID, $file ) );
 
 		return true;
 	}

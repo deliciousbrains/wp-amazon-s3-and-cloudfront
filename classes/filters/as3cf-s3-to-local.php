@@ -1,6 +1,6 @@
 <?php
 
-use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+use DeliciousBrains\WP_Offload_Media\Items\Item;
 
 class AS3CF_S3_To_Local extends AS3CF_Filter {
 
@@ -21,9 +21,8 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		add_filter( 'as3cf_filter_post_s3_to_local', array( $this, 'filter_post' ) ); // Backwards compatibility
 		add_filter( 'as3cf_filter_post_provider_to_local', array( $this, 'filter_post' ) );
 		// Widgets
-		add_filter( 'widget_update_callback', array( $this, 'filter_widget_save' ), 10, 4 );
-		// Srcset handling
-		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'image_file_matches_image_meta' ), 10, 4 );
+		add_filter( 'widget_update_callback', array( $this, 'filter_widget_save' ) );
+		add_filter( 'pre_update_option_widget_block', array( $this, 'filter_widget_block_save' ) );
 	}
 
 	/**
@@ -43,16 +42,32 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	/**
 	 * Filter widget on save.
 	 *
-	 * @param array     $instance
-	 * @param array     $new_instance
-	 * @param array     $old_instance
-	 * @param WP_Widget $class
+	 * @param array $instance
 	 *
 	 * @return array
 	 *
 	 */
-	public function filter_widget_save( $instance, $new_instance, $old_instance, $class ) {
-		return $this->handle_widget( $instance, $class );
+	public function filter_widget_save( $instance ) {
+		return $this->handle_widget( $instance );
+	}
+
+	/**
+	 * Filter widget block on save.
+	 *
+	 * @param array $value The new, unserialized option value.
+	 *
+	 * @return array
+	 */
+	public function filter_widget_block_save( $value ) {
+		if ( empty( $value ) || ! is_array( $value ) ) {
+			return $value;
+		}
+
+		foreach ( $value as $idx => $section ) {
+			$value[ $idx ] = $this->handle_widget( $section );
+		}
+
+		return $value;
 	}
 
 	/**
@@ -89,54 +104,80 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	/**
 	 * Get URL
 	 *
-	 * @param int         $attachment_id
-	 * @param null|string $size
+	 * @param array       $item_source
+	 * @param null|string $object_key
 	 *
 	 * @return bool|string
 	 */
-	protected function get_url( $attachment_id, $size = null ) {
-		return $this->as3cf->get_attachment_local_url_size( $attachment_id, $size );
+	protected function get_url( $item_source, $object_key = null ) {
+		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+			return false;
+		}
+
+		/**
+		 * Return the local URL for an item
+		 *
+		 * @param string|false $url         Url for the item, false if no URL can be determined
+		 * @param array        $item_source Associative array describing the item, guaranteed keys:-
+		 *                                  id: source item's unique integer id
+		 *                                  source_type: source item's string type identifier
+		 * @param string|null  $object_key  Object key (size) describing what sub file of an item to return url for
+		 */
+		return apply_filters( 'as3cf_get_local_url_for_item_source', false, $item_source, $object_key );
 	}
 
 	/**
 	 * Get base URL.
 	 *
-	 * @param int $attachment_id
+	 * @param array $item_source
 	 *
 	 * @return string|false
 	 */
-	protected function get_base_url( $attachment_id ) {
-		return $this->as3cf->get_attachment_url( $attachment_id );
+	protected function get_base_url( $item_source ) {
+		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+			return false;
+		}
+
+		/**
+		 * Return the provider URL for an item
+		 *
+		 * @param string|false $url         Url for the item, false if no URL can be determined
+		 * @param array        $item_source Associative array describing the item, guaranteed keys:-
+		 *                                  id: source item's unique integer id
+		 *                                  source_type: source item's string type identifier
+		 * @param string|null  $object_key  Object key (size) describing what sub file of an item to return url for
+		 */
+		return apply_filters( 'as3cf_get_provider_url_for_item_source', false, $item_source, null );
 	}
 
 	/**
-	 * Get attachment ID from URL.
+	 * Get item source descriptor from URL.
 	 *
 	 * @param string $url
 	 *
 	 * @return bool|int
 	 */
-	public function get_attachment_id_from_url( $url ) {
+	public function get_item_source_from_url( $url ) {
 		// Result for sized URL already cached in request, return it.
 		if ( isset( $this->query_cache[ $url ] ) ) {
 			return $this->query_cache[ $url ];
 		}
 
-		$post_id = Media_Library_Item::get_source_id_by_remote_url( $url );
+		$item_source = Item::get_item_source_by_remote_url( $url );
 
-		if ( $post_id ) {
-			$this->query_cache[ $url ] = $post_id;
+		if ( ! empty( $item_source['id'] ) ) {
+			$this->query_cache[ $url ] = $item_source;
 
-			return $post_id;
+			return $item_source;
 		}
 
 		$full_url = AS3CF_Utils::remove_size_from_filename( $url );
 
 		// If we've already tried to find this URL above because it didn't have a size suffix, cache and return.
 		if ( $url === $full_url ) {
-			$this->query_cache[ $url ] = $post_id;
+			$this->query_cache[ $url ] = $item_source;
 
-			return $post_id;
+			return $item_source;
 		}
 
 		// Result for URL already cached in request whether found or not, return it.
@@ -144,21 +185,21 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 			return $this->query_cache[ $full_url ];
 		}
 
-		$post_id = Media_Library_Item::get_source_id_by_remote_url( $full_url );
+		$item_source = Item::get_item_source_by_remote_url( $full_url );
 
-		$this->query_cache[ $full_url ] = $post_id;
+		$this->query_cache[ $full_url ] = ! empty( $item_source['id'] ) ? $item_source : false;
 
-		return $post_id;
+		return $this->query_cache[ $full_url ];
 	}
 
 	/**
-	 * Get attachment IDs from URLs.
+	 * Get item source descriptors from URLs.
 	 *
 	 * @param array $urls
 	 *
-	 * @return array url => attachment ID (or false)
+	 * @return array url => item source descriptor (or false)
 	 */
-	protected function get_attachment_ids_from_urls( $urls ) {
+	protected function get_item_sources_from_urls( $urls ) {
 		$results = array();
 
 		if ( empty( $urls ) ) {
@@ -170,7 +211,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 		}
 
 		foreach ( $urls as $url ) {
-			$results[ $url ] = $this->get_attachment_id_from_url( $url );
+			$results[ $url ] = $this->get_item_source_from_url( $url );
 		}
 
 		return $results;
@@ -218,26 +259,5 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 */
 	protected function pre_replace_content( $content ) {
 		return $content;
-	}
-
-	/**
-	 * Determines if the image meta data is for the image source file.
-	 *
-	 * @handles wp_image_file_matches_image_meta
-	 *
-	 * @param bool   $match
-	 * @param string $image_location
-	 * @param array  $image_meta
-	 * @param int    $attachment_id
-	 *
-	 * @return bool
-	 */
-	public function image_file_matches_image_meta( $match, $image_location, $image_meta, $attachment_id ) {
-		// If already matched or the URL is local, there's nothing for us to do.
-		if ( $match || ! $this->url_needs_replacing( $image_location ) ) {
-			return $match;
-		}
-
-		return $this->attachment_id_matches_src( $attachment_id, $image_location );
 	}
 }

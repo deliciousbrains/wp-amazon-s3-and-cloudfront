@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Too_Many_Errors_Exception;
 
@@ -110,37 +111,34 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	}
 
 	/**
-	 * Upgrade attachment.
+	 * Upgrade item.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 * @throws Batch_Limits_Exceeded_Exception
 	 * @throws Too_Many_Errors_Exception
 	 *
 	 */
-	protected function upgrade_item( $attachment ) {
+	protected function upgrade_item( $item ) {
 		$limit            = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_sql_limit', 100000 );
 		$where_highest_id = $this->last_post_id;
 		$where_lowest_id  = max( $where_highest_id - $limit, 0 );
 
 		while ( true ) {
-			$this->find_and_replace_attachment_urls( $attachment->ID, $where_lowest_id, $where_highest_id );
+			$this->find_and_replace_attachment_urls( $item->ID, $where_lowest_id, $where_highest_id );
 
 			if ( $where_lowest_id <= 0 ) {
 				// Batch completed
 				return true;
 			}
 
-			$where_highest_id = $where_lowest_id;
-			$where_lowest_id  = max( $where_lowest_id - $limit, 0 );
+			$where_highest_id   = $where_lowest_id;
+			$where_lowest_id    = max( $where_lowest_id - $limit, 0 );
+			$this->last_post_id = $where_lowest_id;
 
 			$this->check_batch_limits();
 		}
-
-		$this->last_post_id = $where_lowest_id;
-
-		return false;
 	}
 
 	/**
@@ -161,12 +159,17 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	 * @param int $where_highest_id
 	 */
 	protected function find_and_replace_attachment_urls( $attachment_id, $where_lowest_id, $where_highest_id ) {
-		$meta      = wp_get_attachment_metadata( $attachment_id, true );
-		$backups   = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
-		$file_path = get_attached_file( $attachment_id, true );
+		$meta       = wp_get_attachment_metadata( $attachment_id, true );
+		$backups    = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+		$file_path  = get_attached_file( $attachment_id, true );
+		$as3cf_item = Item::get_by_source_id( $attachment_id );
 
-		$new_url = $this->as3cf->get_attachment_local_url( $attachment_id );
-		$old_url = $this->as3cf->maybe_remove_query_string( $this->as3cf->get_attachment_url( $attachment_id, null, null, $meta, array(), true ) );
+		if ( empty( $as3cf_item ) ) {
+			return;
+		}
+
+		$new_url = $as3cf_item->get_local_url();
+		$old_url = $this->as3cf->maybe_remove_query_string( $as3cf_item->get_provider_url() );
 
 		if ( empty( $old_url ) || empty( $new_url ) ) {
 			return;

@@ -2,9 +2,9 @@
 **Contributors:** bradt, deliciousbrains, ianmjones  
 **Tags:** uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront  
 **Requires at least:** 4.9  
-**Tested up to:** 5.8  
-**Requires PHP:** 5.5  
-**Stable tag:** 2.5.5  
+**Tested up to:** 5.9  
+**Requires PHP:** 5.6  
+**Stable tag:** 2.6.0  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -13,7 +13,7 @@ Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they a
 
 FORMERLY WP OFFLOAD S3 LITE
 
-https://www.youtube.com/watch?v=_PVybEGaRXc
+https://www.youtube.com/watch?v=I-wTMXMeFu4
 
 This plugin automatically copies images, videos, documents, and any other media added through WordPress' media uploader to [Amazon S3](http://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) or [Google Cloud Storage](https://cloud.google.com/storage/). It then automatically replaces the URL to each media file with their respective Amazon S3, DigitalOcean Spaces or Google Cloud Storage URL or, if you have configured [Amazon CloudFront](http://aws.amazon.com/cloudfront/) or another CDN with or without a custom domain, that URL instead. Image thumbnails are also copied to the bucket and delivered through the correct remote URL.
 
@@ -75,6 +75,10 @@ If you upgrade to the pro version of [WP Offload Media](https://deliciousbrains.
 
 ## Upgrade Notice ##
 
+### 2.6 ###
+This is a major upgrade that updates the format of information stored about offloaded Media Library items. Once upgraded you will not be able to downgrade without restoring data from a backup.
+This version requires PHP 5.6+
+
 ### 2.3 ###
 This is a major upgrade that switches to using a custom table for storing data about offloaded Media Library items. Once upgraded you will not be able to downgrade without restoring data from a backup.
 
@@ -88,6 +92,16 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.6 - 2022-03-09 ###
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-2-6-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: WP Offload Media is now compatible with WordPress 5.9 and Full Site Editing
+* Improvement: Offloaded thumbnail sizes are now tracked for better handling of changes to registered sizes
+* Improvement: Offloads and other storage provider actions are faster
+* Bug fix: URL rewriting now works in the Full Site Editor
+* Bug fix: Offloaded images are now shown when re-editing a Block Template or Template Part
+* Bug fix: URL rewriting now works for Widgets migrated to a Widget Sidebar Block
+* Bug fix: Objects are no longer left in the bucket when deleting a Media Library item with many changes to its thumbnail sizes
 
 ### WP Offload Media Lite 2.5.5 - 2021-07-19 ###
 * Bug fix: Signed GCS URLs broken when updating a post

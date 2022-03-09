@@ -3,21 +3,26 @@
 namespace DeliciousBrains\WP_Offload_Media\Items;
 
 use Amazon_S3_And_CloudFront;
+use AS3CF_Error;
 use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
+use Exception;
 use WP_Error;
 
 abstract class Item {
-	const ITEMS_TABLE = 'as3cf_items';
-	const ORIGINATORS = array(
+	const ITEMS_TABLE               = 'as3cf_items';
+	const ORIGINATORS               = array(
 		'standard'      => 0,
 		'metadata-tool' => 1,
 	);
+	const CAN_USE_OBJECT_VERSIONING = true;
 
-	protected static $source_type = 'media-library';
-	protected static $source_table = 'posts';
-	protected static $source_fk = 'id';
+	protected static $source_type_name = 'Item';
+	protected static $source_type = '';
+	protected static $source_table = '';
+	protected static $source_fk = '';
 
-	private static $checked_table_exists = array();
+	protected static $can_use_yearmonth = true;
 
 	protected static $items_cache_by_id = array();
 	protected static $items_cache_by_source_id = array();
@@ -33,6 +38,8 @@ abstract class Item {
 		'path'        => array( 'path', 'original_path' ),
 		'source_path' => array( 'source_path', 'original_source_path' ),
 	);
+
+	private static $checked_table_exists = array();
 
 	private $id;
 	private $provider;
@@ -51,18 +58,19 @@ abstract class Item {
 	/**
 	 * Item constructor.
 	 *
-	 * @param string $provider          Storage provider key name, e.g. "aws".
-	 * @param string $region            Region for item's bucket.
-	 * @param string $bucket            Bucket for item.
-	 * @param string $path              Key path for item (full sized if type has thumbnails etc).
-	 * @param bool   $is_private        Is the object private in the bucket.
-	 * @param int    $source_id         ID that source has.
-	 * @param string $source_path       Path that source uses, could be relative or absolute depending on source.
-	 * @param string $original_filename An optional filename with no path that was previously used for the item.
-	 * @param array  $extra_info        An optional array of extra data specific to the source type.
-	 * @param int    $id                Optional Item record ID.
-	 * @param int    $originator        Optional originator of record from ORIGINATORS const.
-	 * @param bool   $is_verified       Optional flag as to whether Item's objects are known to exist.
+	 * @param string $provider              Storage provider key name, e.g. "aws".
+	 * @param string $region                Region for item's bucket.
+	 * @param string $bucket                Bucket for item.
+	 * @param string $path                  Key path for item (full sized if type has thumbnails etc).
+	 * @param bool   $is_private            Is the object private in the bucket.
+	 * @param int    $source_id             ID that source has.
+	 * @param string $source_path           Path that source uses, could be relative or absolute depending on source.
+	 * @param string $original_filename     An optional filename with no path that was previously used for the item.
+	 * @param array  $extra_info            An optional array of extra data specific to the source type.
+	 * @param int    $id                    Optional Item record ID.
+	 * @param int    $originator            Optional originator of record from ORIGINATORS const.
+	 * @param bool   $is_verified           Optional flag as to whether Item's objects are known to exist.
+	 * @param bool   $use_object_versioning Optional flag as to whether path prefix should use Object Versioning if type allows it.
 	 */
 	public function __construct(
 		$provider,
@@ -76,32 +84,99 @@ abstract class Item {
 		$extra_info = array(),
 		$id = null,
 		$originator = 0,
-		$is_verified = true
+		$is_verified = true,
+		$use_object_versioning = self::CAN_USE_OBJECT_VERSIONING
 	) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
+		$this->source_id   = $source_id;
+		$this->source_path = $source_path;
+
+		if ( empty( $original_filename ) ) {
+			$this->original_source_path = $source_path;
+		} else {
+			$this->original_source_path = str_replace( wp_basename( $source_path ), $original_filename, $source_path );
+		}
+
+		// Set offload data from previous duplicate if exact match by source path exists.
+		if ( empty( $path ) ) {
+			$prev_items = static::get_by_source_path( array( $this->source_path, $this->original_source_path ), $this->source_id, true, true );
+
+			if ( ! is_wp_error( $prev_items ) && ! empty( $prev_items[0] ) && is_a( $prev_items[0], get_class( $this ) ) ) {
+				/** @var Item $prev_item */
+				$prev_item  = $prev_items[0];
+				$provider   = $prev_item->provider();
+				$region     = $prev_item->region();
+				$bucket     = $prev_item->bucket();
+				$path       = $prev_item->path();
+				$is_private = $prev_item->is_private();
+				$extra_info = $prev_item->extra_info();
+			}
+		}
+
+		// Not a duplicate, create a new path to offload to.
+		if ( empty( $path ) ) {
+			$prefix = $this->get_new_item_prefix( $use_object_versioning );
+			$path   = $prefix . wp_basename( $source_path );
+		}
+
+		if ( ! is_array( $extra_info ) ) {
+			$extra_info = array();
+		}
+
+		if ( ! isset( $extra_info['private_prefix'] ) || is_null( $extra_info['private_prefix'] ) ) {
+			$extra_info['private_prefix'] = '';
+			if ( $as3cf->private_prefix_enabled() ) {
+				$extra_info['private_prefix'] = AS3CF_Utils::trailingslash_prefix( $as3cf->get_setting( 'signed-urls-object-prefix', '' ) );
+			}
+		}
+
+		if ( empty( $provider ) ) {
+			$provider = $as3cf->get_storage_provider()->get_provider_key_name();
+		}
+
+		if ( empty( $region ) ) {
+			$region = $as3cf->get_setting( 'region' );
+			if ( is_wp_error( $region ) ) {
+				$region = '';
+			}
+		}
+
+		if ( empty( $bucket ) ) {
+			$bucket = $as3cf->get_setting( 'bucket' );
+		}
+
 		$this->provider    = $provider;
 		$this->region      = $region;
 		$this->bucket      = $bucket;
 		$this->path        = $path;
-		$this->is_private  = $is_private;
-		$this->source_id   = $source_id;
-		$this->source_path = $source_path;
-		$this->extra_info  = serialize( $extra_info );
+		$this->extra_info  = $extra_info;
 		$this->originator  = $originator;
 		$this->is_verified = $is_verified;
 
 		if ( empty( $original_filename ) ) {
-			$this->original_path        = $path;
-			$this->original_source_path = $source_path;
+			$this->original_path = $path;
 		} else {
-			$this->original_path        = str_replace( wp_basename( $path ), $original_filename, $path );
-			$this->original_source_path = str_replace( wp_basename( $source_path ), $original_filename, $source_path );
+			$this->original_path = str_replace( wp_basename( $path ), $original_filename, $path );
 		}
 
 		if ( ! empty( $id ) ) {
 			$this->id = $id;
 		}
 
+		$this->set_is_private( (bool) $is_private );
+
 		static::add_to_items_cache( $this );
+	}
+
+	/**
+	 * Returns the standard object key for an items primary object
+	 *
+	 * @return string
+	 */
+	public static function primary_object_key() {
+		return '__as3cf_primary';
 	}
 
 	/**
@@ -115,6 +190,12 @@ abstract class Item {
 		if ( empty( $group ) ) {
 			/** @var Amazon_S3_And_CloudFront $as3cf */
 			global $as3cf;
+
+			/**
+			 * Filters the object cache group name.
+			 *
+			 * @param string $group Defaults to 'as3cf'
+			 */
 			$group = trim( '' . apply_filters( 'as3cf_object_cache_group', $as3cf->get_plugin_prefix() ) );
 		}
 
@@ -463,7 +544,7 @@ abstract class Item {
 			'source_id'            => $this->source_id,
 			'source_path'          => $this->source_path,
 			'original_source_path' => $this->original_source_path,
-			'extra_info'           => $this->extra_info,
+			'extra_info'           => serialize( $this->extra_info ),
 			'originator'           => $this->originator,
 			'is_verified'          => $this->is_verified,
 		);
@@ -475,28 +556,6 @@ abstract class Item {
 		ksort( $key_values );
 
 		return $key_values;
-	}
-
-	/**
-	 * All the item's property names in an array, optionally with id if available.
-	 *
-	 * @param bool $include_id Default false.
-	 *
-	 * @return array
-	 */
-	private function keys( $include_id = false ) {
-		return array_keys( $this->key_values( $include_id ) );
-	}
-
-	/**
-	 * All the item's property values in an array, optionally with id if available.
-	 *
-	 * @param bool $include_id Default false.
-	 *
-	 * @return array
-	 */
-	private function values( $include_id = false ) {
-		return array_values( $this->key_values( $include_id ) );
 	}
 
 	/**
@@ -546,10 +605,14 @@ abstract class Item {
 	/**
 	 * Save the item's current data.
 	 *
+	 * @param bool $update_duplicates If updating, also update records for duplicated source, defaults to true.
+	 *
 	 * @return int|WP_Error
 	 */
-	public function save() {
+	public function save( $update_duplicates = true ) {
 		global $wpdb;
+
+		$update = false;
 
 		if ( empty( $this->id ) ) {
 			$result = $wpdb->insert( static::items_table(), $this->key_values(), $this->formats() );
@@ -561,6 +624,8 @@ abstract class Item {
 				static::add_to_items_cache( $this );
 			}
 		} else {
+			$update = true;
+
 			// Make sure object cache does not have stale items.
 			$old_item = static::get_from_object_cache( 'id', $this->id() );
 			static::remove_from_object_cache( $old_item );
@@ -576,6 +641,34 @@ abstract class Item {
 			static::remove_from_items_cache( $this );
 
 			return new WP_Error( 'item_save', 'Error saving item:- ' . $wpdb->last_error );
+		}
+
+		// If one or more duplicate exists that still has the same source paths, keep them in step.
+		if ( $update && $update_duplicates ) {
+			$duplicates = static::get_by_source_path( array( $this->source_path, $this->original_source_path ), $this->source_id );
+
+			if ( ! empty( $duplicates ) && ! is_wp_error( $duplicates ) ) {
+				/** @var Item $duplicate */
+				foreach ( $duplicates as $duplicate ) {
+					if (
+						! is_wp_error( $duplicate ) &&
+						$duplicate->source_type() === $this->source_type() &&
+						$duplicate->source_path() === $this->source_path() &&
+						$duplicate->original_source_path() === $this->original_source_path()
+					) {
+						$duplicate->provider      = $this->provider;
+						$duplicate->region        = $this->region;
+						$duplicate->bucket        = $this->bucket;
+						$duplicate->path          = $this->path;
+						$duplicate->original_path = $this->original_path;
+						$duplicate->is_private    = $this->is_private;
+						$duplicate->extra_info    = $this->extra_info;
+						$duplicate->originator    = $this->originator;
+						$duplicate->is_verified   = $this->is_verified;
+						$duplicate->save( false );
+					}
+				}
+			}
 		}
 
 		return $this->id;
@@ -614,13 +707,29 @@ abstract class Item {
 	 * @return Item
 	 */
 	protected static function create( $object, $add_to_object_cache = false ) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
 		$extra_info = array();
 
 		if ( ! empty( $object->extra_info ) ) {
 			$extra_info = unserialize( $object->extra_info );
+			static::maybe_update_extra_info( $extra_info, $object->source_id, $object->is_private );
 		}
 
-		$item = new static(
+		if ( ! empty( static::$source_type ) && static::$source_type !== $object->source_type ) {
+			AS3CF_Error::log( sprintf( 'Doing it wrong! Trying to create a %s class instance with data representing a %s', __CLASS__, $object->source_type ) );
+		}
+
+		if ( empty( static::$source_type ) ) {
+			/** @var Item $class */
+			$class = $as3cf->get_source_type_class( $object->source_type );
+		} else {
+			/** @var Item $class */
+			$class = $as3cf->get_source_type_class( static::$source_type );
+		}
+
+		$item = new $class(
 			$object->provider,
 			$object->region,
 			$object->bucket,
@@ -636,7 +745,7 @@ abstract class Item {
 		);
 
 		if ( $add_to_object_cache ) {
-			static::add_to_object_cache( $item );
+			$class::add_to_object_cache( $item );
 		}
 
 		return $item;
@@ -678,7 +787,7 @@ abstract class Item {
 	 *
 	 * While source id isn't strictly unique, it is by source type, which is always used in queries based on called class.
 	 *
-	 * @param integer $source_id
+	 * @param int $source_id
 	 *
 	 * @return bool|Item
 	 */
@@ -697,7 +806,7 @@ abstract class Item {
 
 		$item = static::get_from_items_cache_by_source_id( $source_id );
 
-		if ( ! empty( $item ) ) {
+		if ( ! empty( $item ) && ! empty( $item->id() ) ) {
 			return $item;
 		}
 
@@ -710,6 +819,24 @@ abstract class Item {
 		}
 
 		return static::create( $object, true );
+	}
+
+	/**
+	 * Getter for item's source type.
+	 *
+	 * @return string
+	 */
+	public static function source_type() {
+		return static::$source_type;
+	}
+
+	/**
+	 * Getter for item's source type name.
+	 *
+	 * @return string
+	 */
+	public static function source_type_name() {
+		return static::$source_type_name;
 	}
 
 	/**
@@ -740,6 +867,15 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's region value.
+	 *
+	 * @param string $region
+	 */
+	public function set_region( $region ) {
+		$this->region = $region;
+	}
+
+	/**
 	 * Getter for item's bucket value.
 	 *
 	 * @return string
@@ -749,12 +885,44 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's bucket value.
+	 *
+	 * @param string $bucket
+	 */
+	public function set_bucket( $bucket ) {
+		$this->bucket = $bucket;
+	}
+
+	/**
 	 * Getter for item's path value.
+	 *
+	 * The path is always the public representation,
+	 * see provider_key() and provider_keys() for realised versions.
+	 *
+	 * @param string $object_key
 	 *
 	 * @return string
 	 */
-	public function path() {
-		return $this->path;
+	public function path( $object_key = null ) {
+		$path = $this->path;
+
+		if ( ! empty( $object_key ) ) {
+			$objects = $this->objects();
+			if ( isset( $objects[ $object_key ]['source_file'] ) ) {
+				$path = $this->prefix() . $objects[ $object_key ]['source_file'];
+			}
+		}
+
+		return $path;
+	}
+
+	/**
+	 * Setter for item's path value.
+	 *
+	 * @param $path
+	 */
+	public function set_path( $path ) {
+		$this->path = $path;
 	}
 
 	/**
@@ -767,21 +935,167 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's original path value.
+	 *
+	 * @param $path
+	 */
+	public function set_original_path( $path ) {
+		$this->original_path = $path;
+	}
+
+	/**
 	 * Getter for item's is_private value.
+	 *
+	 * @param string|null $object_key
 	 *
 	 * @return bool
 	 */
-	public function is_private() {
+	public function is_private( $object_key = null ) {
+		if ( ! empty( $object_key ) ) {
+			$objects = $this->objects();
+			if ( isset( $objects[ $object_key ]['is_private'] ) ) {
+				return (bool) $objects[ $object_key ]['is_private'];
+			}
+
+			return false;
+		}
+
 		return (bool) $this->is_private;
 	}
 
 	/**
 	 * Setter for item's is_private value
 	 *
-	 * @param bool $private
+	 * @param bool        $private
+	 * @param string|null $object_key
 	 */
-	public function set_is_private( $private ) {
-		$this->is_private = (bool) $private;
+	public function set_is_private( $private, $object_key = null ) {
+		if ( ! empty( $object_key ) ) {
+			$objects = $this->objects();
+			if ( isset( $objects[ $object_key ] ) ) {
+				$objects[ $object_key ]['is_private'] = $private;
+				$this->set_objects( $objects );
+			}
+
+			if ( $object_key === Item::primary_object_key() ) {
+				$this->is_private = $private;
+			}
+
+			return;
+		}
+
+		$this->set_is_private( $private, Item::primary_object_key() );
+	}
+
+	/**
+	 * Any private objects in this item
+	 *
+	 * @return bool
+	 */
+	public function has_private_objects() {
+		foreach ( $this->objects() as $object ) {
+			if ( $object['is_private'] ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Getter for the item prefix
+	 *
+	 * @return string
+	 */
+	public function prefix() {
+		$dirname = dirname( $this->path );
+		$dirname = $dirname === '.' ? '' : $dirname;
+
+		return AS3CF_Utils::trailingslash_prefix( $dirname );
+	}
+
+	/**
+	 * Get the private prefix for item's private objects.
+	 *
+	 * @return string
+	 */
+	public function private_prefix() {
+		$extra_info = $this->extra_info();
+
+		if ( ! empty( $extra_info['private_prefix'] ) ) {
+			return AS3CF_Utils::trailingslash_prefix( $extra_info['private_prefix'] );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Setter for the private prefix
+	 *
+	 * @param string $new_private_prefix
+	 */
+	public function set_private_prefix( $new_private_prefix ) {
+		$extra_info                   = $this->extra_info();
+		$extra_info['private_prefix'] = AS3CF_Utils::trailingslash_prefix( $new_private_prefix );
+		$this->set_extra_info( $extra_info );
+	}
+
+	/**
+	 * Get the full remote key for this item including private prefix when needed
+	 *
+	 * @param string|null $object_key
+	 *
+	 * @return string
+	 */
+	public function provider_key( $object_key = null ) {
+		$path = $this->path( $object_key );
+		if ( $this->is_private( $object_key ) ) {
+			$path = $this->private_prefix() . $path;
+		}
+
+		return $path;
+	}
+
+	/**
+	 * Returns an associative array of provider keys by their object_key.
+	 *
+	 * NOTE: There may be duplicate keys if object_keys reference same source file/object.
+	 *
+	 * @return array
+	 */
+	public function provider_keys() {
+		$keys = array();
+
+		foreach ( array_keys( $this->objects() ) as $object_key ) {
+			$keys[ $object_key ] = $this->provider_key( $object_key );
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Creates a provider key for a given filename using the item's prefix settings.
+	 *
+	 * This function can be used to create ad-hoc custom provider keys.
+	 * There are no tests to see if the filename is known to be associated with the item.
+	 *
+	 * @param string $filename   Just a filename without any path.
+	 * @param bool   $is_private Should a private prefixed provider key be created if appropriate?
+	 *
+	 * @return string
+	 */
+	public function provider_key_for_filename( $filename, $is_private ) {
+		$provider_key = '';
+
+		if ( ! empty( $filename ) ) {
+			$provider_key = $this->prefix() . wp_basename( trim( $filename ) );
+
+			if ( $is_private ) {
+				$provider_key = $this->private_prefix() . $provider_key;
+			}
+		}
+
+		return $provider_key;
 	}
 
 	/**
@@ -796,10 +1110,30 @@ abstract class Item {
 	/**
 	 * Getter for item's source_path value.
 	 *
+	 * @param string|null $object_key
+	 *
 	 * @return string
 	 */
-	public function source_path() {
+	public function source_path( $object_key = null ) {
+		if ( ! empty( $object_key ) ) {
+			$objects = $this->objects();
+			if ( isset( $objects[ $object_key ] ) ) {
+				$object_file = $objects[ $object_key ]['source_file'];
+
+				return str_replace( wp_basename( $this->source_path ), $object_file, $this->source_path );
+			}
+		}
+
 		return $this->source_path;
+	}
+
+	/**
+	 * Setter for item's source_path value
+	 *
+	 * @param string $new_path
+	 */
+	public function set_source_path( $new_path ) {
+		$this->source_path = $new_path;
 	}
 
 	/**
@@ -812,21 +1146,79 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's original_source_path value
+	 *
+	 * @param string $new_path
+	 */
+	public function set_original_source_path( $new_path ) {
+		$this->original_source_path = $new_path;
+	}
+
+	/**
+	 * Get an absolute source path.
+	 *
+	 * Default it is based on the WordPress uploads folder.
+	 *
+	 * @param string|null $object_key Optional, by default the original file's source path is used.
+	 *
+	 * @return string
+	 */
+	public function full_source_path( $object_key = null ) {
+		/**
+		 * Filter the absolute directory path prefix for an item's source files.
+		 *
+		 * @param string $basedir    Default is WordPress uploads folder.
+		 * @param Item   $as3cf_item The Item whose full source path is being accessed.
+		 */
+		$basedir = trailingslashit( apply_filters( 'as3cf_item_basedir', wp_upload_dir()['basedir'], $this ) );
+
+		return $basedir . $this->source_path( $object_key );
+	}
+
+	/**
+	 * Creates an absolute source path for a given filename using the item's source path settings.
+	 *
+	 * This function can be used to create ad-hoc custom source file paths.
+	 * There are no tests to see if the filename is known to be associated with the item.
+	 *
+	 * Default it is based on the WordPress uploads folder.
+	 *
+	 * @param string $filename Just a filename without any path.
+	 *
+	 * @return string
+	 */
+	public function full_source_path_for_filename( $filename ) {
+		if ( empty( $filename ) ) {
+			return '';
+		}
+
+		/**
+		 * Filter the absolute directory path prefix for an item's source files.
+		 *
+		 * @param string $basedir    Default is WordPress uploads folder.
+		 * @param Item   $as3cf_item The Item whose full source path is being accessed.
+		 */
+		$basedir = trailingslashit( apply_filters( 'as3cf_item_basedir', wp_upload_dir()['basedir'], $this ) );
+
+		return $basedir . str_replace( wp_basename( $this->source_path ), wp_basename( trim( $filename ) ), $this->source_path );
+	}
+
+	/**
 	 * Getter for item's extra_info value.
 	 *
 	 * @return array
 	 */
 	public function extra_info() {
-		return unserialize( $this->extra_info );
+		return $this->extra_info;
 	}
 
 	/**
-	 * Setter for extra_info value
+	 * Setter for extra_info value.
 	 *
 	 * @param array $extra_info
 	 */
-	protected function set_extra_info( $extra_info ) {
-		$this->extra_info = serialize( $extra_info );
+	public function set_extra_info( $extra_info ) {
+		$this->extra_info = $extra_info;
 	}
 
 	/**
@@ -839,6 +1231,15 @@ abstract class Item {
 	}
 
 	/**
+	 * Setter for item's originator value.
+	 *
+	 * @param int $originator
+	 */
+	public function set_originator( $originator ) {
+		$this->originator = $originator;
+	}
+
+	/**
 	 * Getter for item's is_verified value.
 	 *
 	 * @return bool
@@ -848,12 +1249,21 @@ abstract class Item {
 	}
 
 	/**
-	 * Setter for item's is_verified value
+	 * Setter for item's is_verified value.
 	 *
 	 * @param bool $is_verified
 	 */
 	public function set_is_verified( $is_verified ) {
 		$this->is_verified = (bool) $is_verified;
+	}
+
+	/**
+	 * Does this item type use object versioning?
+	 *
+	 * @return bool
+	 */
+	public static function can_use_object_versioning() {
+		return static::CAN_USE_OBJECT_VERSIONING;
 	}
 
 	/**
@@ -912,14 +1322,12 @@ abstract class Item {
 	 *
 	 * @param string $url
 	 *
-	 * @return int|bool
+	 * @return array|bool
 	 */
-	public static function get_source_id_by_remote_url( $url ) {
+	public static function get_item_source_by_remote_url( $url ) {
 		global $wpdb;
 
-		/**
-		 * @var Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $as3cf
-		 */
+		/** @var Amazon_S3_And_CloudFront $as3cf */
 		global $as3cf;
 
 		$parts = AS3CF_Utils::parse_url( $url );
@@ -952,8 +1360,7 @@ abstract class Item {
 		}
 
 		$sql = $wpdb->prepare(
-			"SELECT * FROM " . static::items_table() . " WHERE source_type = %s AND (path LIKE %s OR original_path LIKE %s);"
-			, static::$source_type
+			"SELECT * FROM " . static::items_table() . " WHERE (path LIKE %s OR original_path LIKE %s);"
 			, '%' . $path
 			, '%' . $path
 		);
@@ -970,7 +1377,9 @@ abstract class Item {
 		$path = AS3CF_Utils::decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
 		foreach ( $results as $result ) {
-			$as3cf_item = static::create( $result );
+			/** @var Item $class */
+			$class      = $as3cf->get_source_type_class( $result->source_type );
+			$as3cf_item = $class::create( $result );
 
 			// If item's bucket matches first segment of URL path, remove it from URL path before checking match.
 			if ( 0 === strpos( $path, trailingslashit( $as3cf_item->bucket() ) ) ) {
@@ -986,7 +1395,10 @@ abstract class Item {
 
 			// Exact match, return ID.
 			if ( $as3cf_item->path() === $match_path || $as3cf_item->original_path() === $match_path ) {
-				return $as3cf_item->source_id();
+				return array(
+					'id'          => $as3cf_item->source_id(),
+					'source_type' => $as3cf_item->source_type(),
+				);
 			}
 		}
 
@@ -998,11 +1410,11 @@ abstract class Item {
 	 *
 	 * While source id isn't strictly unique, it is by source type, which is always used in queries based on called class.
 	 *
-	 * @param integer $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
-	 * @param integer $limit       Maximum number of source_ids to return. Required if not counting.
-	 * @param bool    $count       Just return a count of matching source_ids? Negates $limit, default false.
-	 * @param int     $originator  Optionally restrict to only records with given originator type from ORIGINATORS const.
-	 * @param bool    $is_verified Optionally restrict to only records that either are or are not verified.
+	 * @param int  $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
+	 * @param int  $limit       Maximum number of source_ids to return. Required if not counting.
+	 * @param bool $count       Just return a count of matching source_ids? Negates $limit, default false.
+	 * @param int  $originator  Optionally restrict to only records with given originator type from ORIGINATORS const.
+	 * @param bool $is_verified Optionally restrict to only records that either are or are not verified.
 	 *
 	 * @return array|int
 	 */
@@ -1030,7 +1442,7 @@ abstract class Item {
 				$sql    .= ' AND originator = %d';
 				$args[] = $originator;
 			} else {
-				\AS3CF_Error::log( __METHOD__ . ' called with invalid originator: ' . $originator );
+				AS3CF_Error::log( __METHOD__ . ' called with invalid originator: ' . $originator );
 
 				return $count ? 0 : array();
 			}
@@ -1042,7 +1454,7 @@ abstract class Item {
 				$sql    .= ' AND is_verified = %d';
 				$args[] = (int) $is_verified;
 			} else {
-				\AS3CF_Error::log( __METHOD__ . ' called with invalid is_verified: ' . $is_verified );
+				AS3CF_Error::log( __METHOD__ . ' called with invalid is_verified: ' . $is_verified );
 
 				return $count ? 0 : array();
 			}
@@ -1067,9 +1479,9 @@ abstract class Item {
 	 *
 	 * While source id isn't strictly unique, it is by source type, which is always used in queries based on called class.
 	 *
-	 * @param integer $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
-	 * @param integer $limit       Maximum number of source_ids to return. Required if not counting.
-	 * @param bool    $count       Just return a count of matching source_ids? Negates $limit, default false.
+	 * @param int  $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
+	 * @param int  $limit       Maximum number of source_ids to return. Required if not counting.
+	 * @param bool $count       Just return a count of matching source_ids? Negates $limit, default false.
 	 *
 	 * @return array|int
 	 *
@@ -1084,11 +1496,475 @@ abstract class Item {
 	}
 
 	/**
-	 * Get absolute file paths associated with source item.
-	 *
-	 * @param integer $id
+	 * Get array of objects (i.e. different sizes of same attachment item)
 	 *
 	 * @return array
 	 */
-	abstract protected function source_paths( $id );
+	public function objects() {
+		$extra_info = $this->extra_info();
+		if ( isset( $extra_info['objects'] ) && is_array( $extra_info['objects'] ) ) {
+			// Make sure that the primary object key, if exists, comes first
+			$array_keys  = array_keys( $extra_info['objects'] );
+			$primary_key = Item::primary_object_key();
+			if ( in_array( $primary_key, $array_keys ) && $primary_key !== $array_keys[0] ) {
+				$extra_info['objects'] = array_merge( array( $primary_key => null ), $extra_info['objects'] );
+			}
+
+			return $extra_info['objects'];
+		}
+
+		return array();
+	}
+
+	/**
+	 * Set array of objects (i.e. different sizes of same attachment item)
+	 *
+	 * @param array $objects
+	 */
+	public function set_objects( $objects ) {
+		$extra_info = $this->extra_info();
+
+		$extra_info['objects'] = $objects;
+		$this->set_extra_info( $extra_info );
+	}
+
+	/**
+	 * Synthesize a data struct to be used when passing information
+	 * about the current item to filters that assume the item is a
+	 * media library item.
+	 *
+	 * @return array
+	 */
+	public function item_data_for_acl_filter() {
+		return array(
+			'source_type' => $this->source_type(),
+			'file'        => $this->path( Item::primary_object_key() ),
+			'sizes'       => array_keys( $this->objects() ),
+		);
+	}
+
+	/**
+	 * Get absolute source file paths for offloaded files.
+	 *
+	 * @return array Associative array of object_key => path
+	 */
+	abstract public function full_source_paths();
+
+	/**
+	 * Get size name from file name.
+	 *
+	 * @return string
+	 */
+	abstract public function get_object_key_from_filename( $filename );
+
+	/**
+	 * Get the provider URL for an item
+	 *
+	 * @param string|null $object_key
+	 *
+	 * @return string|false
+	 */
+	public abstract function get_local_url( $object_key = null );
+
+	/**
+	 * Create a new item from the source id.
+	 *
+	 * @param int   $source_id
+	 * @param array $options
+	 *
+	 * @return Item|WP_Error
+	 */
+	public static function create_from_source_id( $source_id, $options = array() ) {
+		return new WP_Error(
+			'exception',
+			sprintf( 'Doing it wrong! Trying to create a base %s class instance from source ID %d', __CLASS__, $source_id )
+		);
+	}
+
+	/**
+	 * Return a year/month string for the item
+	 *
+	 * @return string
+	 */
+	protected function get_item_time() {
+		return null;
+	}
+
+	/**
+	 * Return an additional 'internal' prefix used by some item types
+	 *
+	 * @return string
+	 */
+	protected function get_internal_prefix() {
+		return '';
+	}
+
+	/**
+	 * Get item's new public prefix path for current settings.
+	 *
+	 * @param bool $use_object_versioning
+	 *
+	 * @return string
+	 */
+	public function get_new_item_prefix( $use_object_versioning = true ) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
+		$prefix = $as3cf->get_object_prefix();
+
+		$time   = $this->get_item_time();
+		$prefix .= AS3CF_Utils::trailingslash_prefix( $as3cf->get_dynamic_prefix( $time, static::$can_use_yearmonth ) );
+
+		if ( $use_object_versioning && static::can_use_object_versioning() && $as3cf->get_setting( 'object-versioning' ) ) {
+			$prefix .= AS3CF_Utils::trailingslash_prefix( $as3cf->get_object_version_string() );
+		}
+
+		return AS3CF_Utils::trailingslash_prefix( $prefix );
+	}
+
+	/**
+	 * Get ACL for object key
+	 *
+	 * @param string      $object_key Object key
+	 * @param string|null $bucket     Optional bucket that ACL is potentially to be used with.
+	 *
+	 * @return string|null
+	 */
+	public function get_acl_for_object_key( $object_key, $bucket = null ) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
+		$acl     = null;
+		$use_acl = $as3cf->use_acl_for_intermediate_size( 0, $object_key, $bucket, $this );
+
+		if ( $use_acl ) {
+			$acl = $this->is_private( $object_key ) ? $as3cf->get_storage_provider()->get_private_acl() : $as3cf->get_storage_provider()->get_default_acl();
+		}
+
+		return $acl;
+	}
+
+	/**
+	 * Search for all items that have the source path(s).
+	 *
+	 * @param array|string $paths              Array of relative source paths.
+	 * @param array|int    $exclude_source_ids Array of source_ids to exclude from search. Default, none.
+	 * @param bool         $exact_match        Use paths as supplied (true, default), or greedy match on path without extension (e.g. find edited too).
+	 * @param bool         $first_only         Only return first matched item sorted by source_id. Default false.
+	 *
+	 * @return array
+	 */
+	public static function get_by_source_path( $paths, $exclude_source_ids = array(), $exact_match = true, $first_only = false ) {
+		global $wpdb;
+
+		if ( ! is_array( $paths ) && is_string( $paths ) && ! empty( $paths ) ) {
+			$paths = array( $paths );
+		}
+
+		if ( ! is_array( $paths ) || empty( $paths ) ) {
+			return array();
+		}
+
+		$paths = AS3CF_Utils::make_upload_file_paths_relative( array_unique( $paths ) );
+
+		$sql = '
+			SELECT DISTINCT items.*
+			FROM ' . static::items_table() . ' AS items USE INDEX (uidx_source_path, uidx_original_source_path)
+			WHERE 1=1
+		';
+
+		if ( ! empty( $exclude_source_ids ) ) {
+			if ( ! is_array( $exclude_source_ids ) ) {
+				$exclude_source_ids = array( $exclude_source_ids );
+			}
+
+			$sql .= ' AND items.source_id NOT IN (' . join( ',', $exclude_source_ids ) . ')';
+		}
+
+		if ( $exact_match ) {
+			$sql .= " AND (items.source_path IN ('" . join( "','", $paths ) . "')";
+			$sql .= " OR items.original_source_path IN ('" . join( "','", $paths ) . "'))";
+		} else {
+			$likes = array_map( function ( $path ) {
+				$ext  = '.' . pathinfo( $path, PATHINFO_EXTENSION );
+				$path = substr_replace( $path, '%', -strlen( $ext ) );
+
+				return "items.source_path LIKE '" . $path . "' OR items.original_source_path LIKE '" . $path . "'";
+			}, $paths );
+
+			$sql .= ' AND (' . join( ' OR ', $likes ) . ')';
+		}
+
+		if ( $first_only ) {
+			$sql .= ' ORDER BY items.source_id LIMIT 1';
+		}
+
+		return array_map( 'static::create', $wpdb->get_results( $sql ) );
+	}
+
+	/**
+	 * Update path and original path with a new prefix
+	 *
+	 * @param string $new_prefix
+	 */
+	public function update_path_prefix( $new_prefix ) {
+		$this->set_path( $new_prefix . wp_basename( $this->path() ) );
+		$this->set_original_path( $new_prefix . wp_basename( $this->original_path() ) );
+	}
+
+	/**
+	 * Returns a link to the items edit page in WordPress
+	 *
+	 * @param object $error
+	 *
+	 * @return object|null Null or object containing properties 'url' and 'text'
+	 */
+	public static function admin_link( $error ) {
+		return null;
+	}
+
+	/**
+	 * Is the item served by provider.
+	 *
+	 * @param bool                  $skip_rewrite_check          Still check if offloaded even if not currently rewriting URLs? Default: false
+	 * @param bool                  $skip_current_provider_check Skip checking if offloaded to current provider. Default: false, negated if $provider supplied
+	 * @param Storage_Provider|null $provider                    Provider where item is expected to be offloaded to. Default: currently configured provider
+	 * @param bool                  $check_is_verified           Check that metadata is verified, has no effect if $skip_rewrite_check is true. Default: false
+	 *
+	 * @return bool
+	 */
+	public function served_by_provider( $skip_rewrite_check = false, $skip_current_provider_check = false, Storage_Provider $provider = null, $check_is_verified = false ) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
+		if ( ! $skip_rewrite_check && ! $as3cf->get_setting( 'serve-from-s3' ) ) {
+			// Not serving provider URLs
+			return false;
+		}
+
+		if ( ! $skip_rewrite_check && ! empty( $check_is_verified ) && ! $this->is_verified() ) {
+			// Offload not verified, treat as not offloaded.
+			return false;
+		}
+
+		if ( ! $skip_current_provider_check && empty( $provider ) ) {
+			$provider = $as3cf->get_storage_provider();
+		}
+
+		if ( ! empty( $provider ) && $provider::get_provider_key_name() !== $this->provider() ) {
+			// File not uploaded to required provider
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Does the item's files exist locally?
+	 *
+	 * @return bool
+	 */
+	public function exists_locally() {
+		foreach ( $this->full_source_paths() as $path ) {
+			if ( file_exists( $path ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the provider URL for an item
+	 *
+	 * @param string   $object_key
+	 * @param null|int $expires
+	 * @param array    $headers
+	 *
+	 * @return string|WP_Error|bool
+	 */
+	public function get_provider_url( $object_key = null, $expires = null, $headers = array() ) {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
+		global $as3cf;
+
+		if ( is_null( $object_key ) ) {
+			$object_key = Item::primary_object_key();
+		}
+
+		// Is a signed expiring URL required for the requested object?
+		if ( is_null( $expires ) ) {
+			$expires = $this->is_private( $object_key ) ? Amazon_S3_And_CloudFront::DEFAULT_EXPIRES : null;
+		} else {
+			$expires = $this->is_private( $object_key ) ? $expires : null;
+		}
+
+		$scheme                 = $as3cf->get_url_scheme();
+		$enable_delivery_domain = $as3cf->get_delivery_provider()->delivery_domain_allowed() ? $as3cf->get_setting( 'enable-delivery-domain' ) : false;
+		$delivery_domain        = $as3cf->get_setting( 'delivery-domain' );
+		$item_path              = $this->path( $object_key );
+
+		if ( ! $enable_delivery_domain || empty( $delivery_domain ) ) {
+			$region = $this->region();
+
+			if ( is_wp_error( $region ) ) {
+				return $region;
+			}
+
+			$delivery_domain = $as3cf->get_storage_provider()->get_url_domain( $this->bucket(), $region, $expires );
+		} else {
+			$delivery_domain = AS3CF_Utils::sanitize_custom_domain( $delivery_domain );
+		}
+
+		if ( ! is_null( $expires ) && $as3cf->is_plugin_setup( true ) ) {
+			try {
+				/**
+				 * Filters the expires time for private content
+				 *
+				 * @param int $expires The expires time in seconds
+				 */
+				$timestamp = time() + apply_filters( 'as3cf_expires', $expires );
+				$url       = $as3cf->get_delivery_provider()->get_signed_url( $this, $item_path, $delivery_domain, $scheme, $timestamp, $headers );
+
+				/**
+				 * Filters the secure URL for private content
+				 *
+				 * @param string $url         The URL
+				 * @param Item   $item        The Item object
+				 * @param array  $item_source The item source descriptor array
+				 * @param int    $timestamp   Expiry timestamp
+				 * @param array  $headers     Optional extra http headers
+				 */
+				return apply_filters( 'as3cf_get_item_secure_url', $url, $this, $this->get_item_source_array(), $timestamp, $headers );
+			} catch ( Exception $e ) {
+				return new WP_Error( 'exception', $e->getMessage() );
+			}
+		} else {
+			try {
+				$url = $as3cf->get_delivery_provider()->get_url( $this, $item_path, $delivery_domain, $scheme, $headers );
+
+				/**
+				 * Filters the URL for public content
+				 *
+				 * @param string $url         The URL
+				 * @param Item   $item        The Item object
+				 * @param array  $item_source The item source descriptor array
+				 * @param int    $source_id   The source ID of the object
+				 * @param int    $timestamp   Expiry timestamp
+				 * @param array  $headers     Optional extra http headers
+				 */
+				return apply_filters( 'as3cf_get_item_url', $url, $this, $this->get_item_source_array(), $expires, $headers );
+			} catch ( Exception $e ) {
+				return new WP_Error( 'exception', $e->getMessage() );
+			}
+		}
+	}
+
+	/**
+	 * Update file sizes after removing local files for an item
+	 *
+	 * @param int $original_size
+	 * @param int $total_size
+	 */
+	public function update_filesize_after_remove_local( $original_size, $total_size ) {
+	}
+
+	/**
+	 * Cleanup file sizes after getting item files back from the bucket
+	 */
+	public function update_filesize_after_download_local() {
+	}
+
+	/**
+	 * If another item in current site shares full size *local* paths, only remove remote files not referenced by duplicates.
+	 * We reference local paths as they should be reflected one way or another remotely, including backups.
+	 *
+	 * @params Item  $as3cf_item
+	 * @params array $paths
+	 */
+	public function remove_duplicate_paths( Item $as3cf_item, $paths ) {
+		return $paths;
+	}
+
+	/**
+	 * Verify that the extra info uses the new format set in plugin version 2.6.0
+	 * Update if needed
+	 *
+	 * @param array $extra_info
+	 * @param int   $source_id
+	 * @param bool  $is_private
+	 *
+	 * @since 2.6.0
+	 */
+	protected static function maybe_update_extra_info( &$extra_info, $source_id, $is_private ) {
+		if ( ! is_array( $extra_info ) ) {
+			return;
+		}
+
+		// Compatibility fallback for if just an array of private sizes is supplied.
+		$private_sizes = array();
+		if ( ! isset( $extra_info['private_sizes'] ) && ! isset( $extra_info['private_prefix'] ) && ! isset( $extra_info['objects'] ) ) {
+			$private_sizes = $extra_info;
+		}
+
+		if ( ! isset( $extra_info['objects'] ) ) {
+			$private_sizes         = isset( $extra_info['private_sizes'] ) && is_array( $extra_info['private_sizes'] ) ? $extra_info['private_sizes'] : $private_sizes;
+			$extra_info['objects'] = array();
+
+			$files = AS3CF_Utils::get_attachment_file_paths( $source_id, false );
+			foreach ( $files as $object_key => $file ) {
+				if ( 'file' === $object_key ) {
+					continue;
+				}
+
+				$new_object = array(
+					'source_file' => wp_basename( $file ),
+					'is_private'  => Item::primary_object_key() === $object_key ? $is_private : in_array( $object_key, $private_sizes ),
+				);
+
+				$extra_info['objects'][ $object_key ] = $new_object;
+			}
+		}
+
+		if ( isset( $extra_info['private_sizes'] ) ) {
+			unset( $extra_info['private_sizes'] );
+		}
+	}
+
+	/**
+	 * Returns the item source description array for this item
+	 *
+	 * @return array Array with the format:
+	 *               array(
+	 *                  'id'          => 1,
+	 *                  'source_type' => 'foo-type',
+	 *               )
+	 */
+	public function get_item_source_array() {
+		return array(
+			'id'          => $this->source_id(),
+			'source_type' => $this->source_type(),
+		);
+	}
+
+	/**
+	 * Returns an array keyed by offloaded source file name.
+	 *
+	 * Each entry is as per objects, but also includes an array of object_keys.
+	 *
+	 * @return array
+	 */
+	public function offloaded_files() {
+		$offloaded_files = array();
+
+		foreach ( $this->objects() as $object_key => $object ) {
+			if ( isset( $offloaded_files[ $object['source_file'] ] ) ) {
+				$offloaded_files[ $object['source_file'] ]['object_keys'][] = $object_key;
+			} else {
+				$object['object_keys']                     = array( $object_key );
+				$offloaded_files[ $object['source_file'] ] = $object;
+			}
+		}
+
+		return $offloaded_files;
+	}
 }

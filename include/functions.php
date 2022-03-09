@@ -1,4 +1,7 @@
 <?php
+
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+
 if ( ! function_exists( 'as3cf_get_attachment_url' ) ) {
 	/**
 	 * Get the url of the file from provider, may be a signed expiring URL if associated file is set as private.
@@ -12,10 +15,7 @@ if ( ! function_exists( 'as3cf_get_attachment_url' ) ) {
 	 * @return string|bool|WP_Error
 	 */
 	function as3cf_get_attachment_url( $post_id, $size = null, $skip_rewrite_check = false ) {
-		/** @var Amazon_S3_And_CloudFront $as3cf */
-		global $as3cf;
-
-		return $as3cf->get_attachment_url( $post_id, null, $size, null, array(), $skip_rewrite_check );
+		return as3cf_get_secure_attachment_url( $post_id, null, $size, $skip_rewrite_check );
 	}
 }
 if ( ! function_exists( 'as3cf_get_secure_attachment_url' ) ) {
@@ -32,9 +32,11 @@ if ( ! function_exists( 'as3cf_get_secure_attachment_url' ) ) {
 	 * @return string|bool|WP_Error
 	 */
 	function as3cf_get_secure_attachment_url( $post_id, $expires = 900, $size = null, $skip_rewrite_check = false ) {
-		/** @var Amazon_S3_And_CloudFront $as3cf */
-		global $as3cf;
+		$as3cf_item = Media_Library_Item::get_by_source_id( $post_id );
+		if ( ! empty( $as3cf_item ) && ! is_wp_error( $as3cf_item ) && $as3cf_item->served_by_provider( $skip_rewrite_check ) ) {
+			return $as3cf_item->get_provider_url( $size, $expires );
+		}
 
-		return $as3cf->get_secure_attachment_url( $post_id, $expires, $size, array(), $skip_rewrite_check );
+		return false;
 	}
 }

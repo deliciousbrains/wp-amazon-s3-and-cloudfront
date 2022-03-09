@@ -21,7 +21,7 @@ use WP_Error;
 /**
  * Upgrade Class
  *
- * This class handles updates to attachments and attachment meta data
+ * This class handles updates to offloaded items.
  *
  * @since 0.6.2
  */
@@ -113,7 +113,7 @@ abstract class Upgrade {
 	protected $items_processed;
 
 	/**
-	 * @var mixed Last attachment processed.
+	 * @var mixed Last item processed.
 	 */
 	protected $last_item;
 
@@ -143,8 +143,8 @@ abstract class Upgrade {
 	protected $session;
 
 	const STATUS_RUNNING = 1;
-	const STATUS_ERROR = 2;
-	const STATUS_PAUSED = 3;
+	const STATUS_ERROR   = 2;
+	const STATUS_PAUSED  = 3;
 
 	/**
 	 * Start it up
@@ -244,13 +244,13 @@ abstract class Upgrade {
 	abstract protected function get_items_to_process( $prefix, $limit, $offset = false );
 
 	/**
-	 * Upgrade attachment.
+	 * Upgrade item.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 */
-	abstract protected function upgrade_item( $attachment );
+	abstract protected function upgrade_item( $item );
 
 	/**
 	 * Get running update text.
@@ -500,6 +500,7 @@ abstract class Upgrade {
 	 * Calculate progress.
 	 *
 	 * @return bool|float
+	 * @throws Batch_Limits_Exceeded_Exception
 	 */
 	protected function calculate_progress() {
 		$this->boot_session();
@@ -510,9 +511,9 @@ abstract class Upgrade {
 		} else {
 			// Set up any per-site state
 			$this->switch_to_blog( get_current_blog_id() );
-			$counts = Media_Library_Item::count_attachments();
+			$counts = Media_Library_Item::count_items();
 
-			// If there are no attachments, disable progress calculation
+			// If there are no items, disable progress calculation
 			// and protect against division by zero.
 			if ( ! $counts['total'] ) {
 				return false;

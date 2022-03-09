@@ -12,7 +12,6 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
-use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 
 /**
@@ -51,23 +50,23 @@ class Upgrade_Items_Table extends Upgrade {
 	/**
 	 * Move an attachment's provider object data from the postmeta table to the custom as3cf_objects table.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 */
-	protected function upgrade_item( $attachment ) {
+	protected function upgrade_item( $item ) {
 		// Make sure legacy metadata isn't broken.
-		$provider_object = unserialize( $attachment->provider_object );
+		$provider_object = unserialize( $item->provider_object );
 
 		if ( false === $provider_object ) {
-			AS3CF_Error::log( 'Failed to unserialize legacy offload metadata for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
+			AS3CF_Error::log( 'Failed to unserialize legacy offload metadata for attachment ' . $item->ID . ': ' . $item->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 
-		if ( empty( $attachment->source_path ) ) {
-			AS3CF_Error::log( 'Attachment with ID ' . $attachment->ID . ' with legacy offload metadata has no local file path.' );
+		if ( empty( $item->source_path ) ) {
+			AS3CF_Error::log( 'Attachment with ID ' . $item->ID . ' with legacy offload metadata has no local file path.' );
 			$this->error_count++;
 
 			return false;
@@ -77,10 +76,10 @@ class Upgrade_Items_Table extends Upgrade {
 		// If we're here we already know there's legacy metadata and that there isn't a new items table record yet,
 		// or there's legacy metadata and an existing items table record that we can just re-save without issue before deleting legacy metadata.
 		// An existing items table entry takes precedence over legacy metadata to avoid accidental overrides from migrations, custom code or other plugins.
-		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment->ID );
+		$as3cf_item = Media_Library_Item::get_by_source_id( $item->ID );
 
 		if ( ! $as3cf_item ) {
-			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $attachment->ID . ' from legacy offload metadata.' );
+			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $item->ID . ' from legacy offload metadata.' );
 			$this->error_count++;
 
 			return false;
@@ -96,7 +95,7 @@ class Upgrade_Items_Table extends Upgrade {
 		}
 
 		// Delete old metadata.
-		return delete_post_meta( $attachment->ID, 'amazonS3_info' );
+		return delete_post_meta( $item->ID, 'amazonS3_info' );
 	}
 
 	/**
