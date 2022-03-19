@@ -70,6 +70,12 @@ $gcp_background: #ffffff;
 				border-left: 1px solid #fbbc05;
 			}
 		}
+
+		&.as3cf-provider-yc {
+			.as3cf-provider-logo {
+				border: 1px solid #000000;
+			}
+		}
 	}
 
 	.as3cf-provider-content {

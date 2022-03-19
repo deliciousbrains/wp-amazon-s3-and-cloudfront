@@ -12,6 +12,7 @@ class Cloudflare extends Another_CDN {
 	protected static $supported_storage_providers = array(
 		// TODO: Add 'do' after testing and documenting.
 		'aws',
+		'yc',
 	);
 
 	/**
