@@ -2,7 +2,6 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Items;
 
-use AS3CF_Error;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
 use Exception;
 use WP_Error;
@@ -80,13 +79,13 @@ class Download_Handler extends Item_Handler {
 			// we'll return an error.
 			$current_provider = $this->as3cf->get_storage_provider();
 			if ( ! empty( $current_provider ) && $current_provider::get_provider_key_name() !== $as3cf_item->provider() ) {
-				$message = sprintf(
+				$error_msg = sprintf(
 					__( '%1$s with ID %d is offloaded to a different provider than currently configured', 'amazon-s3-and-cloudfront' ),
 					$this->as3cf->get_source_type_name( $as3cf_item->source_type() ),
 					$as3cf_item->source_id()
 				);
 
-				return new WP_Error( 'exception', $message );
+				return $this->return_handler_error( $error_msg );
 			} else {
 				$provider_client = $this->as3cf->get_provider_client( $as3cf_item->region() );
 
@@ -148,20 +147,21 @@ class Download_Handler extends Item_Handler {
 		// Make sure the local directory exists.
 		$dir = dirname( $object['SaveAs'] );
 		if ( ! is_dir( $dir ) && ! wp_mkdir_p( $dir ) ) {
-			$error_message = sprintf( __( 'The local directory %s does not exist and could not be created.', 'amazon-s3-and-cloudfront' ), $dir );
-			AS3CF_Error::log( sprintf( __( 'There was an error attempting to download the file %s from the bucket: %s', 'amazon-s3-and-cloudfront' ), $object['Key'], $error_message ) );
+			$error_msg = sprintf( __( 'The local directory %s does not exist and could not be created.', 'amazon-s3-and-cloudfront' ), $dir );
+			$error_msg = sprintf( __( 'There was an error attempting to download the file %1$s from the bucket: %2$s', 'amazon-s3-and-cloudfront' ), $object['Key'], $error_msg );
+
+			return $this->return_handler_error( $error_msg );
 		}
 
 		try {
 			$provider_client->get_object( $object );
 		} catch ( Exception $e ) {
-			$error_msg = sprintf( __( 'Error downloading %1$s from bucket: %2$s', 'amazon-s3-and-cloudfront' ), $object['Key'], $e->getMessage() );
-			AS3CF_Error::log( $error_msg );
-
 			// If storage provider file doesn't exist, an empty local file will be created, clean it up.
 			@unlink( $object['SaveAs'] );
 
-			return new WP_Error( 'download_object', $error_msg );
+			$error_msg = sprintf( __( 'Error downloading %1$s from bucket: %2$s', 'amazon-s3-and-cloudfront' ), $object['Key'], $e->getMessage() );
+
+			return $this->return_handler_error( $error_msg );
 		}
 
 		return true;

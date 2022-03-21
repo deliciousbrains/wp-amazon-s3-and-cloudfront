@@ -34,7 +34,7 @@ class Core extends Integration {
 	 * @param array         $options    Handler dependent options that may have been set for the action.
 	 */
 	public function maybe_remove_local_files( $result, Item $as3cf_item, array $options ) {
-		if ( ! is_wp_error( $result ) && $this->as3cf->get_setting( 'remove-local-file', false ) && $as3cf_item->exists_locally() ) {
+		if ( ! is_wp_error( $result ) && $as3cf_item->id() && $this->as3cf->get_setting( 'remove-local-file', false ) && $as3cf_item->exists_locally() ) {
 			$remove_local_handler = $this->as3cf->get_item_handler( Remove_Local_Handler::get_item_handler_key_name() );
 
 			$remove_local_handler->handle( $as3cf_item );

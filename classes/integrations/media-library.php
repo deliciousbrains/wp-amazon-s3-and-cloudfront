@@ -225,13 +225,7 @@ class Media_Library extends Integration {
 	 */
 	protected function upload_item( Media_Library_Item $as3cf_item, array $offloaded_files ) {
 		$upload_handler = $this->as3cf->get_item_handler( Upload_Handler::get_item_handler_key_name() );
-		$upload_result  = $upload_handler->handle( $as3cf_item, array( 'offloaded_files' => $offloaded_files ) );
-
-		if ( is_wp_error( $upload_result ) ) {
-			foreach ( $upload_result->get_error_messages() as $error_message ) {
-				AS3CF_Error::Log( $error_message );
-			}
-		}
+		$upload_handler->handle( $as3cf_item, array( 'offloaded_files' => $offloaded_files ) );
 	}
 
 	/**
@@ -1124,7 +1118,7 @@ class Media_Library extends Integration {
 	public function get_attachment_id_from_provider_url( $url ) {
 		$item_source = $this->as3cf->filter_provider->get_item_source_from_url( $url );
 
-		if ( ! empty( $item_source['id'] ) && ! empty( $item_source['source_type'] ) && Media_Library_Item::source_type() === $item_source['source_type'] ) {
+		if ( ! Item::is_empty_item_source( $item_source ) && Media_Library_Item::source_type() === $item_source['source_type'] ) {
 			return $item_source['id'];
 		}
 
@@ -1141,7 +1135,7 @@ class Media_Library extends Integration {
 	public function get_attachment_id_from_local_url( $url ) {
 		$item_source = $this->as3cf->filter_local->get_item_source_from_url( $url );
 
-		if ( ! empty( $item_source['id'] ) && ! empty( $item_source['source_type'] ) && Media_Library_Item::source_type() === $item_source['source_type'] ) {
+		if ( ! Item::is_empty_item_source( $item_source ) && Media_Library_Item::source_type() === $item_source['source_type'] ) {
 			return $item_source['id'];
 		}
 

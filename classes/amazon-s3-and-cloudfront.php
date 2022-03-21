@@ -26,6 +26,7 @@ use DeliciousBrains\WP_Offload_Media\Providers\Storage\DigitalOcean_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\GCP_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Null_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Clear_Postmeta_Cache;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Content_Replace_URLs;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_EDD_Replace_URLs;
@@ -166,7 +167,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 */
 	protected $integration_manager;
 
-	const LATEST_UPGRADE_ROUTINE = 10;
+	const LATEST_UPGRADE_ROUTINE = 11;
 
 	/**
 	 * @param string      $plugin_file_path
@@ -231,6 +232,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		new Upgrade_Items_Table( $this );
 		new Upgrade_Tools_Errors( $this );
 		new Upgrade_Item_Extra_Data( $this );
+		new Clear_Postmeta_Cache( $this );
 
 		// Plugin setup
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );

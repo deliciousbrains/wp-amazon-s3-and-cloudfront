@@ -3,7 +3,6 @@
 namespace DeliciousBrains\WP_Offload_Media\Items;
 
 use AS3CF_Error;
-use WP_Error;
 
 class Remove_Local_Handler extends Item_Handler {
 	/**
@@ -51,7 +50,7 @@ class Remove_Local_Handler extends Item_Handler {
 	 * @param Item  $as3cf_item
 	 * @param array $options
 	 *
-	 * @return Manifest|WP_Error
+	 * @return Manifest
 	 */
 	protected function pre_handle( Item $as3cf_item, array $options ) {
 		$manifest        = new Manifest();
@@ -143,7 +142,7 @@ class Remove_Local_Handler extends Item_Handler {
 	 * @param Manifest $manifest
 	 * @param array    $options
 	 *
-	 * @return bool|WP_Error
+	 * @return bool
 	 */
 	protected function handle_item( Item $as3cf_item, Manifest $manifest, array $options ) {
 		foreach ( $manifest->objects as &$file_to_remove ) {
@@ -175,7 +174,7 @@ class Remove_Local_Handler extends Item_Handler {
 	 * @param Manifest $manifest
 	 * @param array    $options
 	 *
-	 * @return bool|WP_Error
+	 * @return bool
 	 */
 	protected function post_handle( Item $as3cf_item, Manifest $manifest, array $options ) {
 		if ( empty( $manifest->objects ) ) {

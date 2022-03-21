@@ -4,7 +4,7 @@ Plugin Name: WP Offload Media Lite
 Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
 Description: Automatically copies media uploads to Amazon S3, DigitalOcean Spaces or Google Cloud Storage for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery.
 Author: Delicious Brains
-Version: 2.6.0
+Version: 2.6.1
 Author URI: https://deliciousbrains.com/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting
 Network: True
 Text Domain: amazon-s3-and-cloudfront
@@ -26,7 +26,7 @@ Domain Path: /languages/
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '2.6.0';
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '2.6.1';
 
 require_once dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
 

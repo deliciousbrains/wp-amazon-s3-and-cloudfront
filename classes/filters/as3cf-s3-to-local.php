@@ -110,7 +110,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 * @return bool|string
 	 */
 	protected function get_url( $item_source, $object_key = null ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+		if ( Item::is_empty_item_source( $item_source ) ) {
 			return false;
 		}
 
@@ -134,7 +134,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 * @return string|false
 	 */
 	protected function get_base_url( $item_source ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+		if ( Item::is_empty_item_source( $item_source ) ) {
 			return false;
 		}
 
@@ -155,7 +155,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 	 *
 	 * @param string $url
 	 *
-	 * @return bool|int
+	 * @return bool|array
 	 */
 	public function get_item_source_from_url( $url ) {
 		// Result for sized URL already cached in request, return it.
@@ -165,7 +165,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 
 		$item_source = Item::get_item_source_by_remote_url( $url );
 
-		if ( ! empty( $item_source['id'] ) ) {
+		if ( ! Item::is_empty_item_source( $item_source ) ) {
 			$this->query_cache[ $url ] = $item_source;
 
 			return $item_source;
@@ -187,7 +187,7 @@ class AS3CF_S3_To_Local extends AS3CF_Filter {
 
 		$item_source = Item::get_item_source_by_remote_url( $full_url );
 
-		$this->query_cache[ $full_url ] = ! empty( $item_source['id'] ) ? $item_source : false;
+		$this->query_cache[ $full_url ] = ! Item::is_empty_item_source( $item_source ) ? $item_source : false;
 
 		return $this->query_cache[ $full_url ];
 	}

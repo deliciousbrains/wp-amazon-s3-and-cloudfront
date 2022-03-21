@@ -441,7 +441,7 @@ abstract class AS3CF_Filter {
 	 * @return bool
 	 */
 	public function item_matches_src( $item_source, $url ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) || Media_Library_Item::source_type() !== $item_source['source_type'] ) {
+		if ( Item::is_empty_item_source( $item_source ) || Media_Library_Item::source_type() !== $item_source['source_type'] ) {
 			return false;
 		}
 		$meta = get_post_meta( $item_source['id'], '_wp_attachment_metadata', true );
@@ -533,7 +533,7 @@ abstract class AS3CF_Filter {
 	 * @return null|string
 	 */
 	public function get_size_string_from_url( $item_source, $url ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+		if ( Item::is_empty_item_source( $item_source ) ) {
 			return false;
 		}
 

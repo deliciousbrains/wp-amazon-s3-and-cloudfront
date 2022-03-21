@@ -183,7 +183,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 * @return bool|string
 	 */
 	protected function get_url( $item_source, $object_key = null ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+		if ( Item::is_empty_item_source( $item_source ) ) {
 			return false;
 		}
 
@@ -207,7 +207,7 @@ class AS3CF_Local_To_S3 extends AS3CF_Filter {
 	 * @return string|false
 	 */
 	protected function get_base_url( $item_source ) {
-		if ( empty( $item_source['id'] ) || empty( $item_source['source_type'] ) ) {
+		if ( Item::is_empty_item_source( $item_source ) ) {
 			return false;
 		}
 

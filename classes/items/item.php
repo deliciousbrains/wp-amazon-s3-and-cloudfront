@@ -800,7 +800,7 @@ abstract class Item {
 
 		$source_id = (int) $source_id;
 
-		if ( empty( $source_id ) ) {
+		if ( $source_id < 0 ) {
 			return false;
 		}
 
@@ -1410,7 +1410,7 @@ abstract class Item {
 	 *
 	 * While source id isn't strictly unique, it is by source type, which is always used in queries based on called class.
 	 *
-	 * @param int  $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
+	 * @param int  $upper_bound Returned source_ids should be lower than this, use null for no upper bound.
 	 * @param int  $limit       Maximum number of source_ids to return. Required if not counting.
 	 * @param bool $count       Just return a count of matching source_ids? Negates $limit, default false.
 	 * @param int  $originator  Optionally restrict to only records with given originator type from ORIGINATORS const.
@@ -1421,17 +1421,16 @@ abstract class Item {
 	public static function get_source_ids( $upper_bound, $limit, $count = false, $originator = null, $is_verified = null ) {
 		global $wpdb;
 
-		$args = array( static::$source_type );
-
 		if ( $count ) {
 			$sql = 'SELECT COUNT(DISTINCT source_id)';
 		} else {
 			$sql = 'SELECT DISTINCT source_id';
 		}
 
-		$sql .= ' FROM ' . static::items_table() . ' WHERE source_type = %s';
+		$sql  .= ' FROM ' . static::items_table() . ' WHERE source_type = %s';
+		$args = array( static::$source_type );
 
-		if ( ! empty( $upper_bound ) ) {
+		if ( is_numeric( $upper_bound ) ) {
 			$sql    .= ' AND source_id < %d';
 			$args[] = $upper_bound;
 		}
@@ -1966,5 +1965,25 @@ abstract class Item {
 		}
 
 		return $offloaded_files;
+	}
+
+	/**
+	 * Is the supplied item_source considered to be empty?
+	 *
+	 * @param array $item_source
+	 *
+	 * @return bool
+	 */
+	public static function is_empty_item_source( $item_source ) {
+		if (
+			empty( $item_source['source_type'] ) ||
+			! isset( $item_source['id'] ) ||
+			! is_numeric( $item_source['id'] ) ||
+			$item_source['id'] < 0
+		) {
+			return true;
+		}
+
+		return false;
 	}
 }

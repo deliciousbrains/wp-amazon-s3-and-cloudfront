@@ -2,7 +2,6 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Items;
 
-use AS3CF_Error;
 use Exception;
 use WP_Error;
 
@@ -37,15 +36,15 @@ class Remove_Provider_Handler extends Item_Handler {
 		$paths    = array();
 
 		if ( ! empty( $options['object_keys'] ) && ! is_array( $options['object_keys'] ) ) {
-			return new WP_Error( 'remove-error', __( 'Invalid object_keys option provided.', 'amazon-s3-and-cloudfront' ) );
+			return $this->return_handler_error( __( 'Invalid object_keys option provided.', 'amazon-s3-and-cloudfront' ) );
 		}
 
 		if ( ! empty( $options['offloaded_files'] ) && ! is_array( $options['offloaded_files'] ) ) {
-			return new WP_Error( 'remove-error', __( 'Invalid offloaded_files option provided.', 'amazon-s3-and-cloudfront' ) );
+			return $this->return_handler_error( __( 'Invalid offloaded_files option provided.', 'amazon-s3-and-cloudfront' ) );
 		}
 
 		if ( ! empty( $options['object_keys'] ) && ! empty( $options['offloaded_files'] ) ) {
-			return new WP_Error( 'remove-error', __( 'Providing both object_keys and offloaded_files options is not supported.', 'amazon-s3-and-cloudfront' ) );
+			return $this->return_handler_error( __( 'Providing both object_keys and offloaded_files options is not supported.', 'amazon-s3-and-cloudfront' ) );
 		}
 
 		if ( empty( $options['offloaded_files'] ) ) {
@@ -118,9 +117,9 @@ class Remove_Provider_Handler extends Item_Handler {
 				) );
 			}
 		} catch ( Exception $e ) {
-			AS3CF_Error::log( 'Error removing files from bucket: ' . $e->getMessage() );
+			$error_msg = sprintf( __( 'Error removing files from bucket: %s', 'amazon-s3-and-cloudfront' ), $e->getMessage() );
 
-			return new WP_Error( 'remove-error', $e->getMessage() );
+			return $this->return_handler_error( $error_msg );
 		}
 
 		return true;
@@ -133,7 +132,7 @@ class Remove_Provider_Handler extends Item_Handler {
 	 * @param Manifest $manifest
 	 * @param array    $options
 	 *
-	 * @return bool|WP_Error
+	 * @return bool
 	 */
 	protected function post_handle( Item $as3cf_item, Manifest $manifest, array $options ) {
 		return true;
