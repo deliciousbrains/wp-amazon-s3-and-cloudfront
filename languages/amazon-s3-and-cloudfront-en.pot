@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: amazon-s3-and-cloudfront\n"
 "Report-Msgid-Bugs-To: nom@deliciousbrains.com\n"
-"POT-Creation-Date: 2022-03-21 15:00+0000\n"
+"POT-Creation-Date: 2022-04-04 12:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: classes/amazon-s3-and-cloudfront.php:196
 #: classes/amazon-s3-and-cloudfront.php:197
+#: classes/amazon-s3-and-cloudfront.php:198
 msgid "Offload Media Lite"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:438
-#: classes/amazon-s3-and-cloudfront.php:455
+#: classes/amazon-s3-and-cloudfront.php:440
+#: classes/amazon-s3-and-cloudfront.php:457
 msgid "Unknown"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:536
+#: classes/amazon-s3-and-cloudfront.php:538
 #: view/bucket-select.php:87
 #: view/delivery-provider-select.php:129
 #: view/delivery-provider-select.php:149
@@ -38,185 +38,185 @@ msgstr ""
 msgid "defined in wp-config.php"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1523
+#: classes/amazon-s3-and-cloudfront.php:1525
 msgid "This action can only be performed through an admin screen."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1525
+#: classes/amazon-s3-and-cloudfront.php:1527
 msgid "Cheatin&#8217; eh?"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1527
+#: classes/amazon-s3-and-cloudfront.php:1529
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1851
+#: classes/amazon-s3-and-cloudfront.php:1853
 msgid "Error Getting Bucket Region"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1852
+#: classes/amazon-s3-and-cloudfront.php:1854
 #, php-format
 msgid "There was an error attempting to get the region of the bucket %s: %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1955
+#: classes/amazon-s3-and-cloudfront.php:1957
 msgid ""
 "This is a test file to check if the user has write permission to the bucket. "
 "Delete me if found."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:1961
+#: classes/amazon-s3-and-cloudfront.php:1963
 #, php-format
 msgid ""
 "There was an error attempting to check the permissions of the bucket %s: %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2079
+#: classes/amazon-s3-and-cloudfront.php:2081
 msgid "Error creating bucket"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2080
+#: classes/amazon-s3-and-cloudfront.php:2082
 msgid "Bucket name too short."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2081
+#: classes/amazon-s3-and-cloudfront.php:2083
 msgid "Bucket name too long."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2082
+#: classes/amazon-s3-and-cloudfront.php:2084
 msgid ""
 "Invalid character. Bucket names can contain lowercase letters, numbers, "
 "periods and hyphens."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2083
+#: classes/amazon-s3-and-cloudfront.php:2085
 msgid "Error saving bucket"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2084
+#: classes/amazon-s3-and-cloudfront.php:2086
 msgid "Error fetching buckets"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2085
+#: classes/amazon-s3-and-cloudfront.php:2087
 msgid "Error getting URL preview: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2086
+#: classes/amazon-s3-and-cloudfront.php:2088
 msgid "The changes you made will be lost if you navigate away from this page"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2087
+#: classes/amazon-s3-and-cloudfront.php:2089
 msgid "Getting diagnostic info..."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2088
+#: classes/amazon-s3-and-cloudfront.php:2090
 msgid "Error getting diagnostic info: "
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2089
+#: classes/amazon-s3-and-cloudfront.php:2091
 msgctxt "placeholder for hidden access key, 39 char max"
 msgid "-- not shown --"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2091
-#: classes/amazon-s3-and-cloudfront.php:4212
+#: classes/amazon-s3-and-cloudfront.php:2093
+#: classes/amazon-s3-and-cloudfront.php:4214
 msgid "Settings saved."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2213
+#: classes/amazon-s3-and-cloudfront.php:2215
 msgid "Cheatin' eh?"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2286
+#: classes/amazon-s3-and-cloudfront.php:2288
 #, php-format
 msgid "Could not set new Delivery Provider: %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2361
-#: classes/amazon-s3-and-cloudfront.php:2491
+#: classes/amazon-s3-and-cloudfront.php:2363
+#: classes/amazon-s3-and-cloudfront.php:2493
 msgid "No bucket name provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2370
+#: classes/amazon-s3-and-cloudfront.php:2372
 msgid "Bucket name not valid."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2383
+#: classes/amazon-s3-and-cloudfront.php:2385
 msgid "No region provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2460
+#: classes/amazon-s3-and-cloudfront.php:2462
 #, php-format
 msgctxt "Trying to change public access setting for given provider's bucket."
 msgid "Can't change Block All Public Access setting for %s buckets."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2469
+#: classes/amazon-s3-and-cloudfront.php:2471
 msgid "No block public access setting provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2482
+#: classes/amazon-s3-and-cloudfront.php:2484
 msgid "Storage Provider not configured with access credentials."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2509
+#: classes/amazon-s3-and-cloudfront.php:2511
 msgid "Could not change Block All Public Access status for bucket."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2526
+#: classes/amazon-s3-and-cloudfront.php:2528
 msgid ""
 "<strong>Failed to Enable Block All Public Access</strong> &mdash; We could "
 "not enable Block All Public Access. You will need to log in to the AWS "
 "Console and do it manually."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2528
+#: classes/amazon-s3-and-cloudfront.php:2530
 msgid ""
 "<strong>Failed to Disable Block All Public Access</strong> &mdash; We could "
 "not disable Block All Public Access. You will need to log in to the AWS "
 "Console and do it manually."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2563
+#: classes/amazon-s3-and-cloudfront.php:2565
 #: view/provider-select.php:329
 msgctxt "placeholder for hidden secret access key, 39 char max"
 msgid "-- not shown --"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2586
+#: classes/amazon-s3-and-cloudfront.php:2588
 msgid "Key File not valid JSON."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2606
-#: classes/amazon-s3-and-cloudfront.php:2620
-#: classes/amazon-s3-and-cloudfront.php:2629
+#: classes/amazon-s3-and-cloudfront.php:2608
+#: classes/amazon-s3-and-cloudfront.php:2622
+#: classes/amazon-s3-and-cloudfront.php:2631
 msgctxt "missing form field"
 msgid " not provided."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2672
+#: classes/amazon-s3-and-cloudfront.php:2674
 msgctxt "Show the media library tab"
 msgid "Media Library"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2673
+#: classes/amazon-s3-and-cloudfront.php:2675
 msgctxt "Show the addons tab"
 msgid "Addons"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2674
+#: classes/amazon-s3-and-cloudfront.php:2676
 msgctxt "Show the support tab"
 msgid "Support"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2851
+#: classes/amazon-s3-and-cloudfront.php:2853
 #, php-format
 msgid ""
 "<strong>WP Offload Media</strong> &mdash; The file %s has been given %s "
 "permissions in the bucket."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2870
+#: classes/amazon-s3-and-cloudfront.php:2872
 msgid ""
 "<strong>WP Offload Media Requirement Missing</strong> &mdash; Looks like you "
 "don't have an image manipulation library installed on this server and "
@@ -224,7 +224,7 @@ msgid ""
 "Please setup GD or ImageMagick."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:2894
+#: classes/amazon-s3-and-cloudfront.php:2896
 #, php-format
 msgid ""
 "<strong>Missing Table</strong> &mdash; One or more required database tables "
@@ -232,18 +232,18 @@ msgid ""
 "details. %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3716
+#: classes/amazon-s3-and-cloudfront.php:3718
 #, php-format
 msgid ""
 "<a href=\"%s\">Define your access keys</a> to enable write access to the "
 "bucket"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3723
+#: classes/amazon-s3-and-cloudfront.php:3725
 msgid "Quick Start Guide"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3725
+#: classes/amazon-s3-and-cloudfront.php:3727
 #, php-format
 msgid ""
 "Looks like we don't have write access to this bucket. It's likely that the "
@@ -252,7 +252,7 @@ msgid ""
 "correctly."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3727
+#: classes/amazon-s3-and-cloudfront.php:3729
 #, php-format
 msgid ""
 "Looks like we don't have access to the buckets. It's likely that the user "
@@ -260,39 +260,39 @@ msgid ""
 "Please see our %s for instructions on setting up permissions correctly."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3897
+#: classes/amazon-s3-and-cloudfront.php:3899
 msgid "WP Offload Media Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3898
+#: classes/amazon-s3-and-cloudfront.php:3900
 msgid ""
 "WP Offload Media Lite and WP Offload Media cannot both be active. We've "
 "automatically deactivated WP Offload Media Lite."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3900
+#: classes/amazon-s3-and-cloudfront.php:3902
 msgid "WP Offload Media Lite Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3901
+#: classes/amazon-s3-and-cloudfront.php:3903
 msgid ""
 "WP Offload Media Lite and WP Offload Media cannot both be active. We've "
 "automatically deactivated WP Offload Media."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:3955
+#: classes/amazon-s3-and-cloudfront.php:3957
 msgid "More&nbsp;info&nbsp;&raquo;"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4024
+#: classes/amazon-s3-and-cloudfront.php:4026
 msgid "this doc"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4026
+#: classes/amazon-s3-and-cloudfront.php:4028
 msgid "WP Offload Media Feature Removed"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4027
+#: classes/amazon-s3-and-cloudfront.php:4029
 #, php-format
 msgid ""
 "You had the \"Always non-SSL\" option selected in your settings, but we've "
@@ -303,21 +303,21 @@ msgid ""
 "to the old behavior."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4175
+#: classes/amazon-s3-and-cloudfront.php:4177
 msgid "Assets Pull"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4176
+#: classes/amazon-s3-and-cloudfront.php:4178
 msgid ""
 "An addon for WP Offload Media to serve your site's JS, CSS, and other "
 "enqueued assets from Amazon CloudFront or another CDN."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4180
+#: classes/amazon-s3-and-cloudfront.php:4182
 msgid "Feature"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4226
+#: classes/amazon-s3-and-cloudfront.php:4228
 #, php-format
 msgid ""
 "<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of "
@@ -328,7 +328,7 @@ msgid ""
 "plugin, it should be safe to deactivate and delete it. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4258
+#: classes/amazon-s3-and-cloudfront.php:4260
 #, php-format
 msgid ""
 "<strong>WP Offload Media Settings Moved</strong> &mdash; You now define your "
@@ -526,18 +526,23 @@ msgid ""
 "configured"
 msgstr ""
 
-#: classes/items/download-handler.php:150
+#: classes/items/download-handler.php:129
+#, php-format
+msgid "There were %1$d errors downloading files for %2$s ID %3$d from bucket"
+msgstr ""
+
+#: classes/items/download-handler.php:155
 #, php-format
 msgid "The local directory %s does not exist and could not be created."
 msgstr ""
 
-#: classes/items/download-handler.php:151
+#: classes/items/download-handler.php:156
 #, php-format
 msgid ""
 "There was an error attempting to download the file %1$s from the bucket: %2$s"
 msgstr ""
 
-#: classes/items/download-handler.php:162
+#: classes/items/download-handler.php:167
 #, php-format
 msgid "Error downloading %1$s from bucket: %2$s"
 msgstr ""
@@ -747,7 +752,7 @@ msgid ""
 "make it run faster."
 msgstr ""
 
-#: classes/upgrades/upgrade-item-extra-data.php:48
+#: classes/upgrades/upgrade-item-extra-data.php:49
 msgid "and updating metadata about offloaded items to new format."
 msgstr ""
 

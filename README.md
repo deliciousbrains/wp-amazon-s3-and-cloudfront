@@ -4,7 +4,7 @@
 **Requires at least:** 4.9  
 **Tested up to:** 5.9  
 **Requires PHP:** 5.6  
-**Stable tag:** 2.6.1  
+**Stable tag:** 2.6.2  
 **License:** GPLv3  
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -92,6 +92,9 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog ##
+
+### WP Offload Media Lite 2.6.2 - 2022-04-04 ###
+* Bug fix: Upgrade routine no longer risks breaking items when external object cache is in use
 
 ### WP Offload Media Lite 2.6.1 - 2022-03-21 ###
 * Bug fix: Local files are no longer removed if as3cf_pre_upload_attachment filter is used to abort upload

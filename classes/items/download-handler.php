@@ -116,18 +116,23 @@ class Download_Handler extends Item_Handler {
 	 * @return bool|WP_Error
 	 */
 	protected function post_handle( Item $as3cf_item, Manifest $manifest, array $options ) {
-		// Look for errors
-		$errors = new WP_Error;
-		$i      = 1;
+		$error_count = 0;
 
 		foreach ( $manifest->objects as $manifest_object ) {
-			if ( $manifest_object['download_result']['status'] !== self::STATUS_OK ) {
-				$errors->add( 'download-error-' . $i++, $manifest_object['download_result']['message'] );
+			if ( self::STATUS_OK !== $manifest_object['download_result']['status'] ) {
+				$error_count++;
 			}
 		}
 
-		if ( count( $errors->get_error_codes() ) ) {
-			return $errors;
+		if ( $error_count > 0 ) {
+			$error_message = sprintf(
+				__( 'There were %1$d errors downloading files for %2$s ID %3$d from bucket', 'amazon-s3-and-cloudfront' ),
+				$error_count,
+				$this->as3cf->get_source_type_name( $as3cf_item->source_type() ),
+				$as3cf_item->source_id()
+			);
+
+			return new WP_Error( 'download-error', $error_message );
 		}
 
 		$as3cf_item->update_filesize_after_download_local();

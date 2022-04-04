@@ -14,6 +14,7 @@ namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 use AS3CF_Error;
 use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+use stdClass;
 
 /**
  * Upgrade_Item_Extra_Data Class
@@ -51,12 +52,14 @@ class Upgrade_Item_Extra_Data extends Upgrade {
 	/**
 	 * Update extra_info in items table
 	 *
-	 * @param $item
+	 * @param stdClass $item
 	 *
 	 * @return bool
 	 */
 	protected function upgrade_item( $item ) {
+		Item::disable_cache();
 		$as3cf_item = Media_Library_Item::get_by_source_id( $item->source_id );
+		Item::enable_cache();
 
 		if ( ! $as3cf_item ) {
 			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $item->source_id . '.' );

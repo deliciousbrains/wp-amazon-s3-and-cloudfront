@@ -40,6 +40,7 @@ abstract class Item {
 	);
 
 	private static $checked_table_exists = array();
+	private static $enable_cache = true;
 
 	private $id;
 	private $provider;
@@ -177,6 +178,20 @@ abstract class Item {
 	 */
 	public static function primary_object_key() {
 		return '__as3cf_primary';
+	}
+
+	/**
+	 * Enable the built-in Item cache.
+	 */
+	public static function enable_cache() {
+		self::$enable_cache = true;
+	}
+
+	/**
+	 * Disable the built-in Item cache.
+	 */
+	public static function disable_cache() {
+		self::$enable_cache = false;
 	}
 
 	/**
@@ -389,6 +404,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_id( $id ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_id[ $blog_id ][ $id ] ) ) {
@@ -414,6 +433,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_source_id( $source_id ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_source_id[ $blog_id ][ static::$source_type ][ $source_id ] ) ) {
@@ -440,6 +463,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_bucket_and_path( $bucket, $path ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_path[ $blog_id ][ static::$source_type ][ $path ] ) ) {
@@ -1896,13 +1923,23 @@ abstract class Item {
 	 */
 	protected static function maybe_update_extra_info( &$extra_info, $source_id, $is_private ) {
 		if ( ! is_array( $extra_info ) ) {
-			return;
+			$extra_info = array();
 		}
 
 		// Compatibility fallback for if just an array of private sizes is supplied.
 		$private_sizes = array();
 		if ( ! isset( $extra_info['private_sizes'] ) && ! isset( $extra_info['private_prefix'] ) && ! isset( $extra_info['objects'] ) ) {
 			$private_sizes = $extra_info;
+		}
+
+		// Compatibility fallback for old broken format.
+		if ( isset( $extra_info['private_sizes'] ) && isset( $extra_info['private_sizes']['private_sizes'] ) ) {
+			$extra_info['private_sizes'] = $extra_info['private_sizes']['private_sizes'];
+		}
+
+		// Extra info must have at least one element, if not it's broken.
+		if ( isset( $extra_info['objects'] ) && 0 === count( $extra_info['objects'] ) ) {
+			unset( $extra_info['objects'] );
 		}
 
 		if ( ! isset( $extra_info['objects'] ) ) {
