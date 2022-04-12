@@ -933,7 +933,7 @@ abstract class Item {
 	public function path( $object_key = null ) {
 		$path = $this->path;
 
-		if ( ! empty( $object_key ) ) {
+		if ( ! empty( $object_key ) || $object_key === 0 ) {
 			$objects = $this->objects();
 			if ( isset( $objects[ $object_key ]['source_file'] ) ) {
 				$path = $this->prefix() . $objects[ $object_key ]['source_file'];
@@ -978,7 +978,7 @@ abstract class Item {
 	 * @return bool
 	 */
 	public function is_private( $object_key = null ) {
-		if ( ! empty( $object_key ) ) {
+		if ( ! empty( $object_key ) || $object_key === 0 ) {
 			$objects = $this->objects();
 			if ( isset( $objects[ $object_key ]['is_private'] ) ) {
 				return (bool) $objects[ $object_key ]['is_private'];
@@ -997,7 +997,7 @@ abstract class Item {
 	 * @param string|null $object_key
 	 */
 	public function set_is_private( $private, $object_key = null ) {
-		if ( ! empty( $object_key ) ) {
+		if ( ! empty( $object_key ) || $object_key === 0 ) {
 			$objects = $this->objects();
 			if ( isset( $objects[ $object_key ] ) ) {
 				$objects[ $object_key ]['is_private'] = $private;
@@ -1142,7 +1142,7 @@ abstract class Item {
 	 * @return string
 	 */
 	public function source_path( $object_key = null ) {
-		if ( ! empty( $object_key ) ) {
+		if ( ! empty( $object_key ) || $object_key === 0 ) {
 			$objects = $this->objects();
 			if ( isset( $objects[ $object_key ] ) ) {
 				$object_file = $objects[ $object_key ]['source_file'];
