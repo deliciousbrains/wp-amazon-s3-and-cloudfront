@@ -37,39 +37,31 @@ class ScopedAccessTokenMiddleware
     use CacheTrait;
     const DEFAULT_CACHE_LIFETIME = 1500;
     /**
-     * @var CacheItemPoolInterface
-     */
-    private $cache;
-    /**
-     * @var array configuration
-     */
-    private $cacheConfig;
-    /**
      * @var callable
      */
     private $tokenFunc;
     /**
-     * @var array|string
+     * @var array<string>|string
      */
     private $scopes;
     /**
      * Creates a new ScopedAccessTokenMiddleware.
      *
      * @param callable $tokenFunc a token generator function
-     * @param array|string $scopes the token authentication scopes
-     * @param array $cacheConfig configuration for the cache when it's present
+     * @param array<string>|string $scopes the token authentication scopes
+     * @param array<mixed> $cacheConfig configuration for the cache when it's present
      * @param CacheItemPoolInterface $cache an implementation of CacheItemPoolInterface
      */
-    public function __construct(callable $tokenFunc, $scopes, array $cacheConfig = null, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface $cache = null)
+    public function __construct(callable $tokenFunc, $scopes, array $cacheConfig = null, CacheItemPoolInterface $cache = null)
     {
         $this->tokenFunc = $tokenFunc;
-        if (!(is_string($scopes) || is_array($scopes))) {
+        if (!(\is_string($scopes) || \is_array($scopes))) {
             throw new \InvalidArgumentException('wants scope should be string or array');
         }
         $this->scopes = $scopes;
-        if (!is_null($cache)) {
+        if (!\is_null($cache)) {
             $this->cache = $cache;
-            $this->cacheConfig = array_merge(['lifetime' => self::DEFAULT_CACHE_LIFETIME, 'prefix' => ''], $cacheConfig);
+            $this->cacheConfig = \array_merge(['lifetime' => self::DEFAULT_CACHE_LIFETIME, 'prefix' => ''], $cacheConfig);
         }
     }
     /**
@@ -106,7 +98,7 @@ class ScopedAccessTokenMiddleware
      */
     public function __invoke(callable $handler)
     {
-        return function (\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) use($handler) {
+        return function (RequestInterface $request, array $options) use($handler) {
             // Requests using "auth"="scoped" will be authorized.
             if (!isset($options['auth']) || $options['auth'] !== 'scoped') {
                 return $handler($request, $options);
@@ -121,10 +113,10 @@ class ScopedAccessTokenMiddleware
     private function getCacheKey()
     {
         $key = null;
-        if (is_string($this->scopes)) {
+        if (\is_string($this->scopes)) {
             $key .= $this->scopes;
-        } elseif (is_array($this->scopes)) {
-            $key .= implode(':', $this->scopes);
+        } elseif (\is_array($this->scopes)) {
+            $key .= \implode(':', $this->scopes);
         }
         return $key;
     }
@@ -141,7 +133,7 @@ class ScopedAccessTokenMiddleware
         if (!empty($cached)) {
             return $cached;
         }
-        $token = call_user_func($this->tokenFunc, $this->scopes);
+        $token = \call_user_func($this->tokenFunc, $this->scopes);
         $this->setCachedValue($cacheKey, $token);
         return $token;
     }

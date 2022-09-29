@@ -32,7 +32,8 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\Connect
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\IamBucket;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MimeType;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Buckets are the basic containers that hold your data. Everything that you
@@ -88,14 +89,14 @@ class Bucket
      * @param string $name The bucket's name.
      * @param array $info [optional] The bucket's metadata.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\ConnectionInterface $connection, $name, array $info = [])
+    public function __construct(ConnectionInterface $connection, $name, array $info = [])
     {
         $this->connection = $connection;
-        $this->identity = ['bucket' => $name, 'userProject' => $this->pluck('requesterProjectId', $info, false)];
+        $this->identity = ['bucket' => $name, 'userProject' => $this->pluck('requesterProjectId', $info, \false)];
         $this->info = $info;
         $this->projectId = $this->connection->projectId();
-        $this->acl = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Acl($this->connection, 'bucketAccessControls', $this->identity);
-        $this->defaultAcl = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Acl($this->connection, 'defaultObjectAccessControls', $this->identity);
+        $this->acl = new Acl($this->connection, 'bucketAccessControls', $this->identity);
+        $this->defaultAcl = new Acl($this->connection, 'defaultObjectAccessControls', $this->identity);
     }
     /**
      * Configure ACL for this bucket.
@@ -147,9 +148,9 @@ class Bucket
         try {
             $this->connection->getBucket($this->identity + ['fields' => 'name']);
         } catch (NotFoundException $ex) {
-            return false;
+            return \false;
         }
-        return true;
+        return \true;
     }
     /**
      * Upload your data in a simple fashion. Uploads will default to being
@@ -268,7 +269,7 @@ class Bucket
         $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
         $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
         $response = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data])->upload();
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
+        return new StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
     }
     /**
      * Asynchronously uploads an object.
@@ -354,9 +355,9 @@ class Bucket
         }
         $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
         $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
-        $promise = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => false])->uploadAsync();
+        $promise = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => \false])->uploadAsync();
         return $promise->then(function (array $response) use($encryptionKey, $encryptionKeySHA256) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
+            return new StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
         });
     }
     /**
@@ -425,7 +426,7 @@ class Bucket
         if ($this->isObjectNameRequired($data) && !isset($options['name'])) {
             throw new \InvalidArgumentException('A name is required when data is of type string or null.');
         }
-        return $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => true]);
+        return $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => \true]);
     }
     /**
      * Get a streamable uploader which can provide greater control over the
@@ -486,7 +487,7 @@ class Bucket
         if ($this->isObjectNameRequired($data) && !isset($options['name'])) {
             throw new \InvalidArgumentException('A name is required when data is of type string or null.');
         }
-        return $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'streamable' => true, 'validate' => false]);
+        return $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'streamable' => \true, 'validate' => \false]);
     }
     /**
      * Lazily instantiates an object. There are no network requests made at this
@@ -519,7 +520,7 @@ class Bucket
         $generation = isset($options['generation']) ? $options['generation'] : null;
         $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
         $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $name, $this->identity['bucket'], $generation, array_filter(['requesterProjectId' => $this->identity['userProject']]), $encryptionKey, $encryptionKeySHA256);
+        return new StorageObject($this->connection, $name, $this->identity['bucket'], $generation, \array_filter(['requesterProjectId' => $this->identity['userProject']]), $encryptionKey, $encryptionKeySHA256);
     }
     /**
      * Fetches all objects in the bucket.
@@ -566,9 +567,9 @@ class Bucket
      */
     public function objects(array $options = [])
     {
-        $resultLimit = $this->pluck('resultLimit', $options, false);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\ObjectIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\ObjectPageIterator(function (array $object) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $object['name'], $this->identity['bucket'], isset($object['generation']) ? $object['generation'] : null, $object + array_filter(['requesterProjectId' => $this->identity['userProject']]));
+        $resultLimit = $this->pluck('resultLimit', $options, \false);
+        return new ObjectIterator(new ObjectPageIterator(function (array $object) {
+            return new StorageObject($this->connection, $object['name'], $this->identity['bucket'], isset($object['generation']) ? $object['generation'] : null, $object + \array_filter(['requesterProjectId' => $this->identity['userProject']]));
         }, [$this->connection, 'listObjects'], $options + $this->identity, ['resultLimit' => $resultLimit]));
     }
     /**
@@ -663,7 +664,7 @@ class Bucket
     public function createNotification($topic, array $options = [])
     {
         $res = $this->connection->insertNotification($options + $this->identity + ['topic' => $this->getFormattedTopic($topic), 'payload_format' => 'JSON_API_V1']);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Notification($this->connection, $res['id'], $this->identity['bucket'], $res + ['requesterProjectId' => $this->identity['userProject']]);
+        return new Notification($this->connection, $res['id'], $this->identity['bucket'], $res + ['requesterProjectId' => $this->identity['userProject']]);
     }
     /**
      * Lazily instantiates a notification. There are no network requests made at
@@ -686,7 +687,7 @@ class Bucket
      */
     public function notification($id)
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Notification($this->connection, $id, $this->identity['bucket'], ['requesterProjectId' => $this->identity['userProject']]);
+        return new Notification($this->connection, $id, $this->identity['bucket'], ['requesterProjectId' => $this->identity['userProject']]);
     }
     /**
      * Fetches all notifications associated with this bucket.
@@ -718,9 +719,9 @@ class Bucket
      */
     public function notifications(array $options = [])
     {
-        $resultLimit = $this->pluck('resultLimit', $options, false);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\ItemIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\PageIterator(function (array $notification) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Notification($this->connection, $notification['id'], $this->identity['bucket'], $notification + ['requesterProjectId' => $this->identity['userProject']]);
+        $resultLimit = $this->pluck('resultLimit', $options, \false);
+        return new ItemIterator(new PageIterator(function (array $notification) {
+            return new Notification($this->connection, $notification['id'], $this->identity['bucket'], $notification + ['requesterProjectId' => $this->identity['userProject']]);
         }, [$this->connection, 'listNotifications'], $options + $this->identity, ['resultLimit' => $resultLimit]));
     }
     /**
@@ -843,6 +844,11 @@ class Bucket
      *           [feature documentation](https://cloud.google.com/storage/docs/uniform-bucket-level-access),
      *           as well as
      *           [Should You Use uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access#should-you-use)
+     *     @type string $iamConfiguration.publicAccessPrevention The bucket's
+     *           Public Access Prevention configuration. Currently,
+     *           'inherited' and 'enforced' are supported. **defaults to**
+     *           `inherited`. For more details, see
+     *           [Public Access Prevention](https://cloud.google.com/storage/docs/public-access-prevention).
      * }
      * @codingStandardsIgnoreEnd
      * @return array
@@ -900,28 +906,28 @@ class Bucket
      */
     public function compose(array $sourceObjects, $name, array $options = [])
     {
-        if (count($sourceObjects) < 2) {
+        if (\count($sourceObjects) < 2) {
             throw new \InvalidArgumentException('Must provide at least two objects to compose.');
         }
-        $options += ['destinationBucket' => $this->name(), 'destinationObject' => $name, 'destinationPredefinedAcl' => isset($options['predefinedAcl']) ? $options['predefinedAcl'] : null, 'destination' => isset($options['metadata']) ? $options['metadata'] : null, 'userProject' => $this->identity['userProject'], 'sourceObjects' => array_map(function ($sourceObject) {
+        $options += ['destinationBucket' => $this->name(), 'destinationObject' => $name, 'destinationPredefinedAcl' => isset($options['predefinedAcl']) ? $options['predefinedAcl'] : null, 'destination' => isset($options['metadata']) ? $options['metadata'] : null, 'userProject' => $this->identity['userProject'], 'sourceObjects' => \array_map(function ($sourceObject) {
             $name = null;
             $generation = null;
             if ($sourceObject instanceof StorageObject) {
                 $name = $sourceObject->name();
                 $generation = isset($sourceObject->identity()['generation']) ? $sourceObject->identity()['generation'] : null;
             }
-            return array_filter(['name' => $name ?: $sourceObject, 'generation' => $generation]);
+            return \array_filter(['name' => $name ?: $sourceObject, 'generation' => $generation]);
         }, $sourceObjects)];
         if (!isset($options['destination']['contentType'])) {
-            $options['destination']['contentType'] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\mimetype_from_filename($name);
+            $options['destination']['contentType'] = MimeType::fromFilename($name);
         }
         if ($options['destination']['contentType'] === null) {
             throw new \InvalidArgumentException('A content type could not be detected and must be provided manually.');
         }
         unset($options['metadata']);
         unset($options['predefinedAcl']);
-        $response = $this->connection->composeObject(array_filter($options));
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response + array_filter(['requesterProjectId' => $this->identity['userProject']]));
+        $response = $this->connection->composeObject(\array_filter($options));
+        return new StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response + \array_filter(['requesterProjectId' => $this->identity['userProject']]));
     }
     /**
      * Retrieves the bucket's details. If no bucket data is cached a network
@@ -1029,7 +1035,7 @@ class Bucket
      */
     public static function lifecycle(array $lifecycle = [])
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Lifecycle($lifecycle);
+        return new Lifecycle($lifecycle);
     }
     /**
      * Retrieves a lifecycle builder preconfigured with the lifecycle rules that
@@ -1086,18 +1092,18 @@ class Bucket
     public function isWritable($file = null)
     {
         $file = $file ?: '__tempfile';
-        $uploader = $this->getResumableUploader(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for(''), ['name' => $file]);
+        $uploader = $this->getResumableUploader(Utils::streamFor(''), ['name' => $file]);
         try {
             $uploader->getResumeUri();
         } catch (ServiceException $e) {
             // We expect a 403 access denied error if the bucket is not writable
             if ($e->getCode() == 403) {
-                return false;
+                return \false;
             }
             // If not a 403, re-raise the unexpected error
             throw $e;
         }
-        return true;
+        return \true;
     }
     /**
      * Manage the IAM policy for the current Bucket.
@@ -1130,7 +1136,7 @@ class Bucket
     public function iam()
     {
         if (!$this->iam) {
-            $this->iam = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iam\Iam(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\IamBucket($this->connection), $this->identity['bucket'], ['parent' => null, 'args' => $this->identity]);
+            $this->iam = new Iam(new IamBucket($this->connection), $this->identity['bucket'], ['parent' => null, 'args' => $this->identity]);
         }
         return $this->iam;
     }
@@ -1258,8 +1264,8 @@ class Bucket
     public function signedUrl($expires, array $options = [])
     {
         // May be overridden for testing.
-        $signingHelper = $this->pluck('helper', $options, false) ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper::getHelper();
-        $resource = sprintf('/%s', $this->identity['bucket']);
+        $signingHelper = $this->pluck('helper', $options, \false) ?: SigningHelper::getHelper();
+        $resource = \sprintf('/%s', $this->identity['bucket']);
         return $signingHelper->sign($this->connection, $expires, $resource, null, $options);
     }
     /**
@@ -1338,8 +1344,8 @@ class Bucket
     public function generateSignedPostPolicyV4($objectName, $expires, array $options = [])
     {
         // May be overridden for testing.
-        $signingHelper = $this->pluck('helper', $options, false) ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\SigningHelper::getHelper();
-        $resource = sprintf('/%s/%s', $this->identity['bucket'], $objectName);
+        $signingHelper = $this->pluck('helper', $options, \false) ?: SigningHelper::getHelper();
+        $resource = \sprintf('/%s/%s', $this->identity['bucket'], $objectName);
         return $signingHelper->v4PostPolicy($this->connection, $expires, $resource, $options);
     }
     /**
@@ -1350,7 +1356,7 @@ class Bucket
      */
     private function isObjectNameRequired($data)
     {
-        return is_string($data) || is_null($data);
+        return \is_string($data) || \is_null($data);
     }
     /**
      * Return a topic name in its fully qualified format.
@@ -1363,17 +1369,17 @@ class Bucket
     private function getFormattedTopic($topic)
     {
         if ($topic instanceof Topic) {
-            return sprintf(self::NOTIFICATION_TEMPLATE, $topic->name());
+            return \sprintf(self::NOTIFICATION_TEMPLATE, $topic->name());
         }
-        if (!is_string($topic)) {
-            throw new \InvalidArgumentException('$topic may only be a string or instance of Google\\Cloud\\PubSub\\Topic');
+        if (!\is_string($topic)) {
+            throw new \InvalidArgumentException('DeliciousBrains\\WP_Offload_Media\\Gcp\\$topic may only be a string or instance of Google\\Cloud\\PubSub\\Topic');
         }
-        if (preg_match('/projects\\/[^\\/]*\\/topics\\/(.*)/', $topic) === 1) {
-            return sprintf(self::NOTIFICATION_TEMPLATE, $topic);
+        if (\preg_match('/projects\\/[^\\/]*\\/topics\\/(.*)/', $topic) === 1) {
+            return \sprintf(self::NOTIFICATION_TEMPLATE, $topic);
         }
         if (!$this->projectId) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
+            throw new GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
         }
-        return sprintf(self::NOTIFICATION_TEMPLATE, sprintf(self::TOPIC_TEMPLATE, $this->projectId, $topic));
+        return \sprintf(self::NOTIFICATION_TEMPLATE, \sprintf(self::TOPIC_TEMPLATE, $this->projectId, $topic));
     }
 }

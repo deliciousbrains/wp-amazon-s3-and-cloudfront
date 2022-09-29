@@ -9,7 +9,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
  */
-class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\TransferException
+class RequestException extends TransferException
 {
     /** @var RequestInterface */
     private $request;
@@ -17,7 +17,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
     private $response;
     /** @var array */
     private $handlerContext;
-    public function __construct($message, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $handlerContext = [])
+    public function __construct($message, RequestInterface $request, ResponseInterface $response = null, \Exception $previous = null, array $handlerContext = [])
     {
         // Set the code of the exception if the response is set and not future.
         $code = $response && !$response instanceof PromiseInterface ? $response->getStatusCode() : 0;
@@ -34,9 +34,9 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
      *
      * @return RequestException
      */
-    public static function wrapException(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \Exception $e)
+    public static function wrapException(RequestInterface $request, \Exception $e)
     {
-        return $e instanceof RequestException ? $e : new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\RequestException($e->getMessage(), $request, null, $e);
+        return $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
     }
     /**
      * Factory method to create a new exception with a normalized error message
@@ -48,18 +48,18 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
      *
      * @return self
      */
-    public static function create(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $previous = null, array $ctx = [])
+    public static function create(RequestInterface $request, ResponseInterface $response = null, \Exception $previous = null, array $ctx = [])
     {
         if (!$response) {
             return new self('Error completing request', $request, null, $previous, $ctx);
         }
-        $level = (int) floor($response->getStatusCode() / 100);
+        $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ClientException::class;
+            $className = ClientException::class;
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\ServerException::class;
+            $className = ServerException::class;
         } else {
             $label = 'Unsuccessful request';
             $className = __CLASS__;
@@ -68,7 +68,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
         $uri = static::obfuscateUri($uri);
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
-        $message = sprintf('%s: `%s %s` resulted in a `%s %s` response', $label, $request->getMethod(), $uri, $response->getStatusCode(), $response->getReasonPhrase());
+        $message = \sprintf('%s: `%s %s` resulted in a `%s %s` response', $label, $request->getMethod(), $uri, $response->getStatusCode(), $response->getReasonPhrase());
         $summary = static::getResponseBodySummary($response);
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
@@ -84,7 +84,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
      *
      * @return string|null
      */
-    public static function getResponseBodySummary(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public static function getResponseBodySummary(ResponseInterface $response)
     {
         return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\get_message_body_summary($response);
     }
@@ -95,11 +95,11 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp
      *
      * @return UriInterface
      */
-    private static function obfuscateUri(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri)
+    private static function obfuscateUri(UriInterface $uri)
     {
         $userInfo = $uri->getUserInfo();
-        if (false !== ($pos = strpos($userInfo, ':'))) {
-            return $uri->withUserInfo(substr($userInfo, 0, $pos), '***');
+        if (\false !== ($pos = \strpos($userInfo, ':'))) {
+            return $uri->withUserInfo(\substr($userInfo, 0, $pos), '***');
         }
         return $uri;
     }

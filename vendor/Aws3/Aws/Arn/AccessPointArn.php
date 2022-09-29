@@ -6,7 +6,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
 /**
  * @internal
  */
-class AccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Arn implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface
+class AccessPointArn extends Arn implements AccessPointArnInterface
 {
     use ResourceTypeAndIdTrait;
     /**
@@ -40,16 +40,16 @@ class AccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Arn 
         self::validateRegion($data, 'access point ARN');
         self::validateAccountId($data, 'access point ARN');
         if ($data['resource_type'] !== 'accesspoint') {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 6th component of an access point ARN" . " represents the resource type and must be 'accesspoint'.");
+            throw new InvalidArnException("The 6th component of an access point ARN" . " represents the resource type and must be 'accesspoint'.");
         }
         if (empty($data['resource_id'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 7th component of an access point ARN" . " represents the resource ID and must not be empty.");
+            throw new InvalidArnException("The 7th component of an access point ARN" . " represents the resource ID and must not be empty.");
         }
-        if (strpos($data['resource_id'], ':') !== false) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The resource ID component of an access" . " point ARN must not contain additional components" . " (delimited by ':').");
+        if (\strpos($data['resource_id'], ':') !== \false) {
+            throw new InvalidArnException("The resource ID component of an access" . " point ARN must not contain additional components" . " (delimited by ':').");
         }
         if (!self::isValidHostLabel($data['resource_id'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The resource ID in an access point ARN" . " must be a valid host label value.");
+            throw new InvalidArnException("The resource ID in an access point ARN" . " must be a valid host label value.");
         }
     }
 }

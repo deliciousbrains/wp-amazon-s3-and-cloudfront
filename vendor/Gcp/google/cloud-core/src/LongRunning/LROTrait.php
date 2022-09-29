@@ -50,7 +50,7 @@ trait LROTrait
      * @param string $lroResource [optional] The resource for which operations
      *        may be listed.
      */
-    private function setLroProperties(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\LongRunning\LongRunningConnectionInterface $lroConnection, array $lroCallables, $resource = null)
+    private function setLroProperties(LongRunningConnectionInterface $lroConnection, array $lroCallables, $resource = null)
     {
         $this->lroConnection = $lroConnection;
         $this->lroCallables = $lroCallables;
@@ -65,7 +65,7 @@ trait LROTrait
      */
     public function resumeOperation($operationName, array $info = [])
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\LongRunning\LongRunningOperation($this->lroConnection, $operationName, $this->lroCallables, $info);
+        return new LongRunningOperation($this->lroConnection, $operationName, $this->lroCallables, $info);
     }
     /**
      * List long running operations.
@@ -82,16 +82,16 @@ trait LROTrait
      *     @type string $pageToken A previously-returned page token used to
      *           resume the loading of results from a specific point.
      * }
-     * @return ItemIterator<InstanceConfiguration>
+     * @return ItemIterator<LongRunningOperation>
      */
     public function longRunningOperations(array $options = [])
     {
-        if (is_null($this->lroResource)) {
+        if (\is_null($this->lroResource)) {
             throw new \BadMethodCallException('This service does list support listing operations.');
         }
-        $resultLimit = $this->pluck('resultLimit', $options, false) ?: 0;
+        $resultLimit = $this->pluck('resultLimit', $options, \false) ?: 0;
         $options['name'] = $this->lroResource . '/operations';
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\ItemIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\PageIterator(function (array $operation) {
+        return new ItemIterator(new PageIterator(function (array $operation) {
             return $this->resumeOperation($operation['name'], $operation);
         }, [$this->lroConnection, 'operations'], $options, ['itemsKey' => 'operations', 'resultLimit' => $resultLimit]));
     }

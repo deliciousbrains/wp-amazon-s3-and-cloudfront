@@ -28,7 +28,7 @@ class ResultPaginator implements \Iterator
      * @param array              $args
      * @param array              $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $operation, array $args, array $config)
+    public function __construct(AwsClientInterface $client, $operation, array $args, array $config)
     {
         $this->client = $client;
         $this->operation = $operation;
@@ -56,7 +56,7 @@ class ResultPaginator implements \Iterator
      */
     public function each(callable $handleResult)
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () use($handleResult) {
+        return Promise\Coroutine::of(function () use($handleResult) {
             $nextToken = null;
             do {
                 $command = $this->createNextCommand($this->args, $nextToken);
@@ -64,7 +64,7 @@ class ResultPaginator implements \Iterator
                 $nextToken = $this->determineNextToken($result);
                 $retVal = $handleResult($result);
                 if ($retVal !== null) {
-                    (yield \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($retVal));
+                    (yield Promise\Create::promiseFor($retVal));
                 }
             } while ($nextToken);
         });
@@ -80,38 +80,43 @@ class ResultPaginator implements \Iterator
     public function search($expression)
     {
         // Apply JMESPath expression on each result, but as a flat sequence.
-        return flatmap($this, function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) use($expression) {
+        return flatmap($this, function (Result $result) use($expression) {
             return (array) $result->search($expression);
         });
     }
     /**
      * @return Result
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
-        return $this->valid() ? $this->result : false;
+        return $this->valid() ? $this->result : \false;
     }
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->valid() ? $this->requestCount - 1 : null;
     }
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->result = null;
     }
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         if ($this->result) {
-            return true;
+            return \true;
         }
         if ($this->nextToken || !$this->requestCount) {
             $this->result = $this->client->execute($this->createNextCommand($this->args, $this->nextToken));
             $this->nextToken = $this->determineNextToken($this->result);
             $this->requestCount++;
-            return true;
+            return \true;
         }
-        return false;
+        return \false;
     }
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->requestCount = 0;
@@ -120,9 +125,9 @@ class ResultPaginator implements \Iterator
     }
     private function createNextCommand(array $args, array $nextToken = null)
     {
-        return $this->client->getCommand($this->operation, array_merge($args, $nextToken ?: []));
+        return $this->client->getCommand($this->operation, \array_merge($args, $nextToken ?: []));
     }
-    private function determineNextToken(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result)
+    private function determineNextToken(Result $result)
     {
         if (!$this->config['output_token']) {
             return null;
@@ -130,8 +135,8 @@ class ResultPaginator implements \Iterator
         if ($this->config['more_results'] && !$result->search($this->config['more_results'])) {
             return null;
         }
-        $nextToken = is_scalar($this->config['output_token']) ? [$this->config['input_token'] => $this->config['output_token']] : array_combine($this->config['input_token'], $this->config['output_token']);
-        return array_filter(array_map(function ($outputToken) use($result) {
+        $nextToken = \is_scalar($this->config['output_token']) ? [$this->config['input_token'] => $this->config['output_token']] : \array_combine($this->config['input_token'], $this->config['output_token']);
+        return \array_filter(\array_map(function ($outputToken) use($result) {
             return $result->search($outputToken);
         }, $nextToken));
     }

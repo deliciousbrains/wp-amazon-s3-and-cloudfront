@@ -2,16 +2,16 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Providers\Storage;
 
-use Amazon_S3_And_CloudFront;
 use AS3CF_Error;
 use AS3CF_Utils;
 use DeliciousBrains\WP_Offload_Media\Providers\Provider;
 use Exception;
+use WP_Error;
 
 abstract class Storage_Provider extends Provider {
 
 	/**
-	 * @var
+	 * @var mixed
 	 */
 	private $client;
 
@@ -67,39 +67,19 @@ abstract class Storage_Provider extends Provider {
 	protected static $key_file_path_constants = array();
 
 	/**
-	 * @var bool
-	 */
-	protected static $block_public_access_allowed = false;
-
-	/**
 	 * @var array
 	 */
-	protected $regions = array();
+	protected static $regions = array();
 
 	/**
 	 * @var bool
 	 */
-	protected $region_required = false;
+	protected static $region_required = false;
 
 	/**
 	 * @var string
 	 */
-	protected $default_region = '';
-
-	/**
-	 * @var string
-	 */
-	protected $default_domain = '';
-
-	/**
-	 * @var string
-	 */
-	protected $console_url = '';
-
-	/**
-	 * @var string
-	 */
-	protected $console_url_prefix_param = '';
+	protected static $default_region = '';
 
 	/**
 	 * Is the provider able to use access keys?
@@ -135,6 +115,10 @@ abstract class Storage_Provider extends Provider {
 	 * @return bool
 	 */
 	public function are_access_keys_set() {
+		if ( ! static::use_access_keys_allowed() ) {
+			return false;
+		}
+
 		return $this->get_access_key_id() && $this->get_secret_access_key();
 	}
 
@@ -233,13 +217,24 @@ abstract class Storage_Provider extends Provider {
 			return false;
 		}
 
-		if ( static::use_server_roles_constant() ) {
+		if ( static::is_use_server_roles_constant_defined() ) {
 			$constant = static::use_server_roles_constant();
 
 			return $constant ? constant( $constant ) : false;
 		}
 
 		return $this->as3cf->get_core_setting( static::$use_server_roles_setting_name, false );
+	}
+
+	/**
+	 * Check if use server roles constant is defined.
+	 *
+	 * @return bool
+	 */
+	public static function is_use_server_roles_constant_defined() {
+		$constant = static::use_server_roles_constant();
+
+		return $constant && constant( $constant );
 	}
 
 	/**
@@ -289,12 +284,10 @@ abstract class Storage_Provider extends Provider {
 	/**
 	 * Get the key file contents from settings.
 	 *
-	 * @return array|bool
+	 * @return mixed
 	 */
 	public function get_key_file() {
-		$key_file = $this->as3cf->get_core_setting( static::$key_file_setting_name, false );
-
-		return $key_file;
+		return $this->as3cf->get_core_setting( static::$key_file_setting_name, false );
 	}
 
 	/**
@@ -397,15 +390,6 @@ abstract class Storage_Provider extends Provider {
 	}
 
 	/**
-	 * Does provider have functionality to block direct public access to bucket?
-	 *
-	 * @return bool
-	 */
-	public static function block_public_access_allowed() {
-		return static::$block_public_access_allowed;
-	}
-
-	/**
 	 * Is public access to the given bucket prohibited?
 	 *
 	 * @param string $bucket
@@ -413,7 +397,7 @@ abstract class Storage_Provider extends Provider {
 	 * @return bool|null
 	 */
 	public function public_access_blocked( $bucket ) {
-		if ( static::block_public_access_allowed() ) {
+		if ( static::block_public_access_supported() ) {
 			return null; // Unknown until sub class overrides this function.
 		} else {
 			return false;
@@ -428,8 +412,42 @@ abstract class Storage_Provider extends Provider {
 	 *
 	 * Note: Should be overridden and implemented as required.
 	 */
-	public function block_public_access( $bucket, $block ) {
-		return;
+	public function block_public_access( string $bucket, bool $block ) {
+	}
+
+	/**
+	 * Is object ownership enforced (and therefore ACLs disabled)?
+	 *
+	 * @param string $bucket
+	 *
+	 * @return bool|null
+	 */
+	public function object_ownership_enforced( string $bucket ): ?bool {
+		if ( static::object_ownership_supported() ) {
+			return null; // Unknown until sub class overrides this function.
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Update the object ownership enforced setting for the given bucket.
+	 *
+	 * @param string $bucket
+	 * @param bool   $enforce
+	 *
+	 * Note: Should be overridden and implemented as required.
+	 */
+	public function enforce_object_ownership( string $bucket, bool $enforce ) {
+	}
+
+	/**
+	 * Does the provider require a region be specified for all endpoint actions?
+	 *
+	 * @return bool
+	 */
+	public static function region_required() {
+		return static::$region_required;
 	}
 
 	/**
@@ -437,17 +455,8 @@ abstract class Storage_Provider extends Provider {
 	 *
 	 * @return string
 	 */
-	public function region_required() {
-		return $this->region_required;
-	}
-
-	/**
-	 * Returns the Provider's default region slug.
-	 *
-	 * @return string
-	 */
-	public function get_default_region() {
-		return $this->default_region;
+	public static function get_default_region() {
+		return static::$default_region;
 	}
 
 	/**
@@ -455,8 +464,8 @@ abstract class Storage_Provider extends Provider {
 	 *
 	 * @return array Keys are region slug, values their name
 	 */
-	public function get_regions() {
-		$regions = apply_filters( static::$provider_key_name . '_get_regions', $this->regions ); // Backwards compatibility, e.g. 'aws_get_regions'.
+	public static function get_regions() {
+		$regions = apply_filters( static::$provider_key_name . '_get_regions', static::$regions ); // Backwards compatibility, e.g. 'aws_get_regions'.
 
 		return apply_filters( 'as3cf_' . static::$provider_key_name . '_get_regions', $regions );
 	}
@@ -473,11 +482,11 @@ abstract class Storage_Provider extends Provider {
 		if ( is_wp_error( $region ) ) {
 			return '';
 		}
-		if ( empty( $region ) && ! $this->region_required() ) {
-			$region = $this->get_default_region();
+		if ( empty( $region ) && ! static::region_required() ) {
+			$region = static::get_default_region();
 		}
 
-		$regions = $this->get_regions();
+		$regions = static::get_regions();
 
 		$region_name = empty( $regions[ $region ] ) ? '' : $regions[ $region ];
 
@@ -496,7 +505,7 @@ abstract class Storage_Provider extends Provider {
 	 * @return bool
 	 */
 	public function is_region_valid( $region ) {
-		return in_array( trim( $region ), array_keys( $this->get_regions() ) );
+		return in_array( trim( $region ), array_keys( static::get_regions() ) );
 	}
 
 	/**
@@ -505,34 +514,41 @@ abstract class Storage_Provider extends Provider {
 	 * @param array $args Options for required region/endpoint
 	 *
 	 * @throws Exception
+	 *
+	 * phpcs:disable PSR2.Methods.MethodDeclaration.Underscore
 	 */
 	private function _init_client( array $args ) {
 		if ( $this->needs_access_keys() ) {
-			throw new Exception( sprintf( __( 'You must first <a href="%s">set your access keys</a>.', 'amazon-s3-and-cloudfront' ), $this->as3cf->get_plugin_page_url() . '#settings' ) );
+			throw new Exception( static::get_needs_access_keys_desc() );
 		}
 
 		if ( is_null( $this->client ) ) {
 			// There's no extra client authentication config required when using server roles.
-			if ( ! $this->use_server_roles() ) {
-				// Some providers can supply Key File contents or Key File Path.
-				if ( static::use_key_file() ) {
-					// Key File contents take precedence over Key File Path.
-					if ( static::get_key_file() ) {
-						$args = array_merge( array(
-							'keyFile' => static::get_key_file(),
-						), $args );
-					} else {
-						$args = array_merge( array(
-							'keyFilePath' => static::get_key_file_path(),
-						), $args );
-					}
-				} else {
-					// Fall back is Access Keys.
+			// So if neither Access Keys nor Key File are set as overrides, can safely fall through
+			// as top of function confirmed that one of Access Keys, Key File or Server Roles configured.
+
+			// Order of precedence, first match wins...
+			// 1. Access Keys define then setting.
+			// 2. Key File Path define then setting.
+			// 3. Key File contents define then setting.
+			// 4. Server Roles define then setting.
+
+			if ( static::are_access_keys_set() ) {
+				$args = array_merge( array(
+					'credentials' => array(
+						'key'    => $this->get_access_key_id(),
+						'secret' => $this->get_secret_access_key(),
+					),
+				), $args );
+			} elseif ( static::use_key_file() ) {
+				// Key File Path takes precedence over Key File contents.
+				if ( static::get_key_file_path() ) {
 					$args = array_merge( array(
-						'credentials' => array(
-							'key'    => $this->get_access_key_id(),
-							'secret' => $this->get_secret_access_key(),
-						),
+						'keyFilePath' => static::get_key_file_path(),
+					), $args );
+				} else {
+					$args = array_merge( array(
+						'keyFile' => static::get_key_file(),
 					), $args );
 				}
 			}
@@ -646,6 +662,8 @@ abstract class Storage_Provider extends Provider {
 	 * @return string
 	 */
 	public function get_url_domain( $bucket, $region = '', $expires = null ) {
+		global $as3cf;
+
 		$args = array(
 			'delivery-provider'      => $this->as3cf->get_setting( 'delivery-provider' ),
 			'enable-delivery-domain' => $this->as3cf->get_setting( 'enable-delivery-domain' ),
@@ -654,7 +672,7 @@ abstract class Storage_Provider extends Provider {
 		);
 
 		// Backwards Compat.
-		$args['domain']     = $args['enable-delivery-domain'] && Amazon_S3_And_CloudFront::get_default_delivery_provider() !== $args['delivery-provider'] ? 'cloudfront' : 'path';
+		$args['domain']     = $args['enable-delivery-domain'] && $as3cf::get_default_delivery_provider() !== $args['delivery-provider'] ? 'cloudfront' : 'path';
 		$args['cloudfront'] = $args['delivery-domain'];
 
 		$prefix = $this->url_prefix( $region, $expires );
@@ -672,31 +690,447 @@ abstract class Storage_Provider extends Provider {
 	}
 
 	/**
-	 * Get the link to the bucket on the provider's console.
-	 *
-	 * @param string $bucket
-	 * @param string $prefix
-	 * @param string $region
+	 * Returns notice text for when access credentials still need to be set.
 	 *
 	 * @return string
 	 */
-	public function get_console_url( $bucket = '', $prefix = '', $region = '' ) {
-		if ( '' !== $prefix ) {
-			$prefix = $this->get_console_url_prefix_param() . apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_value', $prefix );
-		}
+	public static function get_needs_access_keys_desc() {
+		global $as3cf;
 
-		$suffix = apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_suffix_param', $this->get_console_url_suffix_param( $bucket, $prefix, $region ) );
-
-		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url', $this->console_url ) . $bucket . $prefix . $suffix;
+		return sprintf( __( 'You must <a href="%s">set your Storage Provider access credentials</a> to enable bucket access.', 'amazon-s3-and-cloudfront' ), $as3cf::get_plugin_page_url() . '#/storage/provider' );
 	}
 
 	/**
-	 * Get the prefix param to append to the link to the bucket on the provider's console.
+	 * Notification strings for when Block All Public Access enabled on storage provider but delivery provider does not support it.
+	 *
+	 * @return array Keys are heading and message
+	 *
+	 * This function should be overridden by providers that do support Block All Public Access to give more specific message.
+	 */
+	public static function get_block_public_access_warning() {
+		return array(
+			'heading' => _x( 'Block All Public Access is Enabled', 'warning heading', 'amazon-s3-and-cloudfront' ),
+			'message' => __( 'The current Delivery Provider does not support Block All Public Access.', 'amazon-s3-and-cloudfront' ),
+		);
+	}
+
+	/**
+	 * Notification strings for when Object Ownership enforced on storage provider but delivery provider does not support it.
+	 *
+	 * @return array Keys are heading and message
+	 *
+	 * This function should be overridden by providers that do support enforced Object Ownership to give more specific message.
+	 */
+	public static function get_object_ownership_enforced_warning() {
+		return array(
+			'heading' => _x( 'Object Ownership is Enforced', 'warning heading', 'amazon-s3-and-cloudfront' ),
+			'message' => __( 'The current Delivery Provider does not support Object Ownership enforcement.', 'amazon-s3-and-cloudfront' ),
+		);
+	}
+
+	/**
+	 * Notification strings for when Storage Provider is about to be changed but media has already been offloaded.
+	 *
+	 * @param int $offloaded
+	 *
+	 * @return array Keys are heading and message
+	 *
+	 * Note: Because we don't grab all the Storage Provider information into the UI after bring-up
+	 * unless settings have changed, there's an edge case whereby nothing was offloaded, offloads happen,
+	 * then user tries to change provider. At that point UI does know that there have been offloads,
+	 * but there has not been a reason to grab storage providers from server. That's why there's a fall-back
+	 * message without the count of offloads included.
+	 */
+	public static function get_media_already_offloaded_warning( $offloaded = 0 ) {
+		global $as3cf;
+
+		if ( $offloaded ) {
+			$heading = sprintf( __( '<strong>Warning:</strong> You have %d offloaded Media Library items.', 'amazon-s3-and-cloudfront' ), $offloaded );
+		} else {
+			$heading = __( '<strong>Warning:</strong> You have offloaded Media Library items.', 'amazon-s3-and-cloudfront' );
+		}
+		$message = __( 'You should remove them from the bucket before changing storage provider.', 'amazon-s3-and-cloudfront' );
+		$message .= '&nbsp;' . $as3cf::more_info_link( '/wp-offload-media/doc/how-to-change-storage-provider/#mixed-provider' );
+
+		return array(
+			'heading' => $heading,
+			'message' => $message,
+		);
+	}
+
+	/**
+	 * The string to be used for the Use Server Roles option in the UI.
 	 *
 	 * @return string
 	 */
-	public function get_console_url_prefix_param() {
-		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_param', $this->console_url_prefix_param );
+	public static function get_use_server_roles_title() {
+		return sprintf( __( 'My server is on %s and I\'d like to use IAM Roles', 'amazon-s3-and-cloudfront' ), static::get_provider_name() );
+	}
+
+	/**
+	 * The string to be used for the define access keys description.
+	 *
+	 * @return string
+	 */
+	public static function get_define_access_keys_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Copy the following snippet to <strong>near the top</strong> of your wp-config.php and replace the stars with the keys.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-access-keys' );
+
+		return $mesg;
+	}
+
+	/**
+	 * The string to be used for the defined access keys example.
+	 *
+	 * @return string
+	 */
+	public static function get_define_access_keys_example() {
+		global $as3cf;
+
+		// NOTE: This string is specifically formatted to flush left.
+		return "define( '" . $as3cf::preferred_settings_constant() . "', serialize( array(
+	'provider' => '" . static::get_provider_key_name() . "',
+	'access-key-id' => '********************',
+	'secret-access-key' => '**************************************',
+) ) );";
+	}
+
+	/**
+	 * The string to be used for the entered access keys description.
+	 *
+	 * @return string
+	 */
+	public static function get_enter_access_keys_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Storing your access keys in the database is less secure than the other options, but if you\'re ok with that, go ahead and enter your keys in the form below.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-access-keys' );
+
+		return $mesg;
+	}
+
+	/**
+	 * The string to be used for the get access keys help notice.
+	 *
+	 * @return string
+	 */
+	public static function get_access_keys_help() {
+		global $as3cf;
+
+		return sprintf(
+			__( 'Need help configuring your chosen storage provider? <a href="%s" target="_blank">View the Quick Start Guide</a>', 'amazon-s3-and-cloudfront' ),
+			$as3cf::dbrains_url(
+				'/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug(),
+				array(
+					'utm_campaign' => 'support+docs',
+				)
+			)
+		);
+	}
+
+	/**
+	 * The string to be used for the define key file description.
+	 *
+	 * @return string
+	 */
+	public static function get_define_key_file_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Copy the following snippet to <strong>near the top</strong> of your wp-config.php and replace "<strong>/path/to/key/file.json</strong>".', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-key-file' );
+
+		return $mesg;
+	}
+
+	/**
+	 * The string to be used for the define key file example.
+	 *
+	 * @return string
+	 */
+	public static function get_define_key_file_example() {
+		global $as3cf;
+
+		// NOTE: This string is specifically formatted to flush left.
+		return "define( '" . $as3cf::preferred_settings_constant() . "', serialize( array(
+	'provider' => '" . static::get_provider_key_name() . "',
+	'key-file-path' => '/path/to/key/file.json',
+) ) );";
+	}
+
+	/**
+	 * The string to be used for the enter key file description.
+	 *
+	 * @return string
+	 */
+	public static function get_enter_key_file_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Storing your key file\'s contents in the database is less secure than the other options, but if you\'re ok with that, go ahead and enter your key file\'s JSON data in the field below.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-key-file' );
+
+		return $mesg;
+	}
+
+	/**
+	 * The string to be used for the use server roles description.
+	 *
+	 * @return string
+	 */
+	public static function get_use_server_roles_desc() {
+		global $as3cf;
+
+		$mesg = sprintf(
+			__( 'If you host your WordPress site on %s, click the <strong>Next</strong> button to make use of IAM Roles.', 'amazon-s3-and-cloudfront' ),
+			static::get_provider_name()
+		);
+		$mesg .= '<br><br>';
+		$mesg .= __( 'Optionally, copy the following snippet to <strong>near the top</strong> of your wp-config.php.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::more_info_link(
+			'/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#iam-roles'
+		);
+
+		return $mesg;
+	}
+
+	/**
+	 * Get an array of access key related constants that are currently defined.
+	 *
+	 * @return array
+	 */
+	public static function used_access_keys_constants() {
+		global $as3cf;
+
+		$defined_settings = $as3cf->get_defined_settings();
+		$defines          = array();
+
+		// Access Keys defined in dedicated constant.
+		if ( static::is_any_access_key_constant_defined() ) {
+			$constant = static::access_key_id_constant();
+
+			if ( $constant ) {
+				$defines[] = $constant;
+			}
+
+			$constant = static::secret_access_key_constant();
+
+			if ( $constant ) {
+				$defines[] = $constant;
+			}
+		}
+
+		// Access Keys defined in standard settings constant.
+		if ( ! empty( $defined_settings['access-key-id'] ) || ! empty( $defined_settings['secret-access-key'] ) ) {
+			$defines[] = $as3cf::settings_constant();
+		}
+
+		return $defines;
+	}
+
+	/**
+	 * Get an array of key file path related constants that are currently defined.
+	 *
+	 * @return array
+	 */
+	public static function used_key_file_path_constants() {
+		global $as3cf;
+
+		$defined_settings = $as3cf->get_defined_settings();
+		$defines          = array();
+
+		// Key File Path defined in dedicated constant.
+		if ( static::is_key_file_path_constant_defined() ) {
+			$constant = static::key_file_path_constant();
+
+			if ( $constant ) {
+				$defines[] = $constant;
+			}
+		}
+
+		// Key File Path defined in standard settings constant.
+		if ( ! empty( $defined_settings['key-file-path'] ) ) {
+			$defines[] = $as3cf::settings_constant();
+		}
+
+		return $defines;
+	}
+
+	/**
+	 * Get an array of server roles related constants that are currently defined.
+	 *
+	 * @return array
+	 */
+	public static function used_server_roles_constants() {
+		global $as3cf;
+
+		$defined_settings = $as3cf->get_defined_settings();
+		$defines          = array();
+
+		// Use Server Roles defined in dedicated constant.
+		if ( static::is_use_server_roles_constant_defined() ) {
+			$constant = static::use_server_roles_constant();
+
+			if ( $constant ) {
+				$defines[] = $constant;
+			}
+		}
+
+		// Use Server Roles defined in standard settings constant.
+		if ( ! empty( $defined_settings['use-server-roles'] ) ) {
+			$defines[] = $as3cf::settings_constant();
+		}
+
+		return $defines;
+	}
+
+	/**
+	 * Returns a string describing how the provider's authentication method has been defined, if it has.
+	 *
+	 * @return string
+	 *
+	 * TODO: The collection of used constants could be useful elsewhere and could be refactored out.
+	 */
+	public static function get_defined_auth_desc() {
+		global $as3cf;
+
+		$mesg = '';
+
+		if ( static::use_access_keys_allowed() ) {
+			$defines = static::used_access_keys_constants();
+
+			if ( ! empty( $defines ) ) {
+				$mesg = __( 'You\'ve defined your access keys in your wp-config.php.', 'amazon-s3-and-cloudfront' );
+				$mesg .= '<br>';
+
+				if ( count( $defines ) > 1 ) {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" defines in your wp-config.php.', 'Access Keys defined in multiple defines.', 'amazon-s3-and-cloudfront' );
+				} else {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" define in your wp-config.php.', 'Access Keys defined in single define.', 'amazon-s3-and-cloudfront' );
+				}
+
+				$multiple_defines_glue = _x( '" & "', 'joins multiple define keys in notice', 'amazon-s3-and-cloudfront' );
+				$defined_constants_str = join( $multiple_defines_glue, $defines );
+				$mesg                  = sprintf( $mesg, $defined_constants_str );
+				$mesg                  .= '&nbsp;';
+				$mesg                  .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-access-keys' );
+
+				return $mesg;
+			}
+		} elseif ( static::use_key_file_allowed() ) {
+			$defines = static::used_key_file_path_constants();
+
+			if ( ! empty( $defines ) ) {
+				$mesg = __( 'You\'ve defined your key file path in your wp-config.php.', 'amazon-s3-and-cloudfront' );
+				$mesg .= '<br>';
+
+				if ( count( $defines ) > 1 ) {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" defines in your wp-config.php.', 'Key File Path defined in multiple defines.', 'amazon-s3-and-cloudfront' );
+				} else {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" define in your wp-config.php.', 'Key File Path defined in single define.', 'amazon-s3-and-cloudfront' );
+				}
+
+				$multiple_defines_glue = _x( '" & "', 'joins multiple define keys in notice', 'amazon-s3-and-cloudfront' );
+				$defined_constants_str = join( $multiple_defines_glue, $defines );
+				$mesg                  = sprintf( $mesg, $defined_constants_str );
+				$mesg                  .= '&nbsp;';
+				$mesg                  .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#save-key-file' );
+
+				return $mesg;
+			}
+		}
+
+		if ( static::use_server_roles_allowed() ) {
+			$defines = static::used_server_roles_constants();
+
+			if ( ! empty( $defines ) ) {
+				$mesg = __( 'You\'ve chosen this option in your wp-config.php.', 'amazon-s3-and-cloudfront' );
+				$mesg .= '<br>';
+
+				if ( count( $defines ) > 1 ) {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" defines in your wp-config.php.', 'Key File Path defined in multiple defines.', 'amazon-s3-and-cloudfront' );
+				} else {
+					$mesg .= _x( 'To select a different option here, simply comment out or remove the "%1$s" define in your wp-config.php.', 'Key File Path defined in single define.', 'amazon-s3-and-cloudfront' );
+				}
+
+				$multiple_defines_glue = _x( '" & "', 'joins multiple define keys in notice', 'amazon-s3-and-cloudfront' );
+				$defined_constants_str = join( $multiple_defines_glue, $defines );
+				$mesg                  = sprintf( $mesg, $defined_constants_str );
+				$mesg                  .= '&nbsp;';
+				$mesg                  .= $as3cf::more_info_link( '/wp-offload-media/doc/' . static::get_provider_service_quick_start_slug() . '/#iam-roles' );
+
+				return $mesg;
+			}
+		}
+
+		return $mesg;
+	}
+
+	/**
+	 * The string to be used for the use server roles example.
+	 *
+	 * Note: The seemingly weird out-dented formatting here is correct for intended usage.
+	 *
+	 * @return string
+	 */
+	public static function get_use_server_roles_example() {
+		global $as3cf;
+
+		// NOTE: This string is specifically formatted to flush left.
+		return "define( '" . $as3cf::preferred_settings_constant() . "', serialize( array(
+	'provider' => '" . static::get_provider_key_name() . "',
+	'use-server-roles' => true,
+) ) );";
+	}
+
+	/**
+	 * Prepare the bucket error.
+	 *
+	 * @param WP_Error $object
+	 * @param bool     $single Are we dealing with a single bucket?
+	 *
+	 * @return string
+	 */
+	public function prepare_bucket_error( WP_Error $object, bool $single = true ): string {
+		if ( 'Access Denied' === $object->get_error_message() ) {
+			// If the bucket error is access denied, show our notice message.
+			$out = $this->get_access_denied_notice_message( $single );
+		} else {
+			$out = $object->get_error_message();
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Get the access denied bucket error notice message.
+	 *
+	 * @param bool $single
+	 *
+	 * @return string
+	 */
+	private function get_access_denied_notice_message( bool $single = true ): string {
+		if ( $this->needs_access_keys() ) {
+			return $this->get_needs_access_keys_desc();
+		}
+
+		$url = $this->as3cf->dbrains_url( '/wp-offload-media/doc/quick-start-guide/', array(
+			'utm_campaign' => 'error+messages',
+		), 'bucket-restrictions' );
+
+		$quick_start = sprintf( '<a class="js-link" href="%s">%s</a>', $url, __( 'Quick Start Guide', 'amazon-s3-and-cloudfront' ) );
+
+		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+		if ( ! $single ) {
+			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+		}
+
+		return $message;
 	}
 
 	/**
@@ -945,15 +1379,4 @@ abstract class Storage_Provider extends Provider {
 	 * @return string
 	 */
 	abstract protected function url_domain( $domain, $bucket, $region = '', $expires = null, $args = array() );
-
-	/**
-	 * Get the suffix param to append to the link to the bucket on the provider's console.
-	 *
-	 * @param string $bucket
-	 * @param string $prefix
-	 * @param string $region
-	 *
-	 * @return string
-	 */
-	abstract protected function get_console_url_suffix_param( $bucket = '', $prefix = '', $region = '' );
 }

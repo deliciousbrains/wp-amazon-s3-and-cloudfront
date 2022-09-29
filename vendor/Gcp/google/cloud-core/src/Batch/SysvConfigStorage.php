@@ -25,7 +25,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch;
  *      incompatible ways. Please use with caution, and test thoroughly when
  *      upgrading.
  */
-class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ConfigStorageInterface
+class SysvConfigStorage implements ConfigStorageInterface
 {
     const VAR_KEY = 1;
     const DEFAULT_SHM_SIZE = 200000;
@@ -46,20 +46,20 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function __construct()
     {
-        $this->shmSize = intval(getenv('GOOGLE_CLOUD_BATCH_SHM_SIZE'));
+        $this->shmSize = \intval(\getenv('GOOGLE_CLOUD_BATCH_SHM_SIZE'));
         if ($this->shmSize === 0) {
             $this->shmSize = self::DEFAULT_SHM_SIZE;
         }
-        $this->perm = octdec(getenv('GOOGLE_CLOUD_BATCH_PERM'));
+        $this->perm = \octdec(\getenv('GOOGLE_CLOUD_BATCH_PERM'));
         if ($this->perm === 0) {
             $this->perm = self::DEFAULT_PERM;
         }
-        $this->project = getenv('GOOGLE_CLOUD_BATCH_PROJECT');
-        if ($this->project === false) {
+        $this->project = \getenv('GOOGLE_CLOUD_BATCH_PROJECT');
+        if ($this->project === \false) {
             $this->project = self::DEFAULT_PROJECT;
         }
-        $this->sysvKey = ftok(__FILE__, $this->project);
-        $this->semid = sem_get($this->sysvKey, 1, $this->perm, 1);
+        $this->sysvKey = \ftok(__FILE__, $this->project);
+        $this->semid = \sem_get($this->sysvKey, 1, $this->perm, 1);
     }
     /**
      * Acquire a lock.
@@ -68,7 +68,7 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function lock()
     {
-        return sem_acquire($this->semid);
+        return \sem_acquire($this->semid);
     }
     /**
      * Release a lock.
@@ -77,7 +77,7 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function unlock()
     {
-        return sem_release($this->semid);
+        return \sem_release($this->semid);
     }
     /**
      * Save the given JobConfig.
@@ -86,20 +86,20 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      * @return bool
      * @throws \RuntimeException when failed to attach to the shared memory or serialization fails
      */
-    public function save(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig $config)
+    public function save(JobConfig $config)
     {
-        $shmid = shm_attach($this->sysvKey, $this->shmSize, $this->perm);
-        if ($shmid === false) {
+        $shmid = \shm_attach($this->sysvKey, $this->shmSize, $this->perm);
+        if ($shmid === \false) {
             throw new \RuntimeException('Failed to attach to the shared memory');
         }
         // If the variable write fails, clear the memory and re-raise the exception
         try {
-            $result = shm_put_var($shmid, self::VAR_KEY, $config);
+            $result = \shm_put_var($shmid, self::VAR_KEY, $config);
         } catch (\Exception $e) {
             $this->clear();
             throw new \RuntimeException($e->getMessage());
         } finally {
-            shm_detach($shmid);
+            \shm_detach($shmid);
         }
         return $result;
     }
@@ -111,17 +111,17 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function load()
     {
-        $shmid = shm_attach($this->sysvKey, $this->shmSize, $this->perm);
-        if ($shmid === false) {
+        $shmid = \shm_attach($this->sysvKey, $this->shmSize, $this->perm);
+        if ($shmid === \false) {
             throw new \RuntimeException('Failed to attach to the shared memory');
         }
-        if (!shm_has_var($shmid, self::VAR_KEY)) {
-            $result = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig();
+        if (!\shm_has_var($shmid, self::VAR_KEY)) {
+            $result = new JobConfig();
         } else {
-            $result = shm_get_var($shmid, self::VAR_KEY);
+            $result = \shm_get_var($shmid, self::VAR_KEY);
         }
-        shm_detach($shmid);
-        if ($result === false) {
+        \shm_detach($shmid);
+        if ($result === \false) {
             throw new \RuntimeException('Failed to deserialize data from shared memory');
         }
         return $result;
@@ -131,7 +131,18 @@ class SysvConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function clear()
     {
-        $shmid = shm_attach($this->sysvKey, $this->shmSize, $this->perm);
-        shm_remove_var($shmid, self::VAR_KEY);
+        $shmid = \shm_attach($this->sysvKey, $this->shmSize, $this->perm);
+        \shm_remove_var($shmid, self::VAR_KEY);
+    }
+    /**
+     * Serialize the object
+     */
+    public function __serialize()
+    {
+        $vars = \get_object_vars($this);
+        // As of PHP 8.0, "semid" is the unserializable object "SysvSemaphore"
+        // @see https://github.com/googleapis/google-cloud-php/issues/3749
+        unset($vars['semid']);
+        return $vars;
     }
 }

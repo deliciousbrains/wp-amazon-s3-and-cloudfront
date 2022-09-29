@@ -4,7 +4,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
-class CouldNotCreateChecksumException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class CouldNotCreateChecksumException extends \RuntimeException implements MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
     public function __construct($algorithm, \Exception $previous = null)

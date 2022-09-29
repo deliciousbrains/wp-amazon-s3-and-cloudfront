@@ -22,6 +22,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  * @author Haralan Dobrev <hkdobrev@gmail.com>
  * @see    https://api.slack.com/incoming-webhooks
  * @see    https://api.slack.com/docs/message-attachments
+ *
+ * @phpstan-import-type FormattedRecord from \Monolog\Handler\AbstractProcessingHandler
+ * @phpstan-import-type Record from \Monolog\Logger
  */
 class SlackRecord
 {
@@ -61,27 +64,33 @@ class SlackRecord
     private $includeContextAndExtra;
     /**
      * Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
-     * @var array
+     * @var string[]
      */
     private $excludeFields;
     /**
-     * @var FormatterInterface
+     * @var ?FormatterInterface
      */
     private $formatter;
     /**
      * @var NormalizerFormatter
      */
     private $normalizerFormatter;
-    public function __construct(?string $channel = null, ?string $username = null, bool $useAttachment = true, ?string $userIcon = null, bool $useShortAttachment = false, bool $includeContextAndExtra = false, array $excludeFields = array(), \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter = null)
+    /**
+     * @param string[] $excludeFields
+     */
+    public function __construct(?string $channel = null, ?string $username = null, bool $useAttachment = \true, ?string $userIcon = null, bool $useShortAttachment = \false, bool $includeContextAndExtra = \false, array $excludeFields = array(), FormatterInterface $formatter = null)
     {
         $this->setChannel($channel)->setUsername($username)->useAttachment($useAttachment)->setUserIcon($userIcon)->useShortAttachment($useShortAttachment)->includeContextAndExtra($includeContextAndExtra)->excludeFields($excludeFields)->setFormatter($formatter);
         if ($this->includeContextAndExtra) {
-            $this->normalizerFormatter = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter();
+            $this->normalizerFormatter = new NormalizerFormatter();
         }
     }
     /**
      * Returns required data in format that Slack
      * is expecting.
+     *
+     * @phpstan-param FormattedRecord $record
+     * @phpstan-return mixed[]
      */
     public function getSlackData(array $record) : array
     {
@@ -94,12 +103,13 @@ class SlackRecord
             $dataArray['channel'] = $this->channel;
         }
         if ($this->formatter && !$this->useAttachment) {
+            /** @phpstan-ignore-next-line */
             $message = $this->formatter->format($record);
         } else {
             $message = $record['message'];
         }
         if ($this->useAttachment) {
-            $attachment = array('fallback' => $message, 'text' => $message, 'color' => $this->getAttachmentColor($record['level']), 'fields' => array(), 'mrkdwn_in' => array('fields'), 'ts' => $record['datetime']->getTimestamp());
+            $attachment = array('fallback' => $message, 'text' => $message, 'color' => $this->getAttachmentColor($record['level']), 'fields' => array(), 'mrkdwn_in' => array('fields'), 'ts' => $record['datetime']->getTimestamp(), 'footer' => $this->username, 'footer_icon' => $this->userIcon);
             if ($this->useShortAttachment) {
                 $attachment['title'] = $record['level_name'];
             } else {
@@ -115,7 +125,7 @@ class SlackRecord
                         $attachment['fields'][] = $this->generateAttachmentField((string) $key, $record[$key]);
                     } else {
                         // Add all extra fields as individual fields in attachment
-                        $attachment['fields'] = array_merge($attachment['fields'], $this->generateAttachmentFields($record[$key]));
+                        $attachment['fields'] = \array_merge($attachment['fields'], $this->generateAttachmentFields($record[$key]));
                     }
                 }
             }
@@ -124,7 +134,7 @@ class SlackRecord
             $dataArray['text'] = $message;
         }
         if ($this->userIcon) {
-            if (filter_var($this->userIcon, FILTER_VALIDATE_URL)) {
+            if (\filter_var($this->userIcon, \FILTER_VALIDATE_URL)) {
                 $dataArray['icon_url'] = $this->userIcon;
             } else {
                 $dataArray['icon_emoji'] = ":{$this->userIcon}:";
@@ -138,12 +148,12 @@ class SlackRecord
      */
     public function getAttachmentColor(int $level) : string
     {
-        switch (true) {
-            case $level >= \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR:
+        switch (\true) {
+            case $level >= Logger::ERROR:
                 return static::COLOR_DANGER;
-            case $level >= \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING:
+            case $level >= Logger::WARNING:
                 return static::COLOR_WARNING;
-            case $level >= \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO:
+            case $level >= Logger::INFO:
                 return static::COLOR_GOOD;
             default:
                 return static::COLOR_DEFAULT;
@@ -151,20 +161,23 @@ class SlackRecord
     }
     /**
      * Stringifies an array of key/value pairs to be used in attachment fields
+     *
+     * @param mixed[] $fields
      */
     public function stringify(array $fields) : string
     {
+        /** @var Record $fields */
         $normalized = $this->normalizerFormatter->format($fields);
-        $hasSecondDimension = count(array_filter($normalized, 'is_array'));
-        $hasNonNumericKeys = !count(array_filter(array_keys($normalized), 'is_numeric'));
-        return $hasSecondDimension || $hasNonNumericKeys ? \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($normalized, JSON_PRETTY_PRINT | \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::DEFAULT_JSON_FLAGS) : \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($normalized, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::DEFAULT_JSON_FLAGS);
+        $hasSecondDimension = \count(\array_filter($normalized, 'is_array'));
+        $hasNonNumericKeys = !\count(\array_filter(\array_keys($normalized), 'is_numeric'));
+        return $hasSecondDimension || $hasNonNumericKeys ? Utils::jsonEncode($normalized, \JSON_PRETTY_PRINT | Utils::DEFAULT_JSON_FLAGS) : Utils::jsonEncode($normalized, Utils::DEFAULT_JSON_FLAGS);
     }
     /**
      * Channel used by the bot when posting
      *
      * @param ?string $channel
      *
-     * @return SlackHandler
+     * @return static
      */
     public function setChannel(?string $channel = null) : self
     {
@@ -176,14 +189,14 @@ class SlackRecord
      *
      * @param ?string $username
      *
-     * @return SlackHandler
+     * @return static
      */
     public function setUsername(?string $username = null) : self
     {
         $this->username = $username;
         return $this;
     }
-    public function useAttachment(bool $useAttachment = true) : self
+    public function useAttachment(bool $useAttachment = \true) : self
     {
         $this->useAttachment = $useAttachment;
         return $this;
@@ -192,23 +205,26 @@ class SlackRecord
     {
         $this->userIcon = $userIcon;
         if (\is_string($userIcon)) {
-            $this->userIcon = trim($userIcon, ':');
+            $this->userIcon = \trim($userIcon, ':');
         }
         return $this;
     }
-    public function useShortAttachment(bool $useShortAttachment = false) : self
+    public function useShortAttachment(bool $useShortAttachment = \false) : self
     {
         $this->useShortAttachment = $useShortAttachment;
         return $this;
     }
-    public function includeContextAndExtra(bool $includeContextAndExtra = false) : self
+    public function includeContextAndExtra(bool $includeContextAndExtra = \false) : self
     {
         $this->includeContextAndExtra = $includeContextAndExtra;
         if ($this->includeContextAndExtra) {
-            $this->normalizerFormatter = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter();
+            $this->normalizerFormatter = new NormalizerFormatter();
         }
         return $this;
     }
+    /**
+     * @param string[] $excludeFields
+     */
     public function excludeFields(array $excludeFields = []) : self
     {
         $this->excludeFields = $excludeFields;
@@ -222,33 +238,45 @@ class SlackRecord
     /**
      * Generates attachment field
      *
-     * @param string|array $value
+     * @param string|mixed[] $value
+     *
+     * @return array{title: string, value: string, short: false}
      */
     private function generateAttachmentField(string $title, $value) : array
     {
-        $value = is_array($value) ? sprintf('```%s```', substr($this->stringify($value), 0, 1990)) : $value;
-        return array('title' => ucfirst($title), 'value' => $value, 'short' => false);
+        $value = \is_array($value) ? \sprintf('```%s```', \substr($this->stringify($value), 0, 1990)) : $value;
+        return array('title' => \ucfirst($title), 'value' => $value, 'short' => \false);
     }
     /**
      * Generates a collection of attachment fields from array
+     *
+     * @param mixed[] $data
+     *
+     * @return array<array{title: string, value: string, short: false}>
      */
     private function generateAttachmentFields(array $data) : array
     {
+        /** @var Record $data */
+        $normalized = $this->normalizerFormatter->format($data);
         $fields = array();
-        foreach ($this->normalizerFormatter->format($data) as $key => $value) {
+        foreach ($normalized as $key => $value) {
             $fields[] = $this->generateAttachmentField((string) $key, $value);
         }
         return $fields;
     }
     /**
      * Get a copy of record with fields excluded according to $this->excludeFields
+     *
+     * @phpstan-param FormattedRecord $record
+     *
+     * @return mixed[]
      */
     private function removeExcludedFields(array $record) : array
     {
         foreach ($this->excludeFields as $field) {
-            $keys = explode('.', $field);
+            $keys = \explode('.', $field);
             $node =& $record;
-            $lastKey = end($keys);
+            $lastKey = \end($keys);
             foreach ($keys as $key) {
                 if (!isset($node[$key])) {
                     break;

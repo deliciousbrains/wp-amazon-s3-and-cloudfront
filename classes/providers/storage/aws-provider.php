@@ -2,13 +2,15 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Providers\Storage;
 
-use AS3CF_Utils;
+use AS3CF_Error;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandPool;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sdk;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Streams\AWS_S3_Stream_Wrapper;
+use Exception;
+use WP_Error;
 
 class AWS_Provider extends Storage_Provider {
 
@@ -100,12 +102,17 @@ class AWS_Provider extends Storage_Provider {
 	/**
 	 * @var bool
 	 */
-	protected static $block_public_access_allowed = true;
+	protected static $block_public_access_supported = true;
+
+	/**
+	 * @var bool
+	 */
+	protected static $object_ownership_supported = true;
 
 	/**
 	 * @var array
 	 */
-	protected $regions = array(
+	protected static $regions = array(
 		'us-east-1'      => 'US East (N. Virginia)',
 		'us-east-2'      => 'US East (Ohio)',
 		'us-west-1'      => 'US West (N. California)',
@@ -115,9 +122,10 @@ class AWS_Provider extends Storage_Provider {
 		'ap-east-1'      => 'Asia Pacific (Hong Kong)',
 		'ap-south-1'     => 'Asia Pacific (Mumbai)',
 		'ap-northeast-2' => 'Asia Pacific (Seoul)',
-		'ap-northeast-3' => 'Asia Pacific (Osaka-Local)',
+		'ap-northeast-3' => 'Asia Pacific (Osaka)',
 		'ap-southeast-1' => 'Asia Pacific (Singapore)',
 		'ap-southeast-2' => 'Asia Pacific (Sydney)',
+		'ap-southeast-3' => 'Asia Pacific (Jakarta)',
 		'ap-northeast-1' => 'Asia Pacific (Tokyo)',
 		'cn-north-1'     => 'China (Beijing)',
 		'cn-northwest-1' => 'China (Ningxia)',
@@ -128,13 +136,13 @@ class AWS_Provider extends Storage_Provider {
 		'eu-west-3'      => 'EU (Paris)',
 		'eu-north-1'     => 'EU (Stockholm)',
 		'me-south-1'     => 'Middle East (Bahrain)',
-		'sa-east-1'      => 'South America (Sao Paulo)',
+		'sa-east-1'      => 'South America (São Paulo)',
 	);
 
 	/**
 	 * @var string
 	 */
-	protected $default_region = 'us-east-1';
+	protected static $default_region = 'us-east-1';
 
 	/**
 	 * @var string
@@ -151,10 +159,10 @@ class AWS_Provider extends Storage_Provider {
 	 */
 	protected $console_url_prefix_param = '/';
 
-	const API_VERSION = '2006-03-01';
+	const API_VERSION       = '2006-03-01';
 	const SIGNATURE_VERSION = 'v4';
 
-	const PUBLIC_ACL = 'public-read';
+	const PUBLIC_ACL  = 'public-read';
 	const PRIVATE_ACL = 'private';
 
 	/**
@@ -163,6 +171,13 @@ class AWS_Provider extends Storage_Provider {
 	 * @var array
 	 */
 	private $blocked_buckets = array();
+
+	/**
+	 * Keeps track of Object Ownership Enforced state for buckets to save hitting API.
+	 *
+	 * @var array
+	 */
+	private $enforced_ownership_buckets = array();
 
 	/**
 	 * AWS_Provider constructor.
@@ -216,6 +231,47 @@ class AWS_Provider extends Storage_Provider {
 	}
 
 	/**
+	 * Prepare the bucket error.
+	 *
+	 * @param WP_Error $object
+	 * @param bool     $single Are we dealing with a single bucket?
+	 *
+	 * @return string
+	 */
+	public function prepare_bucket_error( WP_Error $object, bool $single = true ): string {
+		if ( false !== strpos( $object->get_error_message(), 'InvalidAccessKeyId' ) ) {
+			return sprintf(
+				__( 'The current Access Key ID is not valid, please <a href="%1$s">update it</a>.', 'amazon-s3-and-cloudfront' ),
+				'#/storage/provider'
+			);
+		}
+
+		if ( false !== strpos( $object->get_error_message(), 'SignatureDoesNotMatch' ) ) {
+			return sprintf(
+				__( 'The current Access Key ID and Secret Access Key are not a valid combination, please <a href="%1$s">update them</a>.', 'amazon-s3-and-cloudfront' ),
+				'#/storage/provider'
+			);
+		}
+
+		if (
+			false !== strpos( $object->get_error_message(), 'CreateBucket' ) &&
+			false !== strpos( $object->get_error_message(), 'BucketAlreadyOwnedByYou' )
+		) {
+			return __( 'The bucket name already exists in your account. To confirm you\'d like to use it, please select "Use Existing Bucket". Alternatively, enter a different bucket name.', 'amazon-s3-and-cloudfront' );
+		}
+
+		if (
+			false !== strpos( $object->get_error_message(), 'CreateBucket' ) &&
+			false !== strpos( $object->get_error_message(), 'BucketAlreadyExists' )
+		) {
+			return __( 'The bucket name already exists in another account. Please enter a different bucket name.', 'amazon-s3-and-cloudfront' );
+		}
+
+		// Fallback to generic error parsing.
+		return parent::prepare_bucket_error( $object, $single );
+	}
+
+	/**
 	 * Returns default args array for the client.
 	 *
 	 * @return array
@@ -224,9 +280,9 @@ class AWS_Provider extends Storage_Provider {
 		return array(
 			'signature_version'              => static::SIGNATURE_VERSION,
 			'version'                        => static::API_VERSION,
-			'region'                         => $this->default_region,
-			'csm'                            => apply_filters( 'as3cf_disable_aws_csm', true ) ? false : true,
-			'use_arn_region'                 => apply_filters( 'as3cf_disable_aws_use_arn_region', true ) ? false : true,
+			'region'                         => static::get_default_region(),
+			'csm'                            => ! apply_filters( 'as3cf_disable_aws_csm', true ),
+			'use_arn_region'                 => ! apply_filters( 'as3cf_disable_aws_use_arn_region', true ),
 			's3_us_east_1_regional_endpoint' => apply_filters( 'as3cf_aws_s3_us_east_1_regional_endpoint', 'legacy' ),
 			'endpoint_discovery'             => apply_filters( 'as3cf_disable_aws_endpoint_discovery', true ) ? array( 'enabled' => false ) : array( 'enabled' => true ),
 			'sts_regional_endpoints'         => apply_filters( 'as3cf_aws_sts_regional_endpoints', 'legacy' ),
@@ -273,7 +329,7 @@ class AWS_Provider extends Storage_Provider {
 	 * @return S3Client
 	 */
 	protected function init_service_client( array $args ) {
-		if ( empty( $args['region'] ) || $args['region'] === $this->default_region ) {
+		if ( empty( $args['region'] ) || $args['region'] === static::get_default_region() ) {
 			$this->s3_client = $this->aws_client->createMultiRegionS3( $args );
 		} else {
 			$this->s3_client = $this->aws_client->createS3( $args );
@@ -408,11 +464,15 @@ class AWS_Provider extends Storage_Provider {
 		$blocked = parent::public_access_blocked( $bucket );
 
 		try {
-			$result = $this->s3_client->getPublicAccessBlock( [ 'Bucket' => $bucket ] );
-		} catch ( \Exception $e ) {
+			$result = $this->s3_client->getPublicAccessBlock( array( 'Bucket' => $bucket ) );
+		} catch ( Exception $e ) {
 			// No policy defined at either bucket or account level, so no blocking happening.
 			if ( false !== strpos( $e->getMessage(), 'NoSuchPublicAccessBlockConfiguration' ) ) {
 				$blocked = false;
+			} else {
+				AS3CF_Error::log( 'Could not get Block All Public Access status: ' . $e->getMessage() );
+
+				return $blocked;
 			}
 		}
 
@@ -440,8 +500,8 @@ class AWS_Provider extends Storage_Provider {
 	 * @param string $bucket
 	 * @param bool   $block
 	 */
-	public function block_public_access( $bucket, $block ) {
-		if ( empty( $bucket ) || ! is_bool( $block ) ) {
+	public function block_public_access( string $bucket, bool $block ) {
+		if ( empty( $bucket ) ) {
 			return;
 		}
 
@@ -458,8 +518,78 @@ class AWS_Provider extends Storage_Provider {
 		$this->s3_client->putPublicAccessBlock( $setting );
 
 		unset( $this->blocked_buckets[ $bucket ] );
+	}
 
-		return;
+	/**
+	 * Is object ownership enforced (and therefore ACLs disabled)?
+	 *
+	 * @param string $bucket
+	 *
+	 * @return bool|null
+	 *
+	 * Note: It's very possible that permissions don't allow the check, in which case default value is returned.
+	 */
+	public function object_ownership_enforced( string $bucket ): ?bool {
+		if ( isset( $this->enforced_ownership_buckets[ $bucket ] ) ) {
+			return $this->enforced_ownership_buckets[ $bucket ];
+		}
+
+		$enforced = parent::object_ownership_enforced( $bucket );
+
+		try {
+			$result             = $this->s3_client->getBucketOwnershipControls( array( 'Bucket' => $bucket ) );
+			$ownership_controls = $result->get( 'OwnershipControls' );
+		} catch ( Exception $e ) {
+			// No policy defined at either bucket or account level, so no object ownership enforcement happening.
+			if ( false !== strpos( $e->getMessage(), 'OwnershipControlsNotFoundError' ) ) {
+				$enforced = false;
+			} else {
+				AS3CF_Error::log( 'Could not get Object Ownership status: ' . $e->getMessage() );
+
+				return $enforced;
+			}
+		}
+
+		if ( ! empty( $ownership_controls ) && ! empty( $ownership_controls['Rules'][0]['ObjectOwnership'] ) ) {
+			if ( 'BucketOwnerEnforced' === $ownership_controls['Rules'][0]['ObjectOwnership'] ) {
+				$enforced = true;
+			} else {
+				$enforced = false;
+			}
+		}
+
+		$this->enforced_ownership_buckets[ $bucket ] = $enforced;
+
+		return $enforced;
+	}
+
+	/**
+	 * Update the object ownership enforced setting for the given bucket.
+	 *
+	 * @param string $bucket
+	 * @param bool   $enforce
+	 */
+	public function enforce_object_ownership( string $bucket, bool $enforce ) {
+		if ( empty( $bucket ) ) {
+			return;
+		}
+
+		$ownership = $enforce ? 'BucketOwnerEnforced' : 'BucketOwnerPreferred';
+
+		$setting = array(
+			'Bucket'            => $bucket,
+			'OwnershipControls' => array(
+				'Rules' => array(
+					array(
+						'ObjectOwnership' => $ownership,
+					),
+				),
+			),
+		);
+
+		$this->s3_client->putBucketOwnershipControls( $setting );
+
+		unset( $this->enforced_ownership_buckets[ $bucket ] );
 	}
 
 	/**
@@ -484,13 +614,13 @@ class AWS_Provider extends Storage_Provider {
 	 * @return string
 	 */
 	public function get_object_url( $bucket, $key, $timestamp, array $args = array() ) {
-		$commandArgs = [ 'Bucket' => $bucket, 'Key' => $key ];
+		$command_args = array( 'Bucket' => $bucket, 'Key' => $key );
 
 		if ( ! empty( $args ) ) {
-			$commandArgs = array_merge( $commandArgs, $args );
+			$command_args = array_merge( $command_args, $args );
 		}
 
-		$command = $this->s3_client->getCommand( 'GetObject', $commandArgs );
+		$command = $this->s3_client->getCommand( 'GetObject', $command_args );
 
 		if ( empty( $timestamp ) || ! is_int( $timestamp ) || $timestamp < 0 ) {
 			return (string) \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize( $command )->getUri();
@@ -578,7 +708,7 @@ class AWS_Provider extends Storage_Provider {
 
 		$results = CommandPool::batch( $this->s3_client, $commands, array( 'preserve_iterator_keys' => true ) );
 
-		/* @var ResultInterface $result */
+		/** @var ResultInterface $result */
 		foreach ( $results as $attachment_id => $result ) {
 			if ( is_a( $result, 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface' ) ) {
 				$found_keys = $result->search( 'Contents[].Key' );
@@ -587,10 +717,10 @@ class AWS_Provider extends Storage_Provider {
 					$keys[ $attachment_id ] = $found_keys;
 				}
 			} elseif ( is_a( $result, 'DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception' ) ) {
-				/* @var S3Exception $result */
-				\AS3CF_Error::log( __FUNCTION__ . ' - ' . $result->getAwsErrorMessage() . ' - Attachment ID: ' . $attachment_id );
+				/** @var S3Exception $result */
+				AS3CF_Error::log( __FUNCTION__ . ' - ' . $result->getAwsErrorMessage() . ' - Attachment ID: ' . $attachment_id );
 			} else {
-				\AS3CF_Error::log( __FUNCTION__ . ' - Unrecognised class returned from CommandPool::batch - Attachment ID: ' . $attachment_id );
+				AS3CF_Error::log( __FUNCTION__ . ' - Unrecognised class returned from CommandPool::batch - Attachment ID: ' . $attachment_id );
 			}
 		}
 
@@ -663,7 +793,7 @@ class AWS_Provider extends Storage_Provider {
 			) );
 
 			return true;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// If we encounter an error that isn't access denied, throw that error.
 			if ( ! $e instanceof S3Exception || ! in_array( $e->getAwsErrorCode(), array( 'AccessDenied', 'NoSuchBucket' ) ) ) {
 				return $e->getMessage();
@@ -684,7 +814,7 @@ class AWS_Provider extends Storage_Provider {
 	protected function url_prefix( $region = '', $expires = null ) {
 		$prefix = 's3';
 
-		if ( '' !== $region ) {
+		if ( ! empty( $region ) && $this->get_default_region() !== $region ) {
 			$prefix .= '.' . $region;
 		}
 
@@ -716,7 +846,7 @@ class AWS_Provider extends Storage_Provider {
 	}
 
 	/**
-	 * Get the suffix param to append to the link to the bucket on the provider's console.
+	 * Get the suffix param to append to the link to the provider's console.
 	 *
 	 * @param string $bucket
 	 * @param string $prefix
@@ -724,7 +854,170 @@ class AWS_Provider extends Storage_Provider {
 	 *
 	 * @return string
 	 */
-	protected function get_console_url_suffix_param( $bucket = '', $prefix = '', $region = '' ) {
+	protected function get_console_url_suffix_param( string $bucket = '', string $prefix = '', string $region = '' ): string {
 		return empty( $region ) ? '' : '?region=' . $region;
+	}
+
+	/**
+	 * Notification strings for when Block All Public Access enabled on storage provider but delivery provider does not support it.
+	 *
+	 * @return array Keys are heading and message
+	 */
+	public static function get_block_public_access_warning() {
+		global $as3cf;
+
+		$cloudfront_setup_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/cloudfront-setup/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+
+		$bucket_access_blocked_message = sprintf(
+			__( 'If you\'re following our documentation on <a href="%1$s">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br> If you\'re not planning on using Amazon CloudFront for delivery, you need to <a href="%2$s">disable Block All Public Access</a>.', 'amazon-s3-and-cloudfront' ),
+			$cloudfront_setup_doc,
+			'#/storage/security'
+		);
+
+		return array(
+			'heading' => _x( 'Block All Public Access is Enabled', 'warning heading', 'amazon-s3-and-cloudfront' ),
+			'message' => $bucket_access_blocked_message,
+		);
+	}
+
+	/**
+	 * Description for when Block All Public Access is enabled and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_block_public_access_enabled_unsupported_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Block All Public Access should only been enabled when Amazon CloudFront is configured for delivery.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::settings_more_info_link( 'bucket', '', 'change+bucket+access' );
+
+		return $mesg;
+	}
+
+	/**
+	 * Description for when Block All Public Access is enabled and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_block_public_access_enabled_unsupported_setup_desc() {
+		global $as3cf;
+
+		$cloudfront_setup_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/cloudfront-setup/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+		$bucket_settings_doc  = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/settings/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' ),
+			'bucket'
+		);
+
+		return sprintf(
+			__( 'If you\'re following our documentation on <a href="%1$s">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue. If you\'re not planning on using Amazon CloudFront for delivery, you need to <a href="%2$s">disable Block All Public Access</a>.', 'amazon-s3-and-cloudfront' ),
+			$cloudfront_setup_doc,
+			$bucket_settings_doc
+		);
+	}
+
+	/**
+	 * Description for when Block All Public Access is disabled and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_block_public_access_disabled_unsupported_desc() {
+		global $as3cf;
+
+		$mesg = __( 'Since you\'re not using Amazon CloudFront for delivery, we recommend you keep Block All Public Access disabled unless you have a very good reason to enable it.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::settings_more_info_link( 'bucket', '', 'change+bucket+access' );
+
+		return $mesg;
+	}
+
+	/**
+	 * Notification strings for when Object Ownership enforced on storage provider but delivery provider does not support it.
+	 *
+	 * @return array Keys are heading and message
+	 *
+	 * This function should be overridden by providers that do support enforced Object Ownership to give more specific message.
+	 */
+	public static function get_object_ownership_enforced_warning() {
+		global $as3cf;
+
+		$cloudfront_setup_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/cloudfront-setup/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+
+		$bucket_access_blocked_message = sprintf(
+			__( 'If you\'re following our documentation on <a href="%1$s">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you\'re not planning on using Amazon CloudFront for delivery, you need to <a href="%2$s">turn off Object Ownership enforcement</a>.', 'amazon-s3-and-cloudfront' ),
+			$cloudfront_setup_doc,
+			'#/storage/security'
+		);
+
+		return array(
+			'heading' => _x( 'Object Ownership is Enforced', 'warning heading', 'amazon-s3-and-cloudfront' ),
+			'message' => $bucket_access_blocked_message,
+		);
+	}
+
+	/**
+	 * Description for when Object Ownership is enforced and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_object_ownership_enforced_unsupported_desc(): string {
+		global $as3cf;
+
+		$mesg = __( 'Object Ownership should only been enforced when Amazon CloudFront is configured for delivery.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::settings_more_info_link( 'bucket', '', 'change+bucket+access' );
+
+		return $mesg;
+	}
+
+	/**
+	 * Description for when Object Ownership is enforced during initial setup.
+	 *
+	 * @return string
+	 */
+	public static function get_object_ownership_enforced_unsupported_setup_desc(): string {
+		global $as3cf;
+
+		$cloudfront_setup_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/cloudfront-setup/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+
+		$object_ownership_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/amazon-s3-bucket-object-ownership/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+
+		return sprintf(
+			__( 'If you\'re following our documentation on <a href="%1$s">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you\'re not planning on using Amazon CloudFront for delivery, you need to edit the bucket\'s Object Ownership setting and <a href="%2$s">enable ACLs</a> or add a <a href="%3$s">Bucket Policy</a>.', 'amazon-s3-and-cloudfront' ),
+			$cloudfront_setup_doc,
+			$object_ownership_doc . '#acls',
+			$object_ownership_doc . '#bucket-policy'
+		);
+	}
+
+	/**
+	 * Description for when Object Ownership is not enforced and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_object_ownership_not_enforced_unsupported_desc(): string {
+		global $as3cf;
+
+		$mesg = __( 'Since you\'re not using Amazon CloudFront for delivery, we recommend you do not enforce Object Ownership unless you have a very good reason to do so.', 'amazon-s3-and-cloudfront' );
+		$mesg .= '&nbsp;';
+		$mesg .= $as3cf::settings_more_info_link( 'bucket', '', 'change+bucket+access' );
+
+		return $mesg;
 	}
 }

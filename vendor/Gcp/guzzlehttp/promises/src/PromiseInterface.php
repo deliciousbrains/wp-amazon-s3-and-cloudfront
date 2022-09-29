@@ -83,5 +83,5 @@ interface PromiseInterface
      * @throws \LogicException if the promise has no wait function or if the
      *                         promise does not settle after waiting.
      */
-    public function wait($unwrap = true);
+    public function wait($unwrap = \true);
 }

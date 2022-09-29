@@ -3,11 +3,11 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\SimpleCache\CacheInterface as SimpleCacheInterface;
-class Psr16CacheAdapter implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface
+class Psr16CacheAdapter implements CacheInterface
 {
     /** @var SimpleCacheInterface */
     private $cache;
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\SimpleCache\CacheInterface $cache)
+    public function __construct(SimpleCacheInterface $cache)
     {
         $this->cache = $cache;
     }

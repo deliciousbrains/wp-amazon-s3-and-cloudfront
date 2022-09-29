@@ -29,7 +29,7 @@ trait WhitelistTrait
      * @param NotFoundException $e The exception.
      * @return NotFoundException
      */
-    private function modifyWhitelistedError(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException $e)
+    private function modifyWhitelistedError(NotFoundException $e)
     {
         $e->setMessage('NOTE: Error may be due to Whitelist Restriction. ' . $e->getMessage());
         return $e;

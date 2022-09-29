@@ -21,6 +21,6 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception;
  * Exception thrown when a request takes too long to complete.
  * In REST context, this exception indicates a status code 504.
  */
-class DeadlineExceededException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException
+class DeadlineExceededException extends ServiceException
 {
 }

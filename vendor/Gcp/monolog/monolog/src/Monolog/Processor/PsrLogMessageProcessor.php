@@ -19,7 +19,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class PsrLogMessageProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\ProcessorInterface
+class PsrLogMessageProcessor implements ProcessorInterface
 {
     public const SIMPLE_DATE = "Y-m-d\\TH:i:s.uP";
     /** @var string|null */
@@ -30,48 +30,47 @@ class PsrLogMessageProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Mo
      * @param string|null $dateFormat              The format of the timestamp: one supported by DateTime::format
      * @param bool        $removeUsedContextFields If set to true the fields interpolated into message gets unset
      */
-    public function __construct(?string $dateFormat = null, bool $removeUsedContextFields = false)
+    public function __construct(?string $dateFormat = null, bool $removeUsedContextFields = \false)
     {
         $this->dateFormat = $dateFormat;
         $this->removeUsedContextFields = $removeUsedContextFields;
     }
     /**
-     * @param  array $record
-     * @return array
+     * {@inheritDoc}
      */
     public function __invoke(array $record) : array
     {
-        if (false === strpos($record['message'], '{')) {
+        if (\false === \strpos($record['message'], '{')) {
             return $record;
         }
         $replacements = [];
         foreach ($record['context'] as $key => $val) {
             $placeholder = '{' . $key . '}';
-            if (strpos($record['message'], $placeholder) === false) {
+            if (\strpos($record['message'], $placeholder) === \false) {
                 continue;
             }
-            if (is_null($val) || is_scalar($val) || is_object($val) && method_exists($val, "__toString")) {
+            if (\is_null($val) || \is_scalar($val) || \is_object($val) && \method_exists($val, "__toString")) {
                 $replacements[$placeholder] = $val;
             } elseif ($val instanceof \DateTimeInterface) {
-                if (!$this->dateFormat && $val instanceof \Monolog\DateTimeImmutable) {
+                if (!$this->dateFormat && $val instanceof \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\DateTimeImmutable) {
                     // handle monolog dates using __toString if no specific dateFormat was asked for
                     // so that it follows the useMicroseconds flag
                     $replacements[$placeholder] = (string) $val;
                 } else {
                     $replacements[$placeholder] = $val->format($this->dateFormat ?: static::SIMPLE_DATE);
                 }
-            } elseif (is_object($val)) {
-                $replacements[$placeholder] = '[object ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::getClass($val) . ']';
-            } elseif (is_array($val)) {
-                $replacements[$placeholder] = 'array' . @json_encode($val);
+            } elseif (\is_object($val)) {
+                $replacements[$placeholder] = '[object ' . Utils::getClass($val) . ']';
+            } elseif (\is_array($val)) {
+                $replacements[$placeholder] = 'array' . Utils::jsonEncode($val, null, \true);
             } else {
-                $replacements[$placeholder] = '[' . gettype($val) . ']';
+                $replacements[$placeholder] = '[' . \gettype($val) . ']';
             }
             if ($this->removeUsedContextFields) {
                 unset($record['context'][$key]);
             }
         }
-        $record['message'] = strtr($record['message'], $replacements);
+        $record['message'] = \strtr($record['message'], $replacements);
         return $record;
     }
 }

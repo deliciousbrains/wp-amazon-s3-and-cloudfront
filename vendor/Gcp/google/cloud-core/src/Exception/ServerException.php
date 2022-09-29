@@ -21,6 +21,6 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception;
  * Exception thrown when a request fails due to an error on the server.
  * In REST context, this exception indicates a status code 500.
  */
-class ServerException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException
+class ServerException extends ServiceException
 {
 }

@@ -26,7 +26,7 @@ final class Env
     {
         static $runtime;
         if (!$runtime) {
-            $runtime = \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::createRuntime();
+            $runtime = Env::createRuntime();
         }
         return $runtime($expression, $data);
     }
@@ -39,12 +39,12 @@ final class Env
     public static function createRuntime()
     {
         switch ($compileDir = self::getEnvVariable(self::COMPILE_DIR)) {
-            case false:
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\AstRuntime();
+            case \false:
+                return new AstRuntime();
             case 'on':
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\CompilerRuntime();
+                return new CompilerRuntime();
             default:
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\CompilerRuntime($compileDir);
+                return new CompilerRuntime($compileDir);
         }
     }
     /**
@@ -56,10 +56,10 @@ final class Env
     public static function cleanCompileDir()
     {
         $total = 0;
-        $compileDir = self::getEnvVariable(self::COMPILE_DIR) ?: sys_get_temp_dir();
-        foreach (glob("{$compileDir}/jmespath_*.php") as $file) {
+        $compileDir = self::getEnvVariable(self::COMPILE_DIR) ?: \sys_get_temp_dir();
+        foreach (\glob("{$compileDir}/jmespath_*.php") as $file) {
             $total++;
-            unlink($file);
+            \unlink($file);
         }
         return $total;
     }
@@ -72,13 +72,13 @@ final class Env
      */
     private static function getEnvVariable($name)
     {
-        if (array_key_exists($name, $_SERVER)) {
+        if (\array_key_exists($name, $_SERVER)) {
             return $_SERVER[$name];
         }
-        if (array_key_exists($name, $_ENV)) {
+        if (\array_key_exists($name, $_ENV)) {
             return $_ENV[$name];
         }
-        $value = getenv($name);
-        return $value === false ? null : $value;
+        $value = \getenv($name);
+        return $value === \false ? null : $value;
     }
 }

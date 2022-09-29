@@ -51,14 +51,14 @@ class BatchRunner
      * @param ProcessItemInterface $processor [optional] The processor object
      *        to use. **Defaults to** null. This is only for testing purpose.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ConfigStorageInterface $configStorage = null, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ProcessItemInterface $processor = null)
+    public function __construct(ConfigStorageInterface $configStorage = null, ProcessItemInterface $processor = null)
     {
         if ($configStorage === null || $processor === null) {
             if ($this->isSysvIPCLoaded() && $this->isDaemonRunning()) {
-                $configStorage = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\SysvConfigStorage();
-                $processor = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\SysvProcessor();
+                $configStorage = new SysvConfigStorage();
+                $processor = new SysvProcessor();
             } else {
-                $configStorage = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\InMemoryConfigStorage::getInstance();
+                $configStorage = InMemoryConfigStorage::getInstance();
                 $processor = $configStorage;
             }
         }
@@ -93,12 +93,12 @@ class BatchRunner
         }
         // Always work on the latest data
         $result = $this->configStorage->lock();
-        if ($result === false) {
-            return false;
+        if ($result === \false) {
+            return \false;
         }
         $this->config = $this->configStorage->load();
         $this->config->registerJob($identifier, function ($id) use($identifier, $func, $options) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchJob($identifier, $func, $id, $options);
+            return new BatchJob($identifier, $func, $id, $options);
         });
         try {
             $result = $this->configStorage->save($this->config);
@@ -165,7 +165,7 @@ class BatchRunner
     public function loadConfig()
     {
         $result = $this->configStorage->lock();
-        if ($result === false) {
+        if ($result === \false) {
             throw new \RuntimeException('Failed to lock the configStorage');
         }
         try {
@@ -177,7 +177,7 @@ class BatchRunner
             $this->configStorage->unlock();
         }
         $this->config = $result;
-        return true;
+        return \true;
     }
     /**
      * Gets the item processor.

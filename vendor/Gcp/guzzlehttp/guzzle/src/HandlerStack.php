@@ -14,7 +14,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 class HandlerStack
 {
     /**
-     * @var null|callable(RequestInterface, array): PromiseInterface
+     * @var (callable(RequestInterface, array): PromiseInterface)|null
      */
     private $handler;
     /**
@@ -22,7 +22,7 @@ class HandlerStack
      */
     private $stack = [];
     /**
-     * @var null|callable(RequestInterface, array): PromiseInterface
+     * @var (callable(RequestInterface, array): PromiseInterface)|null
      */
     private $cached;
     /**
@@ -36,21 +36,21 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param null|callable(RequestInterface, array): PromiseInterface $handler HTTP handler function to use with the stack. If no
-     *                                                                          handler is provided, the best handler for your
-     *                                                                          system will be utilized.
+     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler HTTP handler function to use with the stack. If no
+     *                                                                            handler is provided, the best handler for your
+     *                                                                            system will be utilized.
      */
     public static function create(?callable $handler = null) : self
     {
-        $stack = new self($handler ?: \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::chooseHandler());
-        $stack->push(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Middleware::httpErrors(), 'http_errors');
-        $stack->push(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Middleware::redirect(), 'allow_redirects');
-        $stack->push(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Middleware::cookies(), 'cookies');
-        $stack->push(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Middleware::prepareBody(), 'prepare_body');
+        $stack = new self($handler ?: Utils::chooseHandler());
+        $stack->push(Middleware::httpErrors(), 'http_errors');
+        $stack->push(Middleware::redirect(), 'allow_redirects');
+        $stack->push(Middleware::cookies(), 'cookies');
+        $stack->push(Middleware::prepareBody(), 'prepare_body');
         return $stack;
     }
     /**
-     * @param null|callable(RequestInterface, array): PromiseInterface $handler Underlying HTTP handler.
+     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
@@ -61,7 +61,7 @@ class HandlerStack
      *
      * @return ResponseInterface|PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options)
     {
         $handler = $this->resolve();
         return $handler($request, $options);
@@ -140,7 +140,7 @@ class HandlerStack
      */
     public function before(string $findName, callable $middleware, string $withName = '') : void
     {
-        $this->splice($findName, $withName, $middleware, true);
+        $this->splice($findName, $withName, $middleware, \true);
     }
     /**
      * Add a middleware after another middleware by name.
@@ -151,7 +151,7 @@ class HandlerStack
      */
     public function after(string $findName, callable $middleware, string $withName = '') : void
     {
-        $this->splice($findName, $withName, $middleware, false);
+        $this->splice($findName, $withName, $middleware, \false);
     }
     /**
      * Remove a middleware by instance or name from the stack.
@@ -160,6 +160,9 @@ class HandlerStack
      */
     public function remove($remove) : void
     {
+        if (!\is_string($remove) && !\is_callable($remove)) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a callable or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        }
         $this->cached = null;
         $idx = \is_callable($remove) ? 0 : 1;
         $this->stack = \array_values(\array_filter($this->stack, static function ($tuple) use($idx, $remove) {
@@ -219,7 +222,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param callable $fn Function to write as a string.
+     * @param callable|string $fn Function to write as a string.
      */
     private function debugCallable($fn) : string
     {

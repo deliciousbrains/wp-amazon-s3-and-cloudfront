@@ -24,10 +24,10 @@ trait SignatureTrait
                 $this->cache = [];
                 $this->cacheSize = 0;
             }
-            $dateKey = hash_hmac('sha256', $shortDate, "AWS4{$secretKey}", true);
-            $regionKey = hash_hmac('sha256', $region, $dateKey, true);
-            $serviceKey = hash_hmac('sha256', $service, $regionKey, true);
-            $this->cache[$k] = hash_hmac('sha256', 'aws4_request', $serviceKey, true);
+            $dateKey = \hash_hmac('sha256', $shortDate, "AWS4{$secretKey}", \true);
+            $regionKey = \hash_hmac('sha256', $region, $dateKey, \true);
+            $serviceKey = \hash_hmac('sha256', $service, $regionKey, \true);
+            $this->cache[$k] = \hash_hmac('sha256', 'aws4_request', $serviceKey, \true);
         }
         return $this->cache[$k];
     }

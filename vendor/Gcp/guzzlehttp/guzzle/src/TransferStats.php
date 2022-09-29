@@ -38,7 +38,7 @@ final class TransferStats
      * @param mixed                  $handlerErrorData Handler error data.
      * @param array                  $handlerStats     Handler specific stats.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, ?ResponseInterface $response = null, ?float $transferTime = null, $handlerErrorData = null, array $handlerStats = [])
+    public function __construct(RequestInterface $request, ?ResponseInterface $response = null, ?float $transferTime = null, $handlerErrorData = null, array $handlerStats = [])
     {
         $this->request = $request;
         $this->response = $response;
@@ -109,6 +109,6 @@ final class TransferStats
      */
     public function getHandlerStat(string $stat)
     {
-        return isset($this->handlerStats[$stat]) ? $this->handlerStats[$stat] : null;
+        return $this->handlerStats[$stat] ?? null;
     }
 }

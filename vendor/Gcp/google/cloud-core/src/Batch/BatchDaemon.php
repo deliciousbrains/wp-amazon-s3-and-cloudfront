@@ -54,11 +54,11 @@ class BatchDaemon
         if (!$this->isSysvIPCLoaded()) {
             throw new \RuntimeException('SystemV IPC extensions are missing.');
         }
-        $this->runner = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchRunner(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\SysvConfigStorage(), new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\SysvProcessor());
-        $this->shutdown = false;
+        $this->runner = new BatchRunner(new SysvConfigStorage(), new SysvProcessor());
+        $this->shutdown = \false;
         // Just share the usual descriptors.
         $this->descriptorSpec = [0 => ['file', 'php://stdin', 'r'], 1 => ['file', 'php://stdout', 'w'], 2 => ['file', 'php://stderr', 'w']];
-        $this->command = sprintf('exec php -d auto_prepend_file="" %s daemon', $entrypoint);
+        $this->command = \sprintf('exec php -d auto_prepend_file="" %s daemon', $entrypoint);
         $this->initFailureFile();
     }
     /**
@@ -70,63 +70,64 @@ class BatchDaemon
     {
         $this->setupSignalHandlers();
         $procs = [];
-        while (true) {
+        while (\true) {
             $jobs = $this->runner->getJobs();
             foreach ($jobs as $job) {
-                if (!array_key_exists($job->identifier(), $procs)) {
+                if (!\array_key_exists($job->identifier(), $procs)) {
                     $procs[$job->identifier()] = [];
                 }
-                while (count($procs[$job->identifier()]) > $job->numWorkers()) {
+                while (\count($procs[$job->identifier()]) > $job->numWorkers()) {
                     // Stopping an excessive child.
-                    echo 'Stopping an excessive child.' . PHP_EOL;
-                    $proc = array_pop($procs[$job->identifier()]);
-                    $status = proc_get_status($proc);
+                    echo 'Stopping an excessive child.' . \PHP_EOL;
+                    $proc = \array_pop($procs[$job->identifier()]);
+                    $status = \proc_get_status($proc);
                     // Keep sending SIGTERM until the child exits.
-                    while ($status['running'] === true) {
-                        @proc_terminate($proc);
-                        usleep(50000);
-                        $status = proc_get_status($proc);
+                    while ($status['running'] === \true) {
+                        @\proc_terminate($proc);
+                        \usleep(50000);
+                        $status = \proc_get_status($proc);
                     }
-                    @proc_close($proc);
+                    @\proc_close($proc);
                 }
                 for ($i = 0; $i < $job->numWorkers(); $i++) {
-                    $needStart = false;
-                    if (array_key_exists($i, $procs[$job->identifier()])) {
-                        $status = proc_get_status($procs[$job->identifier()][$i]);
-                        if ($status['running'] !== true) {
-                            $needStart = true;
+                    $needStart = \false;
+                    if (\array_key_exists($i, $procs[$job->identifier()])) {
+                        $status = \proc_get_status($procs[$job->identifier()][$i]);
+                        if ($status['running'] !== \true) {
+                            $needStart = \true;
                         }
                     } else {
-                        $needStart = true;
+                        $needStart = \true;
                     }
                     if ($needStart) {
-                        echo 'Starting a child.' . PHP_EOL;
-                        $procs[$job->identifier()][$i] = proc_open(sprintf('%s %d', $this->command, $job->id()), $this->descriptorSpec, $pipes);
+                        echo 'Starting a child.' . \PHP_EOL;
+                        $procs[$job->identifier()][$i] = \proc_open(\sprintf('%s %d', $this->command, $job->id()), $this->descriptorSpec, $pipes);
                     }
                 }
             }
-            usleep(1000000);
+            \usleep(1000000);
             // Reload the config after 1 second
-            pcntl_signal_dispatch();
+            \pcntl_signal_dispatch();
             if ($this->shutdown) {
-                echo 'Shutting down, waiting for the children' . PHP_EOL;
+                echo 'Shutting down, waiting for the children' . \PHP_EOL;
                 foreach ($procs as $k => $v) {
                     foreach ($v as $proc) {
-                        $status = proc_get_status($proc);
+                        $status = \proc_get_status($proc);
                         // Keep sending SIGTERM until the child exits.
-                        while ($status['running'] === true) {
-                            @proc_terminate($proc);
-                            usleep(50000);
-                            $status = proc_get_status($proc);
+                        while ($status['running'] === \true) {
+                            @\proc_terminate($proc);
+                            \usleep(50000);
+                            $status = \proc_get_status($proc);
                         }
-                        @proc_close($proc);
+                        @\proc_close($proc);
                     }
                 }
-                echo 'BatchDaemon exiting' . PHP_EOL;
+                echo 'BatchDaemon exiting' . \PHP_EOL;
                 exit;
             }
             // Reload the config
             $this->runner->loadConfig();
+            \gc_collect_cycles();
         }
     }
     /**

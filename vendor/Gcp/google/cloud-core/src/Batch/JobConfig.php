@@ -49,7 +49,7 @@ class JobConfig
      */
     public function getJobFromId($identifier)
     {
-        return array_key_exists($identifier, $this->identifierToId) ? $this->jobs[$identifier] : null;
+        return \array_key_exists($identifier, $this->identifierToId) ? $this->jobs[$identifier] : null;
     }
     /**
      * Get the job with the given numeric id.
@@ -60,7 +60,7 @@ class JobConfig
      */
     public function getJobFromIdNum($idNum)
     {
-        return array_key_exists($idNum, $this->idToIdentifier) ? $this->jobs[$this->idToIdentifier[$idNum]] : null;
+        return \array_key_exists($idNum, $this->idToIdentifier) ? $this->jobs[$this->idToIdentifier[$idNum]] : null;
     }
     /**
      * Register a job for executing in batch.
@@ -72,13 +72,13 @@ class JobConfig
      */
     public function registerJob($identifier, $callback)
     {
-        if (array_key_exists($identifier, $this->identifierToId)) {
+        if (\array_key_exists($identifier, $this->identifierToId)) {
             $idNum = $this->identifierToId[$identifier];
         } else {
-            $idNum = count($this->identifierToId) + 1;
+            $idNum = \count($this->identifierToId) + 1;
             $this->idToIdentifier[$idNum] = $identifier;
         }
-        $this->jobs[$identifier] = call_user_func($callback, $idNum);
+        $this->jobs[$identifier] = \call_user_func($callback, $idNum);
         $this->identifierToId[$identifier] = $idNum;
     }
     /**

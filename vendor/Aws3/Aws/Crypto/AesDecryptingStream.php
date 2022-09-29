@@ -9,7 +9,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod;
 /**
  * @internal Represents a stream of data to be decrypted with passed cipher.
  */
-class AesDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterface
+class AesDecryptingStream implements AesStreamInterface
 {
     const BLOCK_SIZE = 16;
     // 128 bits
@@ -35,7 +35,7 @@ class AesDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
      * @param string $key
      * @param CipherMethod $cipherMethod
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $cipherText, $key, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Cipher\CipherMethod $cipherMethod)
+    public function __construct(StreamInterface $cipherText, $key, CipherMethod $cipherMethod)
     {
         $this->stream = $cipherText;
         $this->key = $key;
@@ -67,25 +67,25 @@ class AesDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
     }
     public function isWritable()
     {
-        return false;
+        return \false;
     }
     public function read($length)
     {
-        if ($length > strlen($this->buffer)) {
-            $this->buffer .= $this->decryptBlock(self::BLOCK_SIZE * ceil(($length - strlen($this->buffer)) / self::BLOCK_SIZE));
+        if ($length > \strlen($this->buffer)) {
+            $this->buffer .= $this->decryptBlock((int) (self::BLOCK_SIZE * \ceil(($length - \strlen($this->buffer)) / self::BLOCK_SIZE)));
         }
-        $data = substr($this->buffer, 0, $length);
-        $this->buffer = substr($this->buffer, $length);
+        $data = \substr($this->buffer, 0, $length);
+        $this->buffer = \substr($this->buffer, $length);
         return $data ? $data : '';
     }
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET)
     {
-        if ($offset === 0 && $whence === SEEK_SET) {
+        if ($offset === 0 && $whence === \SEEK_SET) {
             $this->buffer = '';
-            $this->cipherMethod->seek(0, SEEK_SET);
-            $this->stream->seek(0, SEEK_SET);
+            $this->cipherMethod->seek(0, \SEEK_SET);
+            $this->stream->seek(0, \SEEK_SET);
         } else {
-            throw new \LogicException('AES encryption streams only support being' . ' rewound, not arbitrary seeking.');
+            throw new LogicException('AES encryption streams only support being' . ' rewound, not arbitrary seeking.');
         }
     }
     private function decryptBlock($length)
@@ -95,13 +95,13 @@ class AesDecryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
         }
         $cipherText = '';
         do {
-            $cipherText .= $this->stream->read($length - strlen($cipherText));
-        } while (strlen($cipherText) < $length && !$this->stream->eof());
-        $options = OPENSSL_RAW_DATA;
+            $cipherText .= $this->stream->read((int) ($length - \strlen($cipherText)));
+        } while (\strlen($cipherText) < $length && !$this->stream->eof());
+        $options = \OPENSSL_RAW_DATA;
         if (!$this->stream->eof() && $this->stream->getSize() !== $this->stream->tell()) {
-            $options |= OPENSSL_ZERO_PADDING;
+            $options |= \OPENSSL_ZERO_PADDING;
         }
-        $plaintext = openssl_decrypt($cipherText, $this->cipherMethod->getOpenSslName(), $this->key, $options, $this->cipherMethod->getCurrentIv());
+        $plaintext = \openssl_decrypt($cipherText, $this->cipherMethod->getOpenSslName(), $this->key, $options, $this->cipherMethod->getCurrentIv());
         $this->cipherMethod->update($cipherText);
         return $plaintext;
     }

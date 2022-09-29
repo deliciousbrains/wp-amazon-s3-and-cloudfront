@@ -11,18 +11,30 @@ declare (strict_types=1);
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
+use function count;
+use function headers_list;
+use function stripos;
+use function trigger_error;
+use const E_USER_DEPRECATED;
 /**
  * Handler sending logs to browser's javascript console with no browser extension required
  *
  * @author Olivier Poitrey <rs@dailymotion.com>
+ *
+ * @phpstan-import-type FormattedRecord from AbstractProcessingHandler
  */
-class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class BrowserConsoleHandler extends AbstractProcessingHandler
 {
-    protected static $initialized = false;
+    /** @var bool */
+    protected static $initialized = \false;
+    /** @var FormattedRecord[] */
     protected static $records = [];
+    protected const FORMAT_HTML = 'html';
+    protected const FORMAT_JS = 'js';
+    protected const FORMAT_UNKNOWN = 'unknown';
     /**
      * {@inheritDoc}
      *
@@ -34,7 +46,7 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter('[[%channel%]]{macro: autolabel} [[%level_name%]]{font-weight: bold} %message%');
+        return new LineFormatter('[[%channel%]]{macro: autolabel} [[%level_name%]]{font-weight: bold} %message%');
     }
     /**
      * {@inheritDoc}
@@ -45,7 +57,7 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         static::$records[] = $record;
         // Register shutdown handler if not already done
         if (!static::$initialized) {
-            static::$initialized = true;
+            static::$initialized = \true;
             $this->registerShutdownFunction();
         }
     }
@@ -56,13 +68,13 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     public static function send() : void
     {
         $format = static::getResponseFormat();
-        if ($format === 'unknown') {
+        if ($format === self::FORMAT_UNKNOWN) {
             return;
         }
         if (count(static::$records)) {
-            if ($format === 'html') {
+            if ($format === self::FORMAT_HTML) {
                 static::writeOutput('<script>' . static::generateScript() . '</script>');
-            } elseif ($format === 'js') {
+            } elseif ($format === self::FORMAT_JS) {
                 static::writeOutput(static::generateScript());
             }
             static::resetStatic();
@@ -89,8 +101,8 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
      */
     protected function registerShutdownFunction() : void
     {
-        if (PHP_SAPI !== 'cli') {
-            register_shutdown_function(['DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Handler\\BrowserConsoleHandler', 'send']);
+        if (\PHP_SAPI !== 'cli') {
+            \register_shutdown_function(['DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Handler\\BrowserConsoleHandler', 'send']);
         }
     }
     /**
@@ -108,24 +120,33 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
      * If Content-Type is anything else -> unknown
      *
      * @return string One of 'js', 'html' or 'unknown'
+     * @phpstan-return self::FORMAT_*
      */
     protected static function getResponseFormat() : string
     {
         // Check content type
         foreach (headers_list() as $header) {
             if (stripos($header, 'content-type:') === 0) {
-                // This handler only works with HTML and javascript outputs
-                // text/javascript is obsolete in favour of application/javascript, but still used
-                if (stripos($header, 'application/javascript') !== false || stripos($header, 'text/javascript') !== false) {
-                    return 'js';
-                }
-                if (stripos($header, 'text/html') === false) {
-                    return 'unknown';
-                }
-                break;
+                return static::getResponseFormatFromContentType($header);
             }
         }
-        return 'html';
+        return self::FORMAT_HTML;
+    }
+    /**
+     * @return string One of 'js', 'html' or 'unknown'
+     * @phpstan-return self::FORMAT_*
+     */
+    protected static function getResponseFormatFromContentType(string $contentType) : string
+    {
+        // This handler only works with HTML and javascript outputs
+        // text/javascript is obsolete in favour of application/javascript, but still used
+        if (stripos($contentType, 'application/javascript') !== \false || stripos($contentType, 'text/javascript') !== \false) {
+            return self::FORMAT_JS;
+        }
+        if (stripos($contentType, 'text/html') !== \false) {
+            return self::FORMAT_HTML;
+        }
+        return self::FORMAT_UNKNOWN;
     }
     private static function generateScript() : string
     {
@@ -136,32 +157,35 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
             if (empty($context) && empty($extra)) {
                 $script[] = static::call_array('log', static::handleStyles($record['formatted']));
             } else {
-                $script = array_merge($script, [static::call_array('groupCollapsed', static::handleStyles($record['formatted']))], $context, $extra, [static::call('groupEnd')]);
+                $script = \array_merge($script, [static::call_array('groupCollapsed', static::handleStyles($record['formatted']))], $context, $extra, [static::call('groupEnd')]);
             }
         }
-        return "(function (c) {if (c && c.groupCollapsed) {\n" . implode("\n", $script) . "\n}})(console);";
+        return "(function (c) {if (c && c.groupCollapsed) {\n" . \implode("\n", $script) . "\n}})(console);";
     }
+    /**
+     * @return string[]
+     */
     private static function handleStyles(string $formatted) : array
     {
         $args = [];
         $format = '%c' . $formatted;
-        preg_match_all('/\\[\\[(.*?)\\]\\]\\{([^}]*)\\}/s', $format, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
-        foreach (array_reverse($matches) as $match) {
+        \preg_match_all('/\\[\\[(.*?)\\]\\]\\{([^}]*)\\}/s', $format, $matches, \PREG_OFFSET_CAPTURE | \PREG_SET_ORDER);
+        foreach (\array_reverse($matches) as $match) {
             $args[] = '"font-weight: normal"';
             $args[] = static::quote(static::handleCustomStyles($match[2][0], $match[1][0]));
             $pos = $match[0][1];
-            $format = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::substr($format, 0, $pos) . '%c' . $match[1][0] . '%c' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::substr($format, $pos + strlen($match[0][0]));
+            $format = Utils::substr($format, 0, $pos) . '%c' . $match[1][0] . '%c' . Utils::substr($format, $pos + \strlen($match[0][0]));
         }
         $args[] = static::quote('font-weight: normal');
         $args[] = static::quote($format);
-        return array_reverse($args);
+        return \array_reverse($args);
     }
     private static function handleCustomStyles(string $style, string $string) : string
     {
         static $colors = ['blue', 'green', 'red', 'magenta', 'orange', 'black', 'grey'];
         static $labels = [];
-        return preg_replace_callback('/macro\\s*:(.*?)(?:;|$)/', function (array $m) use($string, &$colors, &$labels) {
-            if (trim($m[1]) === 'autolabel') {
+        $style = \preg_replace_callback('/macro\\s*:(.*?)(?:;|$)/', function (array $m) use($string, &$colors, &$labels) {
+            if (\trim($m[1]) === 'autolabel') {
                 // Format the string as a label with consistent auto assigned background color
                 if (!isset($labels[$string])) {
                     $labels[$string] = $colors[count($labels) % count($colors)];
@@ -171,17 +195,26 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
             }
             return $m[1];
         }, $style);
+        if (null === $style) {
+            $pcreErrorCode = \preg_last_error();
+            throw new \RuntimeException('Failed to run preg_replace_callback: ' . $pcreErrorCode . ' / ' . Utils::pcreLastErrorMessage($pcreErrorCode));
+        }
+        return $style;
     }
+    /**
+     * @param  mixed[] $dict
+     * @return mixed[]
+     */
     private static function dump(string $title, array $dict) : array
     {
         $script = [];
-        $dict = array_filter($dict);
+        $dict = \array_filter($dict);
         if (empty($dict)) {
             return $script;
         }
         $script[] = static::call('log', static::quote('%c%s'), static::quote('font-weight: bold'), static::quote($title));
         foreach ($dict as $key => $value) {
-            $value = json_encode($value);
+            $value = \json_encode($value);
             if (empty($value)) {
                 $value = static::quote('');
             }
@@ -191,15 +224,24 @@ class BrowserConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     }
     private static function quote(string $arg) : string
     {
-        return '"' . addcslashes($arg, "\"\n\\") . '"';
+        return '"' . \addcslashes($arg, "\"\n\\") . '"';
     }
+    /**
+     * @param mixed $args
+     */
     private static function call(...$args) : string
     {
-        $method = array_shift($args);
+        $method = \array_shift($args);
+        if (!\is_string($method)) {
+            throw new \UnexpectedValueException('Expected the first arg to be a string, got: ' . \var_export($method, \true));
+        }
         return static::call_array($method, $args);
     }
+    /**
+     * @param mixed[] $args
+     */
     private static function call_array(string $method, array $args) : string
     {
-        return 'c.' . $method . '(' . implode(', ', $args) . ');';
+        return 'c.' . $method . '(' . \implode(', ', $args) . ');';
     }
 }

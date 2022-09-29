@@ -51,11 +51,11 @@ class GrpcRequestWrapper
     /**
      * @var array gRPC retry codes.
      */
-    private $grpcRetryCodes = [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::UNKNOWN, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::INTERNAL, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::UNAVAILABLE, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::DATA_LOSS];
+    private $grpcRetryCodes = [Code::UNKNOWN, Code::INTERNAL, Code::UNAVAILABLE, Code::DATA_LOSS];
     /**
      * @var array Map of error metadata types to RPC wrappers.
      */
-    private $metadataTypes = ['google.rpc.retryinfo-bin' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\RetryInfo::class, 'google.rpc.badrequest-bin' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\BadRequest::class];
+    private $metadataTypes = ['google.rpc.retryinfo-bin' => RetryInfo::class, 'google.rpc.badrequest-bin' => BadRequest::class];
     /**
      * @param array $config [optional] {
      *     Configuration options. Please see
@@ -72,8 +72,8 @@ class GrpcRequestWrapper
     public function __construct(array $config = [])
     {
         $this->setCommonDefaults($config);
-        $config += ['authHttpHandler' => null, 'serializer' => new \DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\Serializer(), 'grpcOptions' => []];
-        $this->authHttpHandler = $config['authHttpHandler'] ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build();
+        $config += ['authHttpHandler' => null, 'serializer' => new Serializer(), 'grpcOptions' => []];
+        $this->authHttpHandler = $config['authHttpHandler'] ?: HttpHandlerFactory::build();
         $this->serializer = $config['serializer'];
         $this->grpcOptions = $config['grpcOptions'];
     }
@@ -98,18 +98,18 @@ class GrpcRequestWrapper
         $retries = isset($options['retries']) ? $options['retries'] : $this->retries;
         $grpcOptions = isset($options['grpcOptions']) ? $options['grpcOptions'] : $this->grpcOptions;
         $timeout = isset($options['requestTimeout']) ? $options['requestTimeout'] : $this->requestTimeout;
-        $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($retries, function (\Exception $ex) {
+        $backoff = new ExponentialBackoff($retries, function (\Exception $ex) {
             $statusCode = $ex->getCode();
-            return in_array($statusCode, $this->grpcRetryCodes);
+            return \in_array($statusCode, $this->grpcRetryCodes);
         });
         if (!isset($grpcOptions['retrySettings'])) {
-            $retrySettings = ['retriesEnabled' => false];
+            $retrySettings = ['retriesEnabled' => \false];
             if ($timeout) {
                 $retrySettings['noRetriesRpcTimeoutMillis'] = $timeout * 1000;
             }
             $grpcOptions['retrySettings'] = $retrySettings;
         }
-        $optionalArgs =& $args[count($args) - 1];
+        $optionalArgs =& $args[\count($args) - 1];
         $optionalArgs += $grpcOptions;
         try {
             return $this->handleResponse($backoff->execute($request, $args));
@@ -168,33 +168,33 @@ class GrpcRequestWrapper
     private function convertToGoogleException($ex)
     {
         switch ($ex->getCode()) {
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::INVALID_ARGUMENT:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\BadRequestException::class;
+            case Code::INVALID_ARGUMENT:
+                $exception = Exception\BadRequestException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::NOT_FOUND:
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::UNIMPLEMENTED:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException::class;
+            case Code::NOT_FOUND:
+            case Code::UNIMPLEMENTED:
+                $exception = Exception\NotFoundException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::ALREADY_EXISTS:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ConflictException::class;
+            case Code::ALREADY_EXISTS:
+                $exception = Exception\ConflictException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::FAILED_PRECONDITION:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\FailedPreconditionException::class;
+            case Code::FAILED_PRECONDITION:
+                $exception = Exception\FailedPreconditionException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::UNKNOWN:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServerException::class;
+            case Code::UNKNOWN:
+                $exception = Exception\ServerException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::INTERNAL:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServerException::class;
+            case Code::INTERNAL:
+                $exception = Exception\ServerException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::ABORTED:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\AbortedException::class;
+            case Code::ABORTED:
+                $exception = Exception\AbortedException::class;
                 break;
-            case \DeliciousBrains\WP_Offload_Media\Gcp\Google\Rpc\Code::DEADLINE_EXCEEDED:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\DeadlineExceededException::class;
+            case Code::DEADLINE_EXCEEDED:
+                $exception = Exception\DeadlineExceededException::class;
                 break;
             default:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException::class;
+                $exception = Exception\ServiceException::class;
                 break;
         }
         $metadata = [];

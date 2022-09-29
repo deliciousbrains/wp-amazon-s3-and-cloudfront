@@ -40,7 +40,7 @@ final class EasyHandle
             throw new \RuntimeException('No headers have been received');
         }
         // HTTP-version SP status-code SP reason-phrase
-        $startLine = explode(' ', array_shift($this->headers), 3);
+        $startLine = \explode(' ', \array_shift($this->headers), 3);
         $headers = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\headers_from_lines($this->headers);
         $normalizedKeys = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\normalize_header_keys($headers);
         if (!empty($this->options['decode_content']) && isset($normalizedKeys['content-encoding'])) {
@@ -57,7 +57,7 @@ final class EasyHandle
             }
         }
         // Attach a response to the easy handle with the parsed headers.
-        $this->response = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Response($startLine[1], $headers, $this->sink, substr($startLine[0], 5), isset($startLine[2]) ? (string) $startLine[2] : null);
+        $this->response = new Response($startLine[1], $headers, $this->sink, \substr($startLine[0], 5), isset($startLine[2]) ? (string) $startLine[2] : null);
     }
     public function __get($name)
     {

@@ -16,6 +16,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\Activati
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LogLevel;
 /**
  * Buffers all records until a certain level is reached
  *
@@ -31,20 +32,38 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  * Monolog\Handler\FingersCrossed\ namespace.
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
+ *
+ * @phpstan-import-type Record from \Monolog\Logger
+ * @phpstan-import-type Level from \Monolog\Logger
+ * @phpstan-import-type LevelName from \Monolog\Logger
  */
-class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Handler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
+class FingersCrossedHandler extends Handler implements ProcessableHandlerInterface, ResettableInterface, FormattableHandlerInterface
 {
     use ProcessableHandlerTrait;
+    /**
+     * @var callable|HandlerInterface
+     * @phpstan-var callable(?Record, HandlerInterface): HandlerInterface|HandlerInterface
+     */
     protected $handler;
+    /** @var ActivationStrategyInterface */
     protected $activationStrategy;
-    protected $buffering = true;
+    /** @var bool */
+    protected $buffering = \true;
+    /** @var int */
     protected $bufferSize;
+    /** @var Record[] */
     protected $buffer = [];
+    /** @var bool */
     protected $stopBuffering;
+    /**
+     * @var ?int
+     * @phpstan-var ?Level
+     */
     protected $passthruLevel;
+    /** @var bool */
     protected $bubble;
     /**
-     * @psalm-param HandlerInterface|callable(?array, FingersCrossedHandler): HandlerInterface $handler
+     * @psalm-param HandlerInterface|callable(?Record, HandlerInterface): HandlerInterface $handler
      *
      * @param callable|HandlerInterface              $handler            Handler or factory callable($record|null, $fingersCrossedHandler).
      * @param int|string|ActivationStrategyInterface $activationStrategy Strategy which determines when this handler takes action, or a level name/value at which the handler is activated
@@ -52,15 +71,18 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
      * @param bool                                   $bubble             Whether the messages that are handled can bubble up the stack or not
      * @param bool                                   $stopBuffering      Whether the handler should stop buffering after being triggered (default true)
      * @param int|string                             $passthruLevel      Minimum level to always flush to handler on close, even if strategy not triggered
+     *
+     * @phpstan-param Level|LevelName|LogLevel::* $passthruLevel
+     * @phpstan-param Level|LevelName|LogLevel::*|ActivationStrategyInterface $activationStrategy
      */
-    public function __construct($handler, $activationStrategy = null, int $bufferSize = 0, bool $bubble = true, bool $stopBuffering = true, $passthruLevel = null)
+    public function __construct($handler, $activationStrategy = null, int $bufferSize = 0, bool $bubble = \true, bool $stopBuffering = \true, $passthruLevel = null)
     {
         if (null === $activationStrategy) {
-            $activationStrategy = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING);
+            $activationStrategy = new ErrorLevelActivationStrategy(Logger::WARNING);
         }
         // convert simple int activationStrategy to an object
         if (!$activationStrategy instanceof ActivationStrategyInterface) {
-            $activationStrategy = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy($activationStrategy);
+            $activationStrategy = new ErrorLevelActivationStrategy($activationStrategy);
         }
         $this->handler = $handler;
         $this->activationStrategy = $activationStrategy;
@@ -68,18 +90,18 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         $this->bubble = $bubble;
         $this->stopBuffering = $stopBuffering;
         if ($passthruLevel !== null) {
-            $this->passthruLevel = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($passthruLevel);
+            $this->passthruLevel = Logger::toMonologLevel($passthruLevel);
         }
-        if (!$this->handler instanceof HandlerInterface && !is_callable($this->handler)) {
-            throw new \RuntimeException("The given handler (" . json_encode($this->handler) . ") is not a callable nor a Monolog\\Handler\\HandlerInterface object");
+        if (!$this->handler instanceof HandlerInterface && !\is_callable($this->handler)) {
+            throw new \RuntimeException("The given handler (" . \json_encode($this->handler) . ") is not a callable nor a Monolog\\Handler\\HandlerInterface object");
         }
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function isHandling(array $record) : bool
     {
-        return true;
+        return \true;
     }
     /**
      * Manually activate this logger regardless of the activation strategy
@@ -87,23 +109,24 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     public function activate() : void
     {
         if ($this->stopBuffering) {
-            $this->buffering = false;
+            $this->buffering = \false;
         }
-        $this->getHandler(end($this->buffer) ?: null)->handleBatch($this->buffer);
+        $this->getHandler(\end($this->buffer) ?: null)->handleBatch($this->buffer);
         $this->buffer = [];
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function handle(array $record) : bool
     {
         if ($this->processors) {
+            /** @var Record $record */
             $record = $this->processRecord($record);
         }
         if ($this->buffering) {
             $this->buffer[] = $record;
-            if ($this->bufferSize > 0 && count($this->buffer) > $this->bufferSize) {
-                array_shift($this->buffer);
+            if ($this->bufferSize > 0 && \count($this->buffer) > $this->bufferSize) {
+                \array_shift($this->buffer);
             }
             if ($this->activationStrategy->isHandlerActivated($record)) {
                 $this->activate();
@@ -111,15 +134,15 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         } else {
             $this->getHandler($record)->handle($record);
         }
-        return false === $this->bubble;
+        return \false === $this->bubble;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close() : void
     {
         $this->flushBuffer();
-        $this->handler->close();
+        $this->getHandler()->close();
     }
     public function reset()
     {
@@ -146,15 +169,15 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
     {
         if (null !== $this->passthruLevel) {
             $level = $this->passthruLevel;
-            $this->buffer = array_filter($this->buffer, function ($record) use($level) {
+            $this->buffer = \array_filter($this->buffer, function ($record) use($level) {
                 return $record['level'] >= $level;
             });
-            if (count($this->buffer) > 0) {
-                $this->getHandler(end($this->buffer) ?: null)->handleBatch($this->buffer);
+            if (\count($this->buffer) > 0) {
+                $this->getHandler(\end($this->buffer))->handleBatch($this->buffer);
             }
         }
         $this->buffer = [];
-        $this->buffering = true;
+        $this->buffering = \true;
     }
     /**
      * Return the nested handler
@@ -162,6 +185,8 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
      * If the handler was provided as a factory callable, this will trigger the handler's instantiation.
      *
      * @return HandlerInterface
+     *
+     * @phpstan-param Record $record
      */
     public function getHandler(array $record = null)
     {
@@ -174,18 +199,26 @@ class FingersCrossedHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         return $this->handler;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
-        $this->getHandler()->setFormatter($formatter);
-        return $this;
+        $handler = $this->getHandler();
+        if ($handler instanceof FormattableHandlerInterface) {
+            $handler->setFormatter($formatter);
+            return $this;
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($handler) . ' does not support formatters.');
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getFormatter() : FormatterInterface
     {
-        return $this->getHandler()->getFormatter();
+        $handler = $this->getHandler();
+        if ($handler instanceof FormattableHandlerInterface) {
+            return $handler->getFormatter();
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($handler) . ' does not support formatters.');
     }
 }

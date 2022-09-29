@@ -6,7 +6,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils;
 /**
  * Persists non-session cookies using a JSON formatted file
  */
-class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\CookieJar
+class FileCookieJar extends CookieJar
 {
     /**
      * @var string filename
@@ -25,7 +25,7 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Coo
      *
      * @throws \RuntimeException if the file cannot be found or created
      */
-    public function __construct(string $cookieFile, bool $storeSessionCookies = false)
+    public function __construct(string $cookieFile, bool $storeSessionCookies = \false)
     {
         parent::__construct();
         $this->filename = $cookieFile;
@@ -53,12 +53,12 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Coo
         $json = [];
         /** @var SetCookie $cookie */
         foreach ($this as $cookie) {
-            if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
+            if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }
-        $jsonStr = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::jsonEncode($json);
-        if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
+        $jsonStr = Utils::jsonEncode($json);
+        if (\false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
     }
@@ -74,16 +74,16 @@ class FileCookieJar extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Coo
     public function load(string $filename) : void
     {
         $json = \file_get_contents($filename);
-        if (false === $json) {
+        if (\false === $json) {
             throw new \RuntimeException("Unable to load file {$filename}");
         }
         if ($json === '') {
             return;
         }
-        $data = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::jsonDecode($json, true);
+        $data = Utils::jsonDecode($json, \true);
         if (\is_array($data)) {
             foreach ($data as $cookie) {
-                $this->setCookie(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\SetCookie($cookie));
+                $this->setCookie(new SetCookie($cookie));
             }
         } elseif (\is_scalar($data) && !empty($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");

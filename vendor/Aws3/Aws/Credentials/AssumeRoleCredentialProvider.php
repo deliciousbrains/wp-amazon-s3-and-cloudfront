@@ -44,10 +44,10 @@ class AssumeRoleCredentialProvider
     public function __invoke()
     {
         $client = $this->client;
-        return $client->assumeRoleAsync($this->assumeRoleParams)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) {
+        return $client->assumeRoleAsync($this->assumeRoleParams)->then(function (Result $result) {
             return $this->client->createCredentials($result);
         })->otherwise(function (\RuntimeException $exception) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\CredentialsException("Error in retrieving assume role credentials.", 0, $exception);
+            throw new CredentialsException("Error in retrieving assume role credentials.", 0, $exception);
         });
     }
 }

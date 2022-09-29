@@ -12,22 +12,33 @@ declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LogLevel;
 /**
  * Injects Hg branch and Hg revision number in all records
  *
  * @author Jonathan A. Schweder <jonathanschweder@gmail.com>
+ *
+ * @phpstan-import-type LevelName from \Monolog\Logger
+ * @phpstan-import-type Level from \Monolog\Logger
  */
-class MercurialProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\ProcessorInterface
+class MercurialProcessor implements ProcessorInterface
 {
+    /** @var Level */
     private $level;
-    private static $cache;
+    /** @var array{branch: string, revision: string}|array<never>|null */
+    private static $cache = null;
     /**
-     * @param string|int $level The minimum logging level at which this Processor will be triggered
+     * @param int|string $level The minimum logging level at which this Processor will be triggered
+     *
+     * @phpstan-param Level|LevelName|LogLevel::* $level
      */
-    public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG)
+    public function __construct($level = Logger::DEBUG)
     {
-        $this->level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::toMonologLevel($level);
+        $this->level = Logger::toMonologLevel($level);
     }
+    /**
+     * {@inheritDoc}
+     */
     public function __invoke(array $record) : array
     {
         // return if the level is not high enough
@@ -37,13 +48,16 @@ class MercurialProcessor implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolo
         $record['extra']['hg'] = self::getMercurialInfo();
         return $record;
     }
+    /**
+     * @return array{branch: string, revision: string}|array<never>
+     */
     private static function getMercurialInfo() : array
     {
         if (self::$cache) {
             return self::$cache;
         }
-        $result = explode(' ', trim(`hg id -nb`));
-        if (count($result) >= 3) {
+        $result = \explode(' ', \trim(`hg id -nb`));
+        if (\count($result) >= 3) {
             return self::$cache = ['branch' => $result[1], 'revision' => $result[2]];
         }
         return self::$cache = [];

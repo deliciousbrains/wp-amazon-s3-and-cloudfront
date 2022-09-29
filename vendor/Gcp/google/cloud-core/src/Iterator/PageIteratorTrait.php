@@ -98,12 +98,12 @@ trait PageIteratorTrait
         $this->resultMapper = $resultMapper;
         $this->call = $call;
         $this->config = $config + ['itemsKey' => 'items', 'nextResultTokenKey' => 'nextPageToken', 'resultTokenKey' => 'pageToken', 'firstPage' => null, 'resultLimit' => 0, 'setNextResultTokenCondition' => function () {
-            return true;
+            return \true;
         }];
         $this->callOptions = $callOptions;
-        $this->resultTokenPath = explode('.', $this->config['resultTokenKey']);
-        $this->nextResultTokenPath = explode('.', $this->config['nextResultTokenKey']);
-        $this->itemsPath = explode('.', $this->config['itemsKey']);
+        $this->resultTokenPath = \explode('.', $this->config['resultTokenKey']);
+        $this->nextResultTokenPath = \explode('.', $this->config['nextResultTokenKey']);
+        $this->itemsPath = \explode('.', $this->config['itemsKey']);
         $this->initialResultToken = $this->nextResultToken();
     }
     /**
@@ -120,6 +120,7 @@ trait PageIteratorTrait
      *
      * @return null
      */
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->itemCount = 0;
@@ -140,6 +141,7 @@ trait PageIteratorTrait
      *
      * @return array|null
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         if ($this->page === null) {
@@ -156,6 +158,7 @@ trait PageIteratorTrait
      *
      * @return int
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->position;
@@ -165,6 +168,7 @@ trait PageIteratorTrait
      *
      * @return null
      */
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->position++;
@@ -175,12 +179,13 @@ trait PageIteratorTrait
      *
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         if (!$this->page && $this->position) {
-            return false;
+            return \false;
         }
-        return true;
+        return \true;
     }
     /**
      * Executes the provided call to get a set of results.
@@ -202,14 +207,14 @@ trait PageIteratorTrait
     {
         $items = $this->get($this->itemsPath, $results);
         $resultMapper = $this->resultMapper;
-        $shouldContinue = true;
+        $shouldContinue = \true;
         if ($items) {
             foreach ($items as $key => $item) {
                 $items[$key] = $resultMapper($item);
                 $this->itemCount++;
                 if ($this->config['resultLimit'] && $this->config['resultLimit'] <= $this->itemCount) {
-                    $items = array_slice($items, 0, $key + 1);
-                    $shouldContinue = false;
+                    $items = \array_slice($items, 0, $key + 1);
+                    $shouldContinue = \false;
                     break;
                 }
             }
@@ -222,7 +227,7 @@ trait PageIteratorTrait
      * @param bool $shouldContinue
      * @return null
      */
-    private function determineNextResultToken(array $results, $shouldContinue = true)
+    private function determineNextResultToken(array $results, $shouldContinue = \true)
     {
         return $shouldContinue && $this->config['setNextResultTokenCondition']($results) ? $this->get($this->nextResultTokenPath, $results) : null;
     }

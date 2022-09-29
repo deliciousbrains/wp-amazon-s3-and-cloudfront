@@ -12,7 +12,7 @@ class UriTemplate
      * @var Parser
      */
     protected $parser, $parsed = array(), $base_uri, $params = array();
-    public function __construct($base_uri = '', $params = array(), \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser = null)
+    public function __construct($base_uri = '', $params = array(), Parser $parser = null)
     {
         $this->base_uri = $base_uri;
         $this->params = $params;
@@ -31,7 +31,7 @@ class UriTemplate
         $uri = $this->base_uri . $uri;
         $result = array();
         // quick check
-        if (($start = strpos($uri, '{')) === false) {
+        if (($start = \strpos($uri, '{')) === \false) {
             return $uri;
         }
         $parser = $this->parser;
@@ -39,7 +39,7 @@ class UriTemplate
         foreach ($nodes as $node) {
             $result[] = $node->expand($parser, $params);
         }
-        return implode('', $result);
+        return \implode('', $result);
     }
     /**
      * Extracts variables from URI
@@ -49,13 +49,15 @@ class UriTemplate
      * @param  bool   $strict  This will perform a full match
      * @return null|array params or null if not match and $strict is true
      */
-    public function extract($template, $uri, $strict = false)
+    public function extract($template, $uri, $strict = \false)
     {
         $params = array();
         $nodes = $this->parser->parse($template);
+        # PHP 8.1.0RC4-dev still throws deprecation warning for `strlen`.
+        # $uri    = (string) $uri;
         foreach ($nodes as $node) {
             // if strict is given, and there's no remaining uri just return null
-            if ($strict && !strlen($uri)) {
+            if ($strict && !\strlen((string) $uri)) {
                 return null;
             }
             // uri'll be truncated from the start when a match is found
@@ -63,7 +65,7 @@ class UriTemplate
             list($uri, $params) = $match;
         }
         // if there's remaining $uri, matching is failed
-        if ($strict && strlen($uri)) {
+        if ($strict && \strlen((string) $uri)) {
             return null;
         }
         return $params;
@@ -78,6 +80,6 @@ class UriTemplate
         if ($parser) {
             return $parser;
         }
-        return $parser = new \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser();
+        return $parser = new Parser();
     }
 }

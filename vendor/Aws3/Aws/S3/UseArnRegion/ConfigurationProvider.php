@@ -41,14 +41,14 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  * $config = $promise->wait();
  * </code>
  */
-class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface
+class ConfigurationProvider extends AbstractConfigurationProvider implements ConfigurationProviderInterface
 {
     const ENV_USE_ARN_REGION = 'AWS_S3_USE_ARN_REGION';
     const INI_USE_ARN_REGION = 's3_use_arn_region';
-    const DEFAULT_USE_ARN_REGION = false;
+    const DEFAULT_USE_ARN_REGION = \false;
     public static $cacheKey = 'aws_s3_use_arn_region_config';
-    protected static $interfaceClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\ConfigurationInterface::class;
-    protected static $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Exception\ConfigurationException::class;
+    protected static $interfaceClass = ConfigurationInterface::class;
+    protected static $exceptionClass = ConfigurationException::class;
     /**
      * Create a default config provider that first checks for environment
      * variables, then checks for a specified profile in the environment-defined
@@ -67,11 +67,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function defaultProvider(array $config = [])
     {
         $configProviders = [self::env()];
-        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != \false) {
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
         if (isset($config['use_arn_region']) && $config['use_arn_region'] instanceof CacheInterface) {
             return self::cache($memo, $config['use_arn_region'], self::$cacheKey);
         }
@@ -86,9 +86,9 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     {
         return function () {
             // Use config from environment variables, if available
-            $useArnRegion = getenv(self::ENV_USE_ARN_REGION);
+            $useArnRegion = \getenv(self::ENV_USE_ARN_REGION);
             if (!empty($useArnRegion)) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Configuration($useArnRegion));
+                return Promise\Create::promiseFor(new Configuration($useArnRegion));
             }
             return self::reject('Could not find environment variable config' . ' in ' . self::ENV_USE_ARN_REGION);
         };
@@ -108,14 +108,14 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function ini($profile = null, $filename = null)
     {
         $filename = $filename ?: self::getDefaultConfigFilename();
-        $profile = $profile ?: (getenv(self::ENV_PROFILE) ?: 'default');
+        $profile = $profile ?: (\getenv(self::ENV_PROFILE) ?: 'default');
         return function () use($profile, $filename) {
-            if (!is_readable($filename)) {
+            if (!@\is_readable($filename)) {
                 return self::reject("Cannot read configuration from {$filename}");
             }
             // Use INI_SCANNER_NORMAL instead of INI_SCANNER_TYPED for PHP 5.5 compatibility
-            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true, INI_SCANNER_NORMAL);
-            if ($data === false) {
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, \true, \INI_SCANNER_NORMAL);
+            if ($data === \false) {
                 return self::reject("Invalid config file: {$filename}");
             }
             if (!isset($data[$profile])) {
@@ -126,9 +126,9 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
             }
             // INI_SCANNER_NORMAL parses false-y values as an empty string
             if ($data[$profile][self::INI_USE_ARN_REGION] === "") {
-                $data[$profile][self::INI_USE_ARN_REGION] = false;
+                $data[$profile][self::INI_USE_ARN_REGION] = \false;
             }
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Configuration($data[$profile][self::INI_USE_ARN_REGION]));
+            return Promise\Create::promiseFor(new Configuration($data[$profile][self::INI_USE_ARN_REGION]));
         };
     }
     /**
@@ -139,7 +139,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function fallback()
     {
         return function () {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Configuration(self::DEFAULT_USE_ARN_REGION));
+            return Promise\Create::promiseFor(new Configuration(self::DEFAULT_USE_ARN_REGION));
         };
     }
 }

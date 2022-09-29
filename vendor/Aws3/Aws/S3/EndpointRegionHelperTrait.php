@@ -20,12 +20,12 @@ trait EndpointRegionHelperTrait
     private $region;
     /** @var Service */
     private $service;
-    private function getPartitionSuffix(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface $arn, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider $provider)
+    private function getPartitionSuffix(ArnInterface $arn, PartitionEndpointProvider $provider)
     {
         $partition = $provider->getPartition($arn->getRegion(), $arn->getService());
         return $partition->getDnsSuffix();
     }
-    private function getSigningRegion($region, $service, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider $provider)
+    private function getSigningRegion($region, $service, PartitionEndpointProvider $provider)
     {
         $partition = $provider->getPartition($region, $service);
         $data = $partition->toArray();
@@ -34,44 +34,37 @@ trait EndpointRegionHelperTrait
         }
         return $region;
     }
-    private function isFipsPseudoRegion($region)
+    private function isMatchingSigningRegion($arnRegion, $clientRegion, $service, PartitionEndpointProvider $provider)
     {
-        return strpos($region, 'fips-') !== false || strpos($region, '-fips') !== false;
-    }
-    private function isMatchingSigningRegion($arnRegion, $clientRegion, $service, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider $provider)
-    {
-        $arnRegion = $this->stripPseudoRegions(strtolower($arnRegion));
-        $clientRegion = $this->stripPseudoRegions(strtolower($clientRegion));
+        $arnRegion = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\strip_fips_pseudo_regions(\strtolower($arnRegion));
+        $clientRegion = \strtolower($clientRegion);
         if ($arnRegion === $clientRegion) {
-            return true;
+            return \true;
         }
         if ($this->getSigningRegion($clientRegion, $service, $provider) === $arnRegion) {
-            return true;
+            return \true;
         }
-        return false;
+        return \false;
     }
-    private function stripPseudoRegions($region)
+    private function validateFipsConfigurations(ArnInterface $arn)
     {
-        return str_replace(['fips-', '-fips'], ['', ''], $region);
-    }
-    private function validateFipsNotUsedWithOutposts(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface $arn)
-    {
+        $useFipsEndpoint = !empty($this->config['use_fips_endpoint']);
         if ($arn instanceof OutpostsArnInterface) {
             if (empty($this->config['use_arn_region']) || !$this->config['use_arn_region']->isUseArnRegion()) {
                 $region = $this->region;
             } else {
                 $region = $arn->getRegion();
             }
-            if ($this->isFipsPseudoRegion($region)) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidRegionException('Fips is currently not supported with S3 Outposts access' . ' points. Please provide a non-fips region or do not supply an' . ' access point ARN.');
+            if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\is_fips_pseudo_region($region)) {
+                throw new InvalidRegionException('Fips is currently not supported with S3 Outposts access' . ' points. Please provide a non-fips region or do not supply an' . ' access point ARN.');
             }
         }
     }
-    private function validateMatchingRegion(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnInterface $arn)
+    private function validateMatchingRegion(ArnInterface $arn)
     {
         if (!$this->isMatchingSigningRegion($arn->getRegion(), $this->region, $this->service->getEndpointPrefix(), $this->partitionProvider)) {
             if (empty($this->config['use_arn_region']) || !$this->config['use_arn_region']->isUseArnRegion()) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\InvalidRegionException('The region' . " specified in the ARN (" . $arn->getRegion() . ") does not match the client region (" . "{$this->region}).");
+                throw new InvalidRegionException('The region' . " specified in the ARN (" . $arn->getRegion() . ") does not match the client region (" . "{$this->region}).");
             }
         }
     }

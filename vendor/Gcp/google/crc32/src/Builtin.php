@@ -22,10 +22,10 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface;
 /**
  * A CRC32 implementation based on the PHP hash functions.
  */
-final class Builtin implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface
+final class Builtin implements CRCInterface
 {
     private $hc;
-    private static $mapping = [\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::IEEE => 'crc32b', \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI => 'crc32c'];
+    private static $mapping = [CRC32::IEEE => 'crc32b', CRC32::CASTAGNOLI => 'crc32c'];
     /**
      * Returns true if this $polynomial is supported by the builtin PHP hash function.
      *
@@ -36,10 +36,10 @@ final class Builtin implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC3
     public static function supports($polynomial)
     {
         if (!isset(self::$mapping[$polynomial])) {
-            return false;
+            return \false;
         }
         $algo = self::$mapping[$polynomial];
-        return in_array($algo, hash_algos());
+        return \in_array($algo, \hash_algos());
     }
     public function __construct($polynomial)
     {
@@ -51,17 +51,17 @@ final class Builtin implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC3
     }
     public function reset()
     {
-        $this->hc = hash_init($this->algo);
+        $this->hc = \hash_init($this->algo);
     }
     public function update($data)
     {
-        hash_update($this->hc, $data);
+        \hash_update($this->hc, $data);
     }
     public function hash($raw_output = null)
     {
         // hash_final will destory the Hash Context resource, so operate on a copy.
-        $hc = hash_copy($this->hc);
-        return hash_final($hc, $raw_output);
+        $hc = \hash_copy($this->hc);
+        return \hash_final($hc, $raw_output);
     }
     public function version()
     {
@@ -69,6 +69,6 @@ final class Builtin implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC3
     }
     public function __clone()
     {
-        $this->hc = hash_copy($this->hc);
+        $this->hc = \hash_copy($this->hc);
     }
 }

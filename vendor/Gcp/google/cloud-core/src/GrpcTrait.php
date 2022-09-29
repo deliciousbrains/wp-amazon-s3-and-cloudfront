@@ -41,7 +41,7 @@ trait GrpcTrait
      *
      * @param GrpcRequestWrapper $requestWrapper
      */
-    public function setRequestWrapper(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\GrpcRequestWrapper $requestWrapper)
+    public function setRequestWrapper(GrpcRequestWrapper $requestWrapper)
     {
         $this->requestWrapper = $requestWrapper;
     }
@@ -62,9 +62,9 @@ trait GrpcTrait
      * @param bool $whitelisted
      * @return \Generator|array
      */
-    public function send(callable $request, array $args, $whitelisted = false)
+    public function send(callable $request, array $args, $whitelisted = \false)
     {
-        $requestOptions = $this->pluckArray(['grpcOptions', 'retries', 'requestTimeout'], $args[count($args) - 1]);
+        $requestOptions = $this->pluckArray(['grpcOptions', 'retries', 'requestTimeout'], $args[\count($args) - 1]);
         try {
             return $this->requestWrapper->send($request, $args, $requestOptions);
         } catch (NotFoundException $e) {
@@ -87,10 +87,10 @@ trait GrpcTrait
         // GAX v0.32.0 introduced the CredentialsWrapper class and a different
         // way to configure credentials. If the class exists, use this new method
         // otherwise default to legacy usage.
-        if (class_exists(\DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\CredentialsWrapper::class)) {
-            $config['credentials'] = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\CredentialsWrapper($this->requestWrapper->getCredentialsFetcher(), $authHttpHandler);
+        if (\class_exists(CredentialsWrapper::class)) {
+            $config['credentials'] = new CredentialsWrapper($this->requestWrapper->getCredentialsFetcher(), $authHttpHandler);
         } else {
-            $config += ['credentialsLoader' => $this->requestWrapper->getCredentialsFetcher(), 'authHttpHandler' => $authHttpHandler, 'enableCaching' => false];
+            $config += ['credentialsLoader' => $this->requestWrapper->getCredentialsFetcher(), 'authHttpHandler' => $authHttpHandler, 'enableCaching' => \false];
         }
         return $config;
     }
@@ -118,7 +118,7 @@ trait GrpcTrait
     }
     private function unpackValue($value)
     {
-        if (count($value) > 1) {
+        if (\count($value) > 1) {
             throw new \RuntimeException("Unexpected fields in struct: {$value}");
         }
         foreach ($value as $setField => $setValue) {
@@ -142,13 +142,13 @@ trait GrpcTrait
     }
     private function flattenValue(array $value)
     {
-        if (count($value) > 1) {
+        if (\count($value) > 1) {
             throw new \RuntimeException("Unexpected fields in struct: {$value}");
         }
         if (isset($value['nullValue'])) {
             return null;
         }
-        return array_pop($value);
+        return \array_pop($value);
     }
     private function flattenListValue(array $value)
     {
@@ -176,7 +176,7 @@ trait GrpcTrait
      */
     private function formatValueForApi($value)
     {
-        $type = gettype($value);
+        $type = \gettype($value);
         switch ($type) {
             case 'string':
                 return ['string_value' => $value];
@@ -186,7 +186,7 @@ trait GrpcTrait
             case 'boolean':
                 return ['bool_value' => $value];
             case 'NULL':
-                return ['null_value' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Protobuf\NullValue::NULL_VALUE];
+                return ['null_value' => NullValue::NULL_VALUE];
             case 'array':
                 if (!empty($value) && $this->isAssoc($value)) {
                     return ['struct_value' => $this->formatStructForApi($value)];
@@ -225,9 +225,9 @@ trait GrpcTrait
      */
     private function formatDurationForApi($value)
     {
-        if (is_string($value)) {
-            $d = explode('.', trim($value, 's'));
-            if (count($d) < 2) {
+        if (\is_string($value)) {
+            $d = \explode('.', \trim($value, 's'));
+            if (\count($d) < 2) {
                 $seconds = $d[0];
                 $nanos = 0;
             } else {

@@ -29,15 +29,16 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\Connect
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MimeType;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Implementation of the
  * [Google Cloud Storage JSON API](https://cloud.google.com/storage/docs/json_api/).
  */
-class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\ConnectionInterface
+class Rest implements ConnectionInterface
 {
     use RestTrait;
     use UriTrait;
@@ -69,11 +70,11 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
      */
     public function __construct(array $config = [])
     {
-        $config += ['serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json', 'componentVersion' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient::VERSION, 'apiEndpoint' => self::DEFAULT_API_ENDPOINT];
+        $config += ['serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json', 'componentVersion' => StorageClient::VERSION, 'apiEndpoint' => self::DEFAULT_API_ENDPOINT];
         $this->apiEndpoint = $this->getApiEndpoint(self::DEFAULT_API_ENDPOINT, $config);
-        $this->setRequestWrapper(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper($config));
-        $this->setRequestBuilder(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestBuilder($config['serviceDefinitionPath'], $this->apiEndpoint));
-        $this->projectId = $this->pluck('projectId', $config, false);
+        $this->setRequestWrapper(new RequestWrapper($config));
+        $this->setRequestBuilder(new RequestBuilder($config['serviceDefinitionPath'], $this->apiEndpoint));
+        $this->projectId = $this->pluck('projectId', $config, \false);
     }
     /**
      * @return string
@@ -219,7 +220,7 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     public function downloadObjectAsync(array $args = [])
     {
         list($request, $requestOptions) = $this->buildDownloadObjectParams($args);
-        return $this->requestWrapper->sendAsync($request, $requestOptions)->then(function (\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response) {
+        return $this->requestWrapper->sendAsync($request, $requestOptions)->then(function (ResponseInterface $response) {
             return $response->getBody();
         });
     }
@@ -229,14 +230,14 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     public function insertObject(array $args = [])
     {
         $args = $this->resolveUploadOptions($args);
-        $uploadType = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader::UPLOAD_TYPE_RESUMABLE;
+        $uploadType = AbstractUploader::UPLOAD_TYPE_RESUMABLE;
         if ($args['streamable']) {
-            $uploaderClass = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\StreamableUploader::class;
+            $uploaderClass = StreamableUploader::class;
         } elseif ($args['resumable']) {
-            $uploaderClass = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\ResumableUploader::class;
+            $uploaderClass = ResumableUploader::class;
         } else {
-            $uploaderClass = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\MultipartUploader::class;
-            $uploadType = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader::UPLOAD_TYPE_MULTIPART;
+            $uploaderClass = MultipartUploader::class;
+            $uploadType = AbstractUploader::UPLOAD_TYPE_MULTIPART;
         }
         $uriParams = ['bucket' => $args['bucket'], 'query' => ['predefinedAcl' => $args['predefinedAcl'], 'uploadType' => $uploadType, 'userProject' => $args['userProject']]];
         return new $uploaderClass($this->requestWrapper, $args['data'], $this->expandUri($this->apiEndpoint . self::UPLOAD_PATH, $uriParams), $args['uploaderOptions']);
@@ -246,26 +247,26 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
      */
     private function resolveUploadOptions(array $args)
     {
-        $args += ['bucket' => null, 'name' => null, 'validate' => true, 'resumable' => null, 'streamable' => null, 'predefinedAcl' => null, 'metadata' => [], 'userProject' => null];
-        $args['data'] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for($args['data']);
+        $args += ['bucket' => null, 'name' => null, 'validate' => \true, 'resumable' => null, 'streamable' => null, 'predefinedAcl' => null, 'metadata' => [], 'userProject' => null];
+        $args['data'] = Utils::streamFor($args['data']);
         if ($args['resumable'] === null) {
-            $args['resumable'] = $args['data']->getSize() > \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader::RESUMABLE_LIMIT;
+            $args['resumable'] = $args['data']->getSize() > AbstractUploader::RESUMABLE_LIMIT;
         }
         if (!$args['name']) {
-            $args['name'] = basename($args['data']->getMetadata('uri'));
+            $args['name'] = \basename($args['data']->getMetadata('uri'));
         }
         $validate = $this->chooseValidationMethod($args);
         if ($validate === 'md5') {
-            $args['metadata']['md5Hash'] = base64_encode(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\hash($args['data'], 'md5', true));
+            $args['metadata']['md5Hash'] = \base64_encode(Utils::hash($args['data'], 'md5', \true));
         } elseif ($validate === 'crc32') {
             $args['metadata']['crc32c'] = $this->crcFromStream($args['data']);
         }
         $args['metadata']['name'] = $args['name'];
         unset($args['name']);
-        $args['contentType'] = isset($args['metadata']['contentType']) ? $args['metadata']['contentType'] : \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\mimetype_from_filename($args['metadata']['name']);
+        $args['contentType'] = isset($args['metadata']['contentType']) ? $args['metadata']['contentType'] : MimeType::fromFilename($args['metadata']['name']);
         $uploaderOptionKeys = ['restOptions', 'retries', 'requestTimeout', 'chunkSize', 'contentType', 'metadata', 'uploadProgressCallback'];
-        $args['uploaderOptions'] = array_intersect_key($args, array_flip($uploaderOptionKeys));
-        $args = array_diff_key($args, array_flip($uploaderOptionKeys));
+        $args['uploaderOptions'] = \array_intersect_key($args, \array_flip($uploaderOptionKeys));
+        $args = \array_diff_key($args, \array_flip($uploaderOptionKeys));
         return $args;
     }
     /**
@@ -373,9 +374,9 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     private function buildDownloadObjectParams(array $args)
     {
         $args += ['bucket' => null, 'object' => null, 'generation' => null, 'userProject' => null];
-        $requestOptions = array_intersect_key($args, ['restOptions' => null, 'retries' => null, 'restRetryFunction' => null, 'restCalcDelayFunction' => null, 'restDelayFunction' => null]);
+        $requestOptions = \array_intersect_key($args, ['restOptions' => null, 'retries' => null, 'restRetryFunction' => null, 'restCalcDelayFunction' => null, 'restDelayFunction' => null]);
         $uri = $this->expandUri($this->apiEndpoint . self::DOWNLOAD_PATH, ['bucket' => $args['bucket'], 'object' => $args['object'], 'query' => ['generation' => $args['generation'], 'alt' => 'media', 'userProject' => $args['userProject']]]);
-        return [new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('GET', \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\uri_for($uri)), $requestOptions];
+        return [new Request('GET', Utils::uriFor($uri)), $requestOptions];
     }
     /**
      * Choose a upload validation method based on user input and platform
@@ -388,10 +389,10 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
     {
         // If the user provided a hash, skip hashing.
         if (isset($args['metadata']['md5Hash']) || isset($args['metadata']['crc32c'])) {
-            return false;
+            return \false;
         }
         $validate = $args['validate'];
-        if (in_array($validate, [false, 'crc32', 'md5'], true)) {
+        if (\in_array($validate, [\false, 'crc32', 'md5'], \true)) {
             return $validate;
         }
         // not documented, but the feature is called crc32c, so let's accept that as input anyways.
@@ -414,19 +415,19 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
      * @param StreamInterface $data
      * @return string
      */
-    private function crcFromStream(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface $data)
+    private function crcFromStream(StreamInterface $data)
     {
         $pos = $data->tell();
         if ($pos > 0) {
             $data->rewind();
         }
-        $crc32c = \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::create(\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI);
+        $crc32c = CRC32::create(CRC32::CASTAGNOLI);
         $data->rewind();
         while (!$data->eof()) {
             $crc32c->update($data->read(1048576));
         }
         $data->seek($pos);
-        return base64_encode($crc32c->hash(true));
+        return \base64_encode($crc32c->hash(\true));
     }
     /**
      * Check if the crc32c extension is available.
@@ -437,7 +438,7 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
      */
     protected function crc32cExtensionLoaded()
     {
-        return extension_loaded('crc32c');
+        return \extension_loaded('crc32c');
     }
     /**
      * Check if hash() supports crc32c.
@@ -448,6 +449,6 @@ class Rest implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage
      */
     protected function supportsBuiltinCrc32c()
     {
-        return \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin::supports(\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI);
+        return Builtin::supports(CRC32::CASTAGNOLI);
     }
 }

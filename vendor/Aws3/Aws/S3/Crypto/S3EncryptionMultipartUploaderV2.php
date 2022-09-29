@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  * inputs will be a lot slower than for PHP 7.1+, so upgrading older PHP version
  * environments may be necessary to use this effectively.
  */
-class S3EncryptionMultipartUploaderV2 extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\MultipartUploader
+class S3EncryptionMultipartUploaderV2 extends MultipartUploader
 {
     use CipherBuilderTrait;
     use CryptoParamsTraitV2;
@@ -33,7 +33,7 @@ class S3EncryptionMultipartUploaderV2 extends \DeliciousBrains\WP_Offload_Media\
      */
     public static function isSupportedCipher($cipherName)
     {
-        return in_array($cipherName, AbstractCryptoClientV2::$supportedCiphers);
+        return \in_array($cipherName, AbstractCryptoClientV2::$supportedCiphers);
     }
     private $provider;
     private $instructionFileSuffix;
@@ -105,9 +105,9 @@ class S3EncryptionMultipartUploaderV2 extends \DeliciousBrains\WP_Offload_Media\
      * @param mixed             $source Source of the data to upload.
      * @param array             $config Configuration used to perform the upload.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
+    public function __construct(S3ClientInterface $client, $source, array $config = [])
     {
-        $this->appendUserAgent($client, 'S3CryptoV' . self::CRYPTO_VERSION);
+        $this->appendUserAgent($client, 'feat/s3-encrypt/' . self::CRYPTO_VERSION);
         $this->client = $client;
         $config['params'] = [];
         if (!empty($config['bucket'])) {
@@ -130,14 +130,14 @@ class S3EncryptionMultipartUploaderV2 extends \DeliciousBrains\WP_Offload_Media\
     }
     private static function getDefaultStrategy()
     {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy();
+        return new HeadersMetadataStrategy();
     }
     private function getEncryptingDataPreparer()
     {
         return function () {
             // Defer encryption work until promise is executed
-            $envelope = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope();
-            list($this->source, $params) = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($this->encrypt($this->source, $this->config ?: [], $this->provider, $envelope))->then(function ($bodyStream) use($envelope) {
+            $envelope = new MetadataEnvelope();
+            list($this->source, $params) = Promise\Create::promiseFor($this->encrypt($this->source, $this->config ?: [], $this->provider, $envelope))->then(function ($bodyStream) use($envelope) {
                 $params = $this->strategy->save($envelope, $this->config['params']);
                 return [$bodyStream, $params];
             })->wait();

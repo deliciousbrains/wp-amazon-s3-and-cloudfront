@@ -21,6 +21,6 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception;
  * Exception thrown when a request fails due to a conflict.
  * In REST context, this exception indicates a status code 409.
  */
-class ConflictException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException
+class ConflictException extends ServiceException
 {
 }

@@ -5,6 +5,8 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Converts Guzzle streams into PHP stream resources.
+ *
+ * @final
  */
 class StreamWrapper
 {
@@ -23,7 +25,7 @@ class StreamWrapper
      *
      * @throws \InvalidArgumentException if stream is not readable or writable
      */
-    public static function getResource(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public static function getResource(StreamInterface $stream)
     {
         self::register();
         if ($stream->isReadable()) {
@@ -33,7 +35,7 @@ class StreamWrapper
         } else {
             throw new \InvalidArgumentException('The stream must be readable, ' . 'writable, or both.');
         }
-        return fopen('guzzle://stream', $mode, null, self::createStreamContext($stream));
+        return \fopen('guzzle://stream', $mode, null, self::createStreamContext($stream));
     }
     /**
      * Creates a stream context that can be used to open a stream as a php stream resource.
@@ -42,28 +44,28 @@ class StreamWrapper
      *
      * @return resource
      */
-    public static function createStreamContext(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public static function createStreamContext(StreamInterface $stream)
     {
-        return stream_context_create(['guzzle' => ['stream' => $stream]]);
+        return \stream_context_create(['guzzle' => ['stream' => $stream]]);
     }
     /**
      * Registers the stream wrapper if needed
      */
     public static function register()
     {
-        if (!in_array('guzzle', stream_get_wrappers())) {
-            stream_wrapper_register('guzzle', __CLASS__);
+        if (!\in_array('guzzle', \stream_get_wrappers())) {
+            \stream_wrapper_register('guzzle', __CLASS__);
         }
     }
     public function stream_open($path, $mode, $options, &$opened_path)
     {
-        $options = stream_context_get_options($this->context);
+        $options = \stream_context_get_options($this->context);
         if (!isset($options['guzzle']['stream'])) {
-            return false;
+            return \false;
         }
         $this->mode = $mode;
         $this->stream = $options['guzzle']['stream'];
-        return true;
+        return \true;
     }
     public function stream_read($count)
     {
@@ -84,7 +86,7 @@ class StreamWrapper
     public function stream_seek($offset, $whence)
     {
         $this->stream->seek($offset, $whence);
-        return true;
+        return \true;
     }
     public function stream_cast($cast_as)
     {

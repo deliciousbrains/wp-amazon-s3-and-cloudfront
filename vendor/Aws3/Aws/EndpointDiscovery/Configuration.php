@@ -2,18 +2,18 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery;
 
-class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface
+class Configuration implements ConfigurationInterface
 {
     private $cacheLimit;
     private $enabled;
     public function __construct($enabled, $cacheLimit = 1000)
     {
-        $this->cacheLimit = filter_var($cacheLimit, FILTER_VALIDATE_INT);
-        if ($this->cacheLimit == false || $this->cacheLimit < 1) {
+        $this->cacheLimit = \filter_var($cacheLimit, \FILTER_VALIDATE_INT);
+        if ($this->cacheLimit == \false || $this->cacheLimit < 1) {
             throw new \InvalidArgumentException("'cache_limit' value must be a positive integer.");
         }
         // Unparsable $enabled flag errs on the side of disabling endpoint discovery
-        $this->enabled = filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+        $this->enabled = \filter_var($enabled, \FILTER_VALIDATE_BOOLEAN);
     }
     /**
      * {@inheritdoc}

@@ -12,6 +12,7 @@ declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
 /**
  * Logs to syslog service.
  *
@@ -25,38 +26,38 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @author Sven Paulus <sven@karlsruhe.org>
  */
-class SyslogHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractSyslogHandler
+class SyslogHandler extends AbstractSyslogHandler
 {
+    /** @var string */
     protected $ident;
+    /** @var int */
     protected $logopts;
     /**
      * @param string     $ident
      * @param string|int $facility Either one of the names of the keys in $this->facilities, or a LOG_* facility constant
-     * @param string|int $level    The minimum logging level at which this handler will be triggered
-     * @param bool       $bubble   Whether the messages that are handled can bubble up the stack or not
      * @param int        $logopts  Option flags for the openlog() call, defaults to LOG_PID
      */
-    public function __construct(string $ident, $facility = LOG_USER, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true, int $logopts = LOG_PID)
+    public function __construct(string $ident, $facility = \LOG_USER, $level = Logger::DEBUG, bool $bubble = \true, int $logopts = \LOG_PID)
     {
         parent::__construct($facility, $level, $bubble);
         $this->ident = $ident;
         $this->logopts = $logopts;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close() : void
     {
-        closelog();
+        \closelog();
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
-        if (!openlog($this->ident, $this->logopts, $this->facility)) {
-            throw new \LogicException('Can\'t open syslog for ident "' . $this->ident . '" and facility "' . $this->facility . '"');
+        if (!\openlog($this->ident, $this->logopts, $this->facility)) {
+            throw new \LogicException('Can\'t open syslog for ident "' . $this->ident . '" and facility "' . $this->facility . '"' . Utils::getRecordMessageForException($record));
         }
-        syslog($this->logLevels[$record['level']], (string) $record['formatted']);
+        \syslog($this->logLevels[$record['level']], (string) $record['formatted']);
     }
 }

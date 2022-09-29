@@ -24,7 +24,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Upload data to Cloud Storage using a Signed URL
  */
-class SignedUrlUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\ResumableUploader
+class SignedUrlUploader extends ResumableUploader
 {
     /**
      * @param RequestWrapper $requestWrapper
@@ -47,7 +47,7 @@ class SignedUrlUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      *           requests.
      * }
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper $requestWrapper, $data, $uri, array $options = [])
+    public function __construct(RequestWrapper $requestWrapper, $data, $uri, array $options = [])
     {
         if (isset($options['origin'])) {
             $this->headers['Origin'] = $options['origin'];
@@ -63,7 +63,7 @@ class SignedUrlUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
     protected function createResumeUri()
     {
         $headers = $this->headers + ['Content-Type' => $this->contentType, 'Content-Length' => 0, 'x-goog-resumable' => 'start'];
-        $request = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('POST', $this->uri, $headers);
+        $request = new Request('POST', $this->uri, $headers);
         $response = $this->requestWrapper->send($request, $this->requestOptions);
         return $this->resumeUri = $response->getHeaderLine('Location');
     }
@@ -73,7 +73,7 @@ class SignedUrlUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      * @param ResponseInterface $response
      * @return string
      */
-    protected function decodeResponse(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response)
+    protected function decodeResponse(ResponseInterface $response)
     {
         return $response->getBody();
     }

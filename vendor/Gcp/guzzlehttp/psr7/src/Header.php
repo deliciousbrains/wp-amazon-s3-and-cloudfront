@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 final class Header
@@ -11,22 +12,20 @@ final class Header
      * contains a key, this function will inject a key with a '' string value.
      *
      * @param string|array $header Header to parse into components.
-     *
-     * @return array Returns the parsed header values.
      */
-    public static function parse($header)
+    public static function parse($header) : array
     {
         static $trimmed = "\"'  \n\t\r";
         $params = $matches = [];
         foreach (self::normalize($header) as $val) {
             $part = [];
-            foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-                if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
+            foreach (\preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
+                if (\preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
                     $m = $matches[0];
                     if (isset($m[1])) {
-                        $part[trim($m[0], $trimmed)] = trim($m[1], $trimmed);
+                        $part[\trim($m[0], $trimmed)] = \trim($m[1], $trimmed);
                     } else {
-                        $part[] = trim($m[0], $trimmed);
+                        $part[] = \trim($m[0], $trimmed);
                     }
                 }
             }
@@ -41,23 +40,24 @@ final class Header
      * headers into an array of headers with no comma separated values.
      *
      * @param string|array $header Header to normalize.
-     *
-     * @return array Returns the normalized header field values.
      */
-    public static function normalize($header)
+    public static function normalize($header) : array
     {
-        if (!is_array($header)) {
-            return array_map('trim', explode(',', $header));
-        }
         $result = [];
-        foreach ($header as $value) {
+        foreach ((array) $header as $value) {
             foreach ((array) $value as $v) {
-                if (strpos($v, ',') === false) {
-                    $result[] = $v;
+                if (\strpos($v, ',') === \false) {
+                    $trimmed = \trim($v);
+                    if ($trimmed !== '') {
+                        $result[] = $trimmed;
+                    }
                     continue;
                 }
-                foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $v) as $vv) {
-                    $result[] = trim($vv);
+                foreach (\preg_split('/,(?=([^"]*"([^"]|\\\\.)*")*[^"]*$)/', $v) as $vv) {
+                    $trimmed = \trim($vv);
+                    if ($trimmed !== '') {
+                        $result[] = $trimmed;
+                    }
                 }
             }
         }

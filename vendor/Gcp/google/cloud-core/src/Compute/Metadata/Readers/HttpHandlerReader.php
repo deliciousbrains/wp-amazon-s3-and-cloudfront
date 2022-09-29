@@ -24,7 +24,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
 /**
  * Read Compute Metadata using the HTTP Handler utility.
  */
-class HttpHandlerReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\ReaderInterface
+class HttpHandlerReader implements ReaderInterface
 {
     /**
      * @var callable
@@ -36,7 +36,7 @@ class HttpHandlerReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function __construct(callable $httpHandler = null)
     {
-        $this->httpHandler = $httpHandler ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::getHttpClient());
+        $this->httpHandler = $httpHandler ?: HttpHandlerFactory::build(HttpClientCache::getHttpClient());
     }
     /**
      * Read the metadata for a given path.
@@ -46,8 +46,8 @@ class HttpHandlerReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\
      */
     public function read($path)
     {
-        $url = sprintf('http://%s/computeMetadata/v1/%s', \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::METADATA_IP, $path);
-        $request = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('GET', $url, [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::FLAVOR_HEADER => 'Google']);
+        $url = \sprintf('http://%s/computeMetadata/v1/%s', GCECredentials::METADATA_IP, $path);
+        $request = new Request('GET', $url, [GCECredentials::FLAVOR_HEADER => 'Google']);
         $handler = $this->httpHandler;
         $res = $handler($request);
         return (string) $res->getBody();

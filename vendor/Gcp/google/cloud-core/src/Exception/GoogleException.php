@@ -21,6 +21,6 @@ use Exception;
 /**
  * Exception thrown when a request fails.
  */
-class GoogleException extends \Exception
+class GoogleException extends Exception
 {
 }

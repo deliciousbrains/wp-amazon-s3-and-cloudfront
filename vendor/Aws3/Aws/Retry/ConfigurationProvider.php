@@ -42,7 +42,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  * $config = $promise->wait();
  * </code>
  */
-class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface
+class ConfigurationProvider extends AbstractConfigurationProvider implements ConfigurationProviderInterface
 {
     const DEFAULT_MAX_ATTEMPTS = 3;
     const DEFAULT_MODE = 'legacy';
@@ -52,8 +52,8 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     const INI_MAX_ATTEMPTS = 'max_attempts';
     const INI_MODE = 'retry_mode';
     public static $cacheKey = 'aws_retries_config';
-    protected static $interfaceClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\ConfigurationInterface::class;
-    protected static $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Exception\ConfigurationException::class;
+    protected static $interfaceClass = ConfigurationInterface::class;
+    protected static $exceptionClass = ConfigurationException::class;
     /**
      * Create a default config provider that first checks for environment
      * variables, then checks for a specified profile in the environment-defined
@@ -72,11 +72,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function defaultProvider(array $config = [])
     {
         $configProviders = [self::env()];
-        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != \false) {
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
         if (isset($config['retries']) && $config['retries'] instanceof CacheInterface) {
             return self::cache($memo, $config['retries'], self::$cacheKey);
         }
@@ -91,10 +91,10 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     {
         return function () {
             // Use config from environment variables, if available
-            $mode = getenv(self::ENV_MODE);
-            $maxAttempts = getenv(self::ENV_MAX_ATTEMPTS) ? getenv(self::ENV_MAX_ATTEMPTS) : self::DEFAULT_MAX_ATTEMPTS;
+            $mode = \getenv(self::ENV_MODE);
+            $maxAttempts = \getenv(self::ENV_MAX_ATTEMPTS) ? \getenv(self::ENV_MAX_ATTEMPTS) : self::DEFAULT_MAX_ATTEMPTS;
             if (!empty($mode)) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Configuration($mode, $maxAttempts));
+                return Promise\Create::promiseFor(new Configuration($mode, $maxAttempts));
             }
             return self::reject('Could not find environment variable config' . ' in ' . self::ENV_MODE);
         };
@@ -107,7 +107,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function fallback()
     {
         return function () {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Configuration(self::DEFAULT_MODE, self::DEFAULT_MAX_ATTEMPTS));
+            return Promise\Create::promiseFor(new Configuration(self::DEFAULT_MODE, self::DEFAULT_MAX_ATTEMPTS));
         };
     }
     /**
@@ -125,13 +125,13 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function ini($profile = null, $filename = null)
     {
         $filename = $filename ?: self::getDefaultConfigFilename();
-        $profile = $profile ?: (getenv(self::ENV_PROFILE) ?: 'default');
+        $profile = $profile ?: (\getenv(self::ENV_PROFILE) ?: 'default');
         return function () use($profile, $filename) {
-            if (!is_readable($filename)) {
+            if (!@\is_readable($filename)) {
                 return self::reject("Cannot read configuration from {$filename}");
             }
-            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true);
-            if ($data === false) {
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, \true);
+            if ($data === \false) {
                 return self::reject("Invalid config file: {$filename}");
             }
             if (!isset($data[$profile])) {
@@ -141,7 +141,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
                 return self::reject("Required retry config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             $maxAttempts = isset($data[$profile][self::INI_MAX_ATTEMPTS]) ? $data[$profile][self::INI_MAX_ATTEMPTS] : self::DEFAULT_MAX_ATTEMPTS;
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Configuration($data[$profile][self::INI_MODE], $maxAttempts));
+            return Promise\Create::promiseFor(new Configuration($data[$profile][self::INI_MODE], $maxAttempts));
         };
     }
     /**
@@ -154,7 +154,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
      */
     public static function unwrap($config)
     {
-        if (is_callable($config)) {
+        if (\is_callable($config)) {
             $config = $config();
         }
         if ($config instanceof PromiseInterface) {
@@ -165,12 +165,12 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
         }
         // An integer value for this config indicates the legacy 'retries'
         // config option, which is incremented to translate to max attempts
-        if (is_int($config)) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Configuration('legacy', $config + 1);
+        if (\is_int($config)) {
+            return new Configuration('legacy', $config + 1);
         }
-        if (is_array($config) && isset($config['mode'])) {
+        if (\is_array($config) && isset($config['mode'])) {
             $maxAttempts = isset($config['max_attempts']) ? $config['max_attempts'] : self::DEFAULT_MAX_ATTEMPTS;
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Retry\Configuration($config['mode'], $maxAttempts);
+            return new Configuration($config['mode'], $maxAttempts);
         }
         throw new \InvalidArgumentException('Not a valid retry configuration' . ' argument.');
     }

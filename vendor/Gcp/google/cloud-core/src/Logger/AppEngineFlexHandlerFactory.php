@@ -41,16 +41,16 @@ class AppEngineFlexHandlerFactory
      *
      * @return AppEngineFlexHandler|AppEngineFlexHandlerV2
      */
-    public static function build($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO, $bubble = true, $filePermission = 0640, $useLocking = false, $stream = null)
+    public static function build($level = Logger::INFO, $bubble = \true, $filePermission = 0640, $useLocking = \false, $stream = null)
     {
-        $version = defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Logger::API') ? \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::API : 1;
+        $version = \defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\Logger::API') ? Logger::API : 1;
         switch ($version) {
             case 1:
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Logger\AppEngineFlexHandler($level, $bubble, $filePermission, $useLocking, $stream);
+                return new AppEngineFlexHandler($level, $bubble, $filePermission, $useLocking, $stream);
             case 2:
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Logger\AppEngineFlexHandlerV2($level, $bubble, $filePermission, $useLocking, $stream);
+                return new AppEngineFlexHandlerV2($level, $bubble, $filePermission, $useLocking, $stream);
             default:
-                throw new \Exception('Version not supported');
+                throw new Exception('Version not supported');
         }
     }
 }

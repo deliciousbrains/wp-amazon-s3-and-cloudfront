@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials;
  *
  * This class makes it easy to test the MetadataStream class.
  */
-class StreamReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata\Readers\ReaderInterface
+class StreamReader implements ReaderInterface
 {
     /**
      * The base PATH for the metadata.
@@ -46,7 +46,7 @@ class StreamReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud
      */
     public function __construct()
     {
-        $options = ['http' => ['method' => 'GET', 'header' => \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::FLAVOR_HEADER . ': Google']];
+        $options = ['http' => ['method' => 'GET', 'header' => GCECredentials::FLAVOR_HEADER . ': Google']];
         $this->context = $this->createStreamContext($options);
     }
     /**
@@ -57,7 +57,7 @@ class StreamReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud
      */
     public function read($path)
     {
-        $url = sprintf('http://%s/computeMetadata/v1/%s', \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::METADATA_IP, $path);
+        $url = \sprintf('http://%s/computeMetadata/v1/%s', GCECredentials::METADATA_IP, $path);
         return $this->getMetadata($url);
     }
     /**
@@ -69,7 +69,7 @@ class StreamReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud
      */
     protected function createStreamContext(array $options)
     {
-        return stream_context_create($options);
+        return \stream_context_create($options);
     }
     /**
      * Abstracted for testing.
@@ -80,6 +80,6 @@ class StreamReader implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud
      */
     protected function getMetadata($url)
     {
-        return file_get_contents($url, false, $this->context);
+        return \file_get_contents($url, \false, $this->context);
     }
 }

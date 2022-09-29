@@ -19,13 +19,18 @@ class History implements \Countable, \IteratorAggregate
     {
         $this->maxEntries = $maxEntries;
     }
+    /**
+     * @return int
+     */
+    #[\ReturnTypeWillChange]
     public function count()
     {
-        return count($this->entries);
+        return \count($this->entries);
     }
+    #[\ReturnTypeWillChange]
     public function getIterator()
     {
-        return new \ArrayIterator(array_values($this->entries));
+        return new \ArrayIterator(\array_values($this->entries));
     }
     /**
      * Get the last finished command seen by the history container.
@@ -38,7 +43,7 @@ class History implements \Countable, \IteratorAggregate
         if (!$this->entries) {
             throw new \LogicException('No commands received');
         }
-        return end($this->entries)['command'];
+        return \end($this->entries)['command'];
     }
     /**
      * Get the last finished request seen by the history container.
@@ -51,7 +56,7 @@ class History implements \Countable, \IteratorAggregate
         if (!$this->entries) {
             throw new \LogicException('No requests received');
         }
-        return end($this->entries)['request'];
+        return \end($this->entries)['request'];
     }
     /**
      * Get the last received result or exception.
@@ -64,7 +69,7 @@ class History implements \Countable, \IteratorAggregate
         if (!$this->entries) {
             throw new \LogicException('No entries');
         }
-        $last = end($this->entries);
+        $last = \end($this->entries);
         if (isset($last['result'])) {
             return $last['result'];
         }
@@ -81,9 +86,9 @@ class History implements \Countable, \IteratorAggregate
      *
      * @return string Returns the ticket used to finish the entry.
      */
-    public function start(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req)
+    public function start(CommandInterface $cmd, RequestInterface $req)
     {
-        $ticket = uniqid();
+        $ticket = \uniqid();
         $this->entries[$ticket] = ['command' => $cmd, 'request' => $req, 'result' => null, 'exception' => null];
         return $ticket;
     }
@@ -106,8 +111,8 @@ class History implements \Countable, \IteratorAggregate
         } else {
             $this->entries[$ticket]['result'] = $result;
         }
-        if (count($this->entries) >= $this->maxEntries) {
-            $this->entries = array_slice($this->entries, -$this->maxEntries, null, true);
+        if (\count($this->entries) >= $this->maxEntries) {
+            $this->entries = \array_slice($this->entries, -$this->maxEntries, null, \true);
         }
     }
     /**
@@ -124,6 +129,6 @@ class History implements \Countable, \IteratorAggregate
      */
     public function toArray()
     {
-        return array_values($this->entries);
+        return \array_values($this->entries);
     }
 }

@@ -26,6 +26,8 @@ class AS3CF_Error {
 	/**
 	 * Wrapper for error logging a message with plugin prefix
 	 *
+	 * phpcs:disable WordPress.PHP.DevelopmentFunctions
+	 *
 	 * @param mixed  $message
 	 * @param string $plugin_prefix
 	 */

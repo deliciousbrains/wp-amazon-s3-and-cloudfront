@@ -1,10 +1,10 @@
 === WP Offload Media Lite for Amazon S3, DigitalOcean Spaces, and Google Cloud Storage ===
 Contributors: bradt, deliciousbrains, ianmjones
 Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront
-Requires at least: 4.9
-Tested up to: 5.9
-Requires PHP: 5.6
-Stable tag: 2.6.2
+Requires at least: 5.3
+Tested up to: 6.1
+Requires PHP: 7.2
+Stable tag: 3.0.0
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -84,6 +84,37 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 3.0.0 - 2022-09-29 =
+* [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-3-0-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)
+* New: Fresh new settings page UI! 🎉
+* New: Advanced Custom Fields Lite & Pro now supported
+* New: Authenticated WP-REST-API endpoints added for managing settings
+* New: Amazon S3 Object Ownership controls are now supported
+* New: Added Asia Pacific (Jakarta) Amazon S3 region
+* New: Added Columbus, Dallas, Toronto, Santiago, Warsaw, Milan, Paris, Madrid, Delhi, Jakarta and Melbourne Google Cloud Storage regions
+* New: AWS PHP SDK updated to v3.222.1
+* New: Google Cloud Storage SDK updated to v1.26.3
+* New: PHP 7.2 or later required
+* New: WordPress 6.1 compatible
+* Improvement: Settings changes by another user or in wp-config.php are detected and reflected in UI
+* Improvement: A page refresh is requested if settings changes by another user conflict with unsaved changes
+* Improvement: Important error notices on the settings page are less easy to miss when displayed
+* Improvement: The Custom Domain (CNAME) can no longer be left empty if enabled
+* Improvement: The format of the entered Custom Domain (CNAME) for a CDN is now validated before being able to save settings
+* Improvement: It is no longer possible to mistake the example URL preview for an offloaded media item
+* Improvement: The relationship between settings and the example URL preview is now easier to understand
+* Improvement: Some common AWS S3 errors are caught and shown with easier to understand messages
+* Improvement: Media settings can now be used even if previously defined Storage Provider credentials have been removed but bucket still set (useful for development or test installs cloned from large production sites)
+* Bug fix: Saving posts with serialized data in post_content that include offloaded URLs now have correct string length values
+* Bug fix: EC2 hosted sites using IAM Roles no longer get an error when retrieving credentials from the instance profile metadata service in some instances
+* Bug fix: URLs are no longer rewritten for media offloaded to a different storage provider than currently configured
+* Bug fix: Creating a bucket on DigitalOcean Spaces no longer fails with 403 Forbidden error
+* Bug fix: Rewrite Media URLs can now be turned off for installs updated from pre WP Offload S3 1.0
+* Bug fix: Legacy AWS access key defines no longer cause issues with upgrade routines
+* Bug fix: Getting Block All Public Access status no longer fails for recently created buckets
+* Bug fix: Block All Public Access warning notice no longer shows even though CloudFront set up
+* Bug fix: Images with non-numeric width or height values no longer cause fatal errors
 
 = WP Offload Media Lite 2.6.2 - 2022-04-04 =
 * Bug fix: Upgrade routine no longer risks breaking items when external object cache is in use

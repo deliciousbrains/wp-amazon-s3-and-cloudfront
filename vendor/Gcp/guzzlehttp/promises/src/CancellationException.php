@@ -5,6 +5,6 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise;
 /**
  * Exception that is set as the reason for a promise that has been cancelled.
  */
-class CancellationException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\RejectionException
+class CancellationException extends RejectionException
 {
 }

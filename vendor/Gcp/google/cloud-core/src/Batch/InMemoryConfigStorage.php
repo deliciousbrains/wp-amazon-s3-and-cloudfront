@@ -17,6 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch;
 
+use BadMethodCallException;
 /**
  * In-memory ConfigStorageInterface implementation.
  *
@@ -25,7 +26,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch;
  *      incompatible ways. Please use with caution, and test thoroughly when
  *      upgrading.
  */
-final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ConfigStorageInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ProcessItemInterface
+final class InMemoryConfigStorage implements ConfigStorageInterface, ProcessItemInterface
 {
     use HandleFailureTrait;
     /* @var JobConfig */
@@ -47,9 +48,23 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
     {
         static $instance = null;
         if ($instance === null) {
-            $instance = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\InMemoryConfigStorage();
+            $instance = new InMemoryConfigStorage();
         }
         return $instance;
+    }
+    /**
+     * To prevent serialize.
+     */
+    public function __sleep()
+    {
+        throw new BadMethodCallException('Serialization not supported');
+    }
+    /**
+     * To prevent unserialize.
+     */
+    public function __wakeup()
+    {
+        throw new BadMethodCallException('Serialization not supported');
     }
     /**
      * To prevent cloning.
@@ -58,27 +73,15 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
     {
     }
     /**
-     * To prevent serialize.
-     */
-    private function __sleep()
-    {
-    }
-    /**
-     * To prevent unserialize.
-     */
-    private function __wakeup()
-    {
-    }
-    /**
      * The constructor registers the shutdown function for running the job for
      * remainder items when the script exits.
      */
     private function __construct()
     {
-        $this->config = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig();
-        $this->created = microtime(true);
+        $this->config = new JobConfig();
+        $this->created = \microtime(\true);
         $this->initFailureFile();
-        $this->hasShutdownHookRegistered = false;
+        $this->hasShutdownHookRegistered = \false;
     }
     /**
      * Just return true
@@ -87,7 +90,7 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
      */
     public function lock()
     {
-        return true;
+        return \true;
     }
     /**
      * Just return true
@@ -96,7 +99,7 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
      */
     public function unlock()
     {
-        return true;
+        return \true;
     }
     /**
      * Save the given JobConfig.
@@ -104,10 +107,10 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
      * @param JobConfig $config A JobConfig to save.
      * @return bool
      */
-    public function save(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig $config)
+    public function save(JobConfig $config)
     {
         $this->config = $config;
-        return true;
+        return \true;
     }
     /**
      * Load a JobConfig from the storage.
@@ -124,7 +127,7 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
      */
     public function clear()
     {
-        $this->config = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig();
+        $this->config = new JobConfig();
     }
     /**
      * Hold the items in memory and run the job in the same process when it
@@ -142,10 +145,10 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
     public function submit($item, $idNum)
     {
         if (!$this->hasShutdownHookRegistered) {
-            register_shutdown_function([$this, 'shutdown']);
-            $this->hasShutdownHookRegistered = true;
+            \register_shutdown_function([$this, 'shutdown']);
+            $this->hasShutdownHookRegistered = \true;
         }
-        if (!array_key_exists($idNum, $this->items)) {
+        if (!\array_key_exists($idNum, $this->items)) {
             $this->items[$idNum] = [];
             $this->lastInvoked[$idNum] = $this->created;
         }
@@ -153,10 +156,10 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
         $job = $this->config->getJobFromIdNum($idNum);
         $batchSize = $job->getBatchSize();
         $period = $job->getCallPeriod();
-        if (count($this->items[$idNum]) >= $batchSize || count($this->items[$idNum]) !== 0 && microtime(true) > $this->lastInvoked[$idNum] + $period) {
+        if (\count($this->items[$idNum]) >= $batchSize || \count($this->items[$idNum]) !== 0 && \microtime(\true) > $this->lastInvoked[$idNum] + $period) {
             $this->flush($idNum);
             $this->items[$idNum] = [];
-            $this->lastInvoked[$idNum] = microtime(true);
+            $this->lastInvoked[$idNum] = \microtime(\true);
         }
     }
     /**
@@ -173,9 +176,9 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
                 $this->handleFailure($idNum, $this->items[$idNum]);
             }
             $this->items[$idNum] = [];
-            $this->lastInvoked[$idNum] = microtime(true);
+            $this->lastInvoked[$idNum] = \microtime(\true);
         }
-        return true;
+        return \true;
     }
     /**
      * Run the job for remainder items.
@@ -183,7 +186,7 @@ final class InMemoryConfigStorage implements \DeliciousBrains\WP_Offload_Media\G
     public function shutdown()
     {
         foreach ($this->items as $idNum => $items) {
-            if (count($items) !== 0) {
+            if (\count($items) !== 0) {
                 $this->flush($idNum);
             }
         }

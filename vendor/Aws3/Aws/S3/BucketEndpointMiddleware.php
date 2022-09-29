@@ -14,7 +14,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  */
 class BucketEndpointMiddleware
 {
-    private static $exclusions = ['GetBucketLocation' => true];
+    private static $exclusions = ['GetBucketLocation' => \true];
     private $nextHandler;
     /**
      * Create a middleware wrapper function.
@@ -31,7 +31,7 @@ class BucketEndpointMiddleware
     {
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(CommandInterface $command, RequestInterface $request)
     {
         $nextHandler = $this->nextHandler;
         $bucket = $command['Bucket'];
@@ -42,13 +42,13 @@ class BucketEndpointMiddleware
     }
     private function removeBucketFromPath($path, $bucket)
     {
-        $len = strlen($bucket) + 1;
-        if (substr($path, 0, $len) === "/{$bucket}") {
-            $path = substr($path, $len);
+        $len = \strlen($bucket) + 1;
+        if (\substr($path, 0, $len) === "/{$bucket}") {
+            $path = \substr($path, $len);
         }
         return $path ?: '/';
     }
-    private function modifyRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
+    private function modifyRequest(RequestInterface $request, CommandInterface $command)
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -56,7 +56,7 @@ class BucketEndpointMiddleware
         $path = $this->removeBucketFromPath($path, $bucket);
         // Modify the Key to make sure the key is encoded, but slashes are not.
         if ($command['Key']) {
-            $path = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client::encodeKey(rawurldecode($path));
+            $path = S3Client::encodeKey(\rawurldecode($path));
         }
         return $request->withUri($uri->withPath($path));
     }

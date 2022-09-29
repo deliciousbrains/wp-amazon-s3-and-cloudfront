@@ -28,22 +28,23 @@ class HttpHandlerFactory
      * @return Guzzle5HttpHandler|Guzzle6HttpHandler|Guzzle7HttpHandler
      * @throws \Exception
      */
-    public static function build(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client = null)
+    public static function build(ClientInterface $client = null)
     {
-        $client = $client ?: new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client();
+        $client = $client ?: new Client();
         $version = null;
-        if (defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
-            $version = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::MAJOR_VERSION;
-        } elseif (defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::VERSION')) {
-            $version = (int) substr(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::VERSION, 0, 1);
+        if (\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
+            $version = ClientInterface::MAJOR_VERSION;
+        } elseif (\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::VERSION')) {
+            /** @phpstan-ignore-next-line */
+            $version = (int) \substr(ClientInterface::VERSION, 0, 1);
         }
         switch ($version) {
             case 5:
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle5HttpHandler($client);
+                return new Guzzle5HttpHandler($client);
             case 6:
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle6HttpHandler($client);
+                return new Guzzle6HttpHandler($client);
             case 7:
-                return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle7HttpHandler($client);
+                return new Guzzle7HttpHandler($client);
             default:
                 throw new \Exception('Version not supported');
         }

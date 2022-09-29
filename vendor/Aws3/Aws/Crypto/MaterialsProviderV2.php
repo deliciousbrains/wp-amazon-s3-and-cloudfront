@@ -2,9 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-abstract class MaterialsProviderV2 implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterfaceV2
+abstract class MaterialsProviderV2 implements MaterialsProviderInterfaceV2
 {
-    private static $supportedKeySizes = [128 => true, 256 => true];
+    private static $supportedKeySizes = [128 => \true, 256 => \true];
     /**
      * Returns if the requested size is supported by AES.
      *
@@ -52,6 +52,6 @@ abstract class MaterialsProviderV2 implements \DeliciousBrains\WP_Offload_Media\
      */
     public function generateIv($openSslName)
     {
-        return openssl_random_pseudo_bytes(openssl_cipher_iv_length($openSslName));
+        return \openssl_random_pseudo_bytes(\openssl_cipher_iv_length($openSslName));
     }
 }

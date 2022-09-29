@@ -42,16 +42,16 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
  * $config = $promise->wait();
  * </code>
  */
-class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface
+class ConfigurationProvider extends AbstractConfigurationProvider implements ConfigurationProviderInterface
 {
-    const DEFAULT_ENABLED = false;
+    const DEFAULT_ENABLED = \false;
     const DEFAULT_CACHE_LIMIT = 1000;
     const ENV_ENABLED = 'AWS_ENDPOINT_DISCOVERY_ENABLED';
     const ENV_ENABLED_ALT = 'AWS_ENABLE_ENDPOINT_DISCOVERY';
     const ENV_PROFILE = 'AWS_PROFILE';
     public static $cacheKey = 'aws_cached_endpoint_discovery_config';
-    protected static $interfaceClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\ConfigurationInterface::class;
-    protected static $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Exception\ConfigurationException::class;
+    protected static $interfaceClass = ConfigurationInterface::class;
+    protected static $exceptionClass = ConfigurationException::class;
     /**
      * Create a default config provider that first checks for environment
      * variables, then checks for a specified profile in the environment-defined
@@ -70,11 +70,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function defaultProvider(array $config = [])
     {
         $configProviders = [self::env()];
-        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != \false) {
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback($config);
-        $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
         if (isset($config['endpoint_discovery']) && $config['endpoint_discovery'] instanceof CacheInterface) {
             return self::cache($memo, $config['endpoint_discovery'], self::$cacheKey);
         }
@@ -90,12 +90,12 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     {
         return function () use($cacheLimit) {
             // Use config from environment variables, if available
-            $enabled = getenv(self::ENV_ENABLED);
-            if ($enabled === false || $enabled === '') {
-                $enabled = getenv(self::ENV_ENABLED_ALT);
+            $enabled = \getenv(self::ENV_ENABLED);
+            if ($enabled === \false || $enabled === '') {
+                $enabled = \getenv(self::ENV_ENABLED_ALT);
             }
-            if ($enabled !== false && $enabled !== '') {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($enabled, $cacheLimit));
+            if ($enabled !== \false && $enabled !== '') {
+                return Promise\Create::promiseFor(new Configuration($enabled, $cacheLimit));
             }
             return self::reject('Could not find environment variable config' . ' in ' . self::ENV_ENABLED);
         };
@@ -118,13 +118,13 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
             if (!empty($apiData['operations'])) {
                 foreach ($apiData['operations'] as $operation) {
                     if (!empty($operation['endpointdiscovery']['required'])) {
-                        $enabled = true;
+                        $enabled = \true;
                     }
                 }
             }
         }
         return function () use($enabled) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($enabled, self::DEFAULT_CACHE_LIMIT));
+            return Promise\Create::promiseFor(new Configuration($enabled, self::DEFAULT_CACHE_LIMIT));
         };
     }
     /**
@@ -143,13 +143,13 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function ini($profile = null, $filename = null, $cacheLimit = self::DEFAULT_CACHE_LIMIT)
     {
         $filename = $filename ?: self::getDefaultConfigFilename();
-        $profile = $profile ?: (getenv(self::ENV_PROFILE) ?: 'default');
+        $profile = $profile ?: (\getenv(self::ENV_PROFILE) ?: 'default');
         return function () use($profile, $filename, $cacheLimit) {
-            if (!is_readable($filename)) {
+            if (!@\is_readable($filename)) {
                 return self::reject("Cannot read configuration from {$filename}");
             }
-            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true);
-            if ($data === false) {
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, \true);
+            if ($data === \false) {
                 return self::reject("Invalid config file: {$filename}");
             }
             if (!isset($data[$profile])) {
@@ -158,7 +158,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
             if (!isset($data[$profile]['endpoint_discovery_enabled'])) {
                 return self::reject("Required endpoint discovery config values \n                    not present in INI profile '{$profile}' ({$filename})");
             }
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($data[$profile]['endpoint_discovery_enabled'], $cacheLimit));
+            return Promise\Create::promiseFor(new Configuration($data[$profile]['endpoint_discovery_enabled'], $cacheLimit));
         };
     }
     /**
@@ -171,7 +171,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
      */
     public static function unwrap($config)
     {
-        if (is_callable($config)) {
+        if (\is_callable($config)) {
             $config = $config();
         }
         if ($config instanceof PromiseInterface) {
@@ -179,11 +179,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
         }
         if ($config instanceof ConfigurationInterface) {
             return $config;
-        } elseif (is_array($config) && isset($config['enabled'])) {
+        } elseif (\is_array($config) && isset($config['enabled'])) {
             if (isset($config['cache_limit'])) {
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($config['enabled'], $config['cache_limit']);
+                return new Configuration($config['enabled'], $config['cache_limit']);
             }
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointDiscovery\Configuration($config['enabled'], self::DEFAULT_CACHE_LIMIT);
+            return new Configuration($config['enabled'], self::DEFAULT_CACHE_LIMIT);
         }
         throw new \InvalidArgumentException('Not a valid endpoint_discovery ' . 'configuration argument.');
     }

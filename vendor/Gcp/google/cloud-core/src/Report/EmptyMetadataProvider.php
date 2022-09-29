@@ -20,7 +20,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report;
 /**
  * An empty MetadataProvider.
  */
-class EmptyMetadataProvider implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report\MetadataProviderInterface
+class EmptyMetadataProvider implements MetadataProviderInterface
 {
     /**
      * Return an array representing MonitoredResource.

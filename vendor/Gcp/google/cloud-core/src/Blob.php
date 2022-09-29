@@ -17,7 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Represents a Blob value.
@@ -50,7 +50,7 @@ class Blob
      */
     public function __construct($value)
     {
-        $this->value = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for($value);
+        $this->value = Utils::streamFor($value);
     }
     /**
      * Get the blob contents as a stream

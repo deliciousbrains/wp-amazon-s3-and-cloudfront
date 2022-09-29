@@ -19,54 +19,59 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @author  Christian Bergau <cbergau86@gmail.com>
  * @author  Jason Davis <happydude@jasondavis.net>
+ *
+ * @phpstan-import-type FormattedRecord from AbstractProcessingHandler
  */
-class ZendMonitorHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class ZendMonitorHandler extends AbstractProcessingHandler
 {
     /**
      * Monolog level / ZendMonitor Custom Event priority map
      *
-     * @var array
+     * @var array<int, int>
      */
     protected $levelMap = [];
     /**
-     * @param  string|int                $level  The minimum logging level at which this handler will be triggered.
-     * @param  bool                      $bubble Whether the messages that are handled can bubble up the stack or not.
      * @throws MissingExtensionException
      */
-    public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct($level = Logger::DEBUG, bool $bubble = \true)
     {
-        if (!function_exists('zend_monitor_custom_event')) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('You must have Zend Server installed with Zend Monitor enabled in order to use this handler');
+        if (!\function_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\zend_monitor_custom_event')) {
+            throw new MissingExtensionException('You must have Zend Server installed with Zend Monitor enabled in order to use this handler');
         }
         //zend monitor constants are not defined if zend monitor is not enabled.
-        $this->levelMap = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => \ZEND_MONITOR_EVENT_SEVERITY_INFO, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => \ZEND_MONITOR_EVENT_SEVERITY_INFO, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => \ZEND_MONITOR_EVENT_SEVERITY_INFO, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => \ZEND_MONITOR_EVENT_SEVERITY_WARNING, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => \ZEND_MONITOR_EVENT_SEVERITY_ERROR, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => \ZEND_MONITOR_EVENT_SEVERITY_ERROR, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => \ZEND_MONITOR_EVENT_SEVERITY_ERROR, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => \ZEND_MONITOR_EVENT_SEVERITY_ERROR];
+        $this->levelMap = [Logger::DEBUG => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_INFO, Logger::INFO => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_INFO, Logger::NOTICE => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_INFO, Logger::WARNING => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_WARNING, Logger::ERROR => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_ERROR, Logger::CRITICAL => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_ERROR, Logger::ALERT => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_ERROR, Logger::EMERGENCY => \DeliciousBrains\WP_Offload_Media\Gcp\ZEND_MONITOR_EVENT_SEVERITY_ERROR];
         parent::__construct($level, $bubble);
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
-        $this->writeZendMonitorCustomEvent(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::getLevelName($record['level']), $record['message'], $record['formatted'], $this->levelMap[$record['level']]);
+        $this->writeZendMonitorCustomEvent(Logger::getLevelName($record['level']), $record['message'], $record['formatted'], $this->levelMap[$record['level']]);
     }
     /**
      * Write to Zend Monitor Events
      * @param string $type      Text displayed in "Class Name (custom)" field
      * @param string $message   Text displayed in "Error String"
-     * @param mixed  $formatted Displayed in Custom Variables tab
+     * @param array  $formatted Displayed in Custom Variables tab
      * @param int    $severity  Set the event severity level (-1,0,1)
+     *
+     * @phpstan-param FormattedRecord $formatted
      */
     protected function writeZendMonitorCustomEvent(string $type, string $message, array $formatted, int $severity) : void
     {
         zend_monitor_custom_event($type, $message, $formatted, $severity);
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\NormalizerFormatter();
+        return new NormalizerFormatter();
     }
+    /**
+     * @return array<int, int>
+     */
     public function getLevelMap() : array
     {
         return $this->levelMap;

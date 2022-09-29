@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  *
  * @author Michael Moussa <michael.moussa@gmail.com>
  */
-class PsrHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
+class PsrHandler extends AbstractHandler implements FormattableHandlerInterface
 {
     /**
      * PSR-3 compliant logger
@@ -37,10 +37,8 @@ class PsrHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\A
     protected $formatter;
     /**
      * @param LoggerInterface $logger The underlying PSR-3 compliant logger to which messages will be proxied
-     * @param string|int      $level  The minimum logging level at which this handler will be triggered
-     * @param bool            $bubble Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface $logger, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct(LoggerInterface $logger, $level = Logger::DEBUG, bool $bubble = \true)
     {
         parent::__construct($level, $bubble);
         $this->logger = $logger;
@@ -51,22 +49,22 @@ class PsrHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\A
     public function handle(array $record) : bool
     {
         if (!$this->isHandling($record)) {
-            return false;
+            return \false;
         }
         if ($this->formatter) {
             $formatted = $this->formatter->format($record);
-            $this->logger->log(strtolower($record['level_name']), (string) $formatted, $record['context']);
+            $this->logger->log(\strtolower($record['level_name']), (string) $formatted, $record['context']);
         } else {
-            $this->logger->log(strtolower($record['level_name']), $record['message'], $record['context']);
+            $this->logger->log(\strtolower($record['level_name']), $record['message'], $record['context']);
         }
-        return false === $this->bubble;
+        return \false === $this->bubble;
     }
     /**
      * Sets the formatter.
      *
      * @param FormatterInterface $formatter
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
         $this->formatter = $formatter;
         return $this;

@@ -19,7 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\UriTrait;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * Provides a base impementation for uploads.
@@ -78,14 +78,14 @@ abstract class AbstractUploader
      *     @type string $contentType Content type of the resource.
      * }
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper $requestWrapper, $data, $uri, array $options = [])
+    public function __construct(RequestWrapper $requestWrapper, $data, $uri, array $options = [])
     {
         $this->requestWrapper = $requestWrapper;
-        $this->data = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for($data);
+        $this->data = Utils::streamFor($data);
         $this->uri = $uri;
         $this->metadata = isset($options['metadata']) ? $options['metadata'] : [];
         $this->chunkSize = isset($options['chunkSize']) ? $options['chunkSize'] : null;
-        $this->requestOptions = array_intersect_key($options, ['restOptions' => null, 'retries' => null, 'requestTimeout' => null]);
+        $this->requestOptions = \array_intersect_key($options, ['restOptions' => null, 'retries' => null, 'requestTimeout' => null]);
         $this->contentType = isset($options['contentType']) ? $options['contentType'] : 'application/octet-stream';
     }
     /**

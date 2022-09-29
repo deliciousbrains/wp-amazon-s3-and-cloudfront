@@ -21,7 +21,7 @@ use Exception;
 /**
  * Exception thrown when a request fails.
  */
-class ServiceException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException
+class ServiceException extends GoogleException
 {
     /**
      * @var Exception
@@ -39,7 +39,7 @@ class ServiceException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clou
      * @param Exception $serviceException
      * @param array $metadata [optional] Exception metadata.
      */
-    public function __construct($message, $code = null, \Exception $serviceException = null, array $metadata = [])
+    public function __construct($message, $code = null, Exception $serviceException = null, array $metadata = [])
     {
         $this->serviceException = $serviceException;
         $this->metadata = $metadata;

@@ -33,10 +33,10 @@ trait TimeTrait
     private function parseTimeString($timestamp)
     {
         $nanoRegex = '/\\d{4}-\\d{1,2}-\\d{1,2}T\\d{1,2}\\:\\d{1,2}\\:\\d{1,2}(?:\\.(\\d{1,}))?/';
-        preg_match($nanoRegex, $timestamp, $matches);
+        \preg_match($nanoRegex, $timestamp, $matches);
         $subSeconds = isset($matches[1]) ? $matches[1] : '0';
-        if (strlen($subSeconds) > 6) {
-            $timestamp = str_replace('.' . $subSeconds, '.' . substr($subSeconds, 0, 6), $timestamp);
+        if (\strlen($subSeconds) > 6) {
+            $timestamp = \str_replace('.' . $subSeconds, '.' . \substr($subSeconds, 0, 6), $timestamp);
         }
         $dt = new \DateTimeImmutable($timestamp);
         $nanos = $this->convertFractionToNanoSeconds($subSeconds);
@@ -64,9 +64,9 @@ trait TimeTrait
     {
         $dateTime = $dateTime->setTimeZone(new \DateTimeZone('UTC'));
         if ($ns === null) {
-            return $dateTime->format(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::FORMAT);
+            return $dateTime->format(Timestamp::FORMAT);
         } else {
-            return sprintf($dateTime->format(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::FORMAT_INTERPOLATE), $this->convertNanoSecondsToFraction($ns));
+            return \sprintf($dateTime->format(Timestamp::FORMAT_INTERPOLATE), $this->convertNanoSecondsToFraction($ns));
         }
     }
     /**
@@ -93,7 +93,7 @@ trait TimeTrait
      */
     private function convertFractionToNanoSeconds($subseconds)
     {
-        return (int) str_pad($subseconds, 9, '0', STR_PAD_RIGHT);
+        return (int) \str_pad($subseconds, 9, '0', \STR_PAD_RIGHT);
     }
     /**
      * Convert nanoseconds to subseconds.
@@ -106,15 +106,15 @@ trait TimeTrait
      *     `true`.
      * @return string
      */
-    private function convertNanoSecondsToFraction($nanos, $rpad = true)
+    private function convertNanoSecondsToFraction($nanos, $rpad = \true)
     {
         $nanos = (string) $nanos;
-        $res = str_pad($nanos, 9, '0', STR_PAD_LEFT);
-        if (substr($res, 6, 3) === '000') {
-            $res = substr($res, 0, 6);
+        $res = \str_pad($nanos, 9, '0', \STR_PAD_LEFT);
+        if (\substr($res, 6, 3) === '000') {
+            $res = \substr($res, 0, 6);
         }
         if (!$rpad) {
-            $res = rtrim($res, '0');
+            $res = \rtrim($res, '0');
         }
         return $res;
     }

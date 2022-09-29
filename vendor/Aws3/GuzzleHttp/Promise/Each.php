@@ -25,7 +25,7 @@ final class Each
      */
     public static function of($iterable, callable $onFulfilled = null, callable $onRejected = null)
     {
-        return (new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
+        return (new EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
     }
     /**
      * Like of, but only allows a certain number of outstanding promises at any
@@ -44,7 +44,7 @@ final class Each
      */
     public static function ofLimit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null)
     {
-        return (new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
+        return (new EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
     }
     /**
      * Like limit, but ensures that no promise in the given $iterable argument
@@ -59,7 +59,7 @@ final class Each
      */
     public static function ofLimitAll($iterable, $concurrency, callable $onFulfilled = null)
     {
-        return each_limit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $aggregate) {
+        return each_limit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, PromiseInterface $aggregate) {
             $aggregate->reject($reason);
         });
     }

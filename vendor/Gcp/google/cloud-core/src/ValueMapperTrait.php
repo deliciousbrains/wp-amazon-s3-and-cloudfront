@@ -35,9 +35,9 @@ trait ValueMapperTrait
      *        **Defaults to** `Google\Cloud\Core\Timestamp`.
      * @return mixed
      */
-    public function createTimestampWithNanos($timestamp, $returnType = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp::class)
+    public function createTimestampWithNanos($timestamp, $returnType = Timestamp::class)
     {
-        if (is_array($timestamp)) {
+        if (\is_array($timestamp)) {
             $timestamp += ['seconds' => 0, 'nanos' => 0];
             $dt = $this->createDateTimeFromSeconds($timestamp['seconds']);
             $nanos = $timestamp['nanos'];

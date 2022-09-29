@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient;
  *
  * @deprecated
  */
-class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface
+class KmsMaterialsProvider extends MaterialsProvider implements MaterialsProviderInterface
 {
     const WRAP_ALGORITHM_NAME = 'kms';
     private $kmsClient;
@@ -24,17 +24,17 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Cr
      * @param string $kmsKeyId The private KMS key id to be used for encrypting
      *                         and decrypting keys.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Kms\KmsClient $kmsClient, $kmsKeyId = null)
+    public function __construct(KmsClient $kmsClient, $kmsKeyId = null)
     {
         $this->kmsClient = $kmsClient;
         $this->kmsKeyId = $kmsKeyId;
     }
-    public function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope)
+    public function fromDecryptionEnvelope(MetadataEnvelope $envelope)
     {
-        if (empty($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
+        if (empty($envelope[MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER])) {
             throw new \RuntimeException('Not able to detect the materials description.');
         }
-        $materialsDescription = json_decode($envelope[\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], true);
+        $materialsDescription = \json_decode($envelope[MetadataEnvelope::MATERIALS_DESCRIPTION_HEADER], \true);
         if (empty($materialsDescription['kms_cmk_id']) && empty($materialsDescription['aws:x-amz-cek-alg'])) {
             throw new \RuntimeException('Not able to detect kms_cmk_id (legacy' . ' implementation) or aws:x-amz-cek-alg (current implementation)' . ' from kms materials description.');
         }
@@ -69,7 +69,7 @@ class KmsMaterialsProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Cr
     public function encryptCek($unencryptedCek, $materialDescription)
     {
         $encryptedDataKey = $this->kmsClient->encrypt(['Plaintext' => $unencryptedCek, 'KeyId' => $this->kmsKeyId, 'EncryptionContext' => $materialDescription]);
-        return base64_encode($encryptedDataKey['CiphertextBlob']);
+        return \base64_encode($encryptedDataKey['CiphertextBlob']);
     }
     /**
      * Takes an encrypted content encryption key (CEK) and material description

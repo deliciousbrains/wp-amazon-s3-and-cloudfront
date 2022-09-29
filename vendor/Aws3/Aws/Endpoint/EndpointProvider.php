@@ -58,10 +58,10 @@ class EndpointProvider
     public static function resolve(callable $provider, array $args = [])
     {
         $result = $provider($args);
-        if (is_array($result)) {
+        if (\is_array($result)) {
             return $result;
         }
-        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedEndpointException('Unable to resolve an endpoint using the provider arguments: ' . json_encode($args) . '. Note: you can provide an "endpoint" ' . 'option to a client constructor to bypass invoking an endpoint ' . 'provider.');
+        throw new UnresolvedEndpointException('Unable to resolve an endpoint using the provider arguments: ' . \json_encode($args) . '. Note: you can provide an "endpoint" ' . 'option to a client constructor to bypass invoking an endpoint ' . 'provider.');
     }
     /**
      * Creates and returns the default SDK endpoint provider.
@@ -72,7 +72,7 @@ class EndpointProvider
      */
     public static function defaultProvider()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider();
+        return PartitionEndpointProvider::defaultProvider();
     }
     /**
      * Creates and returns an endpoint provider that uses patterns from an
@@ -84,6 +84,6 @@ class EndpointProvider
      */
     public static function patterns(array $patterns)
     {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PatternEndpointProvider($patterns);
+        return new PatternEndpointProvider($patterns);
     }
 }

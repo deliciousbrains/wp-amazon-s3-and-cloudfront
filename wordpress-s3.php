@@ -4,7 +4,7 @@ Plugin Name: WP Offload Media Lite
 Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
 Description: Automatically copies media uploads to Amazon S3, DigitalOcean Spaces or Google Cloud Storage for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery.
 Author: Delicious Brains
-Version: 2.6.2
+Version: 3.0.0
 Author URI: https://deliciousbrains.com/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting
 Network: True
 Text Domain: amazon-s3-and-cloudfront
@@ -26,7 +26,9 @@ Domain Path: /languages/
 // Then completely rewritten.
 */
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '2.6.2';
+// phpcs:disable SlevomatCodingStandard.Variables.UnusedVariable
+
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '3.0.0';
 
 require_once dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
 
@@ -63,6 +65,7 @@ function as3cf_init() {
 
 	// Autoloader.
 	require_once $abspath . '/wp-offload-media-autoloader.php';
+	new WP_Offload_Media_Autoloader( 'WP_Offload_Media', $abspath );
 
 	require_once $abspath . '/include/functions.php';
 	require_once $abspath . '/classes/as3cf-utils.php';
@@ -74,8 +77,6 @@ function as3cf_init() {
 	require_once $abspath . '/classes/as3cf-plugin-base.php';
 	require_once $abspath . '/classes/as3cf-plugin-compatibility.php';
 	require_once $abspath . '/classes/amazon-s3-and-cloudfront.php';
-
-	new WP_Offload_Media_Autoloader( 'WP_Offload_Media', $abspath );
 
 	$as3cf = new Amazon_S3_And_CloudFront( __FILE__ );
 

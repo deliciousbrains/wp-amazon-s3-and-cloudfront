@@ -38,7 +38,7 @@ interface PartitionInterface
      * 
      * @return string[]
      */
-    public function getAvailableEndpoints($service, $allowNonRegionalEndpoints = false);
+    public function getAvailableEndpoints($service, $allowNonRegionalEndpoints = \false);
     /**
      * A partition must be invokable as an endpoint provider.
      *

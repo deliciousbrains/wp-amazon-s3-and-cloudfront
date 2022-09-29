@@ -120,5 +120,5 @@ interface RequestInterface extends MessageInterface
      * @param bool $preserveHost Preserve the original state of the Host header.
      * @return static
      */
-    public function withUri(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri, $preserveHost = false);
+    public function withUri(UriInterface $uri, $preserveHost = \false);
 }

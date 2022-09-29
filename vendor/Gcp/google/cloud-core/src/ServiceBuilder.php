@@ -30,7 +30,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Spanner\SpannerClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Speech\SpeechClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Trace\TraceClient;
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Translate\TranslateClient;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Translate\V2\TranslateClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Vision\VisionClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
 /**
@@ -124,7 +124,7 @@ class ServiceBuilder
      */
     public function bigQuery(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\BigQuery\BigQueryClient::class, 'bigquery', $config);
+        return $this->createClient(BigQueryClient::class, 'bigquery', $config);
     }
     /**
      * Google Cloud Datastore is a highly-scalable NoSQL database for your
@@ -147,7 +147,7 @@ class ServiceBuilder
      */
     public function datastore(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Datastore\DatastoreClient::class, 'datastore', $config);
+        return $this->createClient(DatastoreClient::class, 'datastore', $config);
     }
     /**
      * Cloud Firestore is a flexible, scalable, realtime database for mobile,
@@ -170,7 +170,7 @@ class ServiceBuilder
      */
     public function firestore(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Firestore\FirestoreClient::class, 'firestore', $config);
+        return $this->createClient(FirestoreClient::class, 'firestore', $config);
     }
     /**
      * Google Stackdriver Logging allows you to store, search, analyze, monitor,
@@ -189,7 +189,7 @@ class ServiceBuilder
      */
     public function logging(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Logging\LoggingClient::class, 'logging', $config);
+        return $this->createClient(LoggingClient::class, 'logging', $config);
     }
     /**
      * Google Cloud Natural Language provides natural language understanding
@@ -209,7 +209,7 @@ class ServiceBuilder
      */
     public function language(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Language\LanguageClient::class, 'language', $config);
+        return $this->createClient(LanguageClient::class, 'language', $config);
     }
     /**
      * Google Cloud Pub/Sub allows you to send and receive messages between
@@ -232,7 +232,7 @@ class ServiceBuilder
      */
     public function pubsub(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\PubSub\PubSubClient::class, 'pubsub', $config);
+        return $this->createClient(PubSubClient::class, 'pubsub', $config);
     }
     /**
      * Google Cloud Spanner is a highly scalable, transactional, managed, NewSQL
@@ -256,7 +256,7 @@ class ServiceBuilder
      */
     public function spanner(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Spanner\SpannerClient::class, 'spanner', $config);
+        return $this->createClient(SpannerClient::class, 'spanner', $config);
     }
     /**
      * Google Cloud Speech enables easy integration of Google speech recognition
@@ -284,7 +284,7 @@ class ServiceBuilder
      */
     public function speech(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Speech\SpeechClient::class, 'speech', $config);
+        return $this->createClient(SpeechClient::class, 'speech', $config);
     }
     /**
      * Google Cloud Storage allows you to store and retrieve data on Google's
@@ -302,7 +302,7 @@ class ServiceBuilder
      */
     public function storage(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient::class, 'storage', $config);
+        return $this->createClient(StorageClient::class, 'storage', $config);
     }
     /**
      * Google Stackdriver Trace allows you to collect latency data from your applications
@@ -320,7 +320,7 @@ class ServiceBuilder
      */
     public function trace(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Trace\TraceClient::class, 'trace', $config);
+        return $this->createClient(TraceClient::class, 'trace', $config);
     }
     /**
      * Google Cloud Vision allows you to understand the content of an image,
@@ -339,7 +339,7 @@ class ServiceBuilder
      */
     public function vision(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Vision\VisionClient::class, 'vision', $config);
+        return $this->createClient(VisionClient::class, 'vision', $config);
     }
     /**
      * Google Cloud Translation provides the ability to dynamically translate
@@ -386,7 +386,7 @@ class ServiceBuilder
      */
     public function translate(array $config = [])
     {
-        return $this->createClient(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Translate\TranslateClient::class, 'translate', $config);
+        return $this->createClient(TranslateClient::class, 'translate', $config);
     }
     /**
      * Create the client library, or error if not installed.
@@ -397,10 +397,10 @@ class ServiceBuilder
      */
     private function createClient($class, $packageName, array $config = [])
     {
-        if (class_exists($class)) {
+        if (\class_exists($class)) {
             return new $class($this->resolveConfig($config + $this->config));
         }
-        throw new \Exception(sprintf('The google/cloud-%s package is missing and must be installed.', $packageName));
+        throw new \Exception(\sprintf('The google/cloud-%s package is missing and must be installed.', $packageName));
     }
     /**
      * Resolves configuration options.
@@ -411,12 +411,12 @@ class ServiceBuilder
     private function resolveConfig(array $config)
     {
         if (!isset($config['httpHandler'])) {
-            $config['httpHandler'] = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build();
+            $config['httpHandler'] = HttpHandlerFactory::build();
         }
         if (!isset($config['asyncHttpHandler'])) {
             $isGuzzleHandler = $config['httpHandler'] instanceof Guzzle6HttpHandler || $config['httpHandler'] instanceof Guzzle5HttpHandler;
-            $config['asyncHttpHandler'] = $isGuzzleHandler ? [$config['httpHandler'], 'async'] : [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build(), 'async'];
+            $config['asyncHttpHandler'] = $isGuzzleHandler ? [$config['httpHandler'], 'async'] : [HttpHandlerFactory::build(), 'async'];
         }
-        return array_merge($this->config, $config);
+        return \array_merge($this->config, $config);
     }
 }

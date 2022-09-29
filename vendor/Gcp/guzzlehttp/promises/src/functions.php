@@ -21,9 +21,9 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise;
  *
  * @deprecated queue will be removed in guzzlehttp/promises:2.0. Use Utils::queue instead.
  */
-function queue(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\TaskQueueInterface $assign = null)
+function queue(TaskQueueInterface $assign = null)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue($assign);
+    return Utils::queue($assign);
 }
 /**
  * Adds a function to run in the task queue when it is next `run()` and returns
@@ -37,7 +37,7 @@ function queue(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\TaskQueu
  */
 function task(callable $task)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::task($task);
+    return Utils::task($task);
 }
 /**
  * Creates a promise for a value if the value is not a promise.
@@ -50,7 +50,7 @@ function task(callable $task)
  */
 function promise_for($value)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::promiseFor($value);
+    return Create::promiseFor($value);
 }
 /**
  * Creates a rejected promise for a reason if the reason is not a promise. If
@@ -64,7 +64,7 @@ function promise_for($value)
  */
 function rejection_for($reason)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($reason);
+    return Create::rejectionFor($reason);
 }
 /**
  * Create an exception for a rejected promise value.
@@ -77,7 +77,7 @@ function rejection_for($reason)
  */
 function exception_for($reason)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::exceptionFor($reason);
+    return Create::exceptionFor($reason);
 }
 /**
  * Returns an iterator for the given value.
@@ -90,7 +90,7 @@ function exception_for($reason)
  */
 function iter_for($value)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::iterFor($value);
+    return Create::iterFor($value);
 }
 /**
  * Synchronously waits on a promise to resolve and returns an inspection state
@@ -108,9 +108,9 @@ function iter_for($value)
  *
  * @deprecated inspect will be removed in guzzlehttp/promises:2.0. Use Utils::inspect instead.
  */
-function inspect(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface $promise)
+function inspect(PromiseInterface $promise)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::inspect($promise);
+    return Utils::inspect($promise);
 }
 /**
  * Waits on all of the provided promises, but does not unwrap rejected promises
@@ -128,7 +128,7 @@ function inspect(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promis
  */
 function inspect_all($promises)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::inspectAll($promises);
+    return Utils::inspectAll($promises);
 }
 /**
  * Waits on all of the provided promises and returns the fulfilled values.
@@ -148,7 +148,7 @@ function inspect_all($promises)
  */
 function unwrap($promises)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::unwrap($promises);
+    return Utils::unwrap($promises);
 }
 /**
  * Given an array of promises, return a promise that is fulfilled when all the
@@ -165,9 +165,9 @@ function unwrap($promises)
  *
  * @deprecated all will be removed in guzzlehttp/promises:2.0. Use Utils::all instead.
  */
-function all($promises, $recursive = false)
+function all($promises, $recursive = \false)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::all($promises, $recursive);
+    return Utils::all($promises, $recursive);
 }
 /**
  * Initiate a competitive race between multiple promises or values (values will
@@ -189,7 +189,7 @@ function all($promises, $recursive = false)
  */
 function some($count, $promises)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::some($count, $promises);
+    return Utils::some($count, $promises);
 }
 /**
  * Like some(), with 1 as count. However, if the promise fulfills, the
@@ -203,7 +203,7 @@ function some($count, $promises)
  */
 function any($promises)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::any($promises);
+    return Utils::any($promises);
 }
 /**
  * Returns a promise that is fulfilled when all of the provided promises have
@@ -221,7 +221,7 @@ function any($promises)
  */
 function settle($promises)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::settle($promises);
+    return Utils::settle($promises);
 }
 /**
  * Given an iterator that yields promises or values, returns a promise that is
@@ -246,7 +246,7 @@ function settle($promises)
  */
 function each($iterable, callable $onFulfilled = null, callable $onRejected = null)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Each::of($iterable, $onFulfilled, $onRejected);
+    return Each::of($iterable, $onFulfilled, $onRejected);
 }
 /**
  * Like each, but only allows a certain number of outstanding promises at any
@@ -267,7 +267,7 @@ function each($iterable, callable $onFulfilled = null, callable $onRejected = nu
  */
 function each_limit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Each::ofLimit($iterable, $concurrency, $onFulfilled, $onRejected);
+    return Each::ofLimit($iterable, $concurrency, $onFulfilled, $onRejected);
 }
 /**
  * Like each_limit, but ensures that no promise in the given $iterable argument
@@ -284,7 +284,7 @@ function each_limit($iterable, $concurrency, callable $onFulfilled = null, calla
  */
 function each_limit_all($iterable, $concurrency, callable $onFulfilled = null)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Each::ofLimitAll($iterable, $concurrency, $onFulfilled);
+    return Each::ofLimitAll($iterable, $concurrency, $onFulfilled);
 }
 /**
  * Returns true if a promise is fulfilled.
@@ -293,9 +293,9 @@ function each_limit_all($iterable, $concurrency, callable $onFulfilled = null)
  *
  * @deprecated is_fulfilled will be removed in guzzlehttp/promises:2.0. Use Is::fulfilled instead.
  */
-function is_fulfilled(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_fulfilled(PromiseInterface $promise)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::fulfilled($promise);
+    return Is::fulfilled($promise);
 }
 /**
  * Returns true if a promise is rejected.
@@ -304,9 +304,9 @@ function is_fulfilled(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
  *
  * @deprecated is_rejected will be removed in guzzlehttp/promises:2.0. Use Is::rejected instead.
  */
-function is_rejected(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_rejected(PromiseInterface $promise)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::rejected($promise);
+    return Is::rejected($promise);
 }
 /**
  * Returns true if a promise is fulfilled or rejected.
@@ -315,9 +315,9 @@ function is_rejected(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Pr
  *
  * @deprecated is_settled will be removed in guzzlehttp/promises:2.0. Use Is::settled instead.
  */
-function is_settled(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface $promise)
+function is_settled(PromiseInterface $promise)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::settled($promise);
+    return Is::settled($promise);
 }
 /**
  * Create a new coroutine.
@@ -330,5 +330,5 @@ function is_settled(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Pro
  */
 function coroutine(callable $generatorFn)
 {
-    return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Coroutine::of($generatorFn);
+    return Coroutine::of($generatorFn);
 }

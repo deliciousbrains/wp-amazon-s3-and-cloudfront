@@ -64,11 +64,7 @@ final class Utils
         if (\defined('STDOUT')) {
             return \STDOUT;
         }
-        $resource = \fopen('php://output', 'w');
-        if (false === $resource) {
-            throw new \RuntimeException('Can not open php output for writing to debug the resource.');
-        }
-        return $resource;
+        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::tryFopen('php://output', 'w');
     }
     /**
      * Chooses and creates a default handler to use based on the environment.
@@ -83,14 +79,14 @@ final class Utils
     {
         $handler = null;
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            $handler = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\Proxy::wrapSync(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlMultiHandler(), new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlHandler());
+            $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
         } elseif (\function_exists('curl_exec')) {
-            $handler = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlHandler();
+            $handler = new CurlHandler();
         } elseif (\function_exists('curl_multi_exec')) {
-            $handler = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlMultiHandler();
+            $handler = new CurlMultiHandler();
         }
         if (\ini_get('allow_url_fopen')) {
-            $handler = $handler ? \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\Proxy::wrapStreaming($handler, new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\StreamHandler()) : new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\StreamHandler();
+            $handler = $handler ? Proxy::wrapStreaming($handler, new StreamHandler()) : new StreamHandler();
         } elseif (!$handler) {
             throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
@@ -101,7 +97,7 @@ final class Utils
      */
     public static function defaultUserAgent() : string
     {
-        return sprintf('GuzzleHttp/%d', \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface::MAJOR_VERSION);
+        return \sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }
     /**
      * Returns the default cacert bundle for the current system.
@@ -202,33 +198,31 @@ EOT
     public static function isHostInNoProxy(string $host, array $noProxyArray) : bool
     {
         if (\strlen($host) === 0) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\InvalidArgumentException('Empty host provided');
+            throw new InvalidArgumentException('Empty host provided');
         }
         // Strip port if present.
-        if (\strpos($host, ':')) {
-            /** @var string[] $hostParts will never be false because of the checks above */
-            $hostParts = \explode($host, ':', 2);
-            $host = $hostParts[0];
-        }
+        [$host] = \explode(':', $host, 2);
         foreach ($noProxyArray as $area) {
             // Always match on wildcards.
             if ($area === '*') {
-                return true;
-            } elseif (empty($area)) {
+                return \true;
+            }
+            if (empty($area)) {
                 // Don't match on empty values.
                 continue;
-            } elseif ($area === $host) {
+            }
+            if ($area === $host) {
                 // Exact matches.
-                return true;
+                return \true;
             }
             // Special match if the area when prefixed with ".". Remove any
             // existing leading "." and add a new leading ".".
             $area = '.' . \ltrim($area, '.');
             if (\substr($host, -\strlen($area)) === $area) {
-                return true;
+                return \true;
             }
         }
-        return false;
+        return \false;
     }
     /**
      * Wrapper for json_decode that throws when an error occurs.
@@ -245,11 +239,11 @@ EOT
      *
      * @link https://www.php.net/manual/en/function.json-decode.php
      */
-    public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
+    public static function jsonDecode(string $json, bool $assoc = \false, int $depth = 512, int $options = 0)
     {
         $data = \json_decode($json, $assoc, $depth, $options);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
+            throw new InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
         }
         return $data;
     }
@@ -268,7 +262,7 @@ EOT
     {
         $json = \json_encode($value, $options, $depth);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\InvalidArgumentException('json_encode error: ' . \json_last_error_msg());
+            throw new InvalidArgumentException('json_encode error: ' . \json_last_error_msg());
         }
         /** @var string */
         return $json;
@@ -283,33 +277,33 @@ EOT
      */
     public static function currentTime() : float
     {
-        return (double) \function_exists('hrtime') ? \hrtime(true) / 1000000000.0 : \microtime(true);
+        return (float) \function_exists('hrtime') ? \hrtime(\true) / 1000000000.0 : \microtime(\true);
     }
     /**
      * @throws InvalidArgumentException
      *
      * @internal
      */
-    public static function idnUriConvert(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface $uri, int $options = 0) : UriInterface
+    public static function idnUriConvert(UriInterface $uri, int $options = 0) : UriInterface
     {
         if ($uri->getHost()) {
             $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
-            if ($asciiHost === false) {
+            if ($asciiHost === \false) {
                 $errorBitSet = $info['errors'] ?? 0;
-                $errorConstants = array_filter(array_keys(get_defined_constants()), static function ($name) {
-                    return substr($name, 0, 11) === 'IDNA_ERROR_';
+                $errorConstants = \array_filter(\array_keys(\get_defined_constants()), static function (string $name) : bool {
+                    return \substr($name, 0, 11) === 'IDNA_ERROR_';
                 });
                 $errors = [];
                 foreach ($errorConstants as $errorConstant) {
-                    if ($errorBitSet & constant($errorConstant)) {
+                    if ($errorBitSet & \constant($errorConstant)) {
                         $errors[] = $errorConstant;
                     }
                 }
                 $errorMessage = 'IDN conversion failed';
                 if ($errors) {
-                    $errorMessage .= ' (errors: ' . implode(', ', $errors) . ')';
+                    $errorMessage .= ' (errors: ' . \implode(', ', $errors) . ')';
                 }
-                throw new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\InvalidArgumentException($errorMessage);
+                throw new InvalidArgumentException($errorMessage);
             }
             if ($uri->getHost() !== $asciiHost) {
                 // Replace URI only if the ASCII version is different
@@ -326,7 +320,7 @@ EOT
         if (isset($_SERVER[$name])) {
             return (string) $_SERVER[$name];
         }
-        if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
+        if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== \false && $value !== null) {
             return (string) $value;
         }
         return null;

@@ -40,9 +40,9 @@ trait SysvTrait
      */
     private function getSysvKey($idNum)
     {
-        $key = getenv('GOOGLE_CLOUD_SYSV_ID') ?: self::$productionKey;
-        $base = ftok(__FILE__, $key);
-        if ($base == PHP_INT_MAX) {
+        $key = \getenv('GOOGLE_CLOUD_SYSV_ID') ?: self::$productionKey;
+        $base = \ftok(__FILE__, $key);
+        if ($base == \PHP_INT_MAX) {
             $base = 1;
         }
         return $base + $idNum;
@@ -54,6 +54,6 @@ trait SysvTrait
      */
     private function isSysvIPCLoaded()
     {
-        return extension_loaded('sysvmsg') && extension_loaded('sysvsem') && extension_loaded('sysvshm');
+        return \extension_loaded('sysvmsg') && \extension_loaded('sysvsem') && \extension_loaded('sysvshm');
     }
 }

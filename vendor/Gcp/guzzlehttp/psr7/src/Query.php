@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 final class Query
@@ -14,36 +15,34 @@ final class Query
      *
      * @param string   $str         Query string to parse
      * @param int|bool $urlEncoding How the query string is encoded
-     *
-     * @return array
      */
-    public static function parse($str, $urlEncoding = true)
+    public static function parse(string $str, $urlEncoding = \true) : array
     {
         $result = [];
         if ($str === '') {
             return $result;
         }
-        if ($urlEncoding === true) {
+        if ($urlEncoding === \true) {
             $decoder = function ($value) {
-                return rawurldecode(str_replace('+', ' ', $value));
+                return \rawurldecode(\str_replace('+', ' ', (string) $value));
             };
-        } elseif ($urlEncoding === PHP_QUERY_RFC3986) {
+        } elseif ($urlEncoding === \PHP_QUERY_RFC3986) {
             $decoder = 'rawurldecode';
-        } elseif ($urlEncoding === PHP_QUERY_RFC1738) {
+        } elseif ($urlEncoding === \PHP_QUERY_RFC1738) {
             $decoder = 'urldecode';
         } else {
             $decoder = function ($str) {
                 return $str;
             };
         }
-        foreach (explode('&', $str) as $kvp) {
-            $parts = explode('=', $kvp, 2);
+        foreach (\explode('&', $str) as $kvp) {
+            $parts = \explode('=', $kvp, 2);
             $key = $decoder($parts[0]);
             $value = isset($parts[1]) ? $decoder($parts[1]) : null;
-            if (!isset($result[$key])) {
+            if (!\array_key_exists($key, $result)) {
                 $result[$key] = $value;
             } else {
-                if (!is_array($result[$key])) {
+                if (!\is_array($result[$key])) {
                     $result[$key] = [$result[$key]];
                 }
                 $result[$key][] = $value;
@@ -62,43 +61,44 @@ final class Query
      * @param int|false $encoding Set to false to not encode, PHP_QUERY_RFC3986
      *                            to encode using RFC3986, or PHP_QUERY_RFC1738
      *                            to encode using RFC1738.
-     * @return string
      */
-    public static function build(array $params, $encoding = PHP_QUERY_RFC3986)
+    public static function build(array $params, $encoding = \PHP_QUERY_RFC3986) : string
     {
         if (!$params) {
             return '';
         }
-        if ($encoding === false) {
-            $encoder = function ($str) {
+        if ($encoding === \false) {
+            $encoder = function (string $str) : string {
                 return $str;
             };
-        } elseif ($encoding === PHP_QUERY_RFC3986) {
+        } elseif ($encoding === \PHP_QUERY_RFC3986) {
             $encoder = 'rawurlencode';
-        } elseif ($encoding === PHP_QUERY_RFC1738) {
+        } elseif ($encoding === \PHP_QUERY_RFC1738) {
             $encoder = 'urlencode';
         } else {
             throw new \InvalidArgumentException('Invalid type');
         }
         $qs = '';
         foreach ($params as $k => $v) {
-            $k = $encoder($k);
-            if (!is_array($v)) {
+            $k = $encoder((string) $k);
+            if (!\is_array($v)) {
                 $qs .= $k;
+                $v = \is_bool($v) ? (int) $v : $v;
                 if ($v !== null) {
-                    $qs .= '=' . $encoder($v);
+                    $qs .= '=' . $encoder((string) $v);
                 }
                 $qs .= '&';
             } else {
                 foreach ($v as $vv) {
                     $qs .= $k;
+                    $vv = \is_bool($vv) ? (int) $vv : $vv;
                     if ($vv !== null) {
-                        $qs .= '=' . $encoder($vv);
+                        $qs .= '=' . $encoder((string) $vv);
                     }
                     $qs .= '&';
                 }
             }
         }
-        return $qs ? (string) substr($qs, 0, -1) : '';
+        return $qs ? (string) \substr($qs, 0, -1) : '';
     }
 }

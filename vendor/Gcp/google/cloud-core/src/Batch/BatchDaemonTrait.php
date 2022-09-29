@@ -34,7 +34,7 @@ trait BatchDaemonTrait
      */
     private function isDaemonRunning()
     {
-        $isDaemonRunning = filter_var(getenv('IS_BATCH_DAEMON_RUNNING'), FILTER_VALIDATE_BOOLEAN);
-        return $isDaemonRunning !== false;
+        $isDaemonRunning = \filter_var(\getenv('IS_BATCH_DAEMON_RUNNING'), \FILTER_VALIDATE_BOOLEAN);
+        return $isDaemonRunning !== \false;
     }
 }

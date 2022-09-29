@@ -35,9 +35,9 @@ class Retry
      *
      * @param BatchRunner $runner [optional] **Defaults to** a new BatchRunner.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchRunner $runner = null)
+    public function __construct(BatchRunner $runner = null)
     {
-        $this->runner = $runner ?: new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchRunner();
+        $this->runner = $runner ?: new BatchRunner();
         $this->initFailureFile();
     }
     /**
@@ -47,23 +47,23 @@ class Retry
     {
         foreach ($this->getFailedFiles() as $file) {
             // Rename the file first
-            $tmpFile = dirname($file) . '/retrying-' . basename($file);
-            rename($file, $tmpFile);
-            $fp = @fopen($tmpFile, 'r');
-            if ($fp === false) {
-                fwrite(STDERR, sprintf('Could not open the file: %s' . PHP_EOL, $tmpFile));
+            $tmpFile = \dirname($file) . '/retrying-' . \basename($file);
+            \rename($file, $tmpFile);
+            $fp = @\fopen($tmpFile, 'r');
+            if ($fp === \false) {
+                \fwrite(\STDERR, \sprintf('Could not open the file: %s' . \PHP_EOL, $tmpFile));
                 continue;
             }
-            while ($line = fgets($fp)) {
-                $a = unserialize($line);
-                $idNum = key($a);
+            while ($line = \fgets($fp)) {
+                $a = \unserialize($line);
+                $idNum = \key($a);
                 $job = $this->runner->getJobFromIdNum($idNum);
                 if (!$job->callFunc($a[$idNum])) {
                     $this->handleFailure($idNum, $a[$idNum]);
                 }
             }
-            @fclose($fp);
-            @unlink($tmpFile);
+            @\fclose($fp);
+            @\unlink($tmpFile);
         }
     }
 }

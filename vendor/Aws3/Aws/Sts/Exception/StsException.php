@@ -6,6 +6,6 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 /**
  * AWS Security Token Service exception.
  */
-class StsException extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException
+class StsException extends AwsException
 {
 }

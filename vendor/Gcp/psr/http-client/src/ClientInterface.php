@@ -15,5 +15,5 @@ interface ClientInterface
      *
      * @throws \Psr\Http\Client\ClientExceptionInterface If an error happens while processing the request.
      */
-    public function sendRequest(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request) : ResponseInterface;
+    public function sendRequest(RequestInterface $request) : ResponseInterface;
 }

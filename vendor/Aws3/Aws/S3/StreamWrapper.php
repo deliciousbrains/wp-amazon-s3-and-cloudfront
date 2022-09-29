@@ -84,7 +84,7 @@ class StreamWrapper
     /** @var string The opened protocol (e.g., "s3") */
     private $protocol = 's3';
     /** @var bool Keeps track of whether stream has been flushed since opening */
-    private $isFlushed = false;
+    private $isFlushed = \false;
     /**
      * Register the 's3://' stream wrapper
      *
@@ -92,26 +92,26 @@ class StreamWrapper
      * @param string            $protocol Protocol to register as.
      * @param CacheInterface    $cache    Default cache for the protocol.
      */
-    public static function register(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $protocol = 's3', \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CacheInterface $cache = null)
+    public static function register(S3ClientInterface $client, $protocol = 's3', CacheInterface $cache = null)
     {
-        if (in_array($protocol, stream_get_wrappers())) {
-            stream_wrapper_unregister($protocol);
+        if (\in_array($protocol, \stream_get_wrappers())) {
+            \stream_wrapper_unregister($protocol);
         }
         // Set the client passed in as the default stream context client
-        stream_wrapper_register($protocol, get_called_class(), STREAM_IS_URL);
-        $default = stream_context_get_options(stream_context_get_default());
+        \stream_wrapper_register($protocol, \get_called_class(), \STREAM_IS_URL);
+        $default = \stream_context_get_options(\stream_context_get_default());
         $default[$protocol]['client'] = $client;
         if ($cache) {
             $default[$protocol]['cache'] = $cache;
         } elseif (!isset($default[$protocol]['cache'])) {
             // Set a default cache adapter.
-            $default[$protocol]['cache'] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache();
+            $default[$protocol]['cache'] = new LruArrayCache();
         }
-        stream_context_set_default($default);
+        \stream_context_set_default($default);
     }
     public function stream_close()
     {
-        if ($this->body->getSize() === 0 && !$this->isFlushed) {
+        if (!$this->isFlushed && empty($this->body->getSize()) && $this->mode !== 'r') {
             $this->stream_flush();
         }
         $this->body = $this->cache = null;
@@ -119,9 +119,9 @@ class StreamWrapper
     public function stream_open($path, $mode, $options, &$opened_path)
     {
         $this->initProtocol($path);
-        $this->isFlushed = false;
+        $this->isFlushed = \false;
         $this->params = $this->getBucketKey($path);
-        $this->mode = rtrim($mode, 'bt');
+        $this->mode = \rtrim($mode, 'bt');
         if ($errors = $this->validate($path, $this->mode)) {
             return $this->triggerError($errors);
         }
@@ -142,18 +142,23 @@ class StreamWrapper
     }
     public function stream_flush()
     {
-        $this->isFlushed = true;
+        // Check if stream body size has been
+        // calculated via a flush or close
+        if ($this->body->getSize() === null && $this->mode !== 'r') {
+            return $this->triggerError("Unable to determine stream size. Did you forget to close or flush the stream?");
+        }
+        $this->isFlushed = \true;
         if ($this->mode == 'r') {
-            return false;
+            return \false;
         }
         if ($this->body->isSeekable()) {
             $this->body->seek(0);
         }
-        $params = $this->getOptions(true);
+        $params = $this->getOptions(\true);
         $params['Body'] = $this->body;
         // Attempt to guess the ContentType of the upload based on the
         // file extension of the key
-        if (!isset($params['ContentType']) && ($type = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\mimetype_from_filename($params['Key']))) {
+        if (!isset($params['ContentType']) && ($type = Psr7\MimeType::fromFilename($params['Key']))) {
             $params['ContentType'] = $type;
         }
         $this->clearCacheKey("{$this->protocol}://{$params['Bucket']}/{$params['Key']}");
@@ -165,11 +170,11 @@ class StreamWrapper
     {
         return $this->body->read($count);
     }
-    public function stream_seek($offset, $whence = SEEK_SET)
+    public function stream_seek($offset, $whence = \SEEK_SET)
     {
-        return !$this->body->isSeekable() ? false : $this->boolCall(function () use($offset, $whence) {
+        return !$this->body->isSeekable() ? \false : $this->boolCall(function () use($offset, $whence) {
             $this->body->seek($offset, $whence);
-            return true;
+            return \true;
         });
     }
     public function stream_tell()
@@ -188,7 +193,7 @@ class StreamWrapper
         return $this->boolCall(function () use($path) {
             $this->clearCacheKey($path);
             $this->getClient()->deleteObject($this->withPath($path));
-            return true;
+            return \true;
         });
     }
     public function stream_stat()
@@ -207,14 +212,14 @@ class StreamWrapper
     {
         $this->initProtocol($path);
         // Some paths come through as S3:// for some reason.
-        $split = explode('://', $path);
-        $path = strtolower($split[0]) . '://' . $split[1];
+        $split = \explode('://', $path);
+        $path = \strtolower($split[0]) . '://' . $split[1];
         // Check if this path is in the url_stat cache
         if ($value = $this->getCacheStorage()->get($path)) {
             return $value;
         }
         $stat = $this->createStat($path, $flags);
-        if (is_array($stat)) {
+        if (\is_array($stat)) {
             $this->getCacheStorage()->set($path, $stat);
         }
         return $stat;
@@ -226,7 +231,7 @@ class StreamWrapper
      */
     private function initProtocol($path)
     {
-        $parts = explode('://', $path, 2);
+        $parts = \explode('://', $path, 2);
         $this->protocol = $parts[0] ?: 's3';
     }
     private function createStat($path, $flags)
@@ -239,7 +244,7 @@ class StreamWrapper
         return $this->boolCall(function () use($parts, $path) {
             try {
                 $result = $this->getClient()->headObject($parts);
-                if (substr($parts['Key'], -1, 1) == '/' && $result['ContentLength'] == 0) {
+                if (\substr($parts['Key'], -1, 1) == '/' && $result['ContentLength'] == 0) {
                     // Return as if it is a bucket to account for console
                     // bucket objects (e.g., zero-byte object "foo/")
                     return $this->formatUrlStat($path);
@@ -249,7 +254,7 @@ class StreamWrapper
             } catch (S3Exception $e) {
                 // Maybe this isn't an actual key, but a prefix. Do a prefix
                 // listing of objects to determine.
-                $result = $this->getClient()->listObjects(['Bucket' => $parts['Bucket'], 'Prefix' => rtrim($parts['Key'], '/') . '/', 'MaxKeys' => 1]);
+                $result = $this->getClient()->listObjects(['Bucket' => $parts['Bucket'], 'Prefix' => \rtrim($parts['Key'], '/') . '/', 'MaxKeys' => 1]);
                 if (!$result['Contents'] && !$result['CommonPrefixes']) {
                     throw new \Exception("File or directory not found: {$path}");
                 }
@@ -285,7 +290,7 @@ class StreamWrapper
         $params = $this->withPath($path);
         $this->clearCacheKey($path);
         if (!$params['Bucket']) {
-            return false;
+            return \false;
         }
         if (!isset($params['ACL'])) {
             $params['ACL'] = $this->determineAcl($mode);
@@ -304,7 +309,7 @@ class StreamWrapper
         return $this->boolCall(function () use($params, $path, $client) {
             if (!$params['Key']) {
                 $client->deleteBucket(['Bucket' => $params['Bucket']]);
-                return true;
+                return \true;
             }
             return $this->deleteSubfolder($path, $params);
         });
@@ -341,20 +346,20 @@ class StreamWrapper
             $op['Delimiter'] = $delimiter;
         }
         if ($params['Key']) {
-            $params['Key'] = rtrim($params['Key'], $delimiter) . $delimiter;
+            $params['Key'] = \rtrim($params['Key'], $delimiter) . $delimiter;
             $op['Prefix'] = $params['Key'];
         }
         $this->openedBucketPrefix = $params['Key'];
         // Filter our "/" keys added by the console as directories, and ensure
         // that if a filter function is provided that it passes the filter.
-        $this->objectIterator = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\flatmap($this->getClient()->getPaginator('ListObjects', $op), function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result) use($filterFn) {
+        $this->objectIterator = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\flatmap($this->getClient()->getPaginator('ListObjects', $op), function (Result $result) use($filterFn) {
             $contentsAndPrefixes = $result->search('[Contents[], CommonPrefixes[]][]');
             // Filter out dir place holder keys and use the filter fn.
-            return array_filter($contentsAndPrefixes, function ($key) use($filterFn) {
-                return (!$filterFn || call_user_func($filterFn, $key)) && (!isset($key['Key']) || substr($key['Key'], -1, 1) !== '/');
+            return \array_filter($contentsAndPrefixes, function ($key) use($filterFn) {
+                return (!$filterFn || \call_user_func($filterFn, $key)) && (!isset($key['Key']) || \substr($key['Key'], -1, 1) !== '/');
             });
         });
-        return true;
+        return \true;
     }
     /**
      * Close the directory listing handles
@@ -364,8 +369,8 @@ class StreamWrapper
     public function dir_closedir()
     {
         $this->objectIterator = null;
-        gc_collect_cycles();
-        return true;
+        \gc_collect_cycles();
+        return \true;
     }
     /**
      * This method is called in response to rewinddir()
@@ -377,7 +382,7 @@ class StreamWrapper
         return $this->boolCall(function () {
             $this->objectIterator = null;
             $this->dir_opendir($this->openedPath, null);
-            return true;
+            return \true;
         });
     }
     /**
@@ -391,7 +396,7 @@ class StreamWrapper
     {
         // Skip empty result keys
         if (!$this->objectIterator->valid()) {
-            return false;
+            return \false;
         }
         // First we need to create a cache key. This key is the full path to
         // then object in s3: protocol://bucket/key.
@@ -404,7 +409,7 @@ class StreamWrapper
         if (isset($cur['Prefix'])) {
             // Include "directories". Be sure to strip a trailing "/"
             // on prefixes.
-            $result = rtrim($cur['Prefix'], '/');
+            $result = \rtrim($cur['Prefix'], '/');
             $key = $this->formatKey($result);
             $stat = $this->formatUrlStat($key);
         } else {
@@ -417,11 +422,11 @@ class StreamWrapper
         $this->getCacheStorage()->set($key, $stat);
         $this->objectIterator->next();
         // Remove the prefix from the result to emulate other stream wrappers.
-        return $this->openedBucketPrefix ? substr($result, strlen($this->openedBucketPrefix)) : $result;
+        return $this->openedBucketPrefix ? \substr($result, \strlen($this->openedBucketPrefix)) : $result;
     }
     private function formatKey($key)
     {
-        $protocol = explode('://', $this->openedPath)[0];
+        $protocol = \explode('://', $this->openedPath)[0];
         return "{$protocol}://{$this->openedBucket}/{$key}";
     }
     /**
@@ -447,18 +452,18 @@ class StreamWrapper
             return $this->triggerError('The Amazon S3 stream wrapper only ' . 'supports copying objects');
         }
         return $this->boolCall(function () use($partsFrom, $partsTo) {
-            $options = $this->getOptions(true);
+            $options = $this->getOptions(\true);
             // Copy the object and allow overriding default parameters if
             // desired, but by default copy metadata
             $this->getClient()->copy($partsFrom['Bucket'], $partsFrom['Key'], $partsTo['Bucket'], $partsTo['Key'], isset($options['acl']) ? $options['acl'] : 'private', $options);
             // Delete the original object
             $this->getClient()->deleteObject(['Bucket' => $partsFrom['Bucket'], 'Key' => $partsFrom['Key']] + $options);
-            return true;
+            return \true;
         });
     }
     public function stream_cast($cast_as)
     {
-        return false;
+        return \false;
     }
     /**
      * Validates the provided stream arguments for fopen and returns an array
@@ -470,12 +475,12 @@ class StreamWrapper
         if (!$this->getOption('Key')) {
             $errors[] = 'Cannot open a bucket. You must specify a path in the ' . 'form of s3://bucket/key';
         }
-        if (!in_array($mode, ['r', 'w', 'a', 'x'])) {
+        if (!\in_array($mode, ['r', 'w', 'a', 'x'])) {
             $errors[] = "Mode not supported: {$mode}. " . "Use one 'r', 'w', 'a', or 'x'.";
         }
         // When using mode "x" validate if the file exists before attempting
         // to read
-        if ($mode == 'x' && $this->getClient()->doesObjectExist($this->getOption('Bucket'), $this->getOption('Key'), $this->getOptions(true))) {
+        if ($mode == 'x' && $this->getClient()->doesObjectExist($this->getOption('Bucket'), $this->getOption('Key'), $this->getOptions(\true))) {
             $errors[] = "{$path} already exists on Amazon S3";
         }
         return $errors;
@@ -488,16 +493,16 @@ class StreamWrapper
      *
      * @return array
      */
-    private function getOptions($removeContextData = false)
+    private function getOptions($removeContextData = \false)
     {
         // Context is not set when doing things like stat
         if ($this->context === null) {
             $options = [];
         } else {
-            $options = stream_context_get_options($this->context);
+            $options = \stream_context_get_options($this->context);
             $options = isset($options[$this->protocol]) ? $options[$this->protocol] : [];
         }
-        $default = stream_context_get_options(stream_context_get_default());
+        $default = \stream_context_get_options(\stream_context_get_default());
         $default = isset($default[$this->protocol]) ? $default[$this->protocol] : [];
         $result = $this->params + $options + $default;
         if ($removeContextData) {
@@ -533,9 +538,9 @@ class StreamWrapper
     private function getBucketKey($path)
     {
         // Remove the protocol
-        $parts = explode('://', $path);
+        $parts = \explode('://', $path);
         // Get the bucket, key
-        $parts = explode('/', $parts[1], 2);
+        $parts = \explode('/', $parts[1], 2);
         return ['Bucket' => $parts[0], 'Key' => isset($parts[1]) ? $parts[1] : null];
     }
     /**
@@ -547,36 +552,36 @@ class StreamWrapper
      */
     private function withPath($path)
     {
-        $params = $this->getOptions(true);
+        $params = $this->getOptions(\true);
         return $this->getBucketKey($path) + $params;
     }
     private function openReadStream()
     {
         $client = $this->getClient();
-        $command = $client->getCommand('GetObject', $this->getOptions(true));
-        $command['@http']['stream'] = true;
+        $command = $client->getCommand('GetObject', $this->getOptions(\true));
+        $command['@http']['stream'] = \true;
         $result = $client->execute($command);
         $this->size = $result['ContentLength'];
         $this->body = $result['Body'];
         // Wrap the body in a caching entity body if seeking is allowed
         if ($this->getOption('seekable') && !$this->body->isSeekable()) {
-            $this->body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\CachingStream($this->body);
+            $this->body = new CachingStream($this->body);
         }
-        return true;
+        return \true;
     }
     private function openWriteStream()
     {
-        $this->body = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'));
-        return true;
+        $this->body = new Stream(\fopen('php://temp', 'r+'));
+        return \true;
     }
     private function openAppendStream()
     {
         try {
             // Get the body of the object and seek to the end of the stream
             $client = $this->getClient();
-            $this->body = $client->getObject($this->getOptions(true))['Body'];
-            $this->body->seek(0, SEEK_END);
-            return true;
+            $this->body = $client->getObject($this->getOptions(\true))['Body'];
+            $this->body->seek(0, \SEEK_END);
+            return \true;
         } catch (S3Exception $e) {
             // The object does not exist, so use a simple write stream
             return $this->openWriteStream();
@@ -595,12 +600,12 @@ class StreamWrapper
     private function triggerError($errors, $flags = null)
     {
         // This is triggered with things like file_exists()
-        if ($flags & STREAM_URL_STAT_QUIET) {
-            return $flags & STREAM_URL_STAT_LINK ? $this->formatUrlStat(false) : false;
+        if ($flags & \STREAM_URL_STAT_QUIET) {
+            return $flags & \STREAM_URL_STAT_LINK ? $this->formatUrlStat(\false) : \false;
         }
         // This is triggered when doing things like lstat() or stat()
-        trigger_error(implode("\n", (array) $errors), E_USER_WARNING);
-        return false;
+        \trigger_error(\implode("\n", (array) $errors), \E_USER_WARNING);
+        return \false;
     }
     /**
      * Prepare a url_stat result array
@@ -612,7 +617,7 @@ class StreamWrapper
     private function formatUrlStat($result = null)
     {
         $stat = $this->getStatTemplate();
-        switch (gettype($result)) {
+        switch (\gettype($result)) {
             case 'NULL':
             case 'string':
                 // Directory with 0777 access - see "man 2 stat".
@@ -629,7 +634,7 @@ class StreamWrapper
                 }
                 if (isset($result['LastModified'])) {
                     // ListObjects or HeadObject result
-                    $stat['mtime'] = $stat[9] = $stat['ctime'] = $stat[10] = strtotime($result['LastModified']);
+                    $stat['mtime'] = $stat[9] = $stat['ctime'] = $stat[10] = \strtotime($result['LastModified']);
                 }
         }
         return $stat;
@@ -650,7 +655,7 @@ class StreamWrapper
         return $this->boolCall(function () use($params, $path) {
             $this->getClient()->createBucket($params);
             $this->clearCacheKey($path);
-            return true;
+            return \true;
         });
     }
     /**
@@ -664,7 +669,7 @@ class StreamWrapper
     private function createSubfolder($path, array $params)
     {
         // Ensure the path ends in "/" and the body is empty.
-        $params['Key'] = rtrim($params['Key'], '/') . '/';
+        $params['Key'] = \rtrim($params['Key'], '/') . '/';
         $params['Body'] = '';
         // Fail if this pseudo directory key already exists
         if ($this->getClient()->doesObjectExist($params['Bucket'], $params['Key'])) {
@@ -673,7 +678,7 @@ class StreamWrapper
         return $this->boolCall(function () use($params, $path) {
             $this->getClient()->putObject($params);
             $this->clearCacheKey($path);
-            return true;
+            return \true;
         });
     }
     /**
@@ -687,13 +692,13 @@ class StreamWrapper
     private function deleteSubfolder($path, $params)
     {
         // Use a key that adds a trailing slash if needed.
-        $prefix = rtrim($params['Key'], '/') . '/';
+        $prefix = \rtrim($params['Key'], '/') . '/';
         $result = $this->getClient()->listObjects(['Bucket' => $params['Bucket'], 'Prefix' => $prefix, 'MaxKeys' => 1]);
         // Check if the bucket contains keys other than the placeholder
         if ($contents = $result['Contents']) {
-            return count($contents) > 1 || $contents[0]['Key'] != $prefix ? $this->triggerError('Subfolder is not empty') : $this->unlink(rtrim($path, '/') . '/');
+            return \count($contents) > 1 || $contents[0]['Key'] != $prefix ? $this->triggerError('Subfolder is not empty') : $this->unlink(\rtrim($path, '/') . '/');
         }
-        return $result['CommonPrefixes'] ? $this->triggerError('Subfolder contains nested folders') : true;
+        return $result['CommonPrefixes'] ? $this->triggerError('Subfolder contains nested folders') : \true;
     }
     /**
      * Determine the most appropriate ACL based on a file mode.
@@ -704,7 +709,7 @@ class StreamWrapper
      */
     private function determineAcl($mode)
     {
-        switch (substr(decoct($mode), 0, 1)) {
+        switch (\substr(\decoct($mode), 0, 1)) {
             case '7':
                 return 'public-read';
             case '6':
@@ -745,7 +750,7 @@ class StreamWrapper
     private function getCacheStorage()
     {
         if (!$this->cache) {
-            $this->cache = $this->getOption('cache') ?: new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\LruArrayCache();
+            $this->cache = $this->getOption('cache') ?: new LruArrayCache();
         }
         return $this->cache;
     }
@@ -756,7 +761,7 @@ class StreamWrapper
      */
     private function clearCacheKey($key)
     {
-        clearstatcache(true, $key);
+        \clearstatcache(\true, $key);
         $this->getCacheStorage()->remove($key);
     }
     /**

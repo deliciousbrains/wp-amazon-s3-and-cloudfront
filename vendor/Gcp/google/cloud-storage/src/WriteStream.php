@@ -25,13 +25,13 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
  * A Stream implementation that uploads in chunks to a provided uploader when
  * we reach a certain chunkSize. Upon `close`, we will upload the remaining chunk.
  */
-class WriteStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface
+class WriteStream implements StreamInterface
 {
     use StreamDecoratorTrait;
     private $uploader;
     private $stream;
     private $chunkSize = 262144;
-    private $hasWritten = false;
+    private $hasWritten = \false;
     /**
      * Create a new WriteStream instance
      *
@@ -43,15 +43,15 @@ class WriteStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
      *            upload data
      * }
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader $uploader = null, $options = [])
+    public function __construct(AbstractUploader $uploader = null, $options = [])
     {
         if ($uploader) {
             $this->setUploader($uploader);
         }
-        if (array_key_exists('chunkSize', $options)) {
+        if (\array_key_exists('chunkSize', $options)) {
             $this->chunkSize = $options['chunkSize'];
         }
-        $this->stream = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\BufferStream($this->chunkSize);
+        $this->stream = new BufferStream($this->chunkSize);
     }
     /**
      * Close the stream. Uploads any remaining data.
@@ -78,11 +78,11 @@ class WriteStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
         // Ensure we have a resume uri here because we need to create the streaming
         // upload before we have data (size of 0).
         $this->uploader->getResumeUri();
-        $this->hasWritten = true;
+        $this->hasWritten = \true;
         if (!$this->stream->write($data)) {
             $this->uploader->upload($this->getChunkedWriteSize());
         }
-        return strlen($data);
+        return \strlen($data);
     }
     /**
      * Set the uploader for this class. You may need to set this after initialization
@@ -96,6 +96,6 @@ class WriteStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
     }
     private function getChunkedWriteSize()
     {
-        return (int) floor($this->getSize() / $this->chunkSize) * $this->chunkSize;
+        return (int) \floor($this->getSize() / $this->chunkSize) * $this->chunkSize;
     }
 }

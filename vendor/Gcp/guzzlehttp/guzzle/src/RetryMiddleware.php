@@ -32,7 +32,7 @@ class RetryMiddleware
      *                                                                         returns true if the request is to be
      *                                                                         retried.
      * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
-     * @param null|callable(int): int                             $delay       Function that accepts the number of retries
+     * @param (callable(int): int)|null                           $delay       Function that accepts the number of retries
      *                                                                         and returns the number of
      *                                                                         milliseconds to delay.
      */
@@ -51,7 +51,7 @@ class RetryMiddleware
     {
         return (int) \pow(2, $retries - 1) * 1000;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : PromiseInterface
+    public function __invoke(RequestInterface $request, array $options) : PromiseInterface
     {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
@@ -62,7 +62,7 @@ class RetryMiddleware
     /**
      * Execute fulfilled closure
      */
-    private function onFulfilled(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : callable
+    private function onFulfilled(RequestInterface $request, array $options) : callable
     {
         return function ($value) use($request, $options) {
             if (!($this->decider)($options['retries'], $request, $value, null)) {
@@ -74,16 +74,16 @@ class RetryMiddleware
     /**
      * Execute rejected closure
      */
-    private function onRejected(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $req, array $options) : callable
+    private function onRejected(RequestInterface $req, array $options) : callable
     {
         return function ($reason) use($req, $options) {
             if (!($this->decider)($options['retries'], $req, null, $reason)) {
-                return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($reason);
+                return P\Create::rejectionFor($reason);
             }
             return $this->doRetry($req, $options);
         };
     }
-    private function doRetry(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null) : PromiseInterface
+    private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null) : PromiseInterface
     {
         $options['delay'] = ($this->delay)(++$options['retries'], $response);
         return $this($request, $options);

@@ -30,7 +30,7 @@ class SSECMiddleware
         $this->nextHandler = $nextHandler;
         $this->endpointScheme = $endpointScheme;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null)
+    public function __invoke(CommandInterface $command, RequestInterface $request = null)
     {
         // Allows only HTTPS connections when using SSE-C
         if (($command['SSECustomerKey'] || $command['CopySourceSSECustomerKey']) && $this->endpointScheme !== 'https') {
@@ -47,16 +47,16 @@ class SSECMiddleware
         $f = $this->nextHandler;
         return $f($command, $request);
     }
-    private function prepareSseParams(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, $prefix = '')
+    private function prepareSseParams(CommandInterface $command, $prefix = '')
     {
         // Base64 encode the provided key
         $key = $command[$prefix . 'SSECustomerKey'];
-        $command[$prefix . 'SSECustomerKey'] = base64_encode($key);
+        $command[$prefix . 'SSECustomerKey'] = \base64_encode($key);
         // Base64 the provided MD5 or, generate an MD5 if not provided
         if ($md5 = $command[$prefix . 'SSECustomerKeyMD5']) {
-            $command[$prefix . 'SSECustomerKeyMD5'] = base64_encode($md5);
+            $command[$prefix . 'SSECustomerKeyMD5'] = \base64_encode($md5);
         } else {
-            $command[$prefix . 'SSECustomerKeyMD5'] = base64_encode(md5($key, true));
+            $command[$prefix . 'SSECustomerKeyMD5'] = \base64_encode(\md5($key, \true));
         }
     }
 }

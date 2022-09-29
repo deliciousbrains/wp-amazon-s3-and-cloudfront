@@ -36,6 +36,13 @@ class Media_Library extends Integration {
 	protected $replaced_object_keys = array();
 
 	/**
+	 * Keep track of context when rendering media library actions.
+	 *
+	 * @var string
+	 */
+	protected $render_context = 'list';
+
+	/**
 	 * Init Media Library integration.
 	 */
 	public function init() {
@@ -61,7 +68,7 @@ class Media_Library extends Integration {
 		add_filter( 'wp_get_attachment_image_attributes', array( $this, 'wp_get_attachment_image_attributes' ), 99, 3 );
 		add_filter( 'get_image_tag', array( $this, 'maybe_encode_get_image_tag' ), 99, 6 );
 		add_filter( 'wp_get_attachment_image_src', array( $this, 'maybe_encode_wp_get_attachment_image_src' ), 99, 4 );
-		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js', ), 99, 3 );
+		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'maybe_encode_wp_prepare_attachment_for_js' ), 99, 3 );
 		add_filter( 'image_get_intermediate_size', array( $this, 'maybe_encode_image_get_intermediate_size' ), 99, 3 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'wp_get_original_image_path', array( $this, 'get_attached_file' ), 10, 2 );
@@ -92,7 +99,7 @@ class Media_Library extends Integration {
 	 *
 	 * @return bool
 	 */
-	public static function is_installed() {
+	public static function is_installed(): bool {
 		return true;
 	}
 
@@ -127,7 +134,6 @@ class Media_Library extends Integration {
 			 * to be run before proceeding with uploading. I.e. Regenerate Thumbnails requires this.
 			 *
 			 * @param bool True if we should wait AND generate_attachment_metadata hasn't run yet
-			 *
 			 */
 			if ( apply_filters( 'as3cf_wait_for_generate_attachment_metadata', false ) ) {
 				return $data;
@@ -297,7 +303,6 @@ class Media_Library extends Integration {
 	 *
 	 * @return string
 	 * @since 4.5.0
-	 *
 	 */
 	public function wp_unique_filename( $filename, $ext, $dir ) {
 		// Get Post ID if uploaded in post screen.
@@ -469,7 +474,7 @@ class Media_Library extends Integration {
 	/**
 	 * Load the attachment assets only when editing an attachment
 	 *
-	 * @param $hook_suffix
+	 * @param string $hook_suffix
 	 */
 	public function load_attachment_assets( $hook_suffix ) {
 		global $post;
@@ -513,6 +518,8 @@ class Media_Library extends Integration {
 		if ( ! empty( $as3cf_item ) ) {
 			$served_by_provider = $as3cf_item->served_by_provider( true );
 		}
+
+		$this->render_context = 'grid';
 
 		// get the actions available for the attachment
 		$data = array(
@@ -610,20 +617,21 @@ class Media_Library extends Integration {
 	 *
 	 * @return bool|array
 	 */
-	public function get_formatted_provider_info( $id ) {
+	public function get_formatted_provider_info( int $id ) {
 		$as3cf_item = Media_Library_Item::get_by_source_id( $id );
 
 		if ( ! $as3cf_item ) {
 			return false;
 		}
 
-		$provider_object = $as3cf_item->key_values();
+		$provider_object  = $as3cf_item->key_values();
+		$storage_provider = $this->as3cf->get_storage_provider_instance( $provider_object['provider'] );
 
 		// Backwards compatibility.
 		$provider_object['key'] = $provider_object['path'];
 		$provider_object['url'] = $as3cf_item->get_provider_url();
 
-		$acl      = $as3cf_item->is_private() ? $this->as3cf->get_storage_provider()->get_private_acl() : $this->as3cf->get_storage_provider()->get_default_acl();
+		$acl      = $as3cf_item->is_private() ? $storage_provider->get_private_acl() : $storage_provider->get_default_acl();
 		$acl_info = array(
 			'acl'   => $acl,
 			'name'  => $this->as3cf->get_acl_display_name( $acl ),
@@ -635,7 +643,7 @@ class Media_Library extends Integration {
 		}
 
 		$provider_object['acl']           = $acl_info;
-		$provider_object['region']        = $this->as3cf->get_storage_provider()->get_region_name( $provider_object['region'] );
+		$provider_object['region']        = $storage_provider->get_region_name( $provider_object['region'] );
 		$provider_object['provider_name'] = $this->as3cf->get_provider_service_name( $provider_object['provider'] );
 
 		return $provider_object;
@@ -853,7 +861,6 @@ class Media_Library extends Integration {
 				 * @param string             $file          Local file path
 				 * @param int                $attachment_id Attachment post id
 				 * @param Media_Library_Item $as3cf_item    The Item object
-				 *
 				 */
 				return apply_filters( 'as3cf_get_attached_file_noop', $file, $file, $attachment_id, $as3cf_item );
 			} else {
@@ -875,7 +882,6 @@ class Media_Library extends Integration {
 		 * @param string             $file          Local file path
 		 * @param int                $attachment_id Attachment post id
 		 * @param Media_Library_Item $as3cf_item    The Item object
-		 *
 		 */
 		return apply_filters( 'as3cf_get_attached_file', $url, $file, $attachment_id, $as3cf_item );
 	}
@@ -1061,7 +1067,7 @@ class Media_Library extends Integration {
 		}
 
 		$as3cf_item = Media_Library_Item::get_by_source_id( $item_source['id'] );
-		if ( empty( $as3cf_item ) ) {
+		if ( empty( $as3cf_item ) || ! $as3cf_item->served_by_provider() ) {
 			return $url;
 		}
 
@@ -1180,16 +1186,16 @@ class Media_Library extends Integration {
 	}
 
 	/**
-	 * Convert dimensions to size
+	 * Convert dimensions to size.
 	 *
 	 * @param int   $attachment_id
 	 * @param array $dimensions
 	 *
 	 * @return null|string
 	 */
-	private function convert_dimensions_to_size_name( $attachment_id, $dimensions ) {
-		$w                     = ( isset( $dimensions[0] ) && $dimensions[0] > 0 ) ? $dimensions[0] : 1;
-		$h                     = ( isset( $dimensions[1] ) && $dimensions[1] > 0 ) ? $dimensions[1] : 1;
+	private function convert_dimensions_to_size_name( int $attachment_id, array $dimensions ) {
+		$w                     = ( isset( $dimensions[0] ) && (int) $dimensions[0] > 0 ) ? (int) $dimensions[0] : 1;
+		$h                     = ( isset( $dimensions[1] ) && (int) $dimensions[1] > 0 ) ? (int) $dimensions[1] : 1;
 		$original_aspect_ratio = $w / $h;
 		$meta                  = wp_get_attachment_metadata( $attachment_id );
 
@@ -1199,18 +1205,21 @@ class Media_Library extends Integration {
 
 		$sizes = $meta['sizes'];
 		uasort( $sizes, function ( $a, $b ) {
-			// Order by image area
-			return ( $a['width'] * $a['height'] ) - ( $b['width'] * $b['height'] );
+			// Order by image area.
+			return ( (int) $a['width'] * (int) $a['height'] ) - ( (int) $b['width'] * (int) $b['height'] );
 		} );
 
 		$nearest_matches = array();
 
 		foreach ( $sizes as $size => $value ) {
-			if ( $w > $value['width'] || $h > $value['height'] ) {
+			if ( $w > (int) $value['width'] || $h > (int) $value['height'] ) {
 				continue;
 			}
 
-			$aspect_ratio = $value['width'] / $value['height'];
+			$aspect_ratio = 0;
+			if ( (int) $value['height'] > 0 ) {
+				$aspect_ratio = (int) $value['width'] / (int) $value['height'];
+			}
 
 			if ( $aspect_ratio === $original_aspect_ratio ) {
 				return $size;
@@ -1219,7 +1228,7 @@ class Media_Library extends Integration {
 			$nearest_matches[] = $size;
 		}
 
-		// Return nearest match
+		// Return nearest match.
 		if ( ! empty( $nearest_matches ) ) {
 			return $nearest_matches[0];
 		}
@@ -1503,7 +1512,6 @@ class Media_Library extends Integration {
 		 * However, if the current process is for picking up extra files associated with the item,
 		 * the indicated original file may not actually be offloaded if it does not exist
 		 * on the server but has already been offloaded.
-		 *
 		 *
 		 * @param int                $id         The attachment id.
 		 * @param Media_Library_Item $as3cf_item The Item whose files are being offloaded.

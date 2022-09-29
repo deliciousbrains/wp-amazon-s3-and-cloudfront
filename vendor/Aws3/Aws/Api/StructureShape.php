@@ -5,13 +5,13 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 /**
  * Represents a structure shape and resolve member shape references.
  */
-class StructureShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
+class StructureShape extends Shape
 {
     /**
      * @var Shape[]
      */
     private $members;
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, ShapeMap $shapeMap)
     {
         $definition['type'] = 'structure';
         if (!isset($definition['members'])) {

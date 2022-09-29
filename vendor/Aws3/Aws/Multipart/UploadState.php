@@ -96,7 +96,7 @@ class UploadState
      */
     public function getUploadedParts()
     {
-        ksort($this->uploadedParts);
+        \ksort($this->uploadedParts);
         return $this->uploadedParts;
     }
     /**

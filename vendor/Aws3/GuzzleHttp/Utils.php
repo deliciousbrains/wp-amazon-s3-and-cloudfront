@@ -17,7 +17,7 @@ final class Utils
      */
     public static function currentTime()
     {
-        return function_exists('hrtime') ? hrtime(true) / 1000000000.0 : microtime(true);
+        return \function_exists('hrtime') ? \hrtime(\true) / 1000000000.0 : \microtime(\true);
     }
     /**
      * @param int $options
@@ -27,26 +27,26 @@ final class Utils
      *
      * @internal
      */
-    public static function idnUriConvert(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri, $options = 0)
+    public static function idnUriConvert(UriInterface $uri, $options = 0)
     {
         if ($uri->getHost()) {
             $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
-            if ($asciiHost === false) {
+            if ($asciiHost === \false) {
                 $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
-                $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
-                    return substr($name, 0, 11) === 'IDNA_ERROR_';
+                $errorConstants = \array_filter(\array_keys(\get_defined_constants()), function ($name) {
+                    return \substr($name, 0, 11) === 'IDNA_ERROR_';
                 });
                 $errors = [];
                 foreach ($errorConstants as $errorConstant) {
-                    if ($errorBitSet & constant($errorConstant)) {
+                    if ($errorBitSet & \constant($errorConstant)) {
                         $errors[] = $errorConstant;
                     }
                 }
                 $errorMessage = 'IDN conversion failed';
                 if ($errors) {
-                    $errorMessage .= ' (errors: ' . implode(', ', $errors) . ')';
+                    $errorMessage .= ' (errors: ' . \implode(', ', $errors) . ')';
                 }
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\InvalidArgumentException($errorMessage);
+                throw new InvalidArgumentException($errorMessage);
             } else {
                 if ($uri->getHost() !== $asciiHost) {
                     // Replace URI only if the ASCII version is different
@@ -68,14 +68,14 @@ final class Utils
         if (\preg_match('%^[ -~]+$%', $domain) === 1) {
             return $domain;
         }
-        if (\extension_loaded('intl') && defined('INTL_IDNA_VARIANT_UTS46')) {
-            return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
+        if (\extension_loaded('intl') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+            return \idn_to_ascii($domain, $options, \INTL_IDNA_VARIANT_UTS46, $info);
         }
         /*
          * The Idn class is marked as @internal. Verify that class and method exists.
          */
-        if (method_exists(\DeliciousBrains\WP_Offload_Media\Aws3\Symfony\Polyfill\Intl\Idn\Idn::class, 'idn_to_ascii')) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii($domain, $options, \DeliciousBrains\WP_Offload_Media\Aws3\Symfony\Polyfill\Intl\Idn\Idn::INTL_IDNA_VARIANT_UTS46, $info);
+        if (\method_exists(Idn::class, 'idn_to_ascii')) {
+            return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
         }
         throw new \RuntimeException('ext-intl or symfony/polyfill-intl-idn not loaded or too old');
     }

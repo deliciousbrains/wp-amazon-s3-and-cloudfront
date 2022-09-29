@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
  *
  * @internal
  */
-class OutpostsAccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\OutpostsArnInterface
+class OutpostsAccessPointArn extends BaseAccessPointArn implements AccessPointArnInterface, OutpostsArnInterface
 {
     public static function parse($string)
     {
@@ -34,12 +34,12 @@ class OutpostsAccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
     }
     private static function parseOutpostData(array $data)
     {
-        $resourceData = preg_split("/[\\/:]/", $data['resource_id']);
+        $resourceData = \preg_split("/[\\/:]/", $data['resource_id']);
         $data['outpost_id'] = isset($resourceData[0]) ? $resourceData[0] : null;
         $data['accesspoint_type'] = isset($resourceData[1]) ? $resourceData[1] : null;
         $data['accesspoint_name'] = isset($resourceData[2]) ? $resourceData[2] : null;
         if (isset($resourceData[3])) {
-            $data['resource_extra'] = implode(':', array_slice($resourceData, 3));
+            $data['resource_extra'] = \implode(':', \array_slice($resourceData, 3));
         }
         return $data;
     }
@@ -50,28 +50,28 @@ class OutpostsAccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\
      *
      * @param array $data
      */
-    protected static function validate(array $data)
+    public static function validate(array $data)
     {
-        \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Arn::validate($data);
+        Arn::validate($data);
         if ($data['service'] !== 's3-outposts') {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 3rd component of an S3 Outposts" . " access point ARN represents the service and must be" . " 's3-outposts'.");
+            throw new InvalidArnException("The 3rd component of an S3 Outposts" . " access point ARN represents the service and must be" . " 's3-outposts'.");
         }
         self::validateRegion($data, 'S3 Outposts access point ARN');
         self::validateAccountId($data, 'S3 Outposts access point ARN');
         if ($data['resource_type'] !== 'outpost') {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 6th component of an S3 Outposts" . " access point ARN represents the resource type and must be" . " 'outpost'.");
+            throw new InvalidArnException("The 6th component of an S3 Outposts" . " access point ARN represents the resource type and must be" . " 'outpost'.");
         }
         if (!self::isValidHostLabel($data['outpost_id'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 7th component of an S3 Outposts" . " access point ARN is required, represents the outpost ID, and" . " must be a valid host label.");
+            throw new InvalidArnException("The 7th component of an S3 Outposts" . " access point ARN is required, represents the outpost ID, and" . " must be a valid host label.");
         }
         if ($data['accesspoint_type'] !== 'accesspoint') {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 8th component of an S3 Outposts" . " access point ARN must be 'accesspoint'");
+            throw new InvalidArnException("The 8th component of an S3 Outposts" . " access point ARN must be 'accesspoint'");
         }
         if (!self::isValidHostLabel($data['accesspoint_name'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 9th component of an S3 Outposts" . " access point ARN is required, represents the accesspoint name," . " and must be a valid host label.");
+            throw new InvalidArnException("The 9th component of an S3 Outposts" . " access point ARN is required, represents the accesspoint name," . " and must be a valid host label.");
         }
         if (!empty($data['resource_extra'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("An S3 Outposts access point ARN" . " should only have 9 components, delimited by the characters" . " ':' and '/'. '{$data['resource_extra']}' was found after the" . " 9th component.");
+            throw new InvalidArnException("An S3 Outposts access point ARN" . " should only have 9 components, delimited by the characters" . " ':' and '/'. '{$data['resource_extra']}' was found after the" . " 9th component.");
         }
     }
 }

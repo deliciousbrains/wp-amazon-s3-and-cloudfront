@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
@@ -7,20 +8,21 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
  * Stream decorator that begins dropping data once the size of the underlying
  * stream becomes too full.
  */
-class DroppingStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface
+final class DroppingStream implements StreamInterface
 {
     use StreamDecoratorTrait;
+    /** @var int */
     private $maxLength;
     /**
      * @param StreamInterface $stream    Underlying stream to decorate.
      * @param int             $maxLength Maximum size before dropping data.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface $stream, $maxLength)
+    public function __construct(StreamInterface $stream, int $maxLength)
     {
         $this->stream = $stream;
         $this->maxLength = $maxLength;
     }
-    public function write($string)
+    public function write($string) : int
     {
         $diff = $this->maxLength - $this->stream->getSize();
         // Begin returning 0 when the underlying stream is too large.
@@ -28,9 +30,9 @@ class DroppingStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\M
             return 0;
         }
         // Write the stream or a subset of the stream if needed.
-        if (strlen($string) < $diff) {
+        if (\strlen($string) < $diff) {
             return $this->stream->write($string);
         }
-        return $this->stream->write(substr($string, 0, $diff));
+        return $this->stream->write(\substr($string, 0, $diff));
     }
 }

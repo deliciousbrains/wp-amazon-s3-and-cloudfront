@@ -50,7 +50,7 @@ abstract class Abstraction
      * reserved - union of (unreserved / reserved / pct-encoded)
      */
     public $id, $named, $sep, $empty, $reserved, $start, $first;
-    protected static $types = array('' => array('sep' => ',', 'named' => false, 'empty' => '', 'reserved' => false, 'start' => 0, 'first' => null), '+' => array('sep' => ',', 'named' => false, 'empty' => '', 'reserved' => true, 'start' => 1, 'first' => null), '.' => array('sep' => '.', 'named' => false, 'empty' => '', 'reserved' => false, 'start' => 1, 'first' => '.'), '/' => array('sep' => '/', 'named' => false, 'empty' => '', 'reserved' => false, 'start' => 1, 'first' => '/'), ';' => array('sep' => ';', 'named' => true, 'empty' => '', 'reserved' => false, 'start' => 1, 'first' => ';'), '?' => array('sep' => '&', 'named' => true, 'empty' => '=', 'reserved' => false, 'start' => 1, 'first' => '?'), '&' => array('sep' => '&', 'named' => true, 'empty' => '=', 'reserved' => false, 'start' => 1, 'first' => '&'), '#' => array('sep' => ',', 'named' => false, 'empty' => '', 'reserved' => true, 'start' => 1, 'first' => '#')), $loaded = array();
+    protected static $types = array('' => array('sep' => ',', 'named' => \false, 'empty' => '', 'reserved' => \false, 'start' => 0, 'first' => null), '+' => array('sep' => ',', 'named' => \false, 'empty' => '', 'reserved' => \true, 'start' => 1, 'first' => null), '.' => array('sep' => '.', 'named' => \false, 'empty' => '', 'reserved' => \false, 'start' => 1, 'first' => '.'), '/' => array('sep' => '/', 'named' => \false, 'empty' => '', 'reserved' => \false, 'start' => 1, 'first' => '/'), ';' => array('sep' => ';', 'named' => \true, 'empty' => '', 'reserved' => \false, 'start' => 1, 'first' => ';'), '?' => array('sep' => '&', 'named' => \true, 'empty' => '=', 'reserved' => \false, 'start' => 1, 'first' => '?'), '&' => array('sep' => '&', 'named' => \true, 'empty' => '=', 'reserved' => \false, 'start' => 1, 'first' => '&'), '#' => array('sep' => ',', 'named' => \false, 'empty' => '', 'reserved' => \true, 'start' => 1, 'first' => '#')), $loaded = array();
     /**
      * gen-delims | sub-delims
      */
@@ -77,12 +77,12 @@ abstract class Abstraction
         $this->first = $first;
         $this->reserved = $reserved;
     }
-    public abstract function toRegex(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var);
-    public function expand(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, array $params = array())
+    public abstract function toRegex(Parser $parser, Node\Variable $var);
+    public function expand(Parser $parser, Node\Variable $var, array $params = array())
     {
         $options = $var->options;
         $name = $var->name;
-        $is_explode = in_array($options['modifier'], array('*', '%'));
+        $is_explode = \in_array($options['modifier'], array('*', '%'));
         // skip null
         if (!isset($params[$name])) {
             return null;
@@ -90,7 +90,7 @@ abstract class Abstraction
         $val = $params[$name];
         // This algorithm is based on RFC6570 http://tools.ietf.org/html/rfc6570
         // non-array, e.g. string
-        if (!is_array($val)) {
+        if (!\is_array($val)) {
             return $this->expandString($parser, $var, $val);
         } else {
             if (!$is_explode) {
@@ -100,13 +100,13 @@ abstract class Abstraction
             }
         }
     }
-    public function expandString(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, $val)
+    public function expandString(Parser $parser, Node\Variable $var, $val)
     {
         $val = (string) $val;
         $options = $var->options;
         $result = null;
         if ($options['modifier'] === ':') {
-            $val = substr($val, 0, (int) $options['value']);
+            $val = \substr($val, 0, (int) $options['value']);
         }
         return $result . $this->encode($parser, $var, $val);
     }
@@ -118,7 +118,7 @@ abstract class Abstraction
      * @param array $val
      * @return null|string
      */
-    public function expandNonExplode(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, array $val)
+    public function expandNonExplode(Parser $parser, Node\Variable $var, array $val)
     {
         if (empty($val)) {
             return null;
@@ -133,7 +133,7 @@ abstract class Abstraction
      * @param array $val
      * @return null|string
      */
-    public function expandExplode(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, array $val)
+    public function expandExplode(Parser $parser, Node\Variable $var, array $val)
     {
         if (empty($val)) {
             return null;
@@ -149,7 +149,7 @@ abstract class Abstraction
      *
      * @return string encoded string
      */
-    public function encode(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, $values)
+    public function encode(Parser $parser, Node\Variable $var, $values)
     {
         $values = (array) $values;
         $list = isset($values[0]);
@@ -161,20 +161,20 @@ abstract class Abstraction
         if ($var->options['modifier'] !== '*') {
             $assoc_sep = $sep = ',';
         }
-        array_walk($values, function (&$v, $k) use($assoc_sep, $reserved, $list, $maps) {
-            $encoded = rawurlencode($v);
+        \array_walk($values, function (&$v, $k) use($assoc_sep, $reserved, $list, $maps) {
+            $encoded = \rawurlencode($v);
             // assoc? encode key too
             if (!$list) {
-                $encoded = rawurlencode($k) . $assoc_sep . $encoded;
+                $encoded = \rawurlencode($k) . $assoc_sep . $encoded;
             }
             // rawurlencode is compliant with 'unreserved' set
             if (!$reserved) {
                 $v = $encoded;
             } else {
-                $v = str_replace(array_keys($maps), $maps, $encoded);
+                $v = \str_replace(\array_keys($maps), $maps, $encoded);
             }
         });
-        return implode($sep, $values);
+        return \implode($sep, $values);
     }
     /**
      * Decodes variable
@@ -185,14 +185,14 @@ abstract class Abstraction
      *
      * @return string decoded string
      */
-    public function decode(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, $values)
+    public function decode(Parser $parser, Node\Variable $var, $values)
     {
-        $single = !is_array($values);
+        $single = !\is_array($values);
         $values = (array) $values;
-        array_walk($values, function (&$v, $k) {
-            $v = rawurldecode($v);
+        \array_walk($values, function (&$v, $k) {
+            $v = \rawurldecode($v);
         });
-        return $single ? reset($values) : $values;
+        return $single ? \reset($values) : $values;
     }
     /**
      * Extracts value from variable
@@ -202,17 +202,17 @@ abstract class Abstraction
      * @param  string        $data
      * @return string
      */
-    public function extract(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Variable $var, $data)
+    public function extract(Parser $parser, Node\Variable $var, $data)
     {
         $value = $data;
-        $vals = array_filter(explode($this->sep, $data));
+        $vals = \array_filter(\explode($this->sep, $data));
         $options = $var->options;
         switch ($options['modifier']) {
             case '*':
                 $data = array();
                 foreach ($vals as $val) {
-                    if (strpos($val, '=') !== false) {
-                        list($k, $v) = explode('=', $val);
+                    if (\strpos($val, '=') !== \false) {
+                        list($k, $v) = \explode('=', $val);
                         $data[$k] = $v;
                     } else {
                         $data[] = $val;
@@ -222,7 +222,7 @@ abstract class Abstraction
             case ':':
                 break;
             default:
-                $data = strpos($data, $this->sep) !== false ? $vals : $value;
+                $data = \strpos($data, $this->sep) !== \false ? $vals : $value;
         }
         return $this->decode($parser, $var, $data);
     }

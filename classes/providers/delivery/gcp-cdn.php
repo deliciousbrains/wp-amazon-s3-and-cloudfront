@@ -69,7 +69,16 @@ class GCP_CDN extends Delivery_Provider {
 	/**
 	 * @inheritDoc
 	 */
-	public function features_description() {
-		return __( 'Fast, Private Media Supported', 'amazon-s3-and-cloudfront' );
+	public static function signed_urls_support_desc() {
+		return __( 'Private Media Supported', 'amazon-s3-and-cloudfront' );
+	}
+
+	/**
+	 * Title to be shown for provider's console link.
+	 *
+	 * @return string
+	 */
+	public static function get_console_title(): string {
+		return _x( 'Google Cloud Console', 'Provider console link text', 'amazon-s3-and-cloudfront' );
 	}
 }

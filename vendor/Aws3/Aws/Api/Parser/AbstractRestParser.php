@@ -11,7 +11,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * @internal
  */
-abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\AbstractParser
+abstract class AbstractRestParser extends AbstractParser
 {
     use PayloadParserTrait;
     /**
@@ -23,8 +23,8 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
      *
      * @return mixed
      */
-    protected abstract function payload(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, array &$result);
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
+    protected abstract function payload(ResponseInterface $response, StructureShape $member, array &$result);
+    public function __invoke(CommandInterface $command, ResponseInterface $response)
     {
         $output = $this->api->getOperation($command->getName())->getOutput();
         $result = [];
@@ -44,17 +44,17 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
                     break;
             }
         }
-        if (!$payload && $response->getBody()->getSize() > 0 && count($output->getMembers()) > 0) {
+        if (!$payload && $response->getBody()->getSize() > 0 && \count($output->getMembers()) > 0) {
             // if no payload was found, then parse the contents of the body
             $this->payload($response, $output, $result);
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result($result);
+        return new Result($result);
     }
-    private function extractPayload($payload, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $output, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
+    private function extractPayload($payload, StructureShape $output, ResponseInterface $response, array &$result)
     {
         $member = $output->getMember($payload);
         if (!empty($member['eventstream'])) {
-            $result[$payload] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\EventParsingIterator($response->getBody(), $member, $this);
+            $result[$payload] = new EventParsingIterator($response->getBody(), $member, $this);
         } else {
             if ($member instanceof StructureShape) {
                 // Structure members parse top-level data into a specific key.
@@ -69,26 +69,26 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
     /**
      * Extract a single header from the response into the result.
      */
-    private function extractHeader($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
+    private function extractHeader($name, Shape $shape, ResponseInterface $response, &$result)
     {
         $value = $response->getHeaderLine($shape['locationName'] ?: $name);
         switch ($shape->getType()) {
             case 'float':
             case 'double':
-                $value = (double) $value;
+                $value = (float) $value;
                 break;
             case 'long':
                 $value = (int) $value;
                 break;
             case 'boolean':
-                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                $value = \filter_var($value, \FILTER_VALIDATE_BOOLEAN);
                 break;
             case 'blob':
-                $value = base64_decode($value);
+                $value = \base64_decode($value);
                 break;
             case 'timestamp':
                 try {
-                    $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::fromTimestamp($value, !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : null);
+                    $value = DateTimeResult::fromTimestamp($value, !empty($shape['timestampFormat']) ? $shape['timestampFormat'] : null);
                     break;
                 } catch (\Exception $e) {
                     // If the value cannot be parsed, then do not add it to the
@@ -98,7 +98,7 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
             case 'string':
                 try {
                     if ($shape['jsonvalue']) {
-                        $value = $this->parseJson(base64_decode($value), $response);
+                        $value = $this->parseJson(\base64_decode($value), $response);
                     }
                     // If value is not set, do not add to output structure.
                     if (!isset($value)) {
@@ -116,24 +116,24 @@ abstract class AbstractRestParser extends \DeliciousBrains\WP_Offload_Media\Aws3
     /**
      * Extract a map of headers with an optional prefix from the response.
      */
-    private function extractHeaders($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $shape, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, &$result)
+    private function extractHeaders($name, Shape $shape, ResponseInterface $response, &$result)
     {
         // Check if the headers are prefixed by a location name
         $result[$name] = [];
         $prefix = $shape['locationName'];
-        $prefixLen = strlen($prefix);
+        $prefixLen = \strlen($prefix);
         foreach ($response->getHeaders() as $k => $values) {
             if (!$prefixLen) {
-                $result[$name][$k] = implode(', ', $values);
-            } elseif (stripos($k, $prefix) === 0) {
-                $result[$name][substr($k, $prefixLen)] = implode(', ', $values);
+                $result[$name][$k] = \implode(', ', $values);
+            } elseif (\stripos($k, $prefix) === 0) {
+                $result[$name][\substr($k, $prefixLen)] = \implode(', ', $values);
             }
         }
     }
     /**
      * Places the status code of the response into the result array.
      */
-    private function extractStatus($name, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array &$result)
+    private function extractStatus($name, ResponseInterface $response, array &$result)
     {
         $result[$name] = (int) $response->getStatusCode();
     }

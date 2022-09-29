@@ -5,6 +5,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Stream decorator trait
+ *
  * @property StreamInterface stream
  */
 trait StreamDecoratorTrait
@@ -12,7 +13,7 @@ trait StreamDecoratorTrait
     /**
      * @param StreamInterface $stream Stream to decorate
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public function __construct(StreamInterface $stream)
     {
         $this->stream = $stream;
     }
@@ -41,13 +42,13 @@ trait StreamDecoratorTrait
             return $this->getContents();
         } catch (\Exception $e) {
             // Really, PHP? https://bugs.php.net/bug.php?id=53648
-            trigger_error('StreamDecorator::__toString exception: ' . (string) $e, E_USER_ERROR);
+            \trigger_error('StreamDecorator::__toString exception: ' . (string) $e, \E_USER_ERROR);
             return '';
         }
     }
     public function getContents()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToString($this);
+        return Utils::copyToString($this);
     }
     /**
      * Allow decorators to implement custom methods
@@ -59,7 +60,7 @@ trait StreamDecoratorTrait
      */
     public function __call($method, array $args)
     {
-        $result = call_user_func_array([$this->stream, $method], $args);
+        $result = \call_user_func_array([$this->stream, $method], $args);
         // Always return the wrapped object if the result is a return $this
         return $result === $this->stream ? $this : $result;
     }
@@ -103,7 +104,7 @@ trait StreamDecoratorTrait
     {
         $this->seek(0);
     }
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET)
     {
         $this->stream->seek($offset, $whence);
     }

@@ -43,7 +43,7 @@ class CreatedHmacKey
      * @param HmacKey $hmacKey The HMAC Key object.
      * @param string $secret The HMAC key secret.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\HmacKey $hmacKey, $secret)
+    public function __construct(HmacKey $hmacKey, $secret)
     {
         $this->hmacKey = $hmacKey;
         $this->secret = $secret;

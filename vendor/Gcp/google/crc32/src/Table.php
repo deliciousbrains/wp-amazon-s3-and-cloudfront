@@ -61,7 +61,7 @@ final class Table
      */
     public static function create($polynomial)
     {
-        $table = array_fill(0, 256, 0);
+        $table = \array_fill(0, 256, 0);
         for ($i = 0; $i < 256; $i++) {
             $crc = $i;
             for ($j = 0; $j < 8; $j++) {
@@ -84,7 +84,7 @@ final class Table
      */
     public static function create4($polynomial)
     {
-        $table = array_fill(0, 4, array_fill(0, 256, 0));
+        $table = \array_fill(0, 4, \array_fill(0, 256, 0));
         $table[0] = self::create($polynomial);
         for ($i = 0; $i < 256; $i++) {
             // for Slicing-by-4 and Slicing-by-8

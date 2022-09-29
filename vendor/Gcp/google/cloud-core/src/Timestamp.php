@@ -40,9 +40,9 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 class Timestamp
 {
     use TimeTrait;
-    const FORMAT = 'Y-m-d\\TH:i:s.u\\Z';
-    const FORMAT_NO_MS = 'Y-m-d\\TH:i:s\\Z';
-    const FORMAT_INTERPOLATE = 'Y-m-d\\TH:i:s.%\\s\\Z';
+    const FORMAT = 'DeliciousBrains\\WP_Offload_Media\\Gcp\\Y-m-d\\TH:i:s.u\\Z';
+    const FORMAT_NO_MS = 'DeliciousBrains\\WP_Offload_Media\\Gcp\\Y-m-d\\TH:i:s\\Z';
+    const FORMAT_INTERPOLATE = 'DeliciousBrains\\WP_Offload_Media\\Gcp\\Y-m-d\\TH:i:s.%\\s\\Z';
     /**
      * @var \DateTimeInterface
      */

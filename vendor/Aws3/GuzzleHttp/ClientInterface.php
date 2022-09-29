@@ -26,7 +26,7 @@ interface ClientInterface
      * @return ResponseInterface
      * @throws GuzzleException
      */
-    public function send(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = []);
+    public function send(RequestInterface $request, array $options = []);
     /**
      * Asynchronously send an HTTP request.
      *
@@ -36,7 +36,7 @@ interface ClientInterface
      *
      * @return PromiseInterface
      */
-    public function sendAsync(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = []);
+    public function sendAsync(RequestInterface $request, array $options = []);
     /**
      * Create and send an HTTP request.
      *

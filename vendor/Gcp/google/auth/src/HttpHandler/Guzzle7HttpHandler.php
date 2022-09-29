@@ -17,6 +17,6 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler;
 
-class Guzzle7HttpHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle6HttpHandler
+class Guzzle7HttpHandler extends Guzzle6HttpHandler
 {
 }

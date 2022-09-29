@@ -17,7 +17,7 @@ class RateLimiter
     private $timeProvider;
     // Pre-set state variables
     private $currentCapacity = 0;
-    private $enabled = false;
+    private $enabled = \false;
     private $lastMaxRate = 0;
     private $measuredTxRate = 0;
     private $requestCount = 0;
@@ -36,7 +36,7 @@ class RateLimiter
         $this->scaleConstant = isset($options['scale_constant']) ? $options['scale_constant'] : 0.4;
         $this->smooth = isset($options['smooth']) ? $options['smooth'] : 0.8;
         $this->timeProvider = isset($options['time_provider']) ? $options['time_provider'] : null;
-        $this->lastTxRateBucket = floor($this->time());
+        $this->lastTxRateBucket = \floor($this->time());
         $this->lastThrottleTime = $this->time();
     }
     public function isEnabled()
@@ -54,7 +54,7 @@ class RateLimiter
             if (!$this->isEnabled()) {
                 $rateToUse = $this->measuredTxRate;
             } else {
-                $rateToUse = min($this->measuredTxRate, $this->fillRate);
+                $rateToUse = \min($this->measuredTxRate, $this->fillRate);
             }
             $this->lastMaxRate = $rateToUse;
             $this->calculateTimeWindow();
@@ -65,30 +65,30 @@ class RateLimiter
             $this->calculateTimeWindow();
             $calculatedRate = $this->cubicSuccess($this->time());
         }
-        $newRate = min($calculatedRate, 2 * $this->measuredTxRate);
+        $newRate = \min($calculatedRate, 2 * $this->measuredTxRate);
         $this->updateTokenBucketRate($newRate);
         return $newRate;
     }
     private function acquireToken($amount)
     {
         if (!$this->enabled) {
-            return true;
+            return \true;
         }
         $this->refillTokenBucket();
         if ($amount > $this->currentCapacity) {
-            usleep(1000000 * ($amount - $this->currentCapacity) / $this->fillRate);
+            \usleep((int) (1000000 * ($amount - $this->currentCapacity) / $this->fillRate));
         }
         $this->currentCapacity -= $amount;
-        return true;
+        return \true;
     }
     private function calculateTimeWindow()
     {
-        $this->timeWindow = pow($this->lastMaxRate * (1 - $this->beta) / $this->scaleConstant, 0.333);
+        $this->timeWindow = \pow($this->lastMaxRate * (1 - $this->beta) / $this->scaleConstant, 0.333);
     }
     private function cubicSuccess($timestamp)
     {
         $dt = $timestamp - $this->lastThrottleTime;
-        return $this->scaleConstant * pow($dt - $this->timeWindow, 3) + $this->lastMaxRate;
+        return $this->scaleConstant * \pow($dt - $this->timeWindow, 3) + $this->lastMaxRate;
     }
     private function cubicThrottle($rateToUse)
     {
@@ -96,7 +96,7 @@ class RateLimiter
     }
     private function enableTokenBucket()
     {
-        $this->enabled = true;
+        $this->enabled = \true;
     }
     private function refillTokenBucket()
     {
@@ -107,24 +107,24 @@ class RateLimiter
         }
         $fillAmount = ($timestamp - $this->lastTimestamp) * $this->fillRate;
         $this->currentCapacity = $this->currentCapacity + $fillAmount;
-        if (!is_null($this->maxCapacity)) {
-            $this->currentCapacity = min($this->maxCapacity, $this->currentCapacity);
+        if (!\is_null($this->maxCapacity)) {
+            $this->currentCapacity = \min($this->maxCapacity, $this->currentCapacity);
         }
         $this->lastTimestamp = $timestamp;
     }
     private function time()
     {
-        if (is_callable($this->timeProvider)) {
+        if (\is_callable($this->timeProvider)) {
             $provider = $this->timeProvider;
             $time = $provider();
             return $time;
         }
-        return microtime(true);
+        return \microtime(\true);
     }
     private function updateMeasuredRate()
     {
         $timestamp = $this->time();
-        $timeBucket = floor(round($timestamp, 3) * 2) / 2;
+        $timeBucket = \floor(\round($timestamp, 3) * 2) / 2;
         $this->requestCount++;
         if ($timeBucket > $this->lastTxRateBucket) {
             $currentRate = $this->requestCount / ($timeBucket - $this->lastTxRateBucket);
@@ -136,8 +136,8 @@ class RateLimiter
     private function updateTokenBucketRate($newRps)
     {
         $this->refillTokenBucket();
-        $this->fillRate = max($newRps, $this->minFillRate);
-        $this->maxCapacity = max($newRps, $this->minCapacity);
-        $this->currentCapacity = min($this->currentCapacity, $this->maxCapacity);
+        $this->fillRate = \max($newRps, $this->minFillRate);
+        $this->maxCapacity = \max($newRps, $this->minCapacity);
+        $this->currentCapacity = \min($this->currentCapacity, $this->maxCapacity);
     }
 }

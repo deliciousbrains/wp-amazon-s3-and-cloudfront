@@ -78,9 +78,9 @@ class Download_Handler extends Item_Handler {
 			// If the provider of this item is different from what's currently configured,
 			// we'll return an error.
 			$current_provider = $this->as3cf->get_storage_provider();
-			if ( ! empty( $current_provider ) && $current_provider::get_provider_key_name() !== $as3cf_item->provider() ) {
+			if ( ! is_null( $current_provider ) && $current_provider::get_provider_key_name() !== $as3cf_item->provider() ) {
 				$error_msg = sprintf(
-					__( '%1$s with ID %d is offloaded to a different provider than currently configured', 'amazon-s3-and-cloudfront' ),
+					__( '%1$s with ID %2$d is offloaded to a different provider than currently configured', 'amazon-s3-and-cloudfront' ),
 					$this->as3cf->get_source_type_name( $as3cf_item->source_type() ),
 					$as3cf_item->source_id()
 				);
@@ -162,7 +162,7 @@ class Download_Handler extends Item_Handler {
 			$provider_client->get_object( $object );
 		} catch ( Exception $e ) {
 			// If storage provider file doesn't exist, an empty local file will be created, clean it up.
-			@unlink( $object['SaveAs'] );
+			@unlink( $object['SaveAs'] ); //phpcs:ignore
 
 			$error_msg = sprintf( __( 'Error downloading %1$s from bucket: %2$s', 'amazon-s3-and-cloudfront' ), $object['Key'], $e->getMessage() );
 

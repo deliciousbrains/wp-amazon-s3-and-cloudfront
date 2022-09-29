@@ -7,7 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface as Stream;
-abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager
+abstract class AbstractUploader extends AbstractUploadManager
 {
     /** @var Stream Source of the data to be uploaded. */
     protected $source;
@@ -16,7 +16,7 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      * @param mixed  $source
      * @param array  $config
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $source, array $config = [])
+    public function __construct(Client $client, $source, array $config = [])
     {
         $this->source = $this->determineSource($source);
         parent::__construct($client, $config);
@@ -29,10 +29,10 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      *
      * @return Psr7\LimitStream
      */
-    protected function limitPartStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    protected function limitPartStream(Stream $stream)
     {
         // Limit what is read from the stream to the part size.
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\LimitStream($stream, $this->state->getPartSize(), $this->source->tell());
+        return new Psr7\LimitStream($stream, $this->state->getPartSize(), $this->source->tell());
     }
     protected function getUploadCommands(callable $resultHandler)
     {
@@ -49,7 +49,7 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
                 $command->getHandlerList()->appendSign($resultHandler, 'mup');
                 $numberOfParts = $this->getNumberOfParts($this->state->getPartSize());
                 if (isset($numberOfParts) && $partNumber > $numberOfParts) {
-                    throw new $this->config['exception_class']($this->state, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException("Maximum part number for this job exceeded, file has likely been corrupted." . "  Please restart this upload.", $command));
+                    throw new $this->config['exception_class']($this->state, new AwsException("Maximum part number for this job exceeded, file has likely been corrupted." . "  Please restart this upload.", $command));
                 }
                 (yield $command);
                 if ($this->source->tell() > $partStartPos) {
@@ -58,7 +58,7 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
             }
             // Advance the source's offset if not already advanced.
             if ($seekable) {
-                $this->source->seek(min($this->source->tell() + $this->state->getPartSize(), $this->source->getSize()));
+                $this->source->seek(\min($this->source->tell() + $this->state->getPartSize(), $this->source->getSize()));
             } else {
                 $this->source->read($this->state->getPartSize());
             }
@@ -89,7 +89,7 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
      * Turns the provided source into a stream and stores it.
      *
      * If a string is provided, it is assumed to be a filename, otherwise, it
-     * passes the value directly to `Psr7\stream_for()`.
+     * passes the value directly to `Psr7\Utils::streamFor()`.
      *
      * @param mixed $source
      *
@@ -98,20 +98,20 @@ abstract class AbstractUploader extends \DeliciousBrains\WP_Offload_Media\Aws3\A
     private function determineSource($source)
     {
         // Use the contents of a file as the data source.
-        if (is_string($source)) {
-            $source = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\try_fopen($source, 'r');
+        if (\is_string($source)) {
+            $source = Psr7\Utils::tryFopen($source, 'r');
         }
         // Create a source stream.
-        $stream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($source);
+        $stream = Psr7\Utils::streamFor($source);
         if (!$stream->isReadable()) {
-            throw new \InvalidArgumentException('Source stream must be readable.');
+            throw new IAE('Source stream must be readable.');
         }
         return $stream;
     }
     protected function getNumberOfParts($partSize)
     {
         if ($sourceSize = $this->source->getSize()) {
-            return ceil($sourceSize / $partSize);
+            return \ceil($sourceSize / $partSize);
         }
         return null;
     }

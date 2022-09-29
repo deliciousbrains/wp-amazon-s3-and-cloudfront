@@ -11,11 +11,11 @@ class AstRuntime
     private $interpreter;
     private $cache = [];
     private $cachedCount = 0;
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser $parser = null, callable $fnDispatcher = null)
+    public function __construct(Parser $parser = null, callable $fnDispatcher = null)
     {
-        $fnDispatcher = $fnDispatcher ?: \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\FnDispatcher::getInstance();
-        $this->interpreter = new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\TreeInterpreter($fnDispatcher);
-        $this->parser = $parser ?: new \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Parser();
+        $fnDispatcher = $fnDispatcher ?: FnDispatcher::getInstance();
+        $this->interpreter = new TreeInterpreter($fnDispatcher);
+        $this->parser = $parser ?: new Parser();
     }
     /**
      * Returns data from the provided input that matches a given JMESPath

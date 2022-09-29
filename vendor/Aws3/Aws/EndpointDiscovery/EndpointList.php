@@ -9,7 +9,7 @@ class EndpointList
     public function __construct(array $endpoints)
     {
         $this->active = $endpoints;
-        reset($this->active);
+        \reset($this->active);
     }
     /**
      * Gets an active (unexpired) endpoint. Returns null if none found.
@@ -18,19 +18,19 @@ class EndpointList
      */
     public function getActive()
     {
-        if (count($this->active) < 1) {
+        if (\count($this->active) < 1) {
             return null;
         }
-        while (time() > current($this->active)) {
-            $key = key($this->active);
-            $this->expired[$key] = current($this->active);
+        while (\time() > \current($this->active)) {
+            $key = \key($this->active);
+            $this->expired[$key] = \current($this->active);
             $this->increment($this->active);
             unset($this->active[$key]);
-            if (count($this->active) < 1) {
+            if (\count($this->active) < 1) {
                 return null;
             }
         }
-        $active = key($this->active);
+        $active = \key($this->active);
         $this->increment($this->active);
         return $active;
     }
@@ -64,17 +64,17 @@ class EndpointList
      */
     private function getExpired()
     {
-        if (count($this->expired) < 1) {
+        if (\count($this->expired) < 1) {
             return null;
         }
-        $expired = key($this->expired);
+        $expired = \key($this->expired);
         $this->increment($this->expired);
         return $expired;
     }
     private function increment(&$array)
     {
-        if (next($array) === false) {
-            reset($array);
+        if (\next($array) === \false) {
+            \reset($array);
         }
     }
 }

@@ -23,7 +23,6 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 	 *
 	 * This class contains utility functions that need to be available
 	 * across the Pro plugin codebase
-	 *
 	 */
 	class AS3CF_Utils {
 
@@ -41,7 +40,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Trailing slash prefix string ensuring no leading slashes.
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return string
 		 */
@@ -52,7 +51,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Ensure string has a leading slash, like in absolute paths.
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return string
 		 */
@@ -63,7 +62,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Ensure string has no leading slash, like in relative paths.
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return string
 		 */
@@ -74,7 +73,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Ensure string has a leading and trailing slash, like in absolute directory paths.
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return string
 		 */
@@ -200,7 +199,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Is the string a relative URL?
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return bool
 		 */
@@ -349,7 +348,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string
 		 */
 		public static function dbrains_link( $url, $text ) {
-			return sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $text ) );
+			return sprintf( '<a href="%s" target="_blank">%s</a>', esc_url( $url ), esc_html( $text ) );
 		}
 
 		/**
@@ -658,6 +657,283 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			$file_type = wp_check_filetype_and_ext( $file_path, wp_basename( $file_path ) );
 
 			return $file_type['type'];
+		}
+
+		/**
+		 * Is this an AJAX process?
+		 *
+		 * @return bool
+		 */
+		public static function is_ajax() {
+			if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+				return true;
+			}
+
+			return false;
+		}
+
+		/**
+		 * Is this a REST-API process?
+		 *
+		 * @return bool
+		 */
+		public static function is_rest_api() {
+			if (
+				( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
+				( function_exists( 'wp_is_json_request' ) && wp_is_json_request() )
+			) {
+				return true;
+			}
+
+			return false;
+		}
+
+		/**
+		 * Recursive version of the standard array_diff_assoc function.
+		 *
+		 * @see https://www.php.net/manual/en/function.array-diff-assoc.php#111675
+		 *
+		 * @param array $array1
+		 * @param array $array2
+		 *
+		 * @return array
+		 */
+		public static function array_diff_assoc_recursive( $array1, $array2 ) {
+			$difference = array();
+			foreach ( $array1 as $key => $value ) {
+				if ( is_array( $value ) ) {
+					if ( ! isset( $array2[ $key ] ) || ! is_array( $array2[ $key ] ) ) {
+						$difference[ $key ] = $value;
+					} else {
+						$new_diff = static::array_diff_assoc_recursive( $value, $array2[ $key ] );
+						if ( ! empty( $new_diff ) ) {
+							$difference[ $key ] = $new_diff;
+						}
+					}
+				} elseif ( ! array_key_exists( $key, $array2 ) || $array2[ $key ] !== $value ) {
+					$difference[ $key ] = $value;
+				}
+			}
+
+			return $difference;
+		}
+
+		/**
+		 * Renders an HTML select element.
+		 *
+		 * @param array $args
+		 *
+		 * @return string
+		 */
+		public static function make_dropdown( array $args ): string {
+			if (
+				empty( $args['id'] ) ||
+				empty( $args['name'] ) ||
+				empty( $args['label'] ) ||
+				empty( $args['options'] ) ||
+				! is_array( $args['options'] )
+			) {
+				return '';
+			}
+
+			$selected = isset( $args['selected'] ) && ! empty( $args['selected'] ) ? $args['selected'] : false;
+
+			$html = sprintf(
+				'<label for="%1$s" class="screen-reader-text">%2$s</label><select name="%3$s" id="%1$s">',
+				$args['id'],
+				$args['label'],
+				$args['name']
+			);
+
+			foreach ( $args['options'] as $key => $option_value ) {
+				if ( is_string( $option_value ) ) {
+					$html .= sprintf(
+						'<option value="%s" %s>%s</option>',
+						$key,
+						$selected !== false && $key === $selected ? 'selected' : '',
+						$option_value
+					);
+				}
+
+				if ( is_array( $option_value ) ) {
+					$html .= sprintf(
+						'<optgroup label="%s">',
+						$key
+					);
+
+					foreach ( $option_value as $sub_key => $sub_option_value ) {
+						$html .= sprintf(
+							'<option value="%s" %s>%s</option>',
+							$sub_key,
+							$selected !== false && $sub_key === $selected ? 'selected' : '',
+							$sub_option_value
+						);
+					}
+
+					$html .= '</optgroup>';
+				}
+			}
+
+			$html .= '</select> ';
+
+			return $html;
+		}
+
+		/**
+		 * If the given string is broken (optionally base64 encoded) serialized data,
+		 * fix it,otherwise return untouched.
+		 *
+		 * phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		 * phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		 *
+		 * @param mixed $input
+		 *
+		 * @return mixed
+		 */
+		public static function maybe_fix_serialized_string( $input ) {
+			if ( ! is_string( $input ) ) {
+				return $input;
+			}
+
+			$output = $input;
+
+			$base64 = false;
+			if ( self::is_base64( $output ) ) {
+				$base64 = true;
+				$output = base64_decode( $output, true );
+			}
+
+			$is_slashed = false;
+			if ( self::is_slashed_serialized( $output ) ) {
+				$is_slashed = true;
+				$output     = wp_unslash( $output );
+			}
+
+			if ( ! self::is_broken_serialized( $output ) ) {
+				return $input;
+			}
+
+			$output = preg_replace_callback( '/s:(\d+):"(.*?)";/',
+				array( __CLASS__, 'fix_serialized_matches' ),
+				$output
+			);
+
+			if ( ! is_serialized( $output ) || self::is_broken_serialized( $output ) ) {
+				return $input;
+			}
+
+			// If the data was slashed before then re-slash it.
+			if ( $is_slashed ) {
+				$output = wp_slash( $output );
+			}
+
+			// If it was base64 encoded then re-encode.
+			if ( $base64 ) {
+				$output = base64_encode( $output );
+			}
+
+			return $output;
+		}
+
+		/**
+		 * Fixes the broken string segments of a serialized data string.
+		 *
+		 * @param array $matches array of matched parts.
+		 *
+		 * @return string
+		 */
+		private static function fix_serialized_matches( array $matches ): string {
+			return 's:' . strlen( $matches[2] ) . ':"' . $matches[2] . '";';
+		}
+
+		/**
+		 * Tests whether given serialized data is broken or not.
+		 *
+		 * @param string $data Serialized data string.
+		 *
+		 * @return bool
+		 */
+		private static function is_broken_serialized( string $data ): bool {
+			$broken = false;
+
+			if ( is_serialized( $data ) ) {
+				$value = @unserialize( $data ); // @phpcs:ignore
+
+				if ( false === $value && serialize( false ) !== $data ) {
+					$broken = true;
+				}
+			}
+
+			return $broken;
+		}
+
+		/**
+		 * Determine if a string is a slashed serialized string.
+		 *
+		 * @param string $data
+		 *
+		 * @return bool
+		 */
+		private static function is_slashed_serialized( string $data ): bool {
+			if ( ! is_serialized( $data ) ) {
+				return false;
+			}
+
+			$pattern      = '/s:\d+:\\\"/';
+			$start_quotes = preg_match_all( $pattern, $data, $matches );
+			if ( $start_quotes == 0 ) {
+				return false;
+			}
+
+			$pattern    = '/\\\";(s|a|o|i|b|d|})./';
+			$end_quotes = preg_match_all( $pattern, $data, $matches );
+			if ( $end_quotes == 0 ) {
+				return false;
+			}
+
+			$pattern    = '/\\\";}$/';
+			$end_quotes += preg_match_all( $pattern, $data, $matches );
+			if ( $start_quotes !== $end_quotes ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		/**
+		 * Is the data a base64 encoded serialized string, object or JSON string?
+		 *
+		 * @param string $data
+		 *
+		 * @return bool
+		 */
+		private static function is_base64( string $data ): bool {
+			if ( ! empty( $data ) && base64_encode( base64_decode( $data, true ) ) === $data ) {
+				$data = base64_decode( $data, true );
+
+				if ( is_serialized( $data ) || is_object( $data ) || self::is_json( $data ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * Can the supplied string be treated as JSON?
+		 *
+		 * @param string $value
+		 *
+		 * @return bool
+		 */
+		private static function is_json( string $value ): bool {
+			$is_json = false;
+
+			if ( 0 < strlen( trim( $value ) ) && ! is_numeric( $value ) && null !== json_decode( $value ) ) {
+				$is_json = true;
+			}
+
+			return $is_json;
 		}
 	}
 }

@@ -31,9 +31,9 @@ trait ArrayTrait
      * @return mixed
      * @throws \InvalidArgumentException
      */
-    private function pluck($key, array &$arr, $isRequired = true)
+    private function pluck($key, array &$arr, $isRequired = \true)
     {
-        if (!array_key_exists($key, $arr)) {
+        if (!\array_key_exists($key, $arr)) {
             if ($isRequired) {
                 throw new \InvalidArgumentException("Key {$key} does not exist in the provided array.");
             }
@@ -54,21 +54,28 @@ trait ArrayTrait
     {
         $values = [];
         foreach ($keys as $key) {
-            if (array_key_exists($key, $arr)) {
-                $values[$key] = $this->pluck($key, $arr, false);
+            if (\array_key_exists($key, $arr)) {
+                $values[$key] = $this->pluck($key, $arr, \false);
             }
         }
         return $values;
     }
     /**
      * Determine whether given array is associative.
+     * If $arr is empty, then $onEmpty will be returned
+     * $onEmpty defaults to true to maintain compatibility
+     * with the current usage.
      *
      * @param array $arr
+     * @param bool $onEmpty
      * @return bool
      */
-    private function isAssoc(array $arr)
+    private function isAssoc(array $arr, $onEmpty = \true)
     {
-        return array_keys($arr) !== range(0, count($arr) - 1);
+        if (empty($arr)) {
+            return $onEmpty;
+        }
+        return \array_keys($arr) !== \range(0, \count($arr) - 1);
     }
     /**
      * Just like array_filter(), but preserves falsey values except null.
@@ -78,8 +85,8 @@ trait ArrayTrait
      */
     private function arrayFilterRemoveNull(array $arr)
     {
-        return array_filter($arr, function ($element) {
-            return !is_null($element);
+        return \array_filter($arr, function ($element) {
+            return !\is_null($element);
         });
     }
     /**
@@ -96,8 +103,8 @@ trait ArrayTrait
     private function arrayMergeRecursive(array $array1, array $array2)
     {
         foreach ($array2 as $key => $value) {
-            if (array_key_exists($key, $array1) && is_array($array1[$key]) && is_array($value)) {
-                $array1[$key] = $this->isAssoc($array1[$key]) && $this->isAssoc($value) ? $this->arrayMergeRecursive($array1[$key], $value) : array_merge($array1[$key], $value);
+            if (\array_key_exists($key, $array1) && \is_array($array1[$key]) && \is_array($value)) {
+                $array1[$key] = $this->isAssoc($array1[$key]) && $this->isAssoc($value) ? $this->arrayMergeRecursive($array1[$key], $value) : \array_merge($array1[$key], $value);
             } else {
                 $array1[$key] = $value;
             }

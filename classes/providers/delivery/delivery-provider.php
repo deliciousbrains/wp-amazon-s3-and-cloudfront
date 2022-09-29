@@ -5,6 +5,7 @@ namespace DeliciousBrains\WP_Offload_Media\Providers\Delivery;
 use AS3CF_Utils;
 use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Providers\Provider;
+use Exception;
 
 abstract class Delivery_Provider extends Provider {
 
@@ -12,6 +13,11 @@ abstract class Delivery_Provider extends Provider {
 	 * @var string
 	 */
 	protected static $provider_service_name_setting_name = 'delivery-provider-service-name';
+
+	/**
+	 * @var string
+	 */
+	protected $console_url_prefix_param = '/';
 
 	/**
 	 * @var bool
@@ -62,12 +68,51 @@ abstract class Delivery_Provider extends Provider {
 	protected static $signed_urls_object_prefix_constants = array();
 
 	/**
+	 * A description for the Rewrite Media URLs setting.
+	 *
+	 * @return string
+	 */
+	public static function get_rewrite_media_urls_desc(): string {
+		global $as3cf;
+
+		$mesg = sprintf(
+			_x( 'Serves offloaded media files by rewriting local URLs so that they point to %s.', 'Setting description', 'amazon-s3-and-cloudfront' ),
+			static::get_provider_service_name()
+		);
+		$mesg .= ' ' . $as3cf::settings_more_info_link( 'serve-from-s3', 'How URL rewriting works' );
+
+		return $mesg;
+	}
+
+	/**
 	 * Does the delivery provider allow for setting a custom delivery domain?
 	 *
 	 * @return bool
 	 */
 	public static function delivery_domain_allowed() {
 		return static::$delivery_domain_allowed;
+	}
+
+	/**
+	 * A description for the delivery domain settings.
+	 *
+	 * @return string
+	 */
+	public static function get_delivery_domain_desc(): string {
+		return sprintf(
+			__( 'Serves media from a custom domain that has been pointed to %1$s. <a href="%2$s" target="_blank">How to set a custom domain name</a>', 'amazon-s3-and-cloudfront' ),
+			static::get_provider_service_name(),
+			static::get_provider_service_quick_start_url() . '#create-cname'
+		);
+	}
+
+	/**
+	 * Returns array of supported storage provider key names, empty array means all supported.
+	 *
+	 * @return array
+	 */
+	public static function get_supported_storage_providers() {
+		return static::$supported_storage_providers;
 	}
 
 	/**
@@ -83,6 +128,24 @@ abstract class Delivery_Provider extends Provider {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Title used in various places for enabling Signed URLs.
+	 *
+	 * @return string
+	 */
+	public static function signed_urls_option_name() {
+		return __( 'Serve Private Media from Delivery Provider', 'amazon-s3-and-cloudfront' );
+	}
+
+	/**
+	 * Description used in various places for enabling Signed URLs.
+	 *
+	 * @return string
+	 */
+	public static function signed_urls_option_description() {
+		return '';
 	}
 
 	/**
@@ -127,7 +190,7 @@ abstract class Delivery_Provider extends Provider {
 	 * @return string
 	 */
 	public static function signed_urls_object_prefix_name() {
-		return __( 'Private Path', 'amazon-s3-and-cloudfront' );
+		return __( 'Private Bucket Path', 'amazon-s3-and-cloudfront' );
 	}
 
 	/**
@@ -286,7 +349,7 @@ abstract class Delivery_Provider extends Provider {
 
 				return false;
 			}
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->as3cf->notices->add_notice( __( 'Could not read Signing Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
 
 			return false;
@@ -396,12 +459,12 @@ abstract class Delivery_Provider extends Provider {
 	 * @param array|null $headers   Optional array of headers to be passed along to underlying requests.
 	 *
 	 * @return string
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function get_signed_url( Item $as3cf_item, $path, $domain, $scheme, $timestamp, $headers = array() ) {
 		/**
 		 * This default implementation defers to the storage provider's signed URLs.
-		 * Therefore we need to use a storage provider client instance for the item's region.
+		 * Therefore, we need to use a storage provider client instance for the item's region.
 		 */
 		if ( ! empty( $as3cf_item->region() ) && ( $this->as3cf->get_storage_provider()->region_required() || $this->as3cf->get_storage_provider()->get_default_region() !== $as3cf_item->region() ) ) {
 			$region = $this->as3cf->get_storage_provider()->sanitize_region( $as3cf_item->region() );
@@ -418,11 +481,107 @@ abstract class Delivery_Provider extends Provider {
 	}
 
 	/**
-	 * A short description of what features the delivery provider enables.
-	 *
-	 * TODO: Use properties to specify features list, allowing some to be derived from storage provider (e.g. GCP can be fast by default).
+	 * A short description of whether delivery is fast (distributed) or not.
 	 *
 	 * @return string
 	 */
-	abstract public function features_description();
+	public static function edge_server_support_desc() {
+		return __( 'Fast', 'amazon-s3-and-cloudfront' );
+	}
+
+	/**
+	 * A short description of whether signed URLs for private media is supported or not.
+	 *
+	 * @return string
+	 */
+	public static function signed_urls_support_desc() {
+		return __( 'No Private Media', 'amazon-s3-and-cloudfront' );
+	}
+
+	/**
+	 * Description for when Block All Public Access is enabled and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_block_public_access_enabled_unsupported_desc() {
+		return sprintf(
+			__( 'You need to disable Block All Public Access so that %1$s can access your bucket for delivery.', 'amazon-s3-and-cloudfront' ),
+			static::get_provider_name()
+		);
+	}
+
+	/**
+	 * Prompt text to confirm that everything is in place to enable Block All Public Access without issues for Delivery Provider.
+	 *
+	 * @return string
+	 */
+	public static function get_block_public_access_confirm_setup_prompt() {
+		return '';
+	}
+
+	/**
+	 * Description for when Object Ownership is enforced and Delivery Provider does not support it.
+	 *
+	 * @return string
+	 */
+	public static function get_object_ownership_enforced_unsupported_desc(): string {
+		global $as3cf;
+
+		$object_ownership_doc = $as3cf::dbrains_url(
+			'/wp-offload-media/doc/amazon-s3-bucket-object-ownership/',
+			array( 'utm_campaign' => 'support+docs', 'utm_content' => 'change+bucket+access' )
+		);
+
+		return sprintf(
+			__( 'You need to edit the bucket\'s Object Ownership setting and <a href="%1$s">enable ACLs</a> so that %2$s can access your bucket for delivery.', 'amazon-s3-and-cloudfront' ),
+			$object_ownership_doc,
+			static::get_provider_name()
+		);
+	}
+
+	/**
+	 * Prompt text to confirm that everything is in place to enforce Object Ownership without issues for Delivery Provider.
+	 *
+	 * @return string
+	 */
+	public static function get_object_ownership_confirm_setup_prompt(): string {
+		// Using the same text as for the Block Public Access prompt.
+		return static::get_block_public_access_confirm_setup_prompt();
+	}
+
+	/**
+	 * Get the link to the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 * @param string $region
+	 *
+	 * @return string
+	 *
+	 * NOTE: By default delivery providers append the suffix to the base console URL only.
+	 *       The usual bucket, prefix and region params are still processed and the suffix
+	 *       may end up being either a path, params or both that get deeper into the console.
+	 */
+	public function get_console_url( string $bucket = '', string $prefix = '', string $region = '' ): string {
+		if ( '' !== $prefix ) {
+			$prefix = $this->get_console_url_prefix_param() . apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_prefix_value', $prefix );
+		}
+
+		$suffix = apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url_suffix_param', $this->get_console_url_suffix_param( $bucket, $prefix, $region ) );
+
+		return apply_filters( 'as3cf_' . static::$provider_key_name . '_' . static::$service_key_name . '_console_url', $this->console_url ) . $suffix;
+	}
+
+	/**
+	 * Get the suffix param to append to the link to the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 * @param string $region
+	 *
+	 * @return string
+	 */
+	protected function get_console_url_suffix_param( string $bucket = '', string $prefix = '', string $region = '' ): string {
+		return '';
+	}
 }

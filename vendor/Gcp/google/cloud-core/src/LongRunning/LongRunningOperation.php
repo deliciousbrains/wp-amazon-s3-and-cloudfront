@@ -60,7 +60,7 @@ class LongRunningOperation
      *        operation.metadata.typeUrl.
      * @param array $info [optional] The operation info.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\LongRunning\LongRunningConnectionInterface $connection, $name, array $callablesMap, array $info = [])
+    public function __construct(LongRunningConnectionInterface $connection, $name, array $callablesMap, array $info = [])
     {
         $this->connection = $connection;
         $this->name = $name;
@@ -99,7 +99,7 @@ class LongRunningOperation
      */
     public function done(array $options = [])
     {
-        return isset($this->info($options)['done']) ? $this->info['done'] : false;
+        return isset($this->info($options)['done']) ? $this->info['done'] : \false;
     }
     /**
      * Get the state of the Operation.
@@ -258,11 +258,11 @@ class LongRunningOperation
         $pollingIntervalMicros = $options['pollingIntervalSeconds'] * 1000000;
         $maxPollingDuration = $options['maxPollingDurationSeconds'];
         $hasMaxPollingDuration = $maxPollingDuration > 0.0;
-        $endTime = microtime(true) + $maxPollingDuration;
+        $endTime = \microtime(\true) + $maxPollingDuration;
         do {
-            usleep($pollingIntervalMicros);
+            \usleep($pollingIntervalMicros);
             $this->reload($options);
-        } while (!$this->done() && (!$hasMaxPollingDuration || microtime(true) < $endTime));
+        } while (!$this->done() && (!$hasMaxPollingDuration || \microtime(\true) < $endTime));
         return $this->result;
     }
     /**
@@ -305,24 +305,24 @@ class LongRunningOperation
      */
     private function executeDoneCallback($type, $response)
     {
-        if (is_null($response)) {
+        if (\is_null($response)) {
             return null;
         }
-        $callables = array_filter($this->callablesMap, function ($callable) use($type) {
+        $callables = \array_filter($this->callablesMap, function ($callable) use($type) {
             return $callable['typeUrl'] === $type;
         });
-        if (count($callables) === 0) {
+        if (\count($callables) === 0) {
             return $response;
         }
-        $callable = current($callables);
+        $callable = \current($callables);
         $fn = $callable['callable'];
-        return call_user_func($fn, $response);
+        return \call_user_func($fn, $response);
     }
     /**
      * @access private
      */
     public function __debugInfo()
     {
-        return ['connection' => get_class($this->connection), 'name' => $this->name, 'callablesMap' => array_keys($this->callablesMap), 'info' => $this->info];
+        return ['connection' => \get_class($this->connection), 'name' => $this->name, 'callablesMap' => \array_keys($this->callablesMap), 'info' => $this->info];
     }
 }

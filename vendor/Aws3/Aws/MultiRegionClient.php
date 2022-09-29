@@ -4,7 +4,7 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionInterface;
-class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface
+class MultiRegionClient implements AwsClientInterface
 {
     use AwsClientTrait;
     /** @var AwsClientInterface[] A pool of clients keyed by region. */
@@ -21,11 +21,13 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
     private $handlerList;
     /** @var array */
     private $aliases;
+    /** @var callable */
+    private $customHandler;
     public static function getArguments()
     {
-        $args = array_intersect_key(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver::getDefaultArguments(), ['service' => true, 'region' => true]);
-        $args['region']['required'] = false;
-        return $args + ['client_factory' => ['type' => 'config', 'valid' => ['callable'], 'doc' => 'A callable that takes an array of client' . ' configuration arguments and returns a regionalized' . ' client.', 'required' => true, 'internal' => true, 'default' => function (array $args) {
+        $args = \array_intersect_key(ClientResolver::getDefaultArguments(), ['service' => \true, 'region' => \true]);
+        $args['region']['required'] = \false;
+        return $args + ['client_factory' => ['type' => 'config', 'valid' => ['callable'], 'doc' => 'A callable that takes an array of client' . ' configuration arguments and returns a regionalized' . ' client.', 'required' => \true, 'internal' => \true, 'default' => function (array $args) {
             $namespace = manifest($args['service'])['namespace'];
             $klass = "DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\{$namespace}\\{$namespace}Client";
             $region = isset($args['region']) ? $args['region'] : null;
@@ -35,12 +37,12 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
                 }
                 return new $klass($args);
             };
-        }], 'partition' => ['type' => 'config', 'valid' => ['string', \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionInterface::class], 'doc' => 'AWS partition to connect to. Valid partitions' . ' include "aws," "aws-cn," and "aws-us-gov." Used to' . ' restrict the scope of the mapRegions method.', 'default' => function (array $args) {
+        }], 'partition' => ['type' => 'config', 'valid' => ['string', PartitionInterface::class], 'doc' => 'AWS partition to connect to. Valid partitions' . ' include "aws," "aws-cn," and "aws-us-gov." Used to' . ' restrict the scope of the mapRegions method.', 'default' => function (array $args) {
             $region = isset($args['region']) ? $args['region'] : '';
-            return \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider()->getPartition($region, $args['service']);
+            return PartitionEndpointProvider::defaultProvider()->getPartition($region, $args['service']);
         }, 'fn' => function ($value, array &$args) {
-            if (is_string($value)) {
-                $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Endpoint\PartitionEndpointProvider::defaultProvider()->getPartitionByName($value);
+            if (\is_string($value)) {
+                $value = PartitionEndpointProvider::defaultProvider()->getPartitionByName($value);
             }
             if (!$value instanceof PartitionInterface) {
                 throw new \InvalidArgumentException('No valid partition' . ' was provided. Provide a concrete partition or' . ' the name of a partition (e.g., "aws," "aws-cn,"' . ' or "aws-us-gov").');
@@ -68,18 +70,21 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
         if (!isset($args['service'])) {
             $args['service'] = $this->parseClass();
         }
-        $this->handlerList = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\HandlerList(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command) {
+        $this->handlerList = new HandlerList(function (CommandInterface $command) {
             list($region, $args) = $this->getRegionFromArgs($command->toArray());
             $command = $this->getClientFromPool($region)->getCommand($command->getName(), $args);
+            if ($this->isUseCustomHandler()) {
+                $command->getHandlerList()->setHandler($this->customHandler);
+            }
             return $this->executeAsync($command);
         });
         $argDefinitions = static::getArguments();
-        $resolver = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientResolver($argDefinitions);
+        $resolver = new ClientResolver($argDefinitions);
         $args = $resolver->resolve($args, $this->handlerList);
         $this->config = $args['config'];
         $this->factory = $args['client_factory'];
         $this->partition = $args['partition'];
-        $this->args = array_diff_key($args, $args['config']);
+        $this->args = \array_diff_key($args, $args['config']);
     }
     /**
      * Get the region to which the client is configured to send requests by
@@ -111,7 +116,7 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
      */
     public function getCommand($name, array $args = [])
     {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Command($name, $args, clone $this->getHandlerList());
+        return new Command($name, $args, clone $this->getHandlerList());
     }
     public function getConfig($option = null)
     {
@@ -139,6 +144,14 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
     {
         return $this->getClientFromPool()->getEndpoint();
     }
+    public function useCustomHandler(callable $handler)
+    {
+        $this->customHandler = $handler;
+    }
+    private function isUseCustomHandler()
+    {
+        return isset($this->customHandler);
+    }
     /**
      * @param string $region    Omit this argument or pass in an empty string to
      *                          allow the configured client factory to apply the
@@ -150,7 +163,7 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
     {
         if (empty($this->clientPool[$region])) {
             $factory = $this->factory;
-            $this->clientPool[$region] = $factory(array_replace($this->args, array_filter(['region' => $region])));
+            $this->clientPool[$region] = $factory(\array_replace($this->args, \array_filter(['region' => $region])));
         }
         return $this->clientPool[$region];
     }
@@ -161,11 +174,11 @@ class MultiRegionClient implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Aw
      */
     private function parseClass()
     {
-        $klass = get_class($this);
+        $klass = \get_class($this);
         if ($klass === __CLASS__) {
             return '';
         }
-        return strtolower(substr($klass, strrpos($klass, '\\') + 1, -17));
+        return \strtolower(\substr($klass, \strrpos($klass, '\\') + 1, -17));
     }
     private function getRegionFromArgs(array $args)
     {

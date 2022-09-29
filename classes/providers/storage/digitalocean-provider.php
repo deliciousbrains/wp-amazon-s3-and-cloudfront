@@ -2,6 +2,8 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Providers\Storage;
 
+use Exception;
+
 class DigitalOcean_Provider extends AWS_Provider {
 
 	/**
@@ -74,12 +76,17 @@ class DigitalOcean_Provider extends AWS_Provider {
 	/**
 	 * @var bool
 	 */
-	protected static $block_public_access_allowed = false;
+	protected static $block_public_access_supported = false;
+
+	/**
+	 * @var bool
+	 */
+	protected static $object_ownership_supported = false;
 
 	/**
 	 * @var array
 	 */
-	protected $regions = array(
+	protected static $regions = array(
 		'nyc3' => 'New York',
 		'ams3' => 'Amsterdam',
 		'sgp1' => 'Singapore',
@@ -91,12 +98,12 @@ class DigitalOcean_Provider extends AWS_Provider {
 	/**
 	 * @var bool
 	 */
-	protected $region_required = true;
+	protected static $region_required = true;
 
 	/**
 	 * @var string
 	 */
-	protected $default_region = 'nyc3';
+	protected static $default_region = 'nyc3';
 
 	/**
 	 * @var string
@@ -125,10 +132,10 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 *
 	 * @return array
 	 */
-	protected function init_client_args( Array $args ) {
+	protected function init_client_args( array $args ) {
 		if ( empty( $args['endpoint'] ) ) {
 			// DigitalOcean endpoints always require a region.
-			$args['region'] = empty( $args['region'] ) ? $this->get_default_region() : $args['region'];
+			$args['region'] = empty( $args['region'] ) ? static::get_default_region() : $args['region'];
 
 			$args['endpoint'] = 'https://' . $args['region'] . '.' . $this->get_domain();
 		}
@@ -145,7 +152,7 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 *
 	 * @return array
 	 */
-	protected function init_service_client_args( Array $args ) {
+	protected function init_service_client_args( array $args ) {
 		return $args;
 	}
 
@@ -155,9 +162,18 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 * @param string $bucket
 	 * @param bool   $block
 	 */
-	public function block_public_access( $bucket, $block ) {
+	public function block_public_access( string $bucket, bool $block ) {
 		// DigitalOcean doesn't support this, so do nothing.
-		return;
+	}
+
+	/**
+	 * Update the object ownership enforced setting for the given bucket.
+	 *
+	 * @param string $bucket
+	 * @param bool   $enforce
+	 */
+	public function enforce_object_ownership( string $bucket, bool $enforce ) {
+		// DigitalOcean doesn't support this, so do nothing.
 	}
 
 	/**
@@ -165,15 +181,18 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 *
 	 * @param array $args
 	 *
-	 * @throws \Exception
+	 * @throws Exception
 	 */
-	public function create_bucket( Array $args ) {
-		// DigitalOcean is happy with the standard V4 signature, unless doing a "CreateBucket"!
-		if ( ! empty( $this->client_args['signature_version'] ) && 'v4-unsigned-body' === $this->client_args['signature_version'] ) {
+	public function create_bucket( array $args ) {
+		// DigitalOcean requests always require a region, and it must be an AWS S3 one.
+		// The region in the endpoint is all that matters to DigitalOcean Spaces.
+		// @see https://docs.digitalocean.com/products/spaces/reference/s3-sdk-examples/#configure-a-client
+		if ( ! empty( $this->client_args['region'] ) && 'us-east-1' === $this->client_args['region'] ) {
 			parent::create_bucket( $args );
 		} else {
-			$client_args                      = $this->client_args;
-			$client_args['signature_version'] = 'v4-unsigned-body';
+			$client_args           = $this->client_args;
+			$client_args['region'] = 'us-east-1';
+			unset( $args['LocationConstraint'] ); // Not needed and breaks signature.
 			$this->get_client( $client_args, true )->create_bucket( $args );
 		}
 	}
@@ -185,7 +204,7 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 *
 	 * @return string
 	 */
-	public function get_bucket_location( Array $args ) {
+	public function get_bucket_location( array $args ) {
 		// For some reason DigitalOcean Spaces returns an XML LocationConstraint segment prepended to the region key.
 		return strip_tags( parent::get_bucket_location( $args ) );
 	}
@@ -200,5 +219,27 @@ class DigitalOcean_Provider extends AWS_Provider {
 	 */
 	protected function url_prefix( $region = '', $expires = null ) {
 		return $region;
+	}
+
+	/**
+	 * Get the suffix param to append to the link to the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 * @param string $region
+	 *
+	 * @return string
+	 */
+	protected function get_console_url_suffix_param( string $bucket = '', string $prefix = '', string $region = '' ): string {
+		return '';
+	}
+
+	/**
+	 * Title to be shown for provider's console link.
+	 *
+	 * @return string
+	 */
+	public static function get_console_title(): string {
+		return _x( 'Control Panel', 'Provider console link text', 'amazon-s3-and-cloudfront' );
 	}
 }

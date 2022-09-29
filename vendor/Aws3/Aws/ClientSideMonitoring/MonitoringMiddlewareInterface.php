@@ -18,7 +18,7 @@ interface MonitoringMiddlewareInterface
      * @param RequestInterface $request
      * @return array
      */
-    public static function getRequestData(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request);
+    public static function getRequestData(RequestInterface $request);
     /**
      * Data for event properties to be sent to the monitoring agent.
      *
@@ -26,5 +26,5 @@ interface MonitoringMiddlewareInterface
      * @return array
      */
     public static function getResponseData($klass);
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request);
+    public function __invoke(CommandInterface $cmd, RequestInterface $request);
 }

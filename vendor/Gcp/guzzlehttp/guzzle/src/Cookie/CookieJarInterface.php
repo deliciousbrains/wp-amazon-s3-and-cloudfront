@@ -27,14 +27,14 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return RequestInterface returns the modified request.
      */
-    public function withCookieHeader(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request) : RequestInterface;
+    public function withCookieHeader(RequestInterface $request) : RequestInterface;
     /**
      * Extract cookies from an HTTP response and store them in the CookieJar.
      *
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
      */
-    public function extractCookies(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response) : void;
+    public function extractCookies(RequestInterface $request, ResponseInterface $response) : void;
     /**
      * Sets a cookie in the cookie jar.
      *
@@ -42,7 +42,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return bool Returns true on success or false on failure
      */
-    public function setCookie(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Cookie\SetCookie $cookie) : bool;
+    public function setCookie(SetCookie $cookie) : bool;
     /**
      * Remove cookies currently held in the cookie jar.
      *

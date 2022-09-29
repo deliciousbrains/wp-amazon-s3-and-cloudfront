@@ -76,7 +76,7 @@ class Iam
      * }
      * @access private
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iam\IamConnectionInterface $connection, $resource, array $options = [])
+    public function __construct(IamConnectionInterface $connection, $resource, array $options = [])
     {
         $options += ['parent' => 'policy', 'args' => []];
         $this->connection = $connection;
@@ -134,7 +134,7 @@ class Iam
         if ($policy instanceof PolicyBuilder) {
             $policy = $policy->result();
         }
-        if (!is_array($policy)) {
+        if (!\is_array($policy)) {
             throw new \InvalidArgumentException('Given policy data must be an array or an instance of PolicyBuilder.');
         }
         $request = [];

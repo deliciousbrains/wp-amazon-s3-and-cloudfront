@@ -20,7 +20,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  *
  * @final
  */
-class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromisorInterface
+class Pool implements PromisorInterface
 {
     /**
      * @var EachPromise
@@ -36,7 +36,7 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
      *                                  - fulfilled: (callable) Function to invoke when a request completes.
      *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client, $requests, array $config = [])
+    public function __construct(ClientInterface $client, $requests, array $config = [])
     {
         if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
@@ -47,7 +47,7 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
         } else {
             $opts = [];
         }
-        $iterable = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::iterFor($requests);
+        $iterable = P\Create::iterFor($requests);
         $requests = static function () use($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
@@ -59,7 +59,7 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
                 }
             }
         };
-        $this->each = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\EachPromise($requests(), $config);
+        $this->each = new EachPromise($requests(), $config);
     }
     /**
      * Get promise
@@ -86,7 +86,7 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\P
      *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface $client, $requests, array $options = []) : array
+    public static function batch(ClientInterface $client, $requests, array $options = []) : array
     {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);

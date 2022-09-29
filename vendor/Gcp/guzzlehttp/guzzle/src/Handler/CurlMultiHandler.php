@@ -29,9 +29,9 @@ class CurlMultiHandler
      */
     private $selectTimeout;
     /**
-     * @var resource|\CurlMultiHandle|null the currently executing resource in `curl_multi_exec`.
+     * @var int Will be higher than 0 when `curl_multi_exec` is still running.
      */
-    private $active;
+    private $active = 0;
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
      *
@@ -59,11 +59,11 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = $options['handle_factory'] ?? new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactory(50);
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(50);
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
-        } elseif ($selectTimeout = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
-            @trigger_error('Since guzzlehttp/guzzle 7.2.0: Using environment variable GUZZLE_CURL_SELECT_TIMEOUT is deprecated. Use option "select_timeout" instead.', \E_USER_DEPRECATED);
+        } elseif ($selectTimeout = Utils::getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
+            @\trigger_error('Since guzzlehttp/guzzle 7.2.0: Using environment variable GUZZLE_CURL_SELECT_TIMEOUT is deprecated. Use option "select_timeout" instead.', \E_USER_DEPRECATED);
             $this->selectTimeout = (int) $selectTimeout;
         } else {
             $this->selectTimeout = 1;
@@ -84,13 +84,13 @@ class CurlMultiHandler
             throw new \BadMethodCallException("Can not get other property as '_mh'.");
         }
         $multiHandle = \curl_multi_init();
-        if (false === $multiHandle) {
+        if (\false === $multiHandle) {
             throw new \RuntimeException('Can not initialize curl multi handle.');
         }
         $this->_mh = $multiHandle;
         foreach ($this->options as $option => $value) {
             // A warning is raised in case of a wrong option.
-            curl_multi_setopt($this->_mh, $option, $value);
+            \curl_multi_setopt($this->_mh, $option, $value);
         }
         return $this->_mh;
     }
@@ -101,11 +101,11 @@ class CurlMultiHandler
             unset($this->_mh);
         }
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : PromiseInterface
+    public function __invoke(RequestInterface $request, array $options) : PromiseInterface
     {
         $easy = $this->factory->create($request, $options);
         $id = (int) $easy->handle;
-        $promise = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promise([$this, 'execute'], function () use($id) {
+        $promise = new Promise([$this, 'execute'], function () use($id) {
             return $this->cancel($id);
         });
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
@@ -118,7 +118,7 @@ class CurlMultiHandler
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
-            $currentTime = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::currentTime();
+            $currentTime = Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
@@ -127,7 +127,7 @@ class CurlMultiHandler
             }
         }
         // Step through the task queue which may add additional requests.
-        \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue()->run();
+        P\Utils::queue()->run();
         if ($this->active && \curl_multi_select($this->_mh, $this->selectTimeout) === -1) {
             // Perform a usleep if a select returns -1.
             // See: https://bugs.php.net/bug.php?id=61141
@@ -142,7 +142,7 @@ class CurlMultiHandler
      */
     public function execute() : void
     {
-        $queue = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue();
+        $queue = P\Utils::queue();
         while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay
             if (!$this->active && $this->delays) {
@@ -159,7 +159,7 @@ class CurlMultiHandler
         if (empty($easy->options['delay'])) {
             \curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::currentTime() + $easy->options['delay'] / 1000;
+            $this->delays[$id] = Utils::currentTime() + $easy->options['delay'] / 1000;
         }
     }
     /**
@@ -171,19 +171,26 @@ class CurlMultiHandler
      */
     private function cancel($id) : bool
     {
+        if (!\is_int($id)) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        }
         // Cannot cancel if it has been processed.
         if (!isset($this->handles[$id])) {
-            return false;
+            return \false;
         }
         $handle = $this->handles[$id]['easy']->handle;
         unset($this->delays[$id], $this->handles[$id]);
         \curl_multi_remove_handle($this->_mh, $handle);
         \curl_close($handle);
-        return true;
+        return \true;
     }
     private function processMessages() : void
     {
         while ($done = \curl_multi_info_read($this->_mh)) {
+            if ($done['msg'] !== \CURLMSG_DONE) {
+                // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
+                continue;
+            }
             $id = (int) $done['handle'];
             \curl_multi_remove_handle($this->_mh, $done['handle']);
             if (!isset($this->handles[$id])) {
@@ -193,12 +200,12 @@ class CurlMultiHandler
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
             $entry['easy']->errno = $done['result'];
-            $entry['deferred']->resolve(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactory::finish($this, $entry['easy'], $this->factory));
+            $entry['deferred']->resolve(CurlFactory::finish($this, $entry['easy'], $this->factory));
         }
     }
     private function timeToNext() : int
     {
-        $currentTime = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::currentTime();
+        $currentTime = Utils::currentTime();
         $nextTime = \PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {

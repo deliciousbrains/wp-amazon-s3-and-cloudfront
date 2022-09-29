@@ -7,9 +7,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 /**
  * Exception when an HTTP error occurs (4xx or 5xx error)
  */
-class BadResponseException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException
+class BadResponseException extends RequestException
 {
-    public function __construct(string $message, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response, \Throwable $previous = null, array $handlerContext = [])
+    public function __construct(string $message, RequestInterface $request, ResponseInterface $response, \Throwable $previous = null, array $handlerContext = [])
     {
         parent::__construct($message, $request, $response, $previous, $handlerContext);
     }
@@ -18,7 +18,7 @@ class BadResponseException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleH
      */
     public function hasResponse() : bool
     {
-        return true;
+        return \true;
     }
     /**
      * This function narrows the return type from the parent class and does not allow it to be nullable.

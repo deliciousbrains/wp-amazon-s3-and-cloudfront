@@ -12,38 +12,44 @@ declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Processor\ProcessorInterface;
 /**
  * Helper trait for implementing ProcessableInterface
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
+ *
+ * @phpstan-import-type Record from \Monolog\Logger
  */
 trait ProcessableHandlerTrait
 {
     /**
      * @var callable[]
+     * @phpstan-var array<ProcessorInterface|callable(Record): Record>
      */
     protected $processors = [];
     /**
-     * {@inheritdoc}
-     * @suppress PhanTypeMismatchReturn
+     * {@inheritDoc}
      */
     public function pushProcessor(callable $callback) : HandlerInterface
     {
-        array_unshift($this->processors, $callback);
+        \array_unshift($this->processors, $callback);
         return $this;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function popProcessor() : callable
     {
         if (!$this->processors) {
             throw new \LogicException('You tried to pop from an empty processor stack.');
         }
-        return array_shift($this->processors);
+        return \array_shift($this->processors);
     }
     /**
      * Processes a record.
+     *
+     * @phpstan-param  Record $record
+     * @phpstan-return Record
      */
     protected function processRecord(array $record) : array
     {

@@ -36,23 +36,26 @@ use DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Helper;
  *      PC::debug($_SERVER); // PHP Console debugger for any type of vars
  *
  * @author Sergey Barbushin https://www.linkedin.com/in/barbushin
+ *
+ * @phpstan-import-type Record from \Monolog\Logger
  */
-class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class PHPConsoleHandler extends AbstractProcessingHandler
 {
+    /** @var array<string, mixed> */
     private $options = [
-        'enabled' => true,
+        'enabled' => \true,
         // bool Is PHP Console server enabled
         'classesPartialsTraceIgnore' => ['DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\'],
         // array Hide calls of classes started with...
         'debugTagsKeysInContext' => [0, 'tag'],
         // bool Is PHP Console server enabled
-        'useOwnErrorsHandler' => false,
+        'useOwnErrorsHandler' => \false,
         // bool Enable errors handling
-        'useOwnExceptionsHandler' => false,
+        'useOwnExceptionsHandler' => \false,
         // bool Enable exceptions handling
         'sourcesBasePath' => null,
         // string Base path of all project sources to strip in errors source paths
-        'registerHelper' => true,
+        'registerHelper' => \true,
         // bool Register PhpConsole\Helper that allows short debug calls like PC::debug($var, 'ta.g.s')
         'serverEncoding' => null,
         // string|null Server internal encoding
@@ -60,13 +63,13 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
         // int|null Set headers size limit for your web-server
         'password' => null,
         // string|null Protect PHP Console connection by password
-        'enableSslOnlyMode' => false,
+        'enableSslOnlyMode' => \false,
         // bool Force connection by SSL for clients with PHP Console installed
         'ipMasks' => [],
         // array Set IP masks of clients that will be allowed to connect to PHP Console: array('192.168.*.*', '127.0.0.1')
-        'enableEvalListener' => false,
+        'enableEvalListener' => \false,
         // bool Enable eval request to be handled by eval dispatcher(if enabled, 'password' option is also required)
-        'dumperDetectCallbacks' => false,
+        'dumperDetectCallbacks' => \false,
         // bool Convert callback items in dumper vars to (callback SomeClass::someMethod) strings
         'dumperLevelLimit' => 5,
         // int Maximum dumped vars array or object nested dump level
@@ -76,53 +79,53 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
         // int Maximum length of any string or dumped array item
         'dumperDumpSizeLimit' => 500000,
         // int Maximum approximate size of dumped vars result formatted in JSON
-        'detectDumpTraceAndSource' => false,
+        'detectDumpTraceAndSource' => \false,
         // bool Autodetect and append trace data to debug
         'dataStorage' => null,
     ];
     /** @var Connector */
     private $connector;
     /**
-     * @param  array             $options   See \Monolog\Handler\PHPConsoleHandler::$options for more details
-     * @param  Connector|null    $connector Instance of \PhpConsole\Connector class (optional)
-     * @param  string|int        $level     The minimum logging level at which this handler will be triggered.
-     * @param  bool              $bubble    Whether the messages that are handled can bubble up the stack or not.
+     * @param  array<string, mixed> $options   See \Monolog\Handler\PHPConsoleHandler::$options for more details
+     * @param  Connector|null       $connector Instance of \PhpConsole\Connector class (optional)
      * @throws \RuntimeException
      */
-    public function __construct(array $options = [], ?Connector $connector = null, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct(array $options = [], ?Connector $connector = null, $level = Logger::DEBUG, bool $bubble = \true)
     {
-        if (!class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\PhpConsole\\Connector')) {
+        if (!\class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\PhpConsole\\Connector')) {
             throw new \RuntimeException('PHP Console library not found. See https://github.com/barbushin/php-console#installation');
         }
         parent::__construct($level, $bubble);
         $this->options = $this->initOptions($options);
         $this->connector = $this->initConnector($connector);
     }
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
     private function initOptions(array $options) : array
     {
-        $wrongOptions = array_diff(array_keys($options), array_keys($this->options));
+        $wrongOptions = \array_diff(\array_keys($options), \array_keys($this->options));
         if ($wrongOptions) {
-            throw new \RuntimeException('Unknown options: ' . implode(', ', $wrongOptions));
+            throw new \RuntimeException('Unknown options: ' . \implode(', ', $wrongOptions));
         }
-        return array_replace($this->options, $options);
+        return \array_replace($this->options, $options);
     }
-    /**
-     * @suppress PhanTypeMismatchArgument
-     */
     private function initConnector(?Connector $connector = null) : Connector
     {
         if (!$connector) {
             if ($this->options['dataStorage']) {
-                \DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Connector::setPostponeStorage($this->options['dataStorage']);
+                Connector::setPostponeStorage($this->options['dataStorage']);
             }
-            $connector = \DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Connector::getInstance();
+            $connector = Connector::getInstance();
         }
-        if ($this->options['registerHelper'] && !\DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Helper::isRegistered()) {
-            \DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Helper::register();
+        if ($this->options['registerHelper'] && !Helper::isRegistered()) {
+            Helper::register();
         }
         if ($this->options['enabled'] && $connector->isActiveClient()) {
             if ($this->options['useOwnErrorsHandler'] || $this->options['useOwnExceptionsHandler']) {
-                $handler = \DeliciousBrains\WP_Offload_Media\Gcp\PhpConsole\Handler::getInstance();
+                $handler = VendorPhpConsoleHandler::getInstance();
                 $handler->setHandleErrors($this->options['useOwnErrorsHandler']);
                 $handler->setHandleExceptions($this->options['useOwnExceptionsHandler']);
                 $handler->start();
@@ -146,7 +149,7 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
                 $connector->setHeadersLimit($this->options['headersLimit']);
             }
             if ($this->options['detectDumpTraceAndSource']) {
-                $connector->getDebugDispatcher()->detectTraceAndSource = true;
+                $connector->getDebugDispatcher()->detectTraceAndSource = \true;
             }
             $dumper = $connector->getDumper();
             $dumper->levelLimit = $this->options['dumperLevelLimit'];
@@ -164,6 +167,9 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
     {
         return $this->connector;
     }
+    /**
+     * @return array<string, mixed>
+     */
     public function getOptions() : array
     {
         return $this->options;
@@ -180,7 +186,7 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
      */
     protected function write(array $record) : void
     {
-        if ($record['level'] < \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE) {
+        if ($record['level'] < Logger::NOTICE) {
             $this->handleDebugRecord($record);
         } elseif (isset($record['context']['exception']) && $record['context']['exception'] instanceof \Throwable) {
             $this->handleExceptionRecord($record);
@@ -188,24 +194,37 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
             $this->handleErrorRecord($record);
         }
     }
+    /**
+     * @phpstan-param Record $record
+     */
     private function handleDebugRecord(array $record) : void
     {
         $tags = $this->getRecordTags($record);
         $message = $record['message'];
         if ($record['context']) {
-            $message .= ' ' . \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($this->connector->getDumper()->dump(array_filter($record['context'])), null, true);
+            $message .= ' ' . Utils::jsonEncode($this->connector->getDumper()->dump(\array_filter($record['context'])), null, \true);
         }
         $this->connector->getDebugDispatcher()->dispatchDebug($message, $tags, $this->options['classesPartialsTraceIgnore']);
     }
+    /**
+     * @phpstan-param Record $record
+     */
     private function handleExceptionRecord(array $record) : void
     {
         $this->connector->getErrorsDispatcher()->dispatchException($record['context']['exception']);
     }
+    /**
+     * @phpstan-param Record $record
+     */
     private function handleErrorRecord(array $record) : void
     {
         $context = $record['context'];
         $this->connector->getErrorsDispatcher()->dispatchError($context['code'] ?? null, $context['message'] ?? $record['message'], $context['file'] ?? null, $context['line'] ?? null, $this->options['classesPartialsTraceIgnore']);
     }
+    /**
+     * @phpstan-param Record $record
+     * @return string
+     */
     private function getRecordTags(array &$record)
     {
         $tags = null;
@@ -215,7 +234,7 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
                 if (!empty($context[$key])) {
                     $tags = $context[$key];
                     if ($key === 0) {
-                        array_shift($context);
+                        \array_shift($context);
                     } else {
                         unset($context[$key]);
                     }
@@ -223,13 +242,13 @@ class PHPConsoleHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Ha
                 }
             }
         }
-        return $tags ?: strtolower($record['level_name']);
+        return $tags ?: \strtolower($record['level_name']);
     }
     /**
      * {@inheritDoc}
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter('%message%');
+        return new LineFormatter('%message%');
     }
 }

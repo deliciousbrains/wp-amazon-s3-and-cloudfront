@@ -20,10 +20,10 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report;
 /**
  * An MetadataProvider for GAE Flex.
  */
-class GAEFlexMetadataProvider extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report\GAEMetadataProvider
+class GAEFlexMetadataProvider extends GAEMetadataProvider
 {
     protected function getTraceValue($server)
     {
-        return substr($server['HTTP_X_CLOUD_TRACE_CONTEXT'], 0, 32);
+        return \substr($server['HTTP_X_CLOUD_TRACE_CONTEXT'], 0, 32);
     }
 }

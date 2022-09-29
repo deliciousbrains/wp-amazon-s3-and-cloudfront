@@ -1,12 +1,13 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
- * Decorator used to return only a subset of a stream
+ * Decorator used to return only a subset of a stream.
  */
-class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface
+final class LimitStream implements StreamInterface
 {
     use StreamDecoratorTrait;
     /** @var int Offset to start reading from */
@@ -20,46 +21,44 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
      * @param int             $offset Position to seek to before reading (only
      *                                works on seekable streams).
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface $stream, $limit = -1, $offset = 0)
+    public function __construct(StreamInterface $stream, int $limit = -1, int $offset = 0)
     {
         $this->stream = $stream;
         $this->setLimit($limit);
         $this->setOffset($offset);
     }
-    public function eof()
+    public function eof() : bool
     {
         // Always return true if the underlying stream is EOF
         if ($this->stream->eof()) {
-            return true;
+            return \true;
         }
         // No limit and the underlying stream is not at EOF
-        if ($this->limit == -1) {
-            return false;
+        if ($this->limit === -1) {
+            return \false;
         }
         return $this->stream->tell() >= $this->offset + $this->limit;
     }
     /**
      * Returns the size of the limited subset of data
-     * {@inheritdoc}
      */
-    public function getSize()
+    public function getSize() : ?int
     {
         if (null === ($length = $this->stream->getSize())) {
             return null;
-        } elseif ($this->limit == -1) {
+        } elseif ($this->limit === -1) {
             return $length - $this->offset;
         } else {
-            return min($this->limit, $length - $this->offset);
+            return \min($this->limit, $length - $this->offset);
         }
     }
     /**
      * Allow for a bounded seek on the read limited stream
-     * {@inheritdoc}
      */
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET) : void
     {
-        if ($whence !== SEEK_SET || $offset < 0) {
-            throw new \RuntimeException(sprintf('Cannot seek to offset %s with whence %s', $offset, $whence));
+        if ($whence !== \SEEK_SET || $offset < 0) {
+            throw new \RuntimeException(\sprintf('Cannot seek to offset %s with whence %s', $offset, $whence));
         }
         $offset += $this->offset;
         if ($this->limit !== -1) {
@@ -71,9 +70,8 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
     }
     /**
      * Give a relative tell()
-     * {@inheritdoc}
      */
-    public function tell()
+    public function tell() : int
     {
         return $this->stream->tell() - $this->offset;
     }
@@ -84,7 +82,7 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
      *
      * @throws \RuntimeException if the stream cannot be seeked.
      */
-    public function setOffset($offset)
+    public function setOffset(int $offset) : void
     {
         $current = $this->stream->tell();
         if ($current !== $offset) {
@@ -106,13 +104,13 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
      * @param int $limit Number of bytes to allow to be read from the stream.
      *                   Use -1 for no limit.
      */
-    public function setLimit($limit)
+    public function setLimit(int $limit) : void
     {
         $this->limit = $limit;
     }
-    public function read($length)
+    public function read($length) : string
     {
-        if ($this->limit == -1) {
+        if ($this->limit === -1) {
             return $this->stream->read($length);
         }
         // Check if the current position is less than the total allowed
@@ -121,7 +119,7 @@ class LimitStream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Mess
         if ($remaining > 0) {
             // Only return the amount of requested data, ensuring that the byte
             // limit is not exceeded
-            return $this->stream->read(min($remaining, $length));
+            return $this->stream->read(\min($remaining, $length));
         }
         return '';
     }

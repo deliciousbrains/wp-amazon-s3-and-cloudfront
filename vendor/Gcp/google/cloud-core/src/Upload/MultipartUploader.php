@@ -26,7 +26,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 /**
  * Multipart upload implementation.
  */
-class MultipartUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader
+class MultipartUploader extends AbstractUploader
 {
     use JsonTrait;
     /**
@@ -36,7 +36,7 @@ class MultipartUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      */
     public function upload()
     {
-        return $this->jsonDecode($this->requestWrapper->send($this->prepareRequest(), $this->requestOptions)->getBody(), true);
+        return $this->jsonDecode($this->requestWrapper->send($this->prepareRequest(), $this->requestOptions)->getBody(), \true);
     }
     /**
      * Triggers the upload process asynchronously.
@@ -49,8 +49,8 @@ class MultipartUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      */
     public function uploadAsync()
     {
-        return $this->requestWrapper->sendAsync($this->prepareRequest(), $this->requestOptions)->then(function (\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response) {
-            return $this->jsonDecode($response->getBody(), true);
+        return $this->requestWrapper->sendAsync($this->prepareRequest(), $this->requestOptions)->then(function (ResponseInterface $response) {
+            return $this->jsonDecode($response->getBody(), \true);
         });
     }
     /**
@@ -60,12 +60,12 @@ class MultipartUploader extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clo
      */
     private function prepareRequest()
     {
-        $multipartStream = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MultipartStream([['name' => 'metadata', 'headers' => ['Content-Type' => 'application/json; charset=UTF-8'], 'contents' => $this->jsonEncode($this->metadata)], ['name' => 'data', 'headers' => ['Content-Type' => $this->contentType], 'contents' => $this->data]], 'boundary');
+        $multipartStream = new Psr7\MultipartStream([['name' => 'metadata', 'headers' => ['Content-Type' => 'application/json; charset=UTF-8'], 'contents' => $this->jsonEncode($this->metadata)], ['name' => 'data', 'headers' => ['Content-Type' => $this->contentType], 'contents' => $this->data]], 'boundary');
         $headers = ['Content-Type' => 'multipart/related; boundary=boundary'];
         $size = $multipartStream->getSize();
         if ($size !== null) {
             $headers['Content-Length'] = $size;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('POST', $this->uri, $headers, $multipartStream);
+        return new Request('POST', $this->uri, $headers, $multipartStream);
     }
 }

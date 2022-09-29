@@ -2,9 +2,9 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto;
 
-abstract class MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface
+abstract class MaterialsProvider implements MaterialsProviderInterface
 {
-    private static $supportedKeySizes = [128 => true, 192 => true, 256 => true];
+    private static $supportedKeySizes = [128 => \true, 192 => \true, 256 => \true];
     /**
      * Returns if the requested size is supported by AES.
      *
@@ -30,7 +30,7 @@ abstract class MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aw
      *
      * @internal
      */
-    public abstract function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    public abstract function fromDecryptionEnvelope(MetadataEnvelope $envelope);
     /**
      * Returns the material description for this Provider so it can be verified
      * by encryption mechanisms.
@@ -77,7 +77,7 @@ abstract class MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aw
      */
     public function generateCek($keySize)
     {
-        return openssl_random_pseudo_bytes($keySize / 8);
+        return \openssl_random_pseudo_bytes($keySize / 8);
     }
     /**
      * @param string $openSslName Cipher OpenSSL name to use for generating
@@ -87,6 +87,6 @@ abstract class MaterialsProvider implements \DeliciousBrains\WP_Offload_Media\Aw
      */
     public function generateIv($openSslName)
     {
-        return openssl_random_pseudo_bytes(openssl_cipher_iv_length($openSslName));
+        return \openssl_random_pseudo_bytes(\openssl_cipher_iv_length($openSslName));
     }
 }

@@ -98,6 +98,7 @@ body.as3cf-pro {
 
 .as3cfpro_remove a.local-warning {
 	color: #a00;
+
 	&:hover {
 		color: #f00;
 		text-decoration: none;
@@ -107,6 +108,7 @@ body.as3cf-pro {
 
 .media-modal a.local-warning {
 	color: #bc0b0b;
+
 	&:hover {
 		color: red;
 	}
@@ -115,4 +117,27 @@ body.as3cf-pro {
 .attachment-info .attachment-s3-details {
 	font-weight: bold;
 	margin-bottom: 5px;
+}
+
+.table-view-list.media th.column-as3cf_bucket {
+	width: 11%;
+}
+
+.table-view-list.media th.column-as3cf_access {
+	width: 8%;
+}
+
+.table-view-list.media .row-actions span.as3cf-warning:before {
+	background: url(../img/icon/error.svg) no-repeat;
+	background-size: 18px;
+	content: "";
+	display: block;
+	width: 18px;
+	height: 18px;
+	margin: 1px 1px 0 -3px;
+	float: left;
+}
+
+.table-view-list.media .row-actions span.as3cf-warning {
+	color: #50575e;
 }

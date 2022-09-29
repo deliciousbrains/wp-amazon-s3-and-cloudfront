@@ -6,7 +6,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env as JmesPath;
 /**
  * AWS result.
  */
-class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class Result implements ResultInterface, MonitoringEventsInterface
 {
     use HasDataTrait;
     use HasMonitoringEventsTrait;
@@ -24,11 +24,11 @@ class Result implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterfa
     }
     public function search($expression)
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search($expression, $this->toArray());
+        return JmesPath::search($expression, $this->toArray());
     }
     public function __toString()
     {
-        $jsonData = json_encode($this->toArray(), JSON_PRETTY_PRINT);
+        $jsonData = \json_encode($this->toArray(), \JSON_PRETTY_PRINT);
         return <<<EOT
 Model Data
 ----------
@@ -46,6 +46,6 @@ EOT;
      */
     public function getPath($path)
     {
-        return $this->search(str_replace('/', '.', $path));
+        return $this->search(\str_replace('/', '.', $path));
     }
 }

@@ -23,7 +23,7 @@ class PrepareBodyMiddleware
     {
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : PromiseInterface
+    public function __invoke(RequestInterface $request, array $options) : PromiseInterface
     {
         $fn = $this->nextHandler;
         // Don't do anything if the request has no body.
@@ -34,7 +34,7 @@ class PrepareBodyMiddleware
         // Add a default content-type if possible.
         if (!$request->hasHeader('Content-Type')) {
             if ($uri = $request->getBody()->getMetadata('uri')) {
-                if (is_string($uri) && ($type = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MimeType::fromFilename($uri))) {
+                if (\is_string($uri) && ($type = Psr7\MimeType::fromFilename($uri))) {
                     $modify['set_headers']['Content-Type'] = $type;
                 }
             }
@@ -50,12 +50,12 @@ class PrepareBodyMiddleware
         }
         // Add the expect header if needed.
         $this->addExpectHeader($request, $options, $modify);
-        return $fn(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::modifyRequest($request, $modify), $options);
+        return $fn(Psr7\Utils::modifyRequest($request, $modify), $options);
     }
     /**
      * Add expect header
      */
-    private function addExpectHeader(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, array &$modify) : void
+    private function addExpectHeader(RequestInterface $request, array $options, array &$modify) : void
     {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {
@@ -63,11 +63,11 @@ class PrepareBodyMiddleware
         }
         $expect = $options['expect'] ?? null;
         // Return if disabled or if you're not using HTTP/1.1 or HTTP/2.0
-        if ($expect === false || $request->getProtocolVersion() < 1.1) {
+        if ($expect === \false || $request->getProtocolVersion() < 1.1) {
             return;
         }
         // The expect header is unconditionally enabled
-        if ($expect === true) {
+        if ($expect === \true) {
             $modify['set_headers']['Expect'] = '100-Continue';
             return;
         }

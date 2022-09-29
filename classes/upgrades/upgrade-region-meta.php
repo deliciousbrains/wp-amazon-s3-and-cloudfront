@@ -116,7 +116,7 @@ class Upgrade_Region_Meta extends Upgrade {
 	/**
 	 * Get a count of attachments that don't have region in their S3 meta data for a blog
 	 *
-	 * @param $prefix
+	 * @param string $prefix
 	 *
 	 * @return int
 	 */

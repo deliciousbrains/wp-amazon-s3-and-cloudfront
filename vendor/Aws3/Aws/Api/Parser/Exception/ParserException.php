@@ -6,7 +6,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\HasMonitoringEventsTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
-class ParserException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface
+class ParserException extends \RuntimeException implements MonitoringEventsInterface, ResponseContainerInterface
 {
     use HasMonitoringEventsTrait;
     private $errorCode;

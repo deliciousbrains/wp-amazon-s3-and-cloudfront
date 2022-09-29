@@ -2,7 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring;
 
-class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationInterface
+class Configuration implements ConfigurationInterface
 {
     private $clientId;
     private $enabled;
@@ -19,13 +19,13 @@ class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Client
     public function __construct($enabled, $host, $port, $clientId = '')
     {
         $this->host = $host;
-        $this->port = filter_var($port, FILTER_VALIDATE_INT);
-        if ($this->port === false) {
+        $this->port = \filter_var($port, \FILTER_VALIDATE_INT);
+        if ($this->port === \false) {
             throw new \InvalidArgumentException("CSM 'port' value must be an integer!");
         }
         // Unparsable $enabled flag errors on the side of disabling CSM
-        $this->enabled = filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
-        $this->clientId = trim($clientId);
+        $this->enabled = \filter_var($enabled, \FILTER_VALIDATE_BOOLEAN);
+        $this->clientId = \trim($clientId);
     }
     /**
      * {@inheritdoc}

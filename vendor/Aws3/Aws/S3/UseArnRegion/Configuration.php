@@ -2,16 +2,16 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion;
 
-use Aws;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Exception\ConfigurationException;
-class Configuration implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\ConfigurationInterface
+class Configuration implements ConfigurationInterface
 {
     private $useArnRegion;
     public function __construct($useArnRegion)
     {
-        $this->useArnRegion = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\boolean_value($useArnRegion);
-        if (is_null($this->useArnRegion)) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\UseArnRegion\Exception\ConfigurationException("'use_arn_region' config option" . " must be a boolean value.");
+        $this->useArnRegion = Aws\boolean_value($useArnRegion);
+        if (\is_null($this->useArnRegion)) {
+            throw new ConfigurationException("'use_arn_region' config option" . " must be a boolean value.");
         }
     }
     /**

@@ -13,7 +13,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface;
 /**
  * @internal
  */
-abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\MonitoringMiddlewareInterface
+abstract class AbstractMonitoringMiddleware implements MonitoringMiddlewareInterface
 {
     private static $socket;
     private $nextHandler;
@@ -21,7 +21,7 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
     protected $credentialProvider;
     protected $region;
     protected $service;
-    protected static function getAwsExceptionHeader(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException $e, $headerName)
+    protected static function getAwsExceptionHeader(AwsException $e, $headerName)
     {
         $response = $e->getResponse();
         if ($response !== null) {
@@ -32,7 +32,7 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
         }
         return null;
     }
-    protected static function getResultHeader(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result, $headerName)
+    protected static function getResultHeader(ResultInterface $result, $headerName)
     {
         if (isset($result['@metadata']['headers'][$headerName])) {
             return $result['@metadata']['headers'][$headerName];
@@ -77,13 +77,13 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
      * @param  RequestInterface $request
      * @return Promise\PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(CommandInterface $cmd, RequestInterface $request)
     {
         $handler = $this->nextHandler;
         $eventData = null;
         $enabled = $this->isEnabled();
         if ($enabled) {
-            $cmd['@http']['collect_stats'] = true;
+            $cmd['@http']['collect_stats'] = \true;
             $eventData = $this->populateRequestEventData($cmd, $request, $this->getNewEvent($cmd, $request));
         }
         $g = function ($value) use($eventData, $enabled) {
@@ -95,19 +95,19 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
                 }
             }
             if ($value instanceof \Exception || $value instanceof \Throwable) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($value);
+                return Promise\Create::rejectionFor($value);
             }
             return $value;
         };
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for($handler($cmd, $request))->then($g, $g);
+        return Promise\Create::promiseFor($handler($cmd, $request))->then($g, $g);
     }
     private function getClientId()
     {
         return $this->unwrappedOptions()->getClientId();
     }
-    private function getNewEvent(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    private function getNewEvent(CommandInterface $cmd, RequestInterface $request)
     {
-        $event = ['Api' => $cmd->getName(), 'ClientId' => $this->getClientId(), 'Region' => $this->getRegion(), 'Service' => $this->getService(), 'Timestamp' => (int) floor(microtime(true) * 1000), 'UserAgent' => substr($request->getHeaderLine('User-Agent') . ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_user_agent(), 0, 256), 'Version' => 1];
+        $event = ['Api' => $cmd->getName(), 'ClientId' => $this->getClientId(), 'Region' => $this->getRegion(), 'Service' => $this->getService(), 'Timestamp' => (int) \floor(\microtime(\true) * 1000), 'UserAgent' => \substr($request->getHeaderLine('User-Agent') . ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\Aws\default_user_agent(), 0, 256), 'Version' => 1];
         return $event;
     }
     private function getHost()
@@ -143,7 +143,7 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
      * @param array $event
      * @return array
      */
-    protected function populateRequestEventData(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $cmd, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $event)
+    protected function populateRequestEventData(CommandInterface $cmd, RequestInterface $request, array $event)
     {
         $dataFormat = static::getRequestData($request);
         foreach ($dataFormat as $eventKey => $value) {
@@ -180,12 +180,12 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
      * @param bool $forceNewConnection
      * @return Resource
      */
-    private function prepareSocket($forceNewConnection = false)
+    private function prepareSocket($forceNewConnection = \false)
     {
-        if (!is_resource(self::$socket) || $forceNewConnection || socket_last_error(self::$socket)) {
-            self::$socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-            socket_clear_error(self::$socket);
-            socket_connect(self::$socket, $this->getHost(), $this->getPort());
+        if (!\is_resource(self::$socket) || $forceNewConnection || \socket_last_error(self::$socket)) {
+            self::$socket = \socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
+            \socket_clear_error(self::$socket);
+            \socket_connect(self::$socket, $this->getHost(), $this->getPort());
         }
         return self::$socket;
     }
@@ -199,10 +199,10 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
     private function sendEventData(array $eventData)
     {
         $socket = $this->prepareSocket();
-        $datagram = json_encode($eventData);
-        $result = socket_write($socket, $datagram, strlen($datagram));
-        if ($result === false) {
-            $this->prepareSocket(true);
+        $datagram = \json_encode($eventData);
+        $result = \socket_write($socket, $datagram, \strlen($datagram));
+        if ($result === \false) {
+            $this->prepareSocket(\true);
         }
         return $result;
     }
@@ -215,10 +215,10 @@ abstract class AbstractMonitoringMiddleware implements \DeliciousBrains\WP_Offlo
     {
         if (!$this->options instanceof ConfigurationInterface) {
             try {
-                $this->options = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::unwrap($this->options);
+                $this->options = ConfigurationProvider::unwrap($this->options);
             } catch (\Exception $e) {
                 // Errors unwrapping CSM config defaults to disabling it
-                $this->options = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\Configuration(false, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_HOST, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ClientSideMonitoring\ConfigurationProvider::DEFAULT_PORT);
+                $this->options = new Configuration(\false, ConfigurationProvider::DEFAULT_HOST, ConfigurationProvider::DEFAULT_PORT);
             }
         }
         return $this->options;

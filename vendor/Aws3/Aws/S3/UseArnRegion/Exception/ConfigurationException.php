@@ -7,7 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 /**
  * Represents an error interacting with configuration for S3's UseArnRegion
  */
-class ConfigurationException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class ConfigurationException extends \RuntimeException implements MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
 }

@@ -25,18 +25,18 @@ class EndpointParameterMiddleware
      * @param array $args
      * @return \Closure
      */
-    public static function wrap(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service)
+    public static function wrap(Service $service)
     {
         return function (callable $handler) use($service) {
             return new self($handler, $service);
         };
     }
-    public function __construct(callable $nextHandler, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service)
+    public function __construct(callable $nextHandler, Service $service)
     {
         $this->nextHandler = $nextHandler;
         $this->service = $service;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(CommandInterface $command, RequestInterface $request)
     {
         $nextHandler = $this->nextHandler;
         $operation = $this->service->getOperation($command->getName());
@@ -44,7 +44,7 @@ class EndpointParameterMiddleware
             $prefix = $operation['endpoint']['hostPrefix'];
             // Captures endpoint parameters stored in the modeled host.
             // These are denoted by enclosure in braces, i.e. '{param}'
-            preg_match_all("/\\{([a-zA-Z0-9]+)}/", $prefix, $parameters);
+            \preg_match_all("/\\{([a-zA-Z0-9]+)}/", $prefix, $parameters);
             if (!empty($parameters[1])) {
                 // Captured parameters without braces stored in $parameters[1],
                 // which should correspond to members in the Command object
@@ -54,7 +54,7 @@ class EndpointParameterMiddleware
                     }
                     // Captured parameters with braces stored in $parameters[0],
                     // which are replaced by their corresponding Command value
-                    $prefix = str_replace($parameters[0][$index], $command[$parameter], $prefix);
+                    $prefix = \str_replace($parameters[0][$index], $command[$parameter], $prefix);
                 }
             }
             $uri = $request->getUri();

@@ -26,7 +26,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\SysvTrait;
  *      incompatible ways. Please use with caution, and test thoroughly when
  *      upgrading.
  */
-class BatchJob implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobInterface
+class BatchJob implements JobInterface
 {
     const DEFAULT_BATCH_SIZE = 100;
     const DEFAULT_CALL_PERIOD = 2.0;
@@ -86,22 +86,22 @@ class BatchJob implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Cor
     {
         $this->setupSignalHandlers();
         $sysvKey = $this->getSysvKey($this->id);
-        $q = msg_get_queue($sysvKey);
+        $q = \msg_get_queue($sysvKey);
         $items = [];
-        $lastInvoked = microtime(true);
-        if (!is_null($this->bootstrapFile)) {
+        $lastInvoked = \microtime(\true);
+        if (!\is_null($this->bootstrapFile)) {
             require_once $this->bootstrapFile;
         }
-        while (true) {
+        while (\true) {
             // Fire SIGALRM after 1 second to unblock the blocking call.
-            pcntl_alarm(1);
-            if (msg_receive(
+            \pcntl_alarm(1);
+            if (\msg_receive(
                 $q,
                 0,
                 $type,
                 8192,
                 $message,
-                true,
+                \true,
                 0,
                 // blocking mode
                 $errorcode
@@ -109,22 +109,22 @@ class BatchJob implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Cor
                 if ($type === self::$typeDirect) {
                     $items[] = $message;
                 } elseif ($type === self::$typeFile) {
-                    $items[] = unserialize(file_get_contents($message));
-                    @unlink($message);
+                    $items[] = \unserialize(\file_get_contents($message));
+                    @\unlink($message);
                 }
             }
-            pcntl_signal_dispatch();
+            \pcntl_signal_dispatch();
             // It runs the job when
             // 1. Number of items reaches the batchSize.
             // 2-a. Count is >0 and the current time is larger than lastInvoked + period.
             // 2-b. Count is >0 and the shutdown flag is true.
-            if (count($items) >= $this->batchSize || count($items) > 0 && (microtime(true) > $lastInvoked + $this->callPeriod || $this->shutdown)) {
-                printf('Running the job with %d items' . PHP_EOL, count($items));
+            if (\count($items) >= $this->batchSize || \count($items) > 0 && (\microtime(\true) > $lastInvoked + $this->callPeriod || $this->shutdown)) {
+                \printf('Running the job with %d items' . \PHP_EOL, \count($items));
                 $this->flush($items);
                 $items = [];
-                $lastInvoked = microtime(true);
+                $lastInvoked = \microtime(\true);
             }
-            gc_collect_cycles();
+            \gc_collect_cycles();
             if ($this->shutdown) {
                 return;
             }
@@ -140,9 +140,9 @@ class BatchJob implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Cor
     {
         if (!$this->callFunc($items)) {
             $this->handleFailure($this->id, $items);
-            return false;
+            return \false;
         }
-        return true;
+        return \true;
     }
     /**
      * Finish any pending activity for this job.
@@ -155,7 +155,7 @@ class BatchJob implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Cor
      */
     public function callFunc(array $items = [])
     {
-        return call_user_func_array($this->func, [$items]);
+        return \call_user_func_array($this->func, [$items]);
     }
     /**
      * Returns the period in seconds from the last execution to force

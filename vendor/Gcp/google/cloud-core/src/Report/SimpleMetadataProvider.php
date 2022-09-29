@@ -20,7 +20,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report;
 /**
  * Simple MetadataProvider.
  */
-class SimpleMetadataProvider implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report\MetadataProviderInterface
+class SimpleMetadataProvider implements MetadataProviderInterface
 {
     /** @var array */
     private $data = [];

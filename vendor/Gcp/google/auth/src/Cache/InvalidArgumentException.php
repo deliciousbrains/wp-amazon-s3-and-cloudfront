@@ -18,6 +18,6 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Cache;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\InvalidArgumentException as PsrInvalidArgumentException;
-class InvalidArgumentException extends \InvalidArgumentException implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\InvalidArgumentException
+class InvalidArgumentException extends \InvalidArgumentException implements PsrInvalidArgumentException
 {
 }

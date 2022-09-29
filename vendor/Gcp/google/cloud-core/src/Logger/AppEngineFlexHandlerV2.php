@@ -25,7 +25,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * If you are using Monolog 1.x, use {@see \Google\Cloud\Core\Logger\AppEngineFlexHandler} instead.
  */
-class AppEngineFlexHandlerV2 extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\StreamHandler
+class AppEngineFlexHandlerV2 extends StreamHandler
 {
     /**
      * @param int $level [optional] The minimum logging level at which this
@@ -38,16 +38,16 @@ class AppEngineFlexHandlerV2 extends \DeliciousBrains\WP_Offload_Media\Gcp\Monol
      *        any writes.
      * @param resource|string|null $stream [optional]
      */
-    public function __construct($level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO, $bubble = true, $filePermission = 0640, $useLocking = false, $stream = null)
+    public function __construct($level = Logger::INFO, $bubble = \true, $filePermission = 0640, $useLocking = \false, $stream = null)
     {
         if ($stream === null) {
-            $pid = getmypid();
+            $pid = \getmypid();
             $stream = "file:///var/log/app_engine/app.{$pid}.json";
         }
         parent::__construct($stream, $level, $bubble, $filePermission, $useLocking);
     }
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Logger\AppEngineFlexFormatterV2();
+        return new AppEngineFlexFormatterV2();
     }
 }

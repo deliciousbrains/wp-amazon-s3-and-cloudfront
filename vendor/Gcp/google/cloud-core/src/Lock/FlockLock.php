@@ -26,7 +26,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Lock;
  *      incompatible ways. Please use with caution, and test thoroughly when
  *      upgrading.
  */
-class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Lock\LockInterface
+class FlockLock implements LockInterface
 {
     use LockTrait;
     const FILE_PATH_TEMPLATE = '%s/%s.lock';
@@ -54,12 +54,12 @@ class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Co
      */
     public function __construct($fileName, array $options = [])
     {
-        if (!is_string($fileName)) {
+        if (!\is_string($fileName)) {
             throw new \InvalidArgumentException('$fileName must be a string.');
         }
-        $options += ['exclusive' => true];
+        $options += ['exclusive' => \true];
         $this->exclusive = $options['exclusive'];
-        $this->filePath = sprintf(self::FILE_PATH_TEMPLATE, sys_get_temp_dir(), $fileName);
+        $this->filePath = \sprintf(self::FILE_PATH_TEMPLATE, \sys_get_temp_dir(), $fileName);
     }
     /**
      * Acquires a lock that will block until released.
@@ -76,15 +76,15 @@ class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Co
     public function acquire(array $options = [])
     {
         if ($this->handle) {
-            return true;
+            return \true;
         }
         $this->handle = $this->initializeHandle();
-        if (!flock($this->handle, $this->lockType($options))) {
-            fclose($this->handle);
+        if (!\flock($this->handle, $this->lockType($options))) {
+            \fclose($this->handle);
             $this->handle = null;
             throw new \RuntimeException('Failed to acquire lock.');
         }
-        return true;
+        return \true;
     }
     /**
      * Releases the lock.
@@ -94,8 +94,8 @@ class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Co
     public function release()
     {
         if ($this->handle) {
-            $released = flock($this->handle, LOCK_UN);
-            fclose($this->handle);
+            $released = \flock($this->handle, \LOCK_UN);
+            \fclose($this->handle);
             $this->handle = null;
             if (!$released) {
                 throw new \RuntimeException('Failed to release lock.');
@@ -110,7 +110,7 @@ class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Co
      */
     private function initializeHandle()
     {
-        $handle = @fopen($this->filePath, 'c');
+        $handle = @\fopen($this->filePath, 'c');
         if (!$handle) {
             throw new \RuntimeException('Failed to open lock file.');
         }
@@ -118,10 +118,10 @@ class FlockLock implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Co
     }
     private function lockType(array $options)
     {
-        $options += ['blocking' => true];
-        $lockType = $this->exclusive ? LOCK_EX : LOCK_SH;
+        $options += ['blocking' => \true];
+        $lockType = $this->exclusive ? \LOCK_EX : \LOCK_SH;
         if (!$options['blocking']) {
-            $lockType |= LOCK_UN;
+            $lockType |= \LOCK_UN;
         }
         return $lockType;
     }

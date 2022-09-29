@@ -20,7 +20,7 @@ abstract class AbstractParser
     /**
      * @param Service $api Service description.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api)
+    public function __construct(Service $api)
     {
         $this->api = $api;
     }
@@ -30,6 +30,6 @@ abstract class AbstractParser
      *
      * @return ResultInterface
      */
-    public abstract function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response);
-    public abstract function parseMemberFromStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, $response);
+    public abstract function __invoke(CommandInterface $command, ResponseInterface $response);
+    public abstract function parseMemberFromStream(StreamInterface $stream, StructureShape $member, $response);
 }

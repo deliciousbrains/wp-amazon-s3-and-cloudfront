@@ -57,11 +57,11 @@ class TreeCompiler
     private function write($str)
     {
         $this->source .= $this->indentation;
-        if (func_num_args() == 1) {
+        if (\func_num_args() == 1) {
             $this->source .= $str . "\n";
             return $this;
         }
-        $this->source .= vsprintf($str, array_slice(func_get_args(), 1)) . "\n";
+        $this->source .= \vsprintf($str, \array_slice(\func_get_args(), 1)) . "\n";
         return $this;
     }
     /**
@@ -70,7 +70,7 @@ class TreeCompiler
      */
     private function outdent()
     {
-        $this->indentation = substr($this->indentation, 0, -4);
+        $this->indentation = \substr($this->indentation, 0, -4);
         return $this;
     }
     /**
@@ -102,8 +102,8 @@ class TreeCompiler
     }
     private function visit_field(array $node)
     {
-        $arr = '$value[' . var_export($node['value'], true) . ']';
-        $obj = '$value->{' . var_export($node['value'], true) . '}';
+        $arr = '$value[' . \var_export($node['value'], \true) . ']';
+        $obj = '$value->{' . \var_export($node['value'], \true) . '}';
         $this->write('if (is_array($value) || $value instanceof \\ArrayAccess) {')->indent()->write('$value = isset(%s) ? %s : null;', $arr, $arr)->outdent()->write('} elseif ($value instanceof \\stdClass) {')->indent()->write('$value = isset(%s) ? %s : null;', $obj, $obj)->outdent()->write("} else {")->indent()->write('$value = null;')->outdent()->write("}");
         return $this;
     }
@@ -118,7 +118,7 @@ class TreeCompiler
     }
     private function visit_literal(array $node)
     {
-        return $this->write('$value = %s;', var_export($node['value'], true));
+        return $this->write('$value = %s;', \var_export($node['value'], \true));
     }
     private function visit_pipe(array $node)
     {
@@ -133,15 +133,15 @@ class TreeCompiler
         $listVal = $this->makeVar('list');
         $value = $this->makeVar('prev');
         $this->write('if ($value !== null) {')->indent()->write('%s = [];', $listVal)->write('%s = $value;', $value);
-        $first = true;
+        $first = \true;
         foreach ($node['children'] as $child) {
             if (!$first) {
                 $this->write('$value = %s;', $value);
             }
-            $first = false;
+            $first = \false;
             if ($node['type'] == 'multi_select_hash') {
                 $this->dispatch($child['children'][0]);
-                $key = var_export($child['value'], true);
+                $key = \var_export($child['value'], \true);
                 $this->write('%s[%s] = $value;', $listVal, $key);
             } else {
                 $this->dispatch($child);
@@ -163,7 +163,7 @@ class TreeCompiler
     }
     private function visit_slice(array $node)
     {
-        return $this->write('$value = !is_string($value) && !Utils::isArray($value)')->write('    ? null : Utils::slice($value, %s, %s, %s);', var_export($node['value'][0], true), var_export($node['value'][1], true), var_export($node['value'][2], true));
+        return $this->write('$value = !is_string($value) && !Utils::isArray($value)')->write('    ? null : Utils::slice($value, %s, %s, %s);', \var_export($node['value'][0], \true), \var_export($node['value'][1], \true), \var_export($node['value'][2], \true));
     }
     private function visit_current(array $node)
     {
@@ -171,7 +171,7 @@ class TreeCompiler
     }
     private function visit_expref(array $node)
     {
-        $child = var_export($node['children'][0], true);
+        $child = \var_export($node['children'][0], \true);
         return $this->write('$value = function ($value) use ($interpreter) {')->indent()->write('return $interpreter->visit(%s, $value);', $child)->outdent()->write('};');
     }
     private function visit_flatten(array $node)
@@ -220,6 +220,6 @@ class TreeCompiler
     /** @internal */
     public function __call($method, $args)
     {
-        throw new \RuntimeException(sprintf('Invalid node encountered: %s', json_encode($args[0])));
+        throw new \RuntimeException(\sprintf('Invalid node encountered: %s', \json_encode($args[0])));
     }
 }

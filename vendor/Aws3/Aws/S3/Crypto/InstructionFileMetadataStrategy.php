@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client;
  * If there is a failure after an instruction file has been uploaded, it will
  * not be automatically deleted.
  */
-class InstructionFileMetadataStrategy implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataStrategyInterface
+class InstructionFileMetadataStrategy implements MetadataStrategyInterface
 {
     const DEFAULT_FILE_SUFFIX = '.instruction';
     private $client;
@@ -27,7 +27,7 @@ class InstructionFileMetadataStrategy implements \DeliciousBrains\WP_Offload_Med
      * @param string|null $suffix Optional override suffix for instruction file
      *                            object keys.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3Client $client, $suffix = null)
+    public function __construct(S3Client $client, $suffix = null)
     {
         $this->suffix = empty($suffix) ? self::DEFAULT_FILE_SUFFIX : $suffix;
         $this->client = $client;
@@ -42,9 +42,9 @@ class InstructionFileMetadataStrategy implements \DeliciousBrains\WP_Offload_Med
      *
      * @return array Updated arguments for PutObject.
      */
-    public function save(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $args)
+    public function save(MetadataEnvelope $envelope, array $args)
     {
-        $this->client->putObject(['Bucket' => $args['Bucket'], 'Key' => $args['Key'] . $this->suffix, 'Body' => json_encode($envelope)]);
+        $this->client->putObject(['Bucket' => $args['Bucket'], 'Key' => $args['Key'] . $this->suffix, 'Body' => \json_encode($envelope)]);
         return $args;
     }
     /**
@@ -60,9 +60,9 @@ class InstructionFileMetadataStrategy implements \DeliciousBrains\WP_Offload_Med
     public function load(array $args)
     {
         $result = $this->client->getObject(['Bucket' => $args['Bucket'], 'Key' => $args['Key'] . $this->suffix]);
-        $metadataHeaders = json_decode($result['Body'], true);
-        $envelope = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope();
-        $constantValues = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::getConstantValues();
+        $metadataHeaders = \json_decode($result['Body'], \true);
+        $envelope = new MetadataEnvelope();
+        $constantValues = MetadataEnvelope::getConstantValues();
         foreach ($constantValues as $constant) {
             if (!empty($metadataHeaders[$constant])) {
                 $envelope[$constant] = $metadataHeaders[$constant];

@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT;
 
 use DomainException;
+use InvalidArgumentException;
 use UnexpectedValueException;
 /**
  * JSON Web Key implementation, based on this spec:
@@ -21,9 +22,9 @@ class JWK
     /**
      * Parse a set of JWK keys
      *
-     * @param array $jwks The JSON Web Key Set as an associative array
+     * @param array<mixed> $jwks The JSON Web Key Set as an associative array
      *
-     * @return array An associative array that represents the set of keys
+     * @return array<string, Key> An associative array of key IDs (kid) to Key objects
      *
      * @throws InvalidArgumentException     Provided JWK Set is empty
      * @throws UnexpectedValueException     Provided JWK Set was invalid
@@ -31,32 +32,32 @@ class JWK
      *
      * @uses parseKey
      */
-    public static function parseKeySet(array $jwks)
+    public static function parseKeySet(array $jwks) : array
     {
-        $keys = array();
+        $keys = [];
         if (!isset($jwks['keys'])) {
-            throw new \UnexpectedValueException('"keys" member must exist in the JWK Set');
+            throw new UnexpectedValueException('"keys" member must exist in the JWK Set');
         }
         if (empty($jwks['keys'])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\InvalidArgumentException('JWK Set did not contain any keys');
+            throw new InvalidArgumentException('JWK Set did not contain any keys');
         }
         foreach ($jwks['keys'] as $k => $v) {
             $kid = isset($v['kid']) ? $v['kid'] : $k;
             if ($key = self::parseKey($v)) {
-                $keys[$kid] = $key;
+                $keys[(string) $kid] = $key;
             }
         }
         if (0 === \count($keys)) {
-            throw new \UnexpectedValueException('No supported algorithms found in JWK Set');
+            throw new UnexpectedValueException('No supported algorithms found in JWK Set');
         }
         return $keys;
     }
     /**
      * Parse a JWK key
      *
-     * @param array $jwk An individual JWK
+     * @param array<mixed> $jwk An individual JWK
      *
-     * @return resource|array An associative array that represents the key
+     * @return Key The key object for the JWK
      *
      * @throws InvalidArgumentException     Provided JWK is empty
      * @throws UnexpectedValueException     Provided JWK was invalid
@@ -64,32 +65,39 @@ class JWK
      *
      * @uses createPemFromModulusAndExponent
      */
-    private static function parseKey(array $jwk)
+    public static function parseKey(array $jwk) : ?Key
     {
         if (empty($jwk)) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\InvalidArgumentException('JWK must not be empty');
+            throw new InvalidArgumentException('JWK must not be empty');
         }
         if (!isset($jwk['kty'])) {
-            throw new \UnexpectedValueException('JWK must contain a "kty" parameter');
+            throw new UnexpectedValueException('JWK must contain a "kty" parameter');
+        }
+        if (!isset($jwk['alg'])) {
+            // The "alg" parameter is optional in a KTY, but is required for parsing in
+            // this library. Add it manually to your JWK array if it doesn't already exist.
+            // @see https://datatracker.ietf.org/doc/html/rfc7517#section-4.4
+            throw new UnexpectedValueException('JWK must contain an "alg" parameter');
         }
         switch ($jwk['kty']) {
             case 'RSA':
-                if (\array_key_exists('d', $jwk)) {
-                    throw new \UnexpectedValueException('RSA private keys are not supported');
+                if (!empty($jwk['d'])) {
+                    throw new UnexpectedValueException('RSA private keys are not supported');
                 }
                 if (!isset($jwk['n']) || !isset($jwk['e'])) {
-                    throw new \UnexpectedValueException('RSA keys must contain values for both "n" and "e"');
+                    throw new UnexpectedValueException('RSA keys must contain values for both "n" and "e"');
                 }
                 $pem = self::createPemFromModulusAndExponent($jwk['n'], $jwk['e']);
                 $publicKey = \openssl_pkey_get_public($pem);
-                if (false === $publicKey) {
-                    throw new \DomainException('OpenSSL error: ' . \openssl_error_string());
+                if (\false === $publicKey) {
+                    throw new DomainException('OpenSSL error: ' . \openssl_error_string());
                 }
-                return $publicKey;
+                return new Key($publicKey, $jwk['alg']);
             default:
                 // Currently only RSA is supported
                 break;
         }
+        return null;
     }
     /**
      * Create a public key represented in PEM format from RSA modulus and exponent information
@@ -101,12 +109,13 @@ class JWK
      *
      * @uses encodeLength
      */
-    private static function createPemFromModulusAndExponent($n, $e)
+    private static function createPemFromModulusAndExponent(string $n, string $e) : string
     {
-        $modulus = \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT::urlsafeB64Decode($n);
-        $publicExponent = \DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT::urlsafeB64Decode($e);
-        $components = array('modulus' => \pack('Ca*a*', 2, self::encodeLength(\strlen($modulus)), $modulus), 'publicExponent' => \pack('Ca*a*', 2, self::encodeLength(\strlen($publicExponent)), $publicExponent));
-        $rsaPublicKey = \pack('Ca*a*a*', 48, self::encodeLength(\strlen($components['modulus']) + \strlen($components['publicExponent'])), $components['modulus'], $components['publicExponent']);
+        $mod = JWT::urlsafeB64Decode($n);
+        $exp = JWT::urlsafeB64Decode($e);
+        $modulus = \pack('Ca*a*', 2, self::encodeLength(\strlen($mod)), $mod);
+        $publicExponent = \pack('Ca*a*', 2, self::encodeLength(\strlen($exp)), $exp);
+        $rsaPublicKey = \pack('Ca*a*a*', 48, self::encodeLength(\strlen($modulus) + \strlen($publicExponent)), $modulus, $publicExponent);
         // sequence(oid(1.2.840.113549.1.1.1), null)) = rsaEncryption.
         $rsaOID = \pack('H*', '300d06092a864886f70d0101010500');
         // hex version of MA0GCSqGSIb3DQEBAQUA
@@ -125,7 +134,7 @@ class JWK
      * @param int $length
      * @return string
      */
-    private static function encodeLength($length)
+    private static function encodeLength(int $length) : string
     {
         if ($length <= 0x7f) {
             return \chr($length);

@@ -20,6 +20,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 /**
  * Tools for using the IAM API.
  *
@@ -39,7 +40,7 @@ class Iam
      */
     public function __construct(callable $httpHandler = null)
     {
-        $this->httpHandler = $httpHandler ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache::getHttpClient());
+        $this->httpHandler = $httpHandler ?: HttpHandlerFactory::build(HttpClientCache::getHttpClient());
     }
     /**
      * Sign a string using the IAM signBlob API.
@@ -51,7 +52,7 @@ class Iam
      * @param string $email The service account email.
      * @param string $accessToken An access token from the service account.
      * @param string $stringToSign The string to be signed.
-     * @param array $delegates [optional] A list of service account emails to
+     * @param array<string> $delegates [optional] A list of service account emails to
      *        add to the delegate chain. If omitted, the value of `$email` will
      *        be used.
      * @return string The signed string, base64-encoded.
@@ -59,20 +60,20 @@ class Iam
     public function signBlob($email, $accessToken, $stringToSign, array $delegates = [])
     {
         $httpHandler = $this->httpHandler;
-        $name = sprintf(self::SERVICE_ACCOUNT_NAME, $email);
-        $uri = self::IAM_API_ROOT . '/' . sprintf(self::SIGN_BLOB_PATH, $name);
+        $name = \sprintf(self::SERVICE_ACCOUNT_NAME, $email);
+        $uri = self::IAM_API_ROOT . '/' . \sprintf(self::SIGN_BLOB_PATH, $name);
         if ($delegates) {
             foreach ($delegates as &$delegate) {
-                $delegate = sprintf(self::SERVICE_ACCOUNT_NAME, $delegate);
+                $delegate = \sprintf(self::SERVICE_ACCOUNT_NAME, $delegate);
             }
         } else {
             $delegates = [$name];
         }
-        $body = ['delegates' => $delegates, 'payload' => base64_encode($stringToSign)];
+        $body = ['delegates' => $delegates, 'payload' => \base64_encode($stringToSign)];
         $headers = ['Authorization' => 'Bearer ' . $accessToken];
-        $request = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request('POST', $uri, $headers, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for(json_encode($body)));
+        $request = new Psr7\Request('POST', $uri, $headers, Utils::streamFor(\json_encode($body)));
         $res = $httpHandler($request);
-        $body = json_decode((string) $res->getBody(), true);
+        $body = \json_decode((string) $res->getBody(), \true);
         return $body['signedBlob'];
     }
 }

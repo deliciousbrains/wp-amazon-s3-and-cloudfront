@@ -19,7 +19,7 @@ class RedirectMiddleware
 {
     const HISTORY_HEADER = 'X-Guzzle-Redirect-History';
     const STATUS_HISTORY_HEADER = 'X-Guzzle-Redirect-Status-History';
-    public static $defaultSettings = ['max' => 5, 'protocols' => ['http', 'https'], 'strict' => false, 'referer' => false, 'track_redirects' => false];
+    public static $defaultSettings = ['max' => 5, 'protocols' => ['http', 'https'], 'strict' => \false, 'referer' => \false, 'track_redirects' => \false];
     /** @var callable  */
     private $nextHandler;
     /**
@@ -35,15 +35,15 @@ class RedirectMiddleware
      *
      * @return PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options)
     {
         $fn = $this->nextHandler;
         if (empty($options['allow_redirects'])) {
             return $fn($request, $options);
         }
-        if ($options['allow_redirects'] === true) {
+        if ($options['allow_redirects'] === \true) {
             $options['allow_redirects'] = self::$defaultSettings;
-        } elseif (!is_array($options['allow_redirects'])) {
+        } elseif (!\is_array($options['allow_redirects'])) {
             throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
@@ -52,7 +52,7 @@ class RedirectMiddleware
         if (empty($options['allow_redirects']['max'])) {
             return $fn($request, $options);
         }
-        return $fn($request, $options)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response) use($request, $options) {
+        return $fn($request, $options)->then(function (ResponseInterface $response) use($request, $options) {
             return $this->checkRedirect($request, $options, $response);
         });
     }
@@ -63,15 +63,15 @@ class RedirectMiddleware
      *
      * @return ResponseInterface|PromiseInterface
      */
-    public function checkRedirect(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
     {
-        if (substr($response->getStatusCode(), 0, 1) != '3' || !$response->hasHeader('Location')) {
+        if (\substr($response->getStatusCode(), 0, 1) != '3' || !$response->hasHeader('Location')) {
             return $response;
         }
         $this->guardMax($request, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
         if (isset($options['allow_redirects']['on_redirect'])) {
-            call_user_func($options['allow_redirects']['on_redirect'], $request, $response, $nextRequest->getUri());
+            \call_user_func($options['allow_redirects']['on_redirect'], $request, $response, $nextRequest->getUri());
         }
         /** @var PromiseInterface|ResponseInterface $promise */
         $promise = $this($nextRequest, $options);
@@ -86,16 +86,16 @@ class RedirectMiddleware
      *
      * @return PromiseInterface
      */
-    private function withTracking(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface $promise, $uri, $statusCode)
+    private function withTracking(PromiseInterface $promise, $uri, $statusCode)
     {
-        return $promise->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response) use($uri, $statusCode) {
+        return $promise->then(function (ResponseInterface $response) use($uri, $statusCode) {
             // Note that we are pushing to the front of the list as this
             // would be an earlier response than what is currently present
             // in the history header.
             $historyHeader = $response->getHeader(self::HISTORY_HEADER);
             $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
-            array_unshift($historyHeader, $uri);
-            array_unshift($statusHeader, $statusCode);
+            \array_unshift($historyHeader, $uri);
+            \array_unshift($statusHeader, $statusCode);
             return $response->withHeader(self::HISTORY_HEADER, $historyHeader)->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
         });
     }
@@ -106,13 +106,13 @@ class RedirectMiddleware
      *
      * @throws TooManyRedirectsException Too many redirects.
      */
-    private function guardMax(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array &$options)
+    private function guardMax(RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count']) ? $options['__redirect_count'] : 0;
         $options['__redirect_count'] = $current + 1;
         $max = $options['allow_redirects']['max'];
         if ($options['__redirect_count'] > $max) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\TooManyRedirectsException("Will not follow more than {$max} redirects", $request);
+            throw new TooManyRedirectsException("Will not follow more than {$max} redirects", $request);
         }
     }
     /**
@@ -122,7 +122,7 @@ class RedirectMiddleware
      *
      * @return RequestInterface
      */
-    public function modifyRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response)
+    public function modifyRequest(RequestInterface $request, array $options, ResponseInterface $response)
     {
         // Request modifications to apply.
         $modify = [];
@@ -136,12 +136,12 @@ class RedirectMiddleware
             $modify['body'] = '';
         }
         $uri = $this->redirectUri($request, $response, $protocols);
-        if (isset($options['idn_conversion']) && $options['idn_conversion'] !== false) {
-            $idnOptions = $options['idn_conversion'] === true ? IDNA_DEFAULT : $options['idn_conversion'];
-            $uri = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Utils::idnUriConvert($uri, $idnOptions);
+        if (isset($options['idn_conversion']) && $options['idn_conversion'] !== \false) {
+            $idnOptions = $options['idn_conversion'] === \true ? \IDNA_DEFAULT : $options['idn_conversion'];
+            $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
         $modify['uri'] = $uri;
-        \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\rewind_body($request);
+        Psr7\rewind_body($request);
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
         if ($options['allow_redirects']['referer'] && $modify['uri']->getScheme() === $request->getUri()->getScheme()) {
@@ -154,7 +154,7 @@ class RedirectMiddleware
         if ($request->getUri()->getHost() !== $modify['uri']->getHost()) {
             $modify['remove_headers'][] = 'Authorization';
         }
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\modify_request($request, $modify);
+        return Psr7\modify_request($request, $modify);
     }
     /**
      * Set the appropriate URL on the request based on the location header
@@ -165,12 +165,12 @@ class RedirectMiddleware
      *
      * @return UriInterface
      */
-    private function redirectUri(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response, array $protocols)
+    private function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols)
     {
-        $location = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver::resolve($request->getUri(), new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($response->getHeaderLine('Location')));
+        $location = Psr7\UriResolver::resolve($request->getUri(), new Psr7\Uri($response->getHeaderLine('Location')));
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!in_array($location->getScheme(), $protocols)) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception\BadResponseException(sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $location, implode(', ', $protocols)), $request, $response);
+        if (!\in_array($location->getScheme(), $protocols)) {
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $location, \implode(', ', $protocols)), $request, $response);
         }
         return $location;
     }

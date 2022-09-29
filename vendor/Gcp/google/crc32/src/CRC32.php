@@ -71,14 +71,14 @@ class CRC32
      */
     public static function create($polynomial)
     {
-        if (\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Google::supports($polynomial) && function_exists('crc32c')) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Google();
+        if (Google::supports($polynomial) && \function_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\crc32c')) {
+            return new Google();
         }
-        if (\DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin::supports($polynomial)) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin($polynomial);
+        if (Builtin::supports($polynomial)) {
+            return new Builtin($polynomial);
         }
         // Fallback to the pure PHP version
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\PHP($polynomial);
+        return new PHP($polynomial);
     }
     /**
      * Prints the human friendly name for this polynomial.

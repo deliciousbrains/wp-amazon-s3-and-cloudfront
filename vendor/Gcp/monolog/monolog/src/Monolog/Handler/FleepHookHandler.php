@@ -21,8 +21,10 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @see https://fleep.io/integrations/webhooks/ Fleep Webhooks Documentation
  * @author Ando Roots <ando@sqroot.eu>
+ *
+ * @phpstan-import-type FormattedRecord from AbstractProcessingHandler
  */
-class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\SocketHandler
+class FleepHookHandler extends SocketHandler
 {
     protected const FLEEP_HOST = 'fleep.io';
     protected const FLEEP_HOOK_URI = '/hook/';
@@ -37,18 +39,16 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
      * see https://fleep.io/integrations/webhooks/
      *
      * @param  string                    $token  Webhook token
-     * @param  string|int                $level  The minimum logging level at which this handler will be triggered
-     * @param  bool                      $bubble Whether the messages that are handled can bubble up the stack or not
      * @throws MissingExtensionException
      */
-    public function __construct(string $token, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct(string $token, $level = Logger::DEBUG, bool $bubble = \true, bool $persistent = \false, float $timeout = 0.0, float $writingTimeout = 10.0, ?float $connectionTimeout = null, ?int $chunkSize = null)
     {
-        if (!extension_loaded('openssl')) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP extension is required to use the FleepHookHandler');
+        if (!\extension_loaded('openssl')) {
+            throw new MissingExtensionException('The OpenSSL PHP extension is required to use the FleepHookHandler');
         }
         $this->token = $token;
         $connectionString = 'ssl://' . static::FLEEP_HOST . ':443';
-        parent::__construct($connectionString, $level, $bubble);
+        parent::__construct($connectionString, $level, $bubble, $persistent, $timeout, $writingTimeout, $connectionTimeout, $chunkSize);
     }
     /**
      * Returns the default formatter to use with this handler
@@ -59,7 +59,7 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter(null, null, true, true);
+        return new LineFormatter(null, null, \true, \true);
     }
     /**
      * Handles a log record
@@ -70,7 +70,7 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
         $this->closeSocket();
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function generateDataStream(array $record) : string
     {
@@ -85,16 +85,18 @@ class FleepHookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Han
         $header = "POST " . static::FLEEP_HOOK_URI . $this->token . " HTTP/1.1\r\n";
         $header .= "Host: " . static::FLEEP_HOST . "\r\n";
         $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
-        $header .= "Content-Length: " . strlen($content) . "\r\n";
+        $header .= "Content-Length: " . \strlen($content) . "\r\n";
         $header .= "\r\n";
         return $header;
     }
     /**
      * Builds the body of API call
+     *
+     * @phpstan-param FormattedRecord $record
      */
     private function buildContent(array $record) : string
     {
         $dataArray = ['message' => $record['formatted']];
-        return http_build_query($dataArray);
+        return \http_build_query($dataArray);
     }
 }

@@ -35,7 +35,7 @@ class Media_Library_Item extends Item {
 	 */
 	protected static $source_fk = 'id';
 
-	private static $attachment_counts = array();
+	private static $attachment_counts      = array();
 	private static $attachment_count_skips = array();
 
 	/**
@@ -357,6 +357,8 @@ class Media_Library_Item extends Item {
 	/**
 	 * Get size name from file name
 	 *
+	 * @param string $filename
+	 *
 	 * @return string
 	 */
 	public function get_object_key_from_filename( $filename ) {
@@ -510,10 +512,10 @@ class Media_Library_Item extends Item {
 					AND i.source_id = m.post_id
 				)
 				;
-			"
-			, $this->source_path()
-			, $this->source_id()
-			, static::$source_type
+			",
+			$this->source_path(),
+			$this->source_id(),
+			static::$source_type
 		);
 
 		$results = $wpdb->get_results( $sql );
@@ -549,7 +551,7 @@ class Media_Library_Item extends Item {
 	 */
 	public static function admin_link( $error ) {
 		return (object) array(
-			'url'  => get_edit_post_link( $error->source_id ),
+			'url'  => get_edit_post_link( $error->source_id, '' ),
 			'text' => __( 'Edit', 'amazon-s3-and-cloudfront' ),
 		);
 	}
@@ -663,9 +665,11 @@ class Media_Library_Item extends Item {
 		 */
 		if (
 			! empty( $data ) &&
-			( empty( $data['mime_type'] ) ||
-			  0 === strpos( $data['mime_type'], 'image/' ) ||
-			  ! ( 0 === strpos( $data['mime_type'], 'audio/' ) || 0 === strpos( $data['mime_type'], 'video/' ) ) )
+			(
+				empty( $data['mime_type'] ) ||
+				0 === strpos( $data['mime_type'], 'image/' ) ||
+				! ( 0 === strpos( $data['mime_type'], 'audio/' ) || 0 === strpos( $data['mime_type'], 'video/' ) )
+			)
 		) {
 			unset( $data['filesize'] );
 			update_post_meta( $this->source_id(), '_wp_attachment_metadata', $data );
@@ -692,8 +696,8 @@ class Media_Library_Item extends Item {
 	 * If another item in current site shares full size *local* paths, only remove remote files not referenced by duplicates.
 	 * We reference local paths as they should be reflected one way or another remotely, including backups.
 	 *
-	 * @params Item  $as3cf_item
-	 * @params array $paths
+	 * @param Item  $as3cf_item
+	 * @param array $paths
 	 */
 	public function remove_duplicate_paths( Item $as3cf_item, $paths ) {
 		$full_size_paths        = AS3CF_Utils::fullsize_paths( $as3cf_item->full_source_paths() );
@@ -719,6 +723,8 @@ class Media_Library_Item extends Item {
 
 	/**
 	 * Convert the provider info array for an attachment to item object.
+	 *
+	 * phpcs:disable PSR2.Methods.MethodDeclaration.Underscore
 	 *
 	 * @param int   $source_id
 	 * @param array $provider_info
@@ -762,8 +768,10 @@ class Media_Library_Item extends Item {
 		$provider_object = get_post_meta( $post_id, 'amazonS3_info', true );
 
 		if ( ! empty( $provider_object ) && is_array( $provider_object ) && ! empty( $provider_object['bucket'] ) && ! empty( $provider_object['key'] ) ) {
+			global $as3cf;
+
 			$provider_object = array_merge( array(
-				'provider' => Amazon_S3_And_CloudFront::get_default_storage_provider(),
+				'provider' => $as3cf::get_default_storage_provider(),
 			), $provider_object );
 		} else {
 			return false;
@@ -792,8 +800,8 @@ class Media_Library_Item extends Item {
 			/** @var Amazon_S3_And_CloudFront $as3cf */
 			global $as3cf;
 
-			// If region hasn't been stored in the provider metadata retrieve using the bucket.
-			$region = $as3cf->get_bucket_region( $provider_object['bucket'], true );
+			// If region hasn't been stored in the provider metadata, retrieve using the bucket.
+			$region = $as3cf->get_bucket_region( $provider_object['bucket'] );
 
 			// Could just return $region here regardless, but this format is good for debug during legacy migration.
 			if ( is_wp_error( $region ) ) {

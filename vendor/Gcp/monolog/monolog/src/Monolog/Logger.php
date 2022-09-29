@@ -15,7 +15,9 @@ use DateTimeZone;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\InvalidArgumentException;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LogLevel;
 use Throwable;
+use Stringable;
 /**
  * Monolog log channel
  *
@@ -23,8 +25,12 @@ use Throwable;
  * and uses them to store records that are added to it.
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
+ *
+ * @phpstan-type Level Logger::DEBUG|Logger::INFO|Logger::NOTICE|Logger::WARNING|Logger::ERROR|Logger::CRITICAL|Logger::ALERT|Logger::EMERGENCY
+ * @phpstan-type LevelName 'DEBUG'|'INFO'|'NOTICE'|'WARNING'|'ERROR'|'CRITICAL'|'ALERT'|'EMERGENCY'
+ * @phpstan-type Record array{message: string, context: mixed[], level: Level, level_name: LevelName, channel: string, datetime: \DateTimeImmutable, extra: mixed[]}
  */
-class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\ResettableInterface
+class Logger implements LoggerInterface, ResettableInterface
 {
     /**
      * Detailed debug information
@@ -80,7 +86,9 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * This is a static variable and not a constant to serve as an extension point for custom levels
      *
-     * @var string[] $levels Logging levels with the levels as key
+     * @var array<int, string> $levels Logging levels with the levels as key
+     *
+     * @phpstan-var array<Level, LevelName> $levels Logging levels with the levels as key
      */
     protected static $levels = [self::DEBUG => 'DEBUG', self::INFO => 'INFO', self::NOTICE => 'NOTICE', self::WARNING => 'WARNING', self::ERROR => 'ERROR', self::CRITICAL => 'CRITICAL', self::ALERT => 'ALERT', self::EMERGENCY => 'EMERGENCY'];
     /**
@@ -104,7 +112,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * @var bool
      */
-    protected $microsecondTimestamps = true;
+    protected $microsecondTimestamps = \true;
     /**
      * @var DateTimeZone
      */
@@ -126,7 +134,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
         $this->name = $name;
         $this->setHandlers($handlers);
         $this->processors = $processors;
-        $this->timezone = $timezone ?: new \DateTimeZone(date_default_timezone_get() ?: 'UTC');
+        $this->timezone = $timezone ?: new DateTimeZone(\date_default_timezone_get() ?: 'UTC');
     }
     public function getName() : string
     {
@@ -144,9 +152,9 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * Pushes a handler on to the stack.
      */
-    public function pushHandler(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler) : self
+    public function pushHandler(HandlerInterface $handler) : self
     {
-        array_unshift($this->handlers, $handler);
+        \array_unshift($this->handlers, $handler);
         return $this;
     }
     /**
@@ -159,7 +167,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
         if (!$this->handlers) {
             throw new \LogicException('You tried to pop from an empty handler stack.');
         }
-        return array_shift($this->handlers);
+        return \array_shift($this->handlers);
     }
     /**
      * Set handlers, replacing all existing ones.
@@ -171,7 +179,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     public function setHandlers(array $handlers) : self
     {
         $this->handlers = [];
-        foreach (array_reverse($handlers) as $handler) {
+        foreach (\array_reverse($handlers) as $handler) {
             $this->pushHandler($handler);
         }
         return $this;
@@ -188,7 +196,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      */
     public function pushProcessor(callable $callback) : self
     {
-        array_unshift($this->processors, $callback);
+        \array_unshift($this->processors, $callback);
         return $this;
     }
     /**
@@ -202,7 +210,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
         if (!$this->processors) {
             throw new \LogicException('You tried to pop from an empty processor stack.');
         }
-        return array_shift($this->processors);
+        return \array_shift($this->processors);
     }
     /**
      * @return callable[]
@@ -215,65 +223,59 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      * Control the use of microsecond resolution timestamps in the 'datetime'
      * member of new records.
      *
-     * On PHP7.0, generating microsecond resolution timestamps by calling
-     * microtime(true), formatting the result via sprintf() and then parsing
-     * the resulting string via \DateTime::createFromFormat() can incur
-     * a measurable runtime overhead vs simple usage of DateTime to capture
-     * a second resolution timestamp in systems which generate a large number
-     * of log events.
-     *
-     * On PHP7.1 however microseconds are always included by the engine, so
-     * this setting can be left alone unless you really want to suppress
-     * microseconds in the output.
+     * As of PHP7.1 microseconds are always included by the engine, so
+     * there is no performance penalty and Monolog 2 enabled microseconds
+     * by default. This function lets you disable them though in case you want
+     * to suppress microseconds from the output.
      *
      * @param bool $micro True to use microtime() to create timestamps
      */
-    public function useMicrosecondTimestamps(bool $micro)
+    public function useMicrosecondTimestamps(bool $micro) : self
     {
         $this->microsecondTimestamps = $micro;
+        return $this;
     }
     /**
      * Adds a log record.
      *
-     * @param  int    $level   The logging level
-     * @param  string $message The log message
-     * @param  array  $context The log context
-     * @return bool   Whether the record has been processed
+     * @param  int     $level   The logging level
+     * @param  string  $message The log message
+     * @param  mixed[] $context The log context
+     * @return bool    Whether the record has been processed
+     *
+     * @phpstan-param Level $level
      */
     public function addRecord(int $level, string $message, array $context = []) : bool
     {
-        // check if any handler will handle this message so we can return early and save cycles
-        $handlerKey = null;
-        foreach ($this->handlers as $key => $handler) {
-            if ($handler->isHandling(['level' => $level])) {
-                $handlerKey = $key;
-                break;
+        $record = null;
+        foreach ($this->handlers as $handler) {
+            if (null === $record) {
+                // skip creating the record as long as no handler is going to handle it
+                if (!$handler->isHandling(['level' => $level])) {
+                    continue;
+                }
+                $levelName = static::getLevelName($level);
+                $record = ['message' => $message, 'context' => $context, 'level' => $level, 'level_name' => $levelName, 'channel' => $this->name, 'datetime' => new DateTimeImmutable($this->microsecondTimestamps, $this->timezone), 'extra' => []];
+                try {
+                    foreach ($this->processors as $processor) {
+                        $record = $processor($record);
+                    }
+                } catch (Throwable $e) {
+                    $this->handleException($e, $record);
+                    return \true;
+                }
             }
-        }
-        if (null === $handlerKey) {
-            return false;
-        }
-        $levelName = static::getLevelName($level);
-        $record = ['message' => $message, 'context' => $context, 'level' => $level, 'level_name' => $levelName, 'channel' => $this->name, 'datetime' => new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\DateTimeImmutable($this->microsecondTimestamps, $this->timezone), 'extra' => []];
-        try {
-            foreach ($this->processors as $processor) {
-                $record = $processor($record);
-            }
-            // advance the array pointer to the first handler that will handle this record
-            reset($this->handlers);
-            while ($handlerKey !== key($this->handlers)) {
-                next($this->handlers);
-            }
-            while ($handler = current($this->handlers)) {
-                if (true === $handler->handle($record)) {
+            // once the record exists, send it to all handlers as long as the bubbling chain is not interrupted
+            try {
+                if (\true === $handler->handle($record)) {
                     break;
                 }
-                next($this->handlers);
+            } catch (Throwable $e) {
+                $this->handleException($e, $record);
+                return \true;
             }
-        } catch (Throwable $e) {
-            $this->handleException($e, $record);
         }
-        return true;
+        return null !== $record;
     }
     /**
      * Ends a log cycle and frees all resources used by handlers.
@@ -317,21 +319,25 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * Gets all supported logging levels.
      *
-     * @return array Assoc array with human-readable level names => level codes.
+     * @return array<string, int> Assoc array with human-readable level names => level codes.
+     * @phpstan-return array<LevelName, Level>
      */
     public static function getLevels() : array
     {
-        return array_flip(static::$levels);
+        return \array_flip(static::$levels);
     }
     /**
      * Gets the name of the logging level.
      *
      * @throws \Psr\Log\InvalidArgumentException If level is not defined
+     *
+     * @phpstan-param  Level     $level
+     * @phpstan-return LevelName
      */
     public static function getLevelName(int $level) : string
     {
         if (!isset(static::$levels[$level])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\InvalidArgumentException('Level "' . $level . '" is not defined, use one of: ' . implode(', ', array_keys(static::$levels)));
+            throw new InvalidArgumentException('Level "' . $level . '" is not defined, use one of: ' . \implode(', ', \array_keys(static::$levels)));
         }
         return static::$levels[$level];
     }
@@ -340,35 +346,44 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * @param  string|int                        $level Level number (monolog) or name (PSR-3)
      * @throws \Psr\Log\InvalidArgumentException If level is not defined
+     *
+     * @phpstan-param  Level|LevelName|LogLevel::* $level
+     * @phpstan-return Level
      */
     public static function toMonologLevel($level) : int
     {
-        if (is_string($level)) {
+        if (\is_string($level)) {
+            if (\is_numeric($level)) {
+                /** @phpstan-ignore-next-line */
+                return \intval($level);
+            }
             // Contains chars of all log levels and avoids using strtoupper() which may have
             // strange results depending on locale (for example, "i" will become "İ" in Turkish locale)
-            $upper = strtr($level, 'abcdefgilmnortuwy', 'ABCDEFGILMNORTUWY');
-            if (defined(__CLASS__ . '::' . $upper)) {
-                return constant(__CLASS__ . '::' . $upper);
+            $upper = \strtr($level, 'abcdefgilmnortuwy', 'ABCDEFGILMNORTUWY');
+            if (\defined(__CLASS__ . '::' . $upper)) {
+                return \constant(__CLASS__ . '::' . $upper);
             }
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\InvalidArgumentException('Level "' . $level . '" is not defined, use one of: ' . implode(', ', array_keys(static::$levels)));
+            throw new InvalidArgumentException('Level "' . $level . '" is not defined, use one of: ' . \implode(', ', \array_keys(static::$levels) + static::$levels));
         }
-        if (!is_int($level)) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\InvalidArgumentException('Level "' . var_export($level, true) . '" is not defined, use one of: ' . implode(', ', array_keys(static::$levels)));
+        if (!\is_int($level)) {
+            throw new InvalidArgumentException('Level "' . \var_export($level, \true) . '" is not defined, use one of: ' . \implode(', ', \array_keys(static::$levels) + static::$levels));
         }
         return $level;
     }
     /**
      * Checks whether the Logger has a handler that listens on the given level
+     *
+     * @phpstan-param Level $level
      */
     public function isHandling(int $level) : bool
     {
         $record = ['level' => $level];
         foreach ($this->handlers as $handler) {
             if ($handler->isHandling($record)) {
-                return true;
+                return \true;
             }
         }
-        return false;
+        return \false;
     }
     /**
      * Set a custom exception handler that will be called if adding a new record fails
@@ -389,12 +404,17 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param mixed  $level   The log level
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param mixed             $level   The log level
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
+     *
+     * @phpstan-param Level|LevelName|LogLevel::* $level
      */
     public function log($level, $message, array $context = []) : void
     {
+        if (!\is_int($level) && !\is_string($level)) {
+            throw new \InvalidArgumentException('$level is expected to be a string or int');
+        }
         $level = static::toMonologLevel($level);
         $this->addRecord($level, (string) $message, $context);
     }
@@ -403,8 +423,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function debug($message, array $context = []) : void
     {
@@ -415,8 +435,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function info($message, array $context = []) : void
     {
@@ -427,8 +447,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function notice($message, array $context = []) : void
     {
@@ -439,8 +459,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function warning($message, array $context = []) : void
     {
@@ -451,8 +471,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function error($message, array $context = []) : void
     {
@@ -463,8 +483,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function critical($message, array $context = []) : void
     {
@@ -475,8 +495,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function alert($message, array $context = []) : void
     {
@@ -487,8 +507,8 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param string|Stringable $message The log message
+     * @param mixed[]           $context The log context
      */
     public function emergency($message, array $context = []) : void
     {
@@ -497,7 +517,7 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * Sets the timezone to be used for the timestamp of log records.
      */
-    public function setTimezone(\DateTimeZone $tz) : self
+    public function setTimezone(DateTimeZone $tz) : self
     {
         $this->timezone = $tz;
         return $this;
@@ -512,8 +532,11 @@ class Logger implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInte
     /**
      * Delegates exception management to the custom exception handler,
      * or throws the exception if no custom handler is set.
+     *
+     * @param array $record
+     * @phpstan-param Record $record
      */
-    protected function handleException(\Throwable $e, array $record)
+    protected function handleException(Throwable $e, array $record) : void
     {
         if (!$this->exceptionHandler) {
             throw $e;

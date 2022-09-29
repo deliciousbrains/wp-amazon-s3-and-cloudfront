@@ -1,875 +1,1186 @@
-[
-    {
-        "name": "firebase\/php-jwt",
-        "version": "v5.2.0",
-        "version_normalized": "5.2.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/firebase\/php-jwt.git",
-            "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/firebase\/php-jwt\/zipball\/feb0e820b8436873675fd3aca04f3728eb2185cb",
-            "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0"
-        },
-        "require-dev": {
-            "phpunit\/phpunit": ">=4.8 <=9"
-        },
-        "time": "2020-03-25T18:49:23+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Firebase\\JWT\\": "src"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "BSD-3-Clause"
-        ],
-        "authors": [
-            {
-                "name": "Neuman Vong",
-                "email": "neuman+pear@twilio.com",
-                "role": "Developer"
+{
+    "packages": [
+        {
+            "name": "firebase\/php-jwt",
+            "version": "v6.1.2",
+            "version_normalized": "6.1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/firebase\/php-jwt.git",
+                "reference": "c297139da7c6873dbd67cbd1093f09ec0bbd0c50"
             },
-            {
-                "name": "Anant Narayanan",
-                "email": "anant@php.net",
-                "role": "Developer"
-            }
-        ],
-        "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
-        "homepage": "https:\/\/github.com\/firebase\/php-jwt",
-        "keywords": [
-            "jwt",
-            "php"
-        ]
-    },
-    {
-        "name": "google\/auth",
-        "version": "v1.14.3",
-        "version_normalized": "1.14.3.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/googleapis\/google-auth-library-php.git",
-            "reference": "c1503299c779af0cbc99b43788f75930988852cf"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/c1503299c779af0cbc99b43788f75930988852cf",
-            "reference": "c1503299c779af0cbc99b43788f75930988852cf",
-            "shasum": ""
-        },
-        "require": {
-            "firebase\/php-jwt": "~2.0|~3.0|~4.0|~5.0",
-            "guzzlehttp\/guzzle": "^5.3.1|^6.2.1|^7.0",
-            "guzzlehttp\/psr7": "^1.2",
-            "php": ">=5.4",
-            "psr\/cache": "^1.0",
-            "psr\/http-message": "^1.0"
-        },
-        "require-dev": {
-            "guzzlehttp\/promises": "0.1.1|^1.3",
-            "kelvinmo\/simplejwt": "^0.2.5",
-            "phpseclib\/phpseclib": "^2",
-            "phpunit\/phpunit": "^4.8.36|^5.7",
-            "sebastian\/comparator": ">=1.2.3",
-            "squizlabs\/php_codesniffer": "^3.5"
-        },
-        "suggest": {
-            "phpseclib\/phpseclib": "May be used in place of OpenSSL for signing strings or for token management. Please require version ^2."
-        },
-        "time": "2020-10-16T21:33:48+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Auth\\": "src"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "description": "Google Auth Library for PHP",
-        "homepage": "http:\/\/github.com\/google\/google-auth-library-php",
-        "keywords": [
-            "Authentication",
-            "google",
-            "oauth2"
-        ]
-    },
-    {
-        "name": "google\/cloud-core",
-        "version": "v1.40.0",
-        "version_normalized": "1.40.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/googleapis\/google-cloud-php-core.git",
-            "reference": "1f45457d796c3807bc4b19c3d7b7e89a2f59d63c"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/1f45457d796c3807bc4b19c3d7b7e89a2f59d63c",
-            "reference": "1f45457d796c3807bc4b19c3d7b7e89a2f59d63c",
-            "shasum": ""
-        },
-        "require": {
-            "google\/auth": "^1.6",
-            "guzzlehttp\/guzzle": "^5.3|^6.0|^7.0",
-            "guzzlehttp\/promises": "^1.3",
-            "guzzlehttp\/psr7": "^1.2",
-            "monolog\/monolog": "^1.1|^2.0",
-            "php": ">=5.5",
-            "psr\/http-message": "1.0.*",
-            "rize\/uri-template": "~0.3"
-        },
-        "require-dev": {
-            "erusev\/parsedown": "^1.6",
-            "google\/common-protos": "^1.0",
-            "google\/gax": "^1.1",
-            "opis\/closure": "^3",
-            "phpdocumentor\/reflection": "^3.0",
-            "phpunit\/phpunit": "^4.8|^5.0",
-            "squizlabs\/php_codesniffer": "2.*"
-        },
-        "suggest": {
-            "opis\/closure": "May be used to serialize closures to process jobs in the batch daemon. Please require version ^3.",
-            "symfony\/lock": "Required for the Spanner cached based session pool. Please require the following commit: 3.3.x-dev#1ba6ac9"
-        },
-        "time": "2020-10-30T21:33:33+00:00",
-        "bin": [
-            "bin\/google-cloud-batch"
-        ],
-        "type": "library",
-        "extra": {
-            "component": {
-                "id": "cloud-core",
-                "target": "googleapis\/google-cloud-php-core.git",
-                "path": "Core",
-                "entry": "src\/ServiceBuilder.php"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Cloud\\Core\\": "src"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "description": "Google Cloud PHP shared dependency, providing functionality useful to all components."
-    },
-    {
-        "name": "google\/cloud-storage",
-        "version": "v1.23.0",
-        "version_normalized": "1.23.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/googleapis\/google-cloud-php-storage.git",
-            "reference": "42f7dfb248318aa152b4491b72279035df0d0900"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/42f7dfb248318aa152b4491b72279035df0d0900",
-            "reference": "42f7dfb248318aa152b4491b72279035df0d0900",
-            "shasum": ""
-        },
-        "require": {
-            "google\/cloud-core": "^1.39",
-            "google\/crc32": "^0.1.0"
-        },
-        "require-dev": {
-            "erusev\/parsedown": "^1.6",
-            "google\/cloud-pubsub": "^1.0",
-            "phpdocumentor\/reflection": "^3.0",
-            "phpseclib\/phpseclib": "^2",
-            "phpunit\/phpunit": "^4.8|^5.0",
-            "squizlabs\/php_codesniffer": "2.*"
-        },
-        "suggest": {
-            "google\/cloud-pubsub": "May be used to register a topic to receive bucket notifications.",
-            "phpseclib\/phpseclib": "May be used in place of OpenSSL for creating signed Cloud Storage URLs. Please require version ^2."
-        },
-        "time": "2020-09-08T20:52:20+00:00",
-        "type": "library",
-        "extra": {
-            "component": {
-                "id": "cloud-storage",
-                "target": "googleapis\/google-cloud-php-storage.git",
-                "path": "Storage",
-                "entry": "src\/StorageClient.php"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Cloud\\Storage\\": "src"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "description": "Cloud Storage Client for PHP"
-    },
-    {
-        "name": "google\/crc32",
-        "version": "v0.1.0",
-        "version_normalized": "0.1.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/google\/php-crc32.git",
-            "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/google\/php-crc32\/zipball\/a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
-            "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.4"
-        },
-        "require-dev": {
-            "friendsofphp\/php-cs-fixer": "^1.13 || v2.14.2",
-            "paragonie\/random_compat": ">=2",
-            "phpunit\/phpunit": "^4"
-        },
-        "time": "2019-05-09T06:24:58+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\CRC32\\": "src"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "authors": [
-            {
-                "name": "Andrew Brampton",
-                "email": "bramp@google.com"
-            }
-        ],
-        "description": "Various CRC32 implementations",
-        "homepage": "https:\/\/github.com\/google\/php-crc32"
-    },
-    {
-        "name": "guzzlehttp\/guzzle",
-        "version": "7.2.0",
-        "version_normalized": "7.2.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/guzzle\/guzzle.git",
-            "reference": "0aa74dfb41ae110835923ef10a9d803a22d50e79"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/0aa74dfb41ae110835923ef10a9d803a22d50e79",
-            "reference": "0aa74dfb41ae110835923ef10a9d803a22d50e79",
-            "shasum": ""
-        },
-        "require": {
-            "ext-json": "*",
-            "guzzlehttp\/promises": "^1.4",
-            "guzzlehttp\/psr7": "^1.7",
-            "php": "^7.2.5 || ^8.0",
-            "psr\/http-client": "^1.0"
-        },
-        "provide": {
-            "psr\/http-client-implementation": "1.0"
-        },
-        "require-dev": {
-            "ext-curl": "*",
-            "php-http\/client-integration-tests": "^3.0",
-            "phpunit\/phpunit": "^8.5.5 || ^9.3.5",
-            "psr\/log": "^1.1"
-        },
-        "suggest": {
-            "ext-curl": "Required for CURL handler support",
-            "ext-intl": "Required for Internationalized Domain Name (IDN) support",
-            "psr\/log": "Required for using the Log middleware"
-        },
-        "time": "2020-10-10T11:47:56+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "7.1-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\": "src\/"
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/firebase\/php-jwt\/zipball\/c297139da7c6873dbd67cbd1093f09ec0bbd0c50",
+                "reference": "c297139da7c6873dbd67cbd1093f09ec0bbd0c50",
+                "shasum": ""
             },
-            "files": [
-                "src\/functions_include.php"
-            ]
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Michael Dowling",
-                "email": "mtdowling@gmail.com",
-                "homepage": "https:\/\/github.com\/mtdowling"
+            "require": {
+                "php": "^7.1||^8.0"
             },
-            {
-                "name": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
-                "email": "mark.sagikazar@gmail.com",
-                "homepage": "https:\/\/sagikazarmark.hu"
-            }
-        ],
-        "description": "Guzzle is a PHP HTTP client library",
-        "homepage": "http:\/\/guzzlephp.org\/",
-        "keywords": [
-            "client",
-            "curl",
-            "framework",
-            "http",
-            "http client",
-            "psr-18",
-            "psr-7",
-            "rest",
-            "web service"
-        ],
-        "funding": [
-            {
-                "url": "https:\/\/github.com\/GrahamCampbell",
-                "type": "github"
+            "require-dev": {
+                "phpunit\/phpunit": "^7.5||9.5"
             },
-            {
-                "url": "https:\/\/github.com\/Nyholm",
-                "type": "github"
+            "suggest": {
+                "paragonie\/sodium_compat": "Support EdDSA (Ed25519) signatures when libsodium is not present"
             },
-            {
-                "url": "https:\/\/github.com\/alexeyshockov",
-                "type": "github"
+            "time": "2022-04-21T14:37:18+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Firebase\\JWT\\": "src"
+                }
             },
-            {
-                "url": "https:\/\/github.com\/gmponos",
-                "type": "github"
-            }
-        ]
-    },
-    {
-        "name": "guzzlehttp\/promises",
-        "version": "1.4.0",
-        "version_normalized": "1.4.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/guzzle\/promises.git",
-            "reference": "60d379c243457e073cff02bc323a2a86cb355631"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/promises\/zipball\/60d379c243457e073cff02bc323a2a86cb355631",
-            "reference": "60d379c243457e073cff02bc323a2a86cb355631",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.5"
-        },
-        "require-dev": {
-            "symfony\/phpunit-bridge": "^4.4 || ^5.1"
-        },
-        "time": "2020-09-30T07:37:28+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.4-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\Promise\\": "src\/"
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Neuman Vong",
+                    "email": "neuman+pear@twilio.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Anant Narayanan",
+                    "email": "anant@php.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
+            "homepage": "https:\/\/github.com\/firebase\/php-jwt",
+            "keywords": [
+                "jwt",
+                "php"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/firebase\/php-jwt\/issues",
+                "source": "https:\/\/github.com\/firebase\/php-jwt\/tree\/v6.1.2"
             },
-            "files": [
-                "src\/functions_include.php"
-            ]
+            "install-path": "..\/firebase\/php-jwt"
         },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Michael Dowling",
-                "email": "mtdowling@gmail.com",
-                "homepage": "https:\/\/github.com\/mtdowling"
-            }
-        ],
-        "description": "Guzzle promises library",
-        "keywords": [
-            "promise"
-        ]
-    },
-    {
-        "name": "guzzlehttp\/psr7",
-        "version": "1.7.0",
-        "version_normalized": "1.7.0.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/guzzle\/psr7.git",
-            "reference": "53330f47520498c0ae1f61f7e2c90f55690c06a3"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/53330f47520498c0ae1f61f7e2c90f55690c06a3",
-            "reference": "53330f47520498c0ae1f61f7e2c90f55690c06a3",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.4.0",
-            "psr\/http-message": "~1.0",
-            "ralouphie\/getallheaders": "^2.0.5 || ^3.0.0"
-        },
-        "provide": {
-            "psr\/http-message-implementation": "1.0"
-        },
-        "require-dev": {
-            "ext-zlib": "*",
-            "phpunit\/phpunit": "~4.8.36 || ^5.7.27 || ^6.5.14 || ^7.5.20 || ^8.5.8 || ^9.3.10"
-        },
-        "suggest": {
-            "laminas\/laminas-httphandlerrunner": "Emit PSR-7 responses"
-        },
-        "time": "2020-09-30T07:37:11+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.7-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\Psr7\\": "src\/"
+        {
+            "name": "google\/auth",
+            "version": "v1.21.0",
+            "version_normalized": "1.21.0.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/googleapis\/google-auth-library-php.git",
+                "reference": "73392bad2eb6852eea9084b6bbdec752515cb849"
             },
-            "files": [
-                "src\/functions_include.php"
-            ]
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Michael Dowling",
-                "email": "mtdowling@gmail.com",
-                "homepage": "https:\/\/github.com\/mtdowling"
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/googleapis\/google-auth-library-php\/zipball\/73392bad2eb6852eea9084b6bbdec752515cb849",
+                "reference": "73392bad2eb6852eea9084b6bbdec752515cb849",
+                "shasum": ""
             },
-            {
-                "name": "Tobias Schultze",
-                "homepage": "https:\/\/github.com\/Tobion"
-            }
-        ],
-        "description": "PSR-7 message implementation that also provides common utility methods",
-        "keywords": [
-            "http",
-            "message",
-            "psr-7",
-            "request",
-            "response",
-            "stream",
-            "uri",
-            "url"
-        ]
-    },
-    {
-        "name": "monolog\/monolog",
-        "version": "2.1.1",
-        "version_normalized": "2.1.1.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/Seldaek\/monolog.git",
-            "reference": "f9eee5cec93dfb313a38b6b288741e84e53f02d5"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/f9eee5cec93dfb313a38b6b288741e84e53f02d5",
-            "reference": "f9eee5cec93dfb313a38b6b288741e84e53f02d5",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=7.2",
-            "psr\/log": "^1.0.1"
-        },
-        "provide": {
-            "psr\/log-implementation": "1.0.0"
-        },
-        "require-dev": {
-            "aws\/aws-sdk-php": "^2.4.9 || ^3.0",
-            "doctrine\/couchdb": "~1.0@dev",
-            "elasticsearch\/elasticsearch": "^6.0",
-            "graylog2\/gelf-php": "^1.4.2",
-            "php-amqplib\/php-amqplib": "~2.4",
-            "php-console\/php-console": "^3.1.3",
-            "php-parallel-lint\/php-parallel-lint": "^1.0",
-            "phpspec\/prophecy": "^1.6.1",
-            "phpunit\/phpunit": "^8.5",
-            "predis\/predis": "^1.1",
-            "rollbar\/rollbar": "^1.3",
-            "ruflin\/elastica": ">=0.90 <3.0",
-            "swiftmailer\/swiftmailer": "^5.3|^6.0"
-        },
-        "suggest": {
-            "aws\/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
-            "doctrine\/couchdb": "Allow sending log messages to a CouchDB server",
-            "elasticsearch\/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
-            "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
-            "ext-mbstring": "Allow to work properly with unicode symbols",
-            "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
-            "graylog2\/gelf-php": "Allow sending log messages to a GrayLog2 server",
-            "mongodb\/mongodb": "Allow sending log messages to a MongoDB server (via library)",
-            "php-amqplib\/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
-            "php-console\/php-console": "Allow sending log messages to Google Chrome",
-            "rollbar\/rollbar": "Allow sending log messages to Rollbar",
-            "ruflin\/elastica": "Allow sending log messages to an Elastic Search server"
-        },
-        "time": "2020-07-23T08:41:23+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "2.x-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\": "src\/Monolog"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Jordi Boggiano",
-                "email": "j.boggiano@seld.be",
-                "homepage": "http:\/\/seld.be"
-            }
-        ],
-        "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
-        "homepage": "http:\/\/github.com\/Seldaek\/monolog",
-        "keywords": [
-            "log",
-            "logging",
-            "psr-3"
-        ],
-        "funding": [
-            {
-                "url": "https:\/\/github.com\/Seldaek",
-                "type": "github"
+            "require": {
+                "firebase\/php-jwt": "^5.5||^6.0",
+                "guzzlehttp\/guzzle": "^6.2.1|^7.0",
+                "guzzlehttp\/psr7": "^1.7|^2.0",
+                "php": "^7.1||^8.0",
+                "psr\/cache": "^1.0|^2.0|^3.0",
+                "psr\/http-message": "^1.0"
             },
-            {
-                "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/monolog\/monolog",
-                "type": "tidelift"
-            }
-        ]
-    },
-    {
-        "name": "psr\/cache",
-        "version": "1.0.1",
-        "version_normalized": "1.0.1.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/php-fig\/cache.git",
-            "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8"
+            "require-dev": {
+                "guzzlehttp\/promises": "0.1.1|^1.3",
+                "kelvinmo\/simplejwt": "^0.2.5|^0.5.1",
+                "phpseclib\/phpseclib": "^2.0.31",
+                "phpspec\/prophecy-phpunit": "^1.1",
+                "phpunit\/phpunit": "^7.5||^8.5",
+                "sebastian\/comparator": ">=1.2.3",
+                "squizlabs\/php_codesniffer": "^3.5"
+            },
+            "suggest": {
+                "phpseclib\/phpseclib": "May be used in place of OpenSSL for signing strings or for token management. Please require version ^2."
+            },
+            "time": "2022-04-13T20:35:52+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Auth\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Google Auth Library for PHP",
+            "homepage": "http:\/\/github.com\/google\/google-auth-library-php",
+            "keywords": [
+                "Authentication",
+                "google",
+                "oauth2"
+            ],
+            "support": {
+                "docs": "https:\/\/googleapis.github.io\/google-auth-library-php\/main\/",
+                "issues": "https:\/\/github.com\/googleapis\/google-auth-library-php\/issues",
+                "source": "https:\/\/github.com\/googleapis\/google-auth-library-php\/tree\/v1.21.0"
+            },
+            "install-path": "..\/google\/auth"
         },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/cache\/zipball\/d11b50ad223250cf17b86e38383413f5a6764bf8",
-            "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8",
-            "shasum": ""
+        {
+            "name": "google\/cloud-core",
+            "version": "v1.44.3",
+            "version_normalized": "1.44.3.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/googleapis\/google-cloud-php-core.git",
+                "reference": "eac417a907beaa3bc2783a17b90c0113b7aa86e6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-core\/zipball\/eac417a907beaa3bc2783a17b90c0113b7aa86e6",
+                "reference": "eac417a907beaa3bc2783a17b90c0113b7aa86e6",
+                "shasum": ""
+            },
+            "require": {
+                "google\/auth": "^1.18",
+                "guzzlehttp\/guzzle": "^5.3|^6.0|^7.0",
+                "guzzlehttp\/promises": "^1.3",
+                "guzzlehttp\/psr7": "^1.7|^2.0",
+                "monolog\/monolog": "^1.1|^2.0",
+                "php": ">=5.5",
+                "psr\/http-message": "1.0.*",
+                "rize\/uri-template": "~0.3"
+            },
+            "require-dev": {
+                "erusev\/parsedown": "^1.6",
+                "google\/common-protos": "^1.0||^2.0",
+                "google\/gax": "^1.9",
+                "opis\/closure": "^3",
+                "phpdocumentor\/reflection": "^3.0",
+                "phpunit\/phpunit": "^4.8|^5.0",
+                "squizlabs\/php_codesniffer": "2.*"
+            },
+            "suggest": {
+                "opis\/closure": "May be used to serialize closures to process jobs in the batch daemon. Please require version ^3.",
+                "symfony\/lock": "Required for the Spanner cached based session pool. Please require the following commit: 3.3.x-dev#1ba6ac9"
+            },
+            "time": "2022-04-27T23:24:15+00:00",
+            "bin": [
+                "bin\/google-cloud-batch"
+            ],
+            "type": "library",
+            "extra": {
+                "component": {
+                    "id": "cloud-core",
+                    "target": "googleapis\/google-cloud-php-core.git",
+                    "path": "Core",
+                    "entry": "src\/ServiceBuilder.php"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Cloud\\Core\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Google Cloud PHP shared dependency, providing functionality useful to all components.",
+            "support": {
+                "source": "https:\/\/github.com\/googleapis\/google-cloud-php-core\/tree\/v1.44.3"
+            },
+            "install-path": "..\/google\/cloud-core"
         },
-        "require": {
-            "php": ">=5.3.0"
+        {
+            "name": "google\/cloud-storage",
+            "version": "v1.26.3",
+            "version_normalized": "1.26.3.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/googleapis\/google-cloud-php-storage.git",
+                "reference": "1c9cfee8a51605faa93cf2b011a848bd94d50f48"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/googleapis\/google-cloud-php-storage\/zipball\/1c9cfee8a51605faa93cf2b011a848bd94d50f48",
+                "reference": "1c9cfee8a51605faa93cf2b011a848bd94d50f48",
+                "shasum": ""
+            },
+            "require": {
+                "google\/cloud-core": "^1.43",
+                "google\/crc32": "^0.1.0"
+            },
+            "require-dev": {
+                "erusev\/parsedown": "^1.6",
+                "google\/cloud-pubsub": "^1.0",
+                "phpdocumentor\/reflection": "^3.0",
+                "phpseclib\/phpseclib": "^2",
+                "phpunit\/phpunit": "^4.8|^5.0",
+                "squizlabs\/php_codesniffer": "2.*"
+            },
+            "suggest": {
+                "google\/cloud-pubsub": "May be used to register a topic to receive bucket notifications.",
+                "phpseclib\/phpseclib": "May be used in place of OpenSSL for creating signed Cloud Storage URLs. Please require version ^2."
+            },
+            "time": "2022-04-27T23:24:15+00:00",
+            "type": "library",
+            "extra": {
+                "component": {
+                    "id": "cloud-storage",
+                    "target": "googleapis\/google-cloud-php-storage.git",
+                    "path": "Storage",
+                    "entry": "src\/StorageClient.php"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\Cloud\\Storage\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Cloud Storage Client for PHP",
+            "support": {
+                "source": "https:\/\/github.com\/googleapis\/google-cloud-php-storage\/tree\/v1.26.3"
+            },
+            "install-path": "..\/google\/cloud-storage"
         },
-        "time": "2016-08-06T20:24:11+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.0.x-dev"
-            }
+        {
+            "name": "google\/crc32",
+            "version": "v0.1.0",
+            "version_normalized": "0.1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/google\/php-crc32.git",
+                "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/google\/php-crc32\/zipball\/a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
+                "reference": "a8525f0dea6fca1893e1bae2f6e804c5f7d007fb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "friendsofphp\/php-cs-fixer": "^1.13 || v2.14.2",
+                "paragonie\/random_compat": ">=2",
+                "phpunit\/phpunit": "^4"
+            },
+            "time": "2019-05-09T06:24:58+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Google\\CRC32\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Andrew Brampton",
+                    "email": "bramp@google.com"
+                }
+            ],
+            "description": "Various CRC32 implementations",
+            "homepage": "https:\/\/github.com\/google\/php-crc32",
+            "support": {
+                "issues": "https:\/\/github.com\/google\/php-crc32\/issues",
+                "source": "https:\/\/github.com\/google\/php-crc32\/tree\/v0.1.0"
+            },
+            "install-path": "..\/google\/crc32"
         },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Cache\\": "src\/"
-            }
+        {
+            "name": "guzzlehttp\/guzzle",
+            "version": "7.4.2",
+            "version_normalized": "7.4.2.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/guzzle\/guzzle.git",
+                "reference": "ac1ec1cd9b5624694c3a40be801d94137afb12b4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/guzzle\/guzzle\/zipball\/ac1ec1cd9b5624694c3a40be801d94137afb12b4",
+                "reference": "ac1ec1cd9b5624694c3a40be801d94137afb12b4",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp\/promises": "^1.5",
+                "guzzlehttp\/psr7": "^1.8.3 || ^2.1",
+                "php": "^7.2.5 || ^8.0",
+                "psr\/http-client": "^1.0",
+                "symfony\/deprecation-contracts": "^2.2 || ^3.0"
+            },
+            "provide": {
+                "psr\/http-client-implementation": "1.0"
+            },
+            "require-dev": {
+                "bamarni\/composer-bin-plugin": "^1.4.1",
+                "ext-curl": "*",
+                "php-http\/client-integration-tests": "^3.0",
+                "phpunit\/phpunit": "^8.5.5 || ^9.3.5",
+                "psr\/log": "^1.1 || ^2.0 || ^3.0"
+            },
+            "suggest": {
+                "ext-curl": "Required for CURL handler support",
+                "ext-intl": "Required for Internationalized Domain Name (IDN) support",
+                "psr\/log": "Required for using the Log middleware"
+            },
+            "time": "2022-03-20T14:16:28+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "7.4-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src\/functions_include.php"
+                ],
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Graham Campbell",
+                    "email": "hello@gjcampbell.co.uk",
+                    "homepage": "https:\/\/github.com\/GrahamCampbell"
+                },
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https:\/\/github.com\/mtdowling"
+                },
+                {
+                    "name": "Jeremy Lindblom",
+                    "email": "jeremeamia@gmail.com",
+                    "homepage": "https:\/\/github.com\/jeremeamia"
+                },
+                {
+                    "name": "George Mponos",
+                    "email": "gmponos@gmail.com",
+                    "homepage": "https:\/\/github.com\/gmponos"
+                },
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com",
+                    "homepage": "https:\/\/github.com\/Nyholm"
+                },
+                {
+                    "name": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
+                    "email": "mark.sagikazar@gmail.com",
+                    "homepage": "https:\/\/github.com\/sagikazarmark"
+                },
+                {
+                    "name": "Tobias Schultze",
+                    "email": "webmaster@tubo-world.de",
+                    "homepage": "https:\/\/github.com\/Tobion"
+                }
+            ],
+            "description": "Guzzle is a PHP HTTP client library",
+            "keywords": [
+                "client",
+                "curl",
+                "framework",
+                "http",
+                "http client",
+                "psr-18",
+                "psr-7",
+                "rest",
+                "web service"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/guzzle\/guzzle\/issues",
+                "source": "https:\/\/github.com\/guzzle\/guzzle\/tree\/7.4.2"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/github.com\/GrahamCampbell",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/github.com\/Nyholm",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/guzzlehttp\/guzzle",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/guzzlehttp\/guzzle"
         },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "PHP-FIG",
-                "homepage": "http:\/\/www.php-fig.org\/"
-            }
-        ],
-        "description": "Common interface for caching libraries",
-        "keywords": [
-            "cache",
-            "psr",
-            "psr-6"
-        ]
-    },
-    {
-        "name": "psr\/http-client",
-        "version": "1.0.1",
-        "version_normalized": "1.0.1.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/php-fig\/http-client.git",
-            "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621"
+        {
+            "name": "guzzlehttp\/promises",
+            "version": "1.5.1",
+            "version_normalized": "1.5.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/guzzle\/promises.git",
+                "reference": "fe752aedc9fd8fcca3fe7ad05d419d32998a06da"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/guzzle\/promises\/zipball\/fe752aedc9fd8fcca3fe7ad05d419d32998a06da",
+                "reference": "fe752aedc9fd8fcca3fe7ad05d419d32998a06da",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5"
+            },
+            "require-dev": {
+                "symfony\/phpunit-bridge": "^4.4 || ^5.1"
+            },
+            "time": "2021-10-22T20:56:57+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.5-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src\/functions_include.php"
+                ],
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\Promise\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Graham Campbell",
+                    "email": "hello@gjcampbell.co.uk",
+                    "homepage": "https:\/\/github.com\/GrahamCampbell"
+                },
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https:\/\/github.com\/mtdowling"
+                },
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com",
+                    "homepage": "https:\/\/github.com\/Nyholm"
+                },
+                {
+                    "name": "Tobias Schultze",
+                    "email": "webmaster@tubo-world.de",
+                    "homepage": "https:\/\/github.com\/Tobion"
+                }
+            ],
+            "description": "Guzzle promises library",
+            "keywords": [
+                "promise"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/guzzle\/promises\/issues",
+                "source": "https:\/\/github.com\/guzzle\/promises\/tree\/1.5.1"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/github.com\/GrahamCampbell",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/github.com\/Nyholm",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/guzzlehttp\/promises",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/guzzlehttp\/promises"
         },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/http-client\/zipball\/2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
-            "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
-            "shasum": ""
+        {
+            "name": "guzzlehttp\/psr7",
+            "version": "2.2.1",
+            "version_normalized": "2.2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/guzzle\/psr7.git",
+                "reference": "c94a94f120803a18554c1805ef2e539f8285f9a2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/guzzle\/psr7\/zipball\/c94a94f120803a18554c1805ef2e539f8285f9a2",
+                "reference": "c94a94f120803a18554c1805ef2e539f8285f9a2",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2.5 || ^8.0",
+                "psr\/http-factory": "^1.0",
+                "psr\/http-message": "^1.0",
+                "ralouphie\/getallheaders": "^3.0"
+            },
+            "provide": {
+                "psr\/http-factory-implementation": "1.0",
+                "psr\/http-message-implementation": "1.0"
+            },
+            "require-dev": {
+                "bamarni\/composer-bin-plugin": "^1.4.1",
+                "http-interop\/http-factory-tests": "^0.9",
+                "phpunit\/phpunit": "^8.5.8 || ^9.3.10"
+            },
+            "suggest": {
+                "laminas\/laminas-httphandlerrunner": "Emit PSR-7 responses"
+            },
+            "time": "2022-03-20T21:55:58+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.2-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\Psr7\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Graham Campbell",
+                    "email": "hello@gjcampbell.co.uk",
+                    "homepage": "https:\/\/github.com\/GrahamCampbell"
+                },
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https:\/\/github.com\/mtdowling"
+                },
+                {
+                    "name": "George Mponos",
+                    "email": "gmponos@gmail.com",
+                    "homepage": "https:\/\/github.com\/gmponos"
+                },
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com",
+                    "homepage": "https:\/\/github.com\/Nyholm"
+                },
+                {
+                    "name": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
+                    "email": "mark.sagikazar@gmail.com",
+                    "homepage": "https:\/\/github.com\/sagikazarmark"
+                },
+                {
+                    "name": "Tobias Schultze",
+                    "email": "webmaster@tubo-world.de",
+                    "homepage": "https:\/\/github.com\/Tobion"
+                },
+                {
+                    "name": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
+                    "email": "mark.sagikazar@gmail.com",
+                    "homepage": "https:\/\/sagikazarmark.hu"
+                }
+            ],
+            "description": "PSR-7 message implementation that also provides common utility methods",
+            "keywords": [
+                "http",
+                "message",
+                "psr-7",
+                "request",
+                "response",
+                "stream",
+                "uri",
+                "url"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/guzzle\/psr7\/issues",
+                "source": "https:\/\/github.com\/guzzle\/psr7\/tree\/2.2.1"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/github.com\/GrahamCampbell",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/github.com\/Nyholm",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/guzzlehttp\/psr7",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/guzzlehttp\/psr7"
         },
-        "require": {
-            "php": "^7.0 || ^8.0",
-            "psr\/http-message": "^1.0"
+        {
+            "name": "monolog\/monolog",
+            "version": "2.5.0",
+            "version_normalized": "2.5.0.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Seldaek\/monolog.git",
+                "reference": "4192345e260f1d51b365536199744b987e160edc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Seldaek\/monolog\/zipball\/4192345e260f1d51b365536199744b987e160edc",
+                "reference": "4192345e260f1d51b365536199744b987e160edc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2",
+                "psr\/log": "^1.0.1 || ^2.0 || ^3.0"
+            },
+            "provide": {
+                "psr\/log-implementation": "1.0.0 || 2.0.0 || 3.0.0"
+            },
+            "require-dev": {
+                "aws\/aws-sdk-php": "^2.4.9 || ^3.0",
+                "doctrine\/couchdb": "~1.0@dev",
+                "elasticsearch\/elasticsearch": "^7",
+                "graylog2\/gelf-php": "^1.4.2",
+                "mongodb\/mongodb": "^1.8",
+                "php-amqplib\/php-amqplib": "~2.4 || ^3",
+                "php-console\/php-console": "^3.1.3",
+                "phpspec\/prophecy": "^1.6.1",
+                "phpstan\/phpstan": "^0.12.91",
+                "phpunit\/phpunit": "^8.5",
+                "predis\/predis": "^1.1",
+                "rollbar\/rollbar": "^1.3 || ^2 || ^3",
+                "ruflin\/elastica": ">=0.90@dev",
+                "swiftmailer\/swiftmailer": "^5.3|^6.0"
+            },
+            "suggest": {
+                "aws\/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
+                "doctrine\/couchdb": "Allow sending log messages to a CouchDB server",
+                "elasticsearch\/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
+                "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
+                "ext-curl": "Required to send log messages using the IFTTTHandler, the LogglyHandler, the SendGridHandler, the SlackWebhookHandler or the TelegramBotHandler",
+                "ext-mbstring": "Allow to work properly with unicode symbols",
+                "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
+                "ext-openssl": "Required to send log messages using SSL",
+                "ext-sockets": "Allow sending log messages to a Syslog server (via UDP driver)",
+                "graylog2\/gelf-php": "Allow sending log messages to a GrayLog2 server",
+                "mongodb\/mongodb": "Allow sending log messages to a MongoDB server (via library)",
+                "php-amqplib\/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                "php-console\/php-console": "Allow sending log messages to Google Chrome",
+                "rollbar\/rollbar": "Allow sending log messages to Rollbar",
+                "ruflin\/elastica": "Allow sending log messages to an Elastic Search server"
+            },
+            "time": "2022-04-08T15:43:54+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "2.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Monolog\\": "src\/Monolog"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "https:\/\/seld.be"
+                }
+            ],
+            "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
+            "homepage": "https:\/\/github.com\/Seldaek\/monolog",
+            "keywords": [
+                "log",
+                "logging",
+                "psr-3"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/Seldaek\/monolog\/issues",
+                "source": "https:\/\/github.com\/Seldaek\/monolog\/tree\/2.5.0"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/github.com\/Seldaek",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/monolog\/monolog",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/monolog\/monolog"
         },
-        "time": "2020-06-29T06:28:15+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.0.x-dev"
-            }
+        {
+            "name": "psr\/cache",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/cache.git",
+                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/cache\/zipball\/d11b50ad223250cf17b86e38383413f5a6764bf8",
+                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2016-08-06T20:24:11+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Cache\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interface for caching libraries",
+            "keywords": [
+                "cache",
+                "psr",
+                "psr-6"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/cache\/tree\/master"
+            },
+            "install-path": "..\/psr\/cache"
         },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Client\\": "src\/"
-            }
+        {
+            "name": "psr\/http-client",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/http-client.git",
+                "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/http-client\/zipball\/2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
+                "reference": "2dfb5f6c5eff0e91e20e913f8c5452ed95b86621",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.0 || ^8.0",
+                "psr\/http-message": "^1.0"
+            },
+            "time": "2020-06-29T06:28:15+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Client\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interface for HTTP clients",
+            "homepage": "https:\/\/github.com\/php-fig\/http-client",
+            "keywords": [
+                "http",
+                "http-client",
+                "psr",
+                "psr-18"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/http-client\/tree\/master"
+            },
+            "install-path": "..\/psr\/http-client"
         },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "PHP-FIG",
-                "homepage": "http:\/\/www.php-fig.org\/"
-            }
-        ],
-        "description": "Common interface for HTTP clients",
-        "homepage": "https:\/\/github.com\/php-fig\/http-client",
-        "keywords": [
-            "http",
-            "http-client",
-            "psr",
-            "psr-18"
-        ]
-    },
-    {
-        "name": "psr\/http-message",
-        "version": "1.0.1",
-        "version_normalized": "1.0.1.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/php-fig\/http-message.git",
-            "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+        {
+            "name": "psr\/http-factory",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/http-factory.git",
+                "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/http-factory\/zipball\/12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
+                "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0.0",
+                "psr\/http-message": "^1.0"
+            },
+            "time": "2019-04-30T12:38:16+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Message\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interfaces for PSR-7 HTTP message factories",
+            "keywords": [
+                "factory",
+                "http",
+                "message",
+                "psr",
+                "psr-17",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/http-factory\/tree\/master"
+            },
+            "install-path": "..\/psr\/http-factory"
         },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/http-message\/zipball\/f6561bf28d520154e4b0ec72be95418abe6d9363",
-            "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
-            "shasum": ""
+        {
+            "name": "psr\/http-message",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/http-message.git",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/http-message\/zipball\/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2016-08-06T14:39:51+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Message\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https:\/\/github.com\/php-fig\/http-message",
+            "keywords": [
+                "http",
+                "http-message",
+                "psr",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/http-message\/tree\/master"
+            },
+            "install-path": "..\/psr\/http-message"
         },
-        "require": {
-            "php": ">=5.3.0"
+        {
+            "name": "psr\/log",
+            "version": "1.1.4",
+            "version_normalized": "1.1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/log.git",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/d49695b909c3b7628b6289db5479a1c204601f11",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2021-05-03T11:20:27+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Log\\": "Psr\/Log\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https:\/\/github.com\/php-fig\/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/log\/tree\/1.1.4"
+            },
+            "install-path": "..\/psr\/log"
         },
-        "time": "2016-08-06T14:39:51+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.0.x-dev"
-            }
+        {
+            "name": "ralouphie\/getallheaders",
+            "version": "3.0.3",
+            "version_normalized": "3.0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/ralouphie\/getallheaders.git",
+                "reference": "120b605dfeb996808c31b6477290a714d356e822"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/ralouphie\/getallheaders\/zipball\/120b605dfeb996808c31b6477290a714d356e822",
+                "reference": "120b605dfeb996808c31b6477290a714d356e822",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "php-coveralls\/php-coveralls": "^2.1",
+                "phpunit\/phpunit": "^5 || ^6.5"
+            },
+            "time": "2019-03-08T08:55:37+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src\/getallheaders.php"
+                ]
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ralph Khattar",
+                    "email": "ralph.khattar@gmail.com"
+                }
+            ],
+            "description": "A polyfill for getallheaders.",
+            "support": {
+                "issues": "https:\/\/github.com\/ralouphie\/getallheaders\/issues",
+                "source": "https:\/\/github.com\/ralouphie\/getallheaders\/tree\/develop"
+            },
+            "install-path": "..\/ralouphie\/getallheaders"
         },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Http\\Message\\": "src\/"
-            }
+        {
+            "name": "rize\/uri-template",
+            "version": "0.3.4",
+            "version_normalized": "0.3.4.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/rize\/UriTemplate.git",
+                "reference": "2a874863c48d643b9e2e254ab288ec203060a0b8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/rize\/UriTemplate\/zipball\/2a874863c48d643b9e2e254ab288ec203060a0b8",
+                "reference": "2a874863c48d643b9e2e254ab288ec203060a0b8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "~4.8.36"
+            },
+            "time": "2021-10-09T06:30:16+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "DeliciousBrains\\WP_Offload_Media\\Gcp\\Rize\\": "src\/Rize"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Marut K",
+                    "homepage": "http:\/\/twitter.com\/rezigned"
+                }
+            ],
+            "description": "PHP URI Template (RFC 6570) supports both expansion & extraction",
+            "keywords": [
+                "RFC 6570",
+                "template",
+                "uri"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/rize\/UriTemplate\/issues",
+                "source": "https:\/\/github.com\/rize\/UriTemplate\/tree\/0.3.4"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/www.paypal.me\/rezigned",
+                    "type": "custom"
+                },
+                {
+                    "url": "https:\/\/opencollective.com\/rize-uri-template",
+                    "type": "open_collective"
+                }
+            ],
+            "install-path": "..\/rize\/uri-template"
         },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "PHP-FIG",
-                "homepage": "http:\/\/www.php-fig.org\/"
-            }
-        ],
-        "description": "Common interface for HTTP messages",
-        "homepage": "https:\/\/github.com\/php-fig\/http-message",
-        "keywords": [
-            "http",
-            "http-message",
-            "psr",
-            "psr-7",
-            "request",
-            "response"
-        ]
-    },
-    {
-        "name": "psr\/log",
-        "version": "1.1.3",
-        "version_normalized": "1.1.3.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/php-fig\/log.git",
-            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/0f73288fd15629204f9d42b7055f72dacbe811fc",
-            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0"
-        },
-        "time": "2020-03-23T09:12:05+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.1.x-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "DeliciousBrains\\WP_Offload_Media\\Gcp\\Psr\\Log\\": "Psr\/Log\/"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "PHP-FIG",
-                "homepage": "http:\/\/www.php-fig.org\/"
-            }
-        ],
-        "description": "Common interface for logging libraries",
-        "homepage": "https:\/\/github.com\/php-fig\/log",
-        "keywords": [
-            "log",
-            "psr",
-            "psr-3"
-        ]
-    },
-    {
-        "name": "ralouphie\/getallheaders",
-        "version": "3.0.3",
-        "version_normalized": "3.0.3.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/ralouphie\/getallheaders.git",
-            "reference": "120b605dfeb996808c31b6477290a714d356e822"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/ralouphie\/getallheaders\/zipball\/120b605dfeb996808c31b6477290a714d356e822",
-            "reference": "120b605dfeb996808c31b6477290a714d356e822",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.6"
-        },
-        "require-dev": {
-            "php-coveralls\/php-coveralls": "^2.1",
-            "phpunit\/phpunit": "^5 || ^6.5"
-        },
-        "time": "2019-03-08T08:55:37+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "files": [
-                "src\/getallheaders.php"
-            ]
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Ralph Khattar",
-                "email": "ralph.khattar@gmail.com"
-            }
-        ],
-        "description": "A polyfill for getallheaders."
-    },
-    {
-        "name": "rize\/uri-template",
-        "version": "0.3.2",
-        "version_normalized": "0.3.2.0",
-        "source": {
-            "type": "git",
-            "url": "https:\/\/github.com\/rize\/UriTemplate.git",
-            "reference": "9e5fdd5c47147aa5adf7f760002ee591ed37b9ca"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https:\/\/api.github.com\/repos\/rize\/UriTemplate\/zipball\/9e5fdd5c47147aa5adf7f760002ee591ed37b9ca",
-            "reference": "9e5fdd5c47147aa5adf7f760002ee591ed37b9ca",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0"
-        },
-        "require-dev": {
-            "phpunit\/phpunit": "~4.0.0"
-        },
-        "time": "2017-06-14T03:57:53+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "Rize\\UriTemplate": "src\/"
-            }
-        },
-        "notification-url": "https:\/\/packagist.org\/downloads\/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Marut K",
-                "homepage": "http:\/\/twitter.com\/rezigned"
-            }
-        ],
-        "description": "PHP URI Template (RFC 6570) supports both expansion & extraction",
-        "keywords": [
-            "RFC 6570",
-            "template",
-            "uri"
-        ]
-    }
-]
+        {
+            "name": "symfony\/deprecation-contracts",
+            "version": "v2.5.1",
+            "version_normalized": "2.5.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/symfony\/deprecation-contracts.git",
+                "reference": "e8b495ea28c1d97b5e0c121748d6f9b53d075c66"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/symfony\/deprecation-contracts\/zipball\/e8b495ea28c1d97b5e0c121748d6f9b53d075c66",
+                "reference": "e8b495ea28c1d97b5e0c121748d6f9b53d075c66",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "time": "2022-01-02T09:53:40+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "2.5-dev"
+                },
+                "thanks": {
+                    "name": "symfony\/contracts",
+                    "url": "https:\/\/github.com\/symfony\/contracts"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "function.php"
+                ]
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https:\/\/symfony.com\/contributors"
+                }
+            ],
+            "description": "A generic function and convention to trigger deprecation notices",
+            "homepage": "https:\/\/symfony.com",
+            "support": {
+                "source": "https:\/\/github.com\/symfony\/deprecation-contracts\/tree\/v2.5.1"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/symfony.com\/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https:\/\/github.com\/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/symfony\/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/symfony\/deprecation-contracts"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

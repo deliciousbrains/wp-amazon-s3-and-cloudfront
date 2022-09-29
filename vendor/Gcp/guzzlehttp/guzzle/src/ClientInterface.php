@@ -15,7 +15,7 @@ interface ClientInterface
     /**
      * The Guzzle major version.
      */
-    const MAJOR_VERSION = 7;
+    public const MAJOR_VERSION = 7;
     /**
      * Send an HTTP request.
      *
@@ -25,7 +25,7 @@ interface ClientInterface
      *
      * @throws GuzzleException
      */
-    public function send(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = []) : ResponseInterface;
+    public function send(RequestInterface $request, array $options = []) : ResponseInterface;
     /**
      * Asynchronously send an HTTP request.
      *
@@ -33,7 +33,7 @@ interface ClientInterface
      * @param array            $options Request options to apply to the given
      *                                  request and to the transfer.
      */
-    public function sendAsync(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = []) : PromiseInterface;
+    public function sendAsync(RequestInterface $request, array $options = []) : PromiseInterface;
     /**
      * Create and send an HTTP request.
      *

@@ -60,26 +60,26 @@ class MessageFormatter
      *
      * @return string
      */
-    public function format(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null, \Exception $error = null)
+    public function format(RequestInterface $request, ResponseInterface $response = null, \Exception $error = null)
     {
         $cache = [];
-        return preg_replace_callback('/{\\s*([A-Za-z_\\-\\.0-9]+)\\s*}/', function (array $matches) use($request, $response, $error, &$cache) {
+        return \preg_replace_callback('/{\\s*([A-Za-z_\\-\\.0-9]+)\\s*}/', function (array $matches) use($request, $response, $error, &$cache) {
             if (isset($cache[$matches[1]])) {
                 return $cache[$matches[1]];
             }
             $result = '';
             switch ($matches[1]) {
                 case 'request':
-                    $result = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\str($request);
+                    $result = Psr7\str($request);
                     break;
                 case 'response':
-                    $result = $response ? \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\str($response) : '';
+                    $result = $response ? Psr7\str($response) : '';
                     break;
                 case 'req_headers':
-                    $result = trim($request->getMethod() . ' ' . $request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . "\r\n" . $this->headers($request);
+                    $result = \trim($request->getMethod() . ' ' . $request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . "\r\n" . $this->headers($request);
                     break;
                 case 'res_headers':
-                    $result = $response ? sprintf('HTTP/%s %d %s', $response->getProtocolVersion(), $response->getStatusCode(), $response->getReasonPhrase()) . "\r\n" . $this->headers($response) : 'NULL';
+                    $result = $response ? \sprintf('HTTP/%s %d %s', $response->getProtocolVersion(), $response->getStatusCode(), $response->getReasonPhrase()) . "\r\n" . $this->headers($response) : 'NULL';
                     break;
                 case 'req_body':
                     $result = $request->getBody();
@@ -89,10 +89,10 @@ class MessageFormatter
                     break;
                 case 'ts':
                 case 'date_iso_8601':
-                    $result = gmdate('c');
+                    $result = \gmdate('c');
                     break;
                 case 'date_common_log':
-                    $result = date('d/M/Y:H:i:s O');
+                    $result = \date('d/M/Y:H:i:s O');
                     break;
                 case 'method':
                     $result = $request->getMethod();
@@ -117,7 +117,7 @@ class MessageFormatter
                     $result = $request->getHeaderLine('Host');
                     break;
                 case 'hostname':
-                    $result = gethostname();
+                    $result = \gethostname();
                     break;
                 case 'code':
                     $result = $response ? $response->getStatusCode() : 'NULL';
@@ -130,10 +130,10 @@ class MessageFormatter
                     break;
                 default:
                     // handle prefixed dynamic headers
-                    if (strpos($matches[1], 'req_header_') === 0) {
-                        $result = $request->getHeaderLine(substr($matches[1], 11));
-                    } elseif (strpos($matches[1], 'res_header_') === 0) {
-                        $result = $response ? $response->getHeaderLine(substr($matches[1], 11)) : 'NULL';
+                    if (\strpos($matches[1], 'req_header_') === 0) {
+                        $result = $request->getHeaderLine(\substr($matches[1], 11));
+                    } elseif (\strpos($matches[1], 'res_header_') === 0) {
+                        $result = $response ? $response->getHeaderLine(\substr($matches[1], 11)) : 'NULL';
                     }
             }
             $cache[$matches[1]] = $result;
@@ -145,12 +145,12 @@ class MessageFormatter
      *
      * @return string
      */
-    private function headers(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\MessageInterface $message)
+    private function headers(MessageInterface $message)
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {
-            $result .= $name . ': ' . implode(', ', $values) . "\r\n";
+            $result .= $name . ': ' . \implode(', ', $values) . "\r\n";
         }
-        return trim($result);
+        return \trim($result);
     }
 }

@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  * @link https://github.com/aws/aws-sdk-php/
  * @author Andrew Lawson <adlawson@gmail.com>
  */
-class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class DynamoDbHandler extends AbstractProcessingHandler
 {
     public const DATE_FORMAT = 'Y-m-d\\TH:i:s.uO';
     /**
@@ -42,14 +42,12 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      * @var Marshaler
      */
     protected $marshaler;
-    /**
-     * @param int|string $level
-     */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\DynamoDbClient $client, string $table, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct(DynamoDbClient $client, string $table, $level = Logger::DEBUG, bool $bubble = \true)
     {
-        if (defined('Aws\\Sdk::VERSION') && version_compare(\DeliciousBrains\WP_Offload_Media\Gcp\Aws\Sdk::VERSION, '3.0', '>=')) {
+        /** @phpstan-ignore-next-line */
+        if (\defined('Aws\\Sdk::VERSION') && \version_compare(Sdk::VERSION, '3.0', '>=')) {
             $this->version = 3;
-            $this->marshaler = new \DeliciousBrains\WP_Offload_Media\Gcp\Aws\DynamoDb\Marshaler();
+            $this->marshaler = new Marshaler();
         } else {
             $this->version = 2;
         }
@@ -58,7 +56,7 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
         parent::__construct($level, $bubble);
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
@@ -66,21 +64,26 @@ class DynamoDbHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
         if ($this->version === 3) {
             $formatted = $this->marshaler->marshalItem($filtered);
         } else {
+            /** @phpstan-ignore-next-line */
             $formatted = $this->client->formatAttributes($filtered);
         }
         $this->client->putItem(['TableName' => $this->table, 'Item' => $formatted]);
     }
+    /**
+     * @param  mixed[] $record
+     * @return mixed[]
+     */
     protected function filterEmptyFields(array $record) : array
     {
-        return array_filter($record, function ($value) {
-            return !empty($value) || false === $value || 0 === $value;
+        return \array_filter($record, function ($value) {
+            return !empty($value) || \false === $value || 0 === $value;
         });
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\ScalarFormatter(self::DATE_FORMAT);
+        return new ScalarFormatter(self::DATE_FORMAT);
     }
 }

@@ -20,8 +20,10 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Slack\SlackRecord;
  *
  * @author Greg Kedzierski <greg@gregkedzierski.com>
  * @see    https://api.slack.com/
+ *
+ * @phpstan-import-type FormattedRecord from AbstractProcessingHandler
  */
-class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\SocketHandler
+class SlackHandler extends SocketHandler
 {
     /**
      * Slack API token
@@ -39,20 +41,18 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
      * @param  string|null               $username               Name of a bot
      * @param  bool                      $useAttachment          Whether the message should be added to Slack as attachment (plain text otherwise)
      * @param  string|null               $iconEmoji              The emoji name to use (or null)
-     * @param  int                       $level                  The minimum logging level at which this handler will be triggered
-     * @param  bool                      $bubble                 Whether the messages that are handled can bubble up the stack or not
-     * @param  bool                      $useShortAttachment     Whether the the context/extra messages added to Slack as attachments are in a short style
+     * @param  bool                      $useShortAttachment     Whether the context/extra messages added to Slack as attachments are in a short style
      * @param  bool                      $includeContextAndExtra Whether the attachment should include context and extra data
-     * @param  array                     $excludeFields          Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
+     * @param  string[]                  $excludeFields          Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
      * @throws MissingExtensionException If no OpenSSL PHP extension configured
      */
-    public function __construct(string $token, string $channel, ?string $username = null, bool $useAttachment = true, ?string $iconEmoji = null, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL, bool $bubble = true, bool $useShortAttachment = false, bool $includeContextAndExtra = false, array $excludeFields = array())
+    public function __construct(string $token, string $channel, ?string $username = null, bool $useAttachment = \true, ?string $iconEmoji = null, $level = Logger::CRITICAL, bool $bubble = \true, bool $useShortAttachment = \false, bool $includeContextAndExtra = \false, array $excludeFields = array(), bool $persistent = \false, float $timeout = 0.0, float $writingTimeout = 10.0, ?float $connectionTimeout = null, ?int $chunkSize = null)
     {
-        if (!extension_loaded('openssl')) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MissingExtensionException('The OpenSSL PHP extension is required to use the SlackHandler');
+        if (!\extension_loaded('openssl')) {
+            throw new MissingExtensionException('The OpenSSL PHP extension is required to use the SlackHandler');
         }
-        parent::__construct('ssl://slack.com:443', $level, $bubble);
-        $this->slackRecord = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Slack\SlackRecord($channel, $username, $useAttachment, $iconEmoji, $useShortAttachment, $includeContextAndExtra, $excludeFields);
+        parent::__construct('ssl://slack.com:443', $level, $bubble, $persistent, $timeout, $writingTimeout, $connectionTimeout, $chunkSize);
+        $this->slackRecord = new SlackRecord($channel, $username, $useAttachment, $iconEmoji, $useShortAttachment, $includeContextAndExtra, $excludeFields);
         $this->token = $token;
     }
     public function getSlackRecord() : SlackRecord
@@ -64,7 +64,7 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
         return $this->token;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function generateDataStream(array $record) : string
     {
@@ -73,18 +73,24 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
     }
     /**
      * Builds the body of API call
+     *
+     * @phpstan-param FormattedRecord $record
      */
     private function buildContent(array $record) : string
     {
         $dataArray = $this->prepareContentData($record);
-        return http_build_query($dataArray);
+        return \http_build_query($dataArray);
     }
+    /**
+     * @phpstan-param FormattedRecord $record
+     * @return string[]
+     */
     protected function prepareContentData(array $record) : array
     {
         $dataArray = $this->slackRecord->getSlackData($record);
         $dataArray['token'] = $this->token;
         if (!empty($dataArray['attachments'])) {
-            $dataArray['attachments'] = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($dataArray['attachments']);
+            $dataArray['attachments'] = Utils::jsonEncode($dataArray['attachments']);
         }
         return $dataArray;
     }
@@ -96,12 +102,12 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
         $header = "POST /api/chat.postMessage HTTP/1.1\r\n";
         $header .= "Host: slack.com\r\n";
         $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
-        $header .= "Content-Length: " . strlen($content) . "\r\n";
+        $header .= "Content-Length: " . \strlen($content) . "\r\n";
         $header .= "\r\n";
         return $header;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
@@ -117,12 +123,12 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
     protected function finalizeWrite() : void
     {
         $res = $this->getResource();
-        if (is_resource($res)) {
-            @fread($res, 2048);
+        if (\is_resource($res)) {
+            @\fread($res, 2048);
         }
         $this->closeSocket();
     }
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
         parent::setFormatter($formatter);
         $this->slackRecord->setFormatter($formatter);
@@ -170,6 +176,9 @@ class SlackHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
         $this->slackRecord->includeContextAndExtra($includeContextAndExtra);
         return $this;
     }
+    /**
+     * @param string[] $excludeFields
+     */
     public function excludeFields(array $excludeFields) : self
     {
         $this->slackRecord->excludeFields($excludeFields);

@@ -7,12 +7,14 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
  * Reads from multiple streams, one after the other.
  *
  * This is a read-only stream decorator.
+ *
+ * @final
  */
-class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
+class AppendStream implements StreamInterface
 {
     /** @var StreamInterface[] Streams being decorated */
     private $streams = [];
-    private $seekable = true;
+    private $seekable = \true;
     private $current = 0;
     private $pos = 0;
     /**
@@ -41,20 +43,20 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
      *
      * @throws \InvalidArgumentException if the stream is not readable
      */
-    public function addStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public function addStream(StreamInterface $stream)
     {
         if (!$stream->isReadable()) {
             throw new \InvalidArgumentException('Each stream must be readable');
         }
         // The stream is only seekable if all streams are seekable
         if (!$stream->isSeekable()) {
-            $this->seekable = false;
+            $this->seekable = \false;
         }
         $this->streams[] = $stream;
     }
     public function getContents()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToString($this);
+        return Utils::copyToString($this);
     }
     /**
      * Closes each attached stream.
@@ -64,7 +66,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     public function close()
     {
         $this->pos = $this->current = 0;
-        $this->seekable = true;
+        $this->seekable = \true;
         foreach ($this->streams as $stream) {
             $stream->close();
         }
@@ -80,7 +82,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     public function detach()
     {
         $this->pos = $this->current = 0;
-        $this->seekable = true;
+        $this->seekable = \true;
         foreach ($this->streams as $stream) {
             $stream->detach();
         }
@@ -113,7 +115,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     }
     public function eof()
     {
-        return !$this->streams || $this->current >= count($this->streams) - 1 && $this->streams[$this->current]->eof();
+        return !$this->streams || $this->current >= \count($this->streams) - 1 && $this->streams[$this->current]->eof();
     }
     public function rewind()
     {
@@ -124,11 +126,11 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
      *
      * {@inheritdoc}
      */
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET)
     {
         if (!$this->seekable) {
             throw new \RuntimeException('This AppendStream is not seekable');
-        } elseif ($whence !== SEEK_SET) {
+        } elseif ($whence !== \SEEK_SET) {
             throw new \RuntimeException('The AppendStream can only seek with SEEK_SET');
         }
         $this->pos = $this->current = 0;
@@ -142,7 +144,7 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
         }
         // Seek to the actual position by reading from each stream
         while ($this->pos < $offset && !$this->eof()) {
-            $result = $this->read(min(8096, $offset - $this->pos));
+            $result = $this->read(\min(8096, $offset - $this->pos));
             if ($result === '') {
                 break;
             }
@@ -156,13 +158,13 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
     public function read($length)
     {
         $buffer = '';
-        $total = count($this->streams) - 1;
+        $total = \count($this->streams) - 1;
         $remaining = $length;
-        $progressToNext = false;
+        $progressToNext = \false;
         while ($remaining > 0) {
             // Progress to the next stream if needed.
             if ($progressToNext || $this->streams[$this->current]->eof()) {
-                $progressToNext = false;
+                $progressToNext = \false;
                 if ($this->current === $total) {
                     break;
                 }
@@ -171,22 +173,22 @@ class AppendStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Me
             $result = $this->streams[$this->current]->read($remaining);
             // Using a loose comparison here to match on '', false, and null
             if ($result == null) {
-                $progressToNext = true;
+                $progressToNext = \true;
                 continue;
             }
             $buffer .= $result;
-            $remaining = $length - strlen($buffer);
+            $remaining = $length - \strlen($buffer);
         }
-        $this->pos += strlen($buffer);
+        $this->pos += \strlen($buffer);
         return $buffer;
     }
     public function isReadable()
     {
-        return true;
+        return \true;
     }
     public function isWritable()
     {
-        return false;
+        return \false;
     }
     public function isSeekable()
     {

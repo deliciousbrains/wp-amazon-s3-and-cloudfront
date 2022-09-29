@@ -16,7 +16,7 @@ abstract class Integration {
 	 *
 	 * @param Amazon_S3_And_CloudFront $as3cf
 	 */
-	public function __construct( $as3cf ) {
+	public function __construct( Amazon_S3_And_CloudFront $as3cf ) {
 		$this->as3cf = $as3cf;
 	}
 
@@ -25,8 +25,20 @@ abstract class Integration {
 	 *
 	 * @return bool
 	 */
-	public static function is_installed() {
+	public static function is_installed(): bool {
 		return false;
+	}
+
+	/**
+	 * Is this integration enabled?
+	 *
+	 * While the integration's dependencies may be installed,
+	 * it is possible that the integration is disabled for other reasons.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		return static::is_installed();
 	}
 
 	/**

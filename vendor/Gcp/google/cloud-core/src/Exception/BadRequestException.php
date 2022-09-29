@@ -21,6 +21,6 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception;
  * Exception thrown when a request fails due to an error in the request.
  * In REST context, this exception indicates a status code 400.
  */
-class BadRequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException
+class BadRequestException extends ServiceException
 {
 }

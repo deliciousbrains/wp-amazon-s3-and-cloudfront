@@ -1,31 +1,33 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 /**
  * PHP stream implementation.
- *
- * @var $stream
  */
-class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface
+class Stream implements StreamInterface
 {
     /**
-     * Resource modes.
-     *
-     * @var string
-     *
      * @see http://php.net/manual/function.fopen.php
      * @see http://php.net/manual/en/function.gzopen.php
      */
-    const READABLE_MODES = '/r|a\\+|ab\\+|w\\+|wb\\+|x\\+|xb\\+|c\\+|cb\\+/';
-    const WRITABLE_MODES = '/a|w|r\\+|rb\\+|rw|x|c/';
+    private const READABLE_MODES = '/r|a\\+|ab\\+|w\\+|wb\\+|x\\+|xb\\+|c\\+|cb\\+/';
+    private const WRITABLE_MODES = '/a|w|r\\+|rb\\+|rw|x|c/';
+    /** @var resource */
     private $stream;
+    /** @var int|null */
     private $size;
+    /** @var bool */
     private $seekable;
+    /** @var bool */
     private $readable;
+    /** @var bool */
     private $writable;
+    /** @var string|null */
     private $uri;
+    /** @var mixed[] */
     private $customMetadata;
     /**
      * This constructor accepts an associative array of options.
@@ -36,25 +38,25 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
      * - metadata: (array) Any additional metadata to return when the metadata
      *   of the stream is accessed.
      *
-     * @param resource $stream  Stream resource to wrap.
-     * @param array    $options Associative array of options.
+     * @param resource                            $stream  Stream resource to wrap.
+     * @param array{size?: int, metadata?: array} $options Associative array of options.
      *
      * @throws \InvalidArgumentException if the stream is not a stream resource
      */
-    public function __construct($stream, $options = [])
+    public function __construct($stream, array $options = [])
     {
-        if (!is_resource($stream)) {
+        if (!\is_resource($stream)) {
             throw new \InvalidArgumentException('Stream must be a resource');
         }
         if (isset($options['size'])) {
             $this->size = $options['size'];
         }
-        $this->customMetadata = isset($options['metadata']) ? $options['metadata'] : [];
+        $this->customMetadata = $options['metadata'] ?? [];
         $this->stream = $stream;
-        $meta = stream_get_meta_data($this->stream);
+        $meta = \stream_get_meta_data($this->stream);
         $this->seekable = $meta['seekable'];
-        $this->readable = (bool) preg_match(self::READABLE_MODES, $meta['mode']);
-        $this->writable = (bool) preg_match(self::WRITABLE_MODES, $meta['mode']);
+        $this->readable = (bool) \preg_match(self::READABLE_MODES, $meta['mode']);
+        $this->writable = (bool) \preg_match(self::WRITABLE_MODES, $meta['mode']);
         $this->uri = $this->getMetadata('uri');
     }
     /**
@@ -64,33 +66,37 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
     {
         $this->close();
     }
-    public function __toString()
+    public function __toString() : string
     {
         try {
             if ($this->isSeekable()) {
                 $this->seek(0);
             }
             return $this->getContents();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if (\PHP_VERSION_ID >= 70400) {
+                throw $e;
+            }
+            \trigger_error(\sprintf('%s::__toString exception: %s', self::class, (string) $e), \E_USER_ERROR);
             return '';
         }
     }
-    public function getContents()
+    public function getContents() : string
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
         }
-        $contents = stream_get_contents($this->stream);
-        if ($contents === false) {
+        $contents = \stream_get_contents($this->stream);
+        if ($contents === \false) {
             throw new \RuntimeException('Unable to read stream contents');
         }
         return $contents;
     }
-    public function close()
+    public function close() : void
     {
         if (isset($this->stream)) {
-            if (is_resource($this->stream)) {
-                fclose($this->stream);
+            if (\is_resource($this->stream)) {
+                \fclose($this->stream);
             }
             $this->detach();
         }
@@ -103,10 +109,10 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
         $result = $this->stream;
         unset($this->stream);
         $this->size = $this->uri = null;
-        $this->readable = $this->writable = $this->seekable = false;
+        $this->readable = $this->writable = $this->seekable = \false;
         return $result;
     }
-    public function getSize()
+    public function getSize() : ?int
     {
         if ($this->size !== null) {
             return $this->size;
@@ -116,50 +122,50 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
         }
         // Clear the stat cache if the stream has a URI
         if ($this->uri) {
-            clearstatcache(true, $this->uri);
+            \clearstatcache(\true, $this->uri);
         }
-        $stats = fstat($this->stream);
-        if (isset($stats['size'])) {
+        $stats = \fstat($this->stream);
+        if (\is_array($stats) && isset($stats['size'])) {
             $this->size = $stats['size'];
             return $this->size;
         }
         return null;
     }
-    public function isReadable()
+    public function isReadable() : bool
     {
         return $this->readable;
     }
-    public function isWritable()
+    public function isWritable() : bool
     {
         return $this->writable;
     }
-    public function isSeekable()
+    public function isSeekable() : bool
     {
         return $this->seekable;
     }
-    public function eof()
+    public function eof() : bool
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
         }
-        return feof($this->stream);
+        return \feof($this->stream);
     }
-    public function tell()
+    public function tell() : int
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
         }
-        $result = ftell($this->stream);
-        if ($result === false) {
+        $result = \ftell($this->stream);
+        if ($result === \false) {
             throw new \RuntimeException('Unable to determine stream position');
         }
         return $result;
     }
-    public function rewind()
+    public function rewind() : void
     {
         $this->seek(0);
     }
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET) : void
     {
         $whence = (int) $whence;
         if (!isset($this->stream)) {
@@ -168,11 +174,11 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
         if (!$this->seekable) {
             throw new \RuntimeException('Stream is not seekable');
         }
-        if (fseek($this->stream, $offset, $whence) === -1) {
-            throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . var_export($whence, true));
+        if (\fseek($this->stream, $offset, $whence) === -1) {
+            throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, \true));
         }
     }
-    public function read($length)
+    public function read($length) : string
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
@@ -186,13 +192,13 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
         if (0 === $length) {
             return '';
         }
-        $string = fread($this->stream, $length);
-        if (false === $string) {
+        $string = \fread($this->stream, $length);
+        if (\false === $string) {
             throw new \RuntimeException('Unable to read from stream');
         }
         return $string;
     }
-    public function write($string)
+    public function write($string) : int
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
@@ -202,22 +208,27 @@ class Stream implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\S
         }
         // We can't know the size after writing anything
         $this->size = null;
-        $result = fwrite($this->stream, $string);
-        if ($result === false) {
+        $result = \fwrite($this->stream, $string);
+        if ($result === \false) {
             throw new \RuntimeException('Unable to write to stream');
         }
         return $result;
     }
+    /**
+     * {@inheritdoc}
+     *
+     * @return mixed
+     */
     public function getMetadata($key = null)
     {
         if (!isset($this->stream)) {
             return $key ? null : [];
         } elseif (!$key) {
-            return $this->customMetadata + stream_get_meta_data($this->stream);
+            return $this->customMetadata + \stream_get_meta_data($this->stream);
         } elseif (isset($this->customMetadata[$key])) {
             return $this->customMetadata[$key];
         }
-        $meta = stream_get_meta_data($this->stream);
-        return isset($meta[$key]) ? $meta[$key] : null;
+        $meta = \stream_get_meta_data($this->stream);
+        return $meta[$key] ?? null;
     }
 }

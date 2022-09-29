@@ -91,6 +91,6 @@ trait JobTrait
      */
     public function flush(array $items = [])
     {
-        return false;
+        return \false;
     }
 }

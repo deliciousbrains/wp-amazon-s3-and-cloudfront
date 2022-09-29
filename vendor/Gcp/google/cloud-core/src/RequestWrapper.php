@@ -25,7 +25,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFact
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapperTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
@@ -115,21 +115,21 @@ class RequestWrapper
     public function __construct(array $config = [])
     {
         $this->setCommonDefaults($config);
-        $config += ['accessToken' => null, 'asyncHttpHandler' => null, 'authHttpHandler' => null, 'httpHandler' => null, 'restOptions' => [], 'shouldSignRequest' => true, 'componentVersion' => null, 'restRetryFunction' => null, 'restDelayFunction' => null, 'restCalcDelayFunction' => null];
+        $config += ['accessToken' => null, 'asyncHttpHandler' => null, 'authHttpHandler' => null, 'httpHandler' => null, 'restOptions' => [], 'shouldSignRequest' => \true, 'componentVersion' => null, 'restRetryFunction' => null, 'restDelayFunction' => null, 'restCalcDelayFunction' => null];
         $this->componentVersion = $config['componentVersion'];
         $this->accessToken = $config['accessToken'];
         $this->restOptions = $config['restOptions'];
         $this->shouldSignRequest = $config['shouldSignRequest'];
         $this->retryFunction = $config['restRetryFunction'] ?: $this->getRetryFunction();
         $this->delayFunction = $config['restDelayFunction'] ?: function ($delay) {
-            usleep($delay);
+            \usleep($delay);
         };
         $this->calcDelayFunction = $config['restCalcDelayFunction'];
-        $this->httpHandler = $config['httpHandler'] ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build();
+        $this->httpHandler = $config['httpHandler'] ?: HttpHandlerFactory::build();
         $this->authHttpHandler = $config['authHttpHandler'] ?: $this->httpHandler;
         $this->asyncHttpHandler = $config['asyncHttpHandler'] ?: $this->buildDefaultAsyncHandler();
         if ($this->credentialsFetcher instanceof AnonymousCredentials) {
-            $this->shouldSignRequest = false;
+            $this->shouldSignRequest = \false;
         }
     }
     /**
@@ -156,10 +156,10 @@ class RequestWrapper
      * }
      * @return ResponseInterface
      */
-    public function send(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = [])
+    public function send(RequestInterface $request, array $options = [])
     {
         $retryOptions = $this->getRetryOptions($options);
-        $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($retryOptions['retries'], $retryOptions['retryFunction']);
+        $backoff = new ExponentialBackoff($retryOptions['retries'], $retryOptions['retryFunction']);
         if ($retryOptions['delayFunction']) {
             $backoff->setDelayFunction($retryOptions['delayFunction']);
         }
@@ -200,7 +200,7 @@ class RequestWrapper
      *      incompatible ways. Please use with caution, and test thoroughly when
      *      upgrading.
      */
-    public function sendAsync(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options = [])
+    public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Unfortunately, the current ExponentialBackoff implementation doesn't
         // play nicely with promises.
@@ -209,11 +209,11 @@ class RequestWrapper
             $asyncHttpHandler = $this->asyncHttpHandler;
             $retryOptions = $this->getRetryOptions($options);
             if (!$retryOptions['calcDelayFunction']) {
-                $retryOptions['calcDelayFunction'] = [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff::class, 'calculateDelay'];
+                $retryOptions['calcDelayFunction'] = [ExponentialBackoff::class, 'calculateDelay'];
             }
             return $asyncHttpHandler($this->applyHeaders($request), $this->getRequestOptions($options))->then(null, function (\Exception $ex) use($fn, $retryAttempt, $retryOptions) {
                 $shouldRetry = $retryOptions['retryFunction']($ex, $retryAttempt);
-                if ($shouldRetry === false || $retryAttempt >= $retryOptions['retries']) {
+                if ($shouldRetry === \false || $retryAttempt >= $retryOptions['retries']) {
                     throw $this->convertToGoogleException($ex);
                 }
                 $delay = $retryOptions['calcDelayFunction']($retryAttempt);
@@ -230,9 +230,9 @@ class RequestWrapper
      * @param RequestInterface $request A PSR-7 request.
      * @return RequestInterface
      */
-    private function applyHeaders(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request)
+    private function applyHeaders(RequestInterface $request)
     {
-        $headers = ['User-Agent' => 'gcloud-php/' . $this->componentVersion, 'x-goog-api-client' => 'gl-php/' . PHP_VERSION . ' gccl/' . $this->componentVersion];
+        $headers = ['User-Agent' => 'gcloud-php/' . $this->componentVersion, 'x-goog-api-client' => 'gl-php/' . \PHP_VERSION . ' gccl/' . $this->componentVersion];
         if ($this->shouldSignRequest) {
             $quotaProject = $this->quotaProject;
             $token = null;
@@ -250,7 +250,7 @@ class RequestWrapper
                 $headers['X-Goog-User-Project'] = [$quotaProject];
             }
         }
-        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\modify_request($request, ['set_headers' => $headers]);
+        return Utils::modifyRequest($request, ['set_headers' => $headers]);
     }
     /**
      * Fetches credentials.
@@ -258,9 +258,9 @@ class RequestWrapper
      * @param FetchAuthTokenInterface $credentialsFetcher
      * @return array
      */
-    private function fetchCredentials(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface $credentialsFetcher)
+    private function fetchCredentials(FetchAuthTokenInterface $credentialsFetcher)
     {
-        $backoff = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ExponentialBackoff($this->retries, $this->getRetryFunction());
+        $backoff = new ExponentialBackoff($this->retries, $this->getRetryFunction());
         try {
             return $backoff->execute([$credentialsFetcher, 'fetchAuthToken'], [$this->authHttpHandler]);
         } catch (\Exception $ex) {
@@ -277,25 +277,25 @@ class RequestWrapper
     {
         switch ($ex->getCode()) {
             case 400:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\BadRequestException::class;
+                $exception = Exception\BadRequestException::class;
                 break;
             case 404:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException::class;
+                $exception = Exception\NotFoundException::class;
                 break;
             case 409:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ConflictException::class;
+                $exception = Exception\ConflictException::class;
                 break;
             case 412:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\FailedPreconditionException::class;
+                $exception = Exception\FailedPreconditionException::class;
                 break;
             case 500:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServerException::class;
+                $exception = Exception\ServerException::class;
                 break;
             case 504:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\DeadlineExceededException::class;
+                $exception = Exception\DeadlineExceededException::class;
                 break;
             default:
-                $exception = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException::class;
+                $exception = Exception\ServiceException::class;
                 break;
         }
         return new $exception($this->getExceptionMessage($ex), $ex->getCode(), $ex);
@@ -324,7 +324,7 @@ class RequestWrapper
     {
         $restOptions = isset($options['restOptions']) ? $options['restOptions'] : $this->restOptions;
         $timeout = isset($options['requestTimeout']) ? $options['requestTimeout'] : $this->requestTimeout;
-        if ($timeout && !array_key_exists('timeout', $restOptions)) {
+        if ($timeout && !\array_key_exists('timeout', $restOptions)) {
             $restOptions['timeout'] = $timeout;
         }
         return $restOptions;
@@ -347,6 +347,6 @@ class RequestWrapper
     private function buildDefaultAsyncHandler()
     {
         $isGuzzleHandler = $this->httpHandler instanceof Guzzle6HttpHandler || $this->httpHandler instanceof Guzzle5HttpHandler;
-        return $isGuzzleHandler ? [$this->httpHandler, 'async'] : [\DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory::build(), 'async'];
+        return $isGuzzleHandler ? [$this->httpHandler, 'async'] : [HttpHandlerFactory::build(), 'async'];
     }
 }

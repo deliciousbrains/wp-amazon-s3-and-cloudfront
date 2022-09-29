@@ -64,25 +64,25 @@ class Retry
     {
         $delayFunction = $this->delayFunction;
         $retryAttempt = 0;
-        $continue = true;
+        $continue = \true;
         do {
             try {
-                $res = call_user_func_array($function, $arguments);
-                $continue = false;
+                $res = \call_user_func_array($function, $arguments);
+                $continue = \false;
                 return $res;
             } catch (\Exception $exception) {
                 if ($this->retryFunction) {
-                    if (!call_user_func($this->retryFunction, $exception, $retryAttempt)) {
+                    if (!\call_user_func($this->retryFunction, $exception, $retryAttempt)) {
                         throw $exception;
                     }
                 }
                 if ($retryAttempt < $this->retries) {
                     $delay = $delayFunction($exception);
                     $delay += ['seconds' => 0, 'nanos' => 0];
-                    time_nanosleep($delay['seconds'], $delay['nanos']);
+                    \time_nanosleep($delay['seconds'], $delay['nanos']);
                     $retryAttempt++;
                 } else {
-                    $continue = false;
+                    $continue = \false;
                     throw $exception;
                 }
             }

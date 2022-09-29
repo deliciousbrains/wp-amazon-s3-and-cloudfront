@@ -14,7 +14,7 @@ class S3UriParser
 {
     private $pattern = '/^(.+\\.)?s3[.-]([A-Za-z0-9-]+)\\./';
     private $streamWrapperScheme = 's3';
-    private static $defaultResult = ['path_style' => true, 'bucket' => null, 'key' => null, 'region' => null];
+    private static $defaultResult = ['path_style' => \true, 'bucket' => null, 'key' => null, 'region' => null];
     /**
      * Parses a URL or S3 StreamWrapper Uri (s3://) into an associative array
      * of Amazon S3 data including:
@@ -34,19 +34,19 @@ class S3UriParser
         // Attempt to parse host component of uri as an ARN
         $components = $this->parseS3UrlComponents($uri);
         if (!empty($components)) {
-            if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser::isArn($components['host'])) {
-                $arn = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn($components['host']);
-                return ['bucket' => $components['host'], 'key' => $components['path'], 'path_style' => false, 'region' => $arn->getRegion()];
+            if (ArnParser::isArn($components['host'])) {
+                $arn = new AccessPointArn($components['host']);
+                return ['bucket' => $components['host'], 'key' => $components['path'], 'path_style' => \false, 'region' => $arn->getRegion()];
             }
         }
-        $url = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($uri);
+        $url = Psr7\Utils::uriFor($uri);
         if ($url->getScheme() == $this->streamWrapperScheme) {
             return $this->parseStreamWrapper($url);
         }
         if (!$url->getHost()) {
             throw new \InvalidArgumentException('No hostname found in URI: ' . $uri);
         }
-        if (!preg_match($this->pattern, $url->getHost(), $matches)) {
+        if (!\preg_match($this->pattern, $url->getHost(), $matches)) {
             return $this->parseCustomEndpoint($url);
         }
         // Parse the URI based on the matched format (path / virtual)
@@ -57,30 +57,30 @@ class S3UriParser
     }
     private function parseS3UrlComponents($uri)
     {
-        preg_match("/^([a-zA-Z0-9]*):\\/\\/([a-zA-Z0-9:-]*)\\/(.*)/", $uri, $components);
+        \preg_match("/^([a-zA-Z0-9]*):\\/\\/([a-zA-Z0-9:-]*)\\/(.*)/", $uri, $components);
         if (empty($components)) {
             return [];
         }
         return ['scheme' => $components[1], 'host' => $components[2], 'path' => $components[3]];
     }
-    private function parseStreamWrapper(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parseStreamWrapper(UriInterface $url)
     {
         $result = self::$defaultResult;
-        $result['path_style'] = false;
+        $result['path_style'] = \false;
         $result['bucket'] = $url->getHost();
         if ($url->getPath()) {
-            $key = ltrim($url->getPath(), '/ ');
+            $key = \ltrim($url->getPath(), '/ ');
             if (!empty($key)) {
                 $result['key'] = $key;
             }
         }
         return $result;
     }
-    private function parseCustomEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parseCustomEndpoint(UriInterface $url)
     {
         $result = self::$defaultResult;
-        $path = ltrim($url->getPath(), '/ ');
-        $segments = explode('/', $path, 2);
+        $path = \ltrim($url->getPath(), '/ ');
+        $segments = \explode('/', $path, 2);
         if (isset($segments[0])) {
             $result['bucket'] = $segments[0];
             if (isset($segments[1])) {
@@ -89,37 +89,37 @@ class S3UriParser
         }
         return $result;
     }
-    private function parsePathStyle(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url)
+    private function parsePathStyle(UriInterface $url)
     {
         $result = self::$defaultResult;
         if ($url->getPath() != '/') {
-            $path = ltrim($url->getPath(), '/');
+            $path = \ltrim($url->getPath(), '/');
             if ($path) {
-                $pathPos = strpos($path, '/');
-                if ($pathPos === false) {
+                $pathPos = \strpos($path, '/');
+                if ($pathPos === \false) {
                     // https://s3.amazonaws.com/bucket
                     $result['bucket'] = $path;
-                } elseif ($pathPos == strlen($path) - 1) {
+                } elseif ($pathPos == \strlen($path) - 1) {
                     // https://s3.amazonaws.com/bucket/
-                    $result['bucket'] = substr($path, 0, -1);
+                    $result['bucket'] = \substr($path, 0, -1);
                 } else {
                     // https://s3.amazonaws.com/bucket/key
-                    $result['bucket'] = substr($path, 0, $pathPos);
-                    $result['key'] = substr($path, $pathPos + 1) ?: null;
+                    $result['bucket'] = \substr($path, 0, $pathPos);
+                    $result['key'] = \substr($path, $pathPos + 1) ?: null;
                 }
             }
         }
         return $result;
     }
-    private function parseVirtualHosted(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $url, array $matches)
+    private function parseVirtualHosted(UriInterface $url, array $matches)
     {
         $result = self::$defaultResult;
-        $result['path_style'] = false;
+        $result['path_style'] = \false;
         // Remove trailing "." from the prefix to get the bucket
-        $result['bucket'] = substr($matches[1], 0, -1);
+        $result['bucket'] = \substr($matches[1], 0, -1);
         $path = $url->getPath();
         // Check if a key was present, and if so, removing the leading "/"
-        $result['key'] = !$path || $path == '/' ? null : substr($path, 1);
+        $result['key'] = !$path || $path == '/' ? null : \substr($path, 1);
         return $result;
     }
 }

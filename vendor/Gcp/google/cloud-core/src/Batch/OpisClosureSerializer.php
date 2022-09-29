@@ -27,7 +27,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure;
  *      incompatible ways. Please use with caution, and test thoroughly when
  *      upgrading.
  */
-class OpisClosureSerializer implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\ClosureSerializerInterface
+class OpisClosureSerializer implements ClosureSerializerInterface
 {
     /**
      * Recursively serializes closures.
@@ -36,9 +36,9 @@ class OpisClosureSerializer implements \DeliciousBrains\WP_Offload_Media\Gcp\Goo
      */
     public function wrapClosures(&$data)
     {
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::enterContext();
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::wrapClosures($data);
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::exitContext();
+        SerializableClosure::enterContext();
+        SerializableClosure::wrapClosures($data);
+        SerializableClosure::exitContext();
     }
     /**
      * Recursively unserializes closures.
@@ -47,8 +47,8 @@ class OpisClosureSerializer implements \DeliciousBrains\WP_Offload_Media\Gcp\Goo
      */
     public function unwrapClosures(&$data)
     {
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::enterContext();
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::unwrapClosures($data);
-        \DeliciousBrains\WP_Offload_Media\Gcp\Opis\Closure\SerializableClosure::exitContext();
+        SerializableClosure::enterContext();
+        SerializableClosure::unwrapClosures($data);
+        SerializableClosure::exitContext();
     }
 }

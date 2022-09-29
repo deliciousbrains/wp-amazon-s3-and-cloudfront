@@ -50,7 +50,7 @@ trait ItemIteratorTrait
      */
     public function nextResultToken()
     {
-        return method_exists($this->pageIterator, 'nextResultToken') ? $this->pageIterator->nextResultToken() : null;
+        return \method_exists($this->pageIterator, 'nextResultToken') ? $this->pageIterator->nextResultToken() : null;
     }
     /**
      * Iterate over the results on a per page basis.
@@ -66,6 +66,7 @@ trait ItemIteratorTrait
      *
      * @return null
      */
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->pageIndex = 0;
@@ -77,6 +78,7 @@ trait ItemIteratorTrait
      *
      * @return mixed
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         $page = $this->pageIterator->current();
@@ -87,6 +89,7 @@ trait ItemIteratorTrait
      *
      * @return int
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->position;
@@ -96,11 +99,12 @@ trait ItemIteratorTrait
      *
      * @return null
      */
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->pageIndex++;
         $this->position++;
-        if (count($this->pageIterator->current()) <= $this->pageIndex && $this->nextResultToken()) {
+        if (\count($this->pageIterator->current()) <= $this->pageIndex && $this->nextResultToken()) {
             $this->pageIterator->next();
             $this->pageIndex = 0;
         }
@@ -110,11 +114,12 @@ trait ItemIteratorTrait
      *
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         $page = $this->pageIterator->current();
         if (isset($page[$this->pageIndex])) {
-            return true;
+            return \true;
         }
         // If there are no results, but a token for the next page
         // exists let's continue paging until there are results.
@@ -122,9 +127,9 @@ trait ItemIteratorTrait
             $this->pageIterator->next();
             $page = $this->pageIterator->current();
             if (isset($page[$this->pageIndex])) {
-                return true;
+                return \true;
             }
         }
-        return false;
+        return \false;
     }
 }

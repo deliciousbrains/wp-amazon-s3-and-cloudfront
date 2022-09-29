@@ -20,7 +20,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception;
 /**
  * Exception thrown when a transaction is aborted.
  */
-class AbortedException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException
+class AbortedException extends ServiceException
 {
     /**
      * Return the delay in seconds and nanos before retrying the failed request.
@@ -29,10 +29,10 @@ class AbortedException extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Clou
      */
     public function getRetryDelay()
     {
-        $metadata = array_filter($this->metadata, function ($metadataItem) {
-            return array_key_exists('retryDelay', $metadataItem);
+        $metadata = \array_filter($this->metadata, function ($metadataItem) {
+            return \array_key_exists('retryDelay', $metadataItem);
         });
-        if (count($metadata) === 0) {
+        if (\count($metadata) === 0) {
             return ['seconds' => 0, 'nanos' => 0];
         }
         return $metadata[0]['retryDelay'] + ['seconds' => 0, 'nanos' => 0];

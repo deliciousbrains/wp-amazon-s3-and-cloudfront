@@ -14,5 +14,5 @@ interface LoggerAwareInterface
      *
      * @return void
      */
-    public function setLogger(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Log\LoggerInterface $logger);
+    public function setLogger(LoggerInterface $logger);
 }

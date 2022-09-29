@@ -45,7 +45,7 @@ class StorageClient
 {
     use ArrayTrait;
     use ClientTrait;
-    const VERSION = '1.23.0';
+    const VERSION = '1.26.3';
     const FULL_CONTROL_SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
     const READ_ONLY_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only';
     const READ_WRITE_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_write';
@@ -91,9 +91,9 @@ class StorageClient
     public function __construct(array $config = [])
     {
         if (!isset($config['scopes'])) {
-            $config['scopes'] = [self::FULL_CONTROL_SCOPE];
+            $config['scopes'] = ['https://www.googleapis.com/auth/iam', self::FULL_CONTROL_SCOPE];
         }
-        $this->connection = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\Rest($this->configureAuthentication($config) + ['projectId' => $this->projectId]);
+        $this->connection = new Rest($this->configureAuthentication($config) + ['projectId' => $this->projectId]);
     }
     /**
      * Lazily instantiates a bucket. There are no network requests made at this
@@ -118,14 +118,14 @@ class StorageClient
      *        request. **Defaults to** `false`.
      * @return Bucket
      */
-    public function bucket($name, $userProject = false)
+    public function bucket($name, $userProject = \false)
     {
         if (!$userProject) {
             $userProject = null;
-        } elseif (!is_string($userProject)) {
+        } elseif (!\is_string($userProject)) {
             $userProject = $this->projectId;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Bucket($this->connection, $name, ['requesterProjectId' => $userProject]);
+        return new Bucket($this->connection, $name, ['requesterProjectId' => $userProject]);
     }
     /**
      * Fetches all buckets in the project.
@@ -176,12 +176,12 @@ class StorageClient
     public function buckets(array $options = [])
     {
         $this->requireProjectId();
-        $resultLimit = $this->pluck('resultLimit', $options, false);
-        $bucketUserProject = $this->pluck('bucketUserProject', $options, false);
-        $bucketUserProject = !is_null($bucketUserProject) ? $bucketUserProject : true;
+        $resultLimit = $this->pluck('resultLimit', $options, \false);
+        $bucketUserProject = $this->pluck('bucketUserProject', $options, \false);
+        $bucketUserProject = !\is_null($bucketUserProject) ? $bucketUserProject : \true;
         $userProject = isset($options['userProject']) && $bucketUserProject ? $options['userProject'] : null;
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\ItemIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\PageIterator(function (array $bucket) use($userProject) {
-            return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Bucket($this->connection, $bucket['name'], $bucket + ['requesterProjectId' => $userProject]);
+        return new ItemIterator(new PageIterator(function (array $bucket) use($userProject) {
+            return new Bucket($this->connection, $bucket['name'], $bucket + ['requesterProjectId' => $userProject]);
         }, [$this->connection, 'listBuckets'], $options + ['project' => $this->projectId], ['resultLimit' => $resultLimit]));
     }
     /**
@@ -229,8 +229,11 @@ class StorageClient
      *     @type array $defaultObjectAcl Default access controls to apply to new
      *           objects when no ACL is provided.
      *     @type array|Lifecycle $lifecycle The bucket's lifecycle configuration.
-     *     @type string $location The location of the bucket. **Defaults to**
-     *           `"US"`.
+     *     @type string $location The location of the bucket. A dual-region can
+     *           be specified as a string (e.g. "US-CENTRAL1+US-WEST1"). For
+     *           more information, see
+     *           [Bucket Locations](https://cloud.google.com/storage/docs/locations).
+     *           **Defaults to** `"US"`.
      *     @type array $logging The bucket's logging configuration, which
      *           defines the destination bucket and optional name prefix for the
      *           current bucket's logs.
@@ -289,6 +292,9 @@ class StorageClient
      *           [feature documentation](https://cloud.google.com/storage/docs/uniform-bucket-level-access),
      *           as well as
      *           [Should You Use uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access#should-you-use)
+     *     @type string $rpo Specifies the Turbo Replication setting for a dual-region bucket.
+     *           The possible values are DEFAULT and ASYNC_TURBO. Trying to set the rpo for a non dual-region
+     *           bucket will throw an exception. Non existence of this parameter is equivalent to it being DEFAULT.
      * }
      * @codingStandardsIgnoreEnd
      * @return Bucket
@@ -300,11 +306,11 @@ class StorageClient
         if (isset($options['lifecycle']) && $options['lifecycle'] instanceof Lifecycle) {
             $options['lifecycle'] = $options['lifecycle']->toArray();
         }
-        $bucketUserProject = $this->pluck('bucketUserProject', $options, false);
-        $bucketUserProject = !is_null($bucketUserProject) ? $bucketUserProject : true;
+        $bucketUserProject = $this->pluck('bucketUserProject', $options, \false);
+        $bucketUserProject = !\is_null($bucketUserProject) ? $bucketUserProject : \true;
         $userProject = isset($options['userProject']) && $bucketUserProject ? $options['userProject'] : null;
         $response = $this->connection->insertBucket($options + ['name' => $name, 'project' => $this->projectId]);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Bucket($this->connection, $name, $response + ['requesterProjectId' => $userProject]);
+        return new Bucket($this->connection, $name, $response + ['requesterProjectId' => $userProject]);
     }
     /**
      * Registers this StorageClient as the handler for stream reading/writing.
@@ -314,7 +320,7 @@ class StorageClient
      */
     public function registerStreamWrapper($protocol = null)
     {
-        return \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StreamWrapper::register($this, $protocol);
+        return StreamWrapper::register($this, $protocol);
     }
     /**
      * Unregisters the SteamWrapper
@@ -323,7 +329,7 @@ class StorageClient
      */
     public function unregisterStreamWrapper($protocol = null)
     {
-        \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StreamWrapper::unregister($protocol);
+        StreamWrapper::unregister($protocol);
     }
     /**
      * Create an uploader to handle a Signed URL.
@@ -341,7 +347,7 @@ class StorageClient
      */
     public function signedUrlUploader($uri, $data, array $options = [])
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\SignedUrlUploader($this->connection->requestWrapper(), $data, $uri, $options);
+        return new SignedUrlUploader($this->connection->requestWrapper(), $data, $uri, $options);
     }
     /**
      * Create a Timestamp object.
@@ -357,7 +363,7 @@ class StorageClient
      */
     public function timestamp(\DateTimeInterface $timestamp, $nanoSeconds = null)
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Timestamp($timestamp, $nanoSeconds);
+        return new Timestamp($timestamp, $nanoSeconds);
     }
     /**
      * Get the service account email associated with this client.
@@ -415,8 +421,8 @@ class StorageClient
         if (!$options['projectId']) {
             $this->requireProjectId();
         }
-        $resultLimit = $this->pluck('resultLimit', $options, false);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\ItemIterator(new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Iterator\PageIterator(function (array $metadata) use($options) {
+        $resultLimit = $this->pluck('resultLimit', $options, \false);
+        return new ItemIterator(new PageIterator(function (array $metadata) use($options) {
             return $this->hmacKey($metadata['accessId'], $options['projectId'], $metadata);
         }, [$this->connection, 'listHmacKeys'], $options, ['resultLimit' => $resultLimit]));
     }
@@ -439,7 +445,7 @@ class StorageClient
         if (!$projectId) {
             $this->requireProjectId();
         }
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\HmacKey($this->connection, $projectId ?: $this->projectId, $accessId, $metadata);
+        return new HmacKey($this->connection, $projectId ?: $this->projectId, $accessId, $metadata);
     }
     /**
      * Creates a new HMAC key for the specified service account.
@@ -472,8 +478,8 @@ class StorageClient
             $this->requireProjectId();
         }
         $res = $this->connection->createHmacKey(['projectId' => $options['projectId'], 'serviceAccountEmail' => $serviceAccountEmail] + $options);
-        $key = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\HmacKey($this->connection, $options['projectId'], $res['metadata']['accessId'], $res['metadata']);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\CreatedHmacKey($key, $res['secret']);
+        $key = new HmacKey($this->connection, $options['projectId'], $res['metadata']['accessId'], $res['metadata']);
+        return new CreatedHmacKey($key, $res['secret']);
     }
     /**
      * Throw an exception if no project ID available.
@@ -484,7 +490,7 @@ class StorageClient
     private function requireProjectId()
     {
         if (!$this->projectId) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
+            throw new GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
         }
     }
 }

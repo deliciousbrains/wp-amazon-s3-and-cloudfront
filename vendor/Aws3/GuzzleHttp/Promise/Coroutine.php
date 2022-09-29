@@ -41,7 +41,7 @@ use Throwable;
  *
  * @link https://github.com/petkaantonov/bluebird/blob/master/API.md#generators inspiration
  */
-final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
+final class Coroutine implements PromiseInterface
 {
     /**
      * @var PromiseInterface|null
@@ -58,7 +58,7 @@ final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
     public function __construct(callable $generatorFn)
     {
         $this->generator = $generatorFn();
-        $this->result = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise(function () {
+        $this->result = new Promise(function () {
             while (isset($this->currentPromise)) {
                 $this->currentPromise->wait();
             }
@@ -88,7 +88,7 @@ final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
     {
         return $this->result->otherwise($onRejected);
     }
-    public function wait($unwrap = true)
+    public function wait($unwrap = \true)
     {
         return $this->result->wait($unwrap);
     }
@@ -111,7 +111,7 @@ final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
     }
     private function nextCoroutine($yielded)
     {
-        $this->currentPromise = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Create::promiseFor($yielded)->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
+        $this->currentPromise = Create::promiseFor($yielded)->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
     }
     /**
      * @internal
@@ -139,7 +139,7 @@ final class Coroutine implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
     {
         unset($this->currentPromise);
         try {
-            $nextYield = $this->generator->throw(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Create::exceptionFor($reason));
+            $nextYield = $this->generator->throw(Create::exceptionFor($reason));
             // The throw was caught, so keep iterating on the coroutine
             $this->nextCoroutine($nextYield);
         } catch (Exception $exception) {

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\MessageInterface;
@@ -11,13 +12,11 @@ final class Message
      * Returns the string representation of an HTTP message.
      *
      * @param MessageInterface $message Message to convert to a string.
-     *
-     * @return string
      */
-    public static function toString(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\MessageInterface $message)
+    public static function toString(MessageInterface $message) : string
     {
         if ($message instanceof RequestInterface) {
-            $msg = trim($message->getMethod() . ' ' . $message->getRequestTarget()) . ' HTTP/' . $message->getProtocolVersion();
+            $msg = \trim($message->getMethod() . ' ' . $message->getRequestTarget()) . ' HTTP/' . $message->getProtocolVersion();
             if (!$message->hasHeader('host')) {
                 $msg .= "\r\nHost: " . $message->getUri()->getHost();
             }
@@ -27,12 +26,12 @@ final class Message
             throw new \InvalidArgumentException('Unknown message type');
         }
         foreach ($message->getHeaders() as $name => $values) {
-            if (strtolower($name) === 'set-cookie') {
+            if (\strtolower($name) === 'set-cookie') {
                 foreach ($values as $value) {
                     $msg .= "\r\n{$name}: " . $value;
                 }
             } else {
-                $msg .= "\r\n{$name}: " . implode(', ', $values);
+                $msg .= "\r\n{$name}: " . \implode(', ', $values);
             }
         }
         return "{$msg}\r\n\r\n" . $message->getBody();
@@ -44,10 +43,8 @@ final class Message
      *
      * @param MessageInterface $message    The message to get the body summary
      * @param int              $truncateAt The maximum allowed size of the summary
-     *
-     * @return string|null
      */
-    public static function bodySummary(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\MessageInterface $message, $truncateAt = 120)
+    public static function bodySummary(MessageInterface $message, int $truncateAt = 120) : ?string
     {
         $body = $message->getBody();
         if (!$body->isSeekable() || !$body->isReadable()) {
@@ -64,7 +61,7 @@ final class Message
         }
         // Matches any printable character, including unicode characters:
         // letters, marks, numbers, punctuation, spacing, and separators.
-        if (preg_match('/[^\\pL\\pM\\pN\\pP\\pS\\pZ\\n\\r\\t]/u', $summary)) {
+        if (\preg_match('/[^\\pL\\pM\\pN\\pP\\pS\\pZ\\n\\r\\t]/u', $summary)) {
             return null;
         }
         return $summary;
@@ -79,7 +76,7 @@ final class Message
      *
      * @throws \RuntimeException
      */
-    public static function rewindBody(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\MessageInterface $message)
+    public static function rewindBody(MessageInterface $message) : void
     {
         $body = $message->getBody();
         if ($body->tell()) {
@@ -94,37 +91,35 @@ final class Message
      * array values, and a "body" key containing the body of the message.
      *
      * @param string $message HTTP request or response to parse.
-     *
-     * @return array
      */
-    public static function parseMessage($message)
+    public static function parseMessage(string $message) : array
     {
         if (!$message) {
             throw new \InvalidArgumentException('Invalid message');
         }
-        $message = ltrim($message, "\r\n");
-        $messageParts = preg_split("/\r?\n\r?\n/", $message, 2);
-        if ($messageParts === false || count($messageParts) !== 2) {
+        $message = \ltrim($message, "\r\n");
+        $messageParts = \preg_split("/\r?\n\r?\n/", $message, 2);
+        if ($messageParts === \false || \count($messageParts) !== 2) {
             throw new \InvalidArgumentException('Invalid message: Missing header delimiter');
         }
-        list($rawHeaders, $body) = $messageParts;
+        [$rawHeaders, $body] = $messageParts;
         $rawHeaders .= "\r\n";
         // Put back the delimiter we split previously
-        $headerParts = preg_split("/\r?\n/", $rawHeaders, 2);
-        if ($headerParts === false || count($headerParts) !== 2) {
+        $headerParts = \preg_split("/\r?\n/", $rawHeaders, 2);
+        if ($headerParts === \false || \count($headerParts) !== 2) {
             throw new \InvalidArgumentException('Invalid message: Missing status line');
         }
-        list($startLine, $rawHeaders) = $headerParts;
-        if (preg_match("/(?:^HTTP\\/|^[A-Z]+ \\S+ HTTP\\/)(\\d+(?:\\.\\d+)?)/i", $startLine, $matches) && $matches[1] === '1.0') {
+        [$startLine, $rawHeaders] = $headerParts;
+        if (\preg_match("/(?:^HTTP\\/|^[A-Z]+ \\S+ HTTP\\/)(\\d+(?:\\.\\d+)?)/i", $startLine, $matches) && $matches[1] === '1.0') {
             // Header folding is deprecated for HTTP/1.1, but allowed in HTTP/1.0
-            $rawHeaders = preg_replace(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Rfc7230::HEADER_FOLD_REGEX, ' ', $rawHeaders);
+            $rawHeaders = \preg_replace(Rfc7230::HEADER_FOLD_REGEX, ' ', $rawHeaders);
         }
         /** @var array[] $headerLines */
-        $count = preg_match_all(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+        $count = \preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, \PREG_SET_ORDER);
         // If these aren't the same, then one line didn't match and there's an invalid header.
-        if ($count !== substr_count($rawHeaders, "\n")) {
+        if ($count !== \substr_count($rawHeaders, "\n")) {
             // Folding is deprecated, see https://tools.ietf.org/html/rfc7230#section-3.2.4
-            if (preg_match(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
+            if (\preg_match(Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
                 throw new \InvalidArgumentException('Invalid header syntax: Obsolete line folding');
             }
             throw new \InvalidArgumentException('Invalid header syntax');
@@ -140,58 +135,52 @@ final class Message
      *
      * @param string $path    Path from the start-line
      * @param array  $headers Array of headers (each value an array).
-     *
-     * @return string
      */
-    public static function parseRequestUri($path, array $headers)
+    public static function parseRequestUri(string $path, array $headers) : string
     {
-        $hostKey = array_filter(array_keys($headers), function ($k) {
-            return strtolower($k) === 'host';
+        $hostKey = \array_filter(\array_keys($headers), function ($k) {
+            return \strtolower($k) === 'host';
         });
         // If no host is found, then a full URI cannot be constructed.
         if (!$hostKey) {
             return $path;
         }
-        $host = $headers[reset($hostKey)][0];
-        $scheme = substr($host, -4) === ':443' ? 'https' : 'http';
-        return $scheme . '://' . $host . '/' . ltrim($path, '/');
+        $host = $headers[\reset($hostKey)][0];
+        $scheme = \substr($host, -4) === ':443' ? 'https' : 'http';
+        return $scheme . '://' . $host . '/' . \ltrim($path, '/');
     }
     /**
      * Parses a request message string into a request object.
      *
      * @param string $message Request message string.
-     *
-     * @return Request
      */
-    public static function parseRequest($message)
+    public static function parseRequest(string $message) : RequestInterface
     {
         $data = self::parseMessage($message);
         $matches = [];
-        if (!preg_match('/^[\\S]+\\s+([a-zA-Z]+:\\/\\/|\\/).*/', $data['start-line'], $matches)) {
+        if (!\preg_match('/^[\\S]+\\s+([a-zA-Z]+:\\/\\/|\\/).*/', $data['start-line'], $matches)) {
             throw new \InvalidArgumentException('Invalid request string');
         }
-        $parts = explode(' ', $data['start-line'], 3);
-        $version = isset($parts[2]) ? explode('/', $parts[2])[1] : '1.1';
-        $request = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request($parts[0], $matches[1] === '/' ? self::parseRequestUri($parts[1], $data['headers']) : $parts[1], $data['headers'], $data['body'], $version);
+        $parts = \explode(' ', $data['start-line'], 3);
+        $version = isset($parts[2]) ? \explode('/', $parts[2])[1] : '1.1';
+        $request = new Request($parts[0], $matches[1] === '/' ? self::parseRequestUri($parts[1], $data['headers']) : $parts[1], $data['headers'], $data['body'], $version);
         return $matches[1] === '/' ? $request : $request->withRequestTarget($parts[1]);
     }
     /**
      * Parses a response message string into a response object.
      *
      * @param string $message Response message string.
-     *
-     * @return Response
      */
-    public static function parseResponse($message)
+    public static function parseResponse(string $message) : ResponseInterface
     {
         $data = self::parseMessage($message);
         // According to https://tools.ietf.org/html/rfc7230#section-3.1.2 the space
         // between status-code and reason-phrase is required. But browsers accept
         // responses without space and reason as well.
-        if (!preg_match('/^HTTP\\/.* [0-9]{3}( .*|$)/', $data['start-line'])) {
+        if (!\preg_match('/^HTTP\\/.* [0-9]{3}( .*|$)/', $data['start-line'])) {
             throw new \InvalidArgumentException('Invalid response string: ' . $data['start-line']);
         }
-        $parts = explode(' ', $data['start-line'], 3);
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Response((int) $parts[1], $data['headers'], $data['body'], explode('/', $parts[0])[1], isset($parts[2]) ? $parts[2] : null);
+        $parts = \explode(' ', $data['start-line'], 3);
+        return new Response((int) $parts[1], $data['headers'], $data['body'], \explode('/', $parts[0])[1], $parts[2] ?? null);
     }
 }

@@ -28,7 +28,7 @@ trait CRCTrait
      */
     private static function int2hex($i)
     {
-        return str_pad(dechex($i), 8, '0', STR_PAD_LEFT);
+        return \str_pad(\dechex($i), 8, '0', \STR_PAD_LEFT);
     }
     /**
      * { function_description }
@@ -46,7 +46,7 @@ trait CRCTrait
     {
         $crc = $crc & 0xffffffff;
         if ($raw_output) {
-            return pack('N', $crc);
+            return \pack('N', $crc);
         }
         return self::int2hex($crc);
     }

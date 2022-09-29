@@ -5,11 +5,11 @@ namespace DeliciousBrains\WP_Offload_Media\Providers\Delivery;
 /**
  * Class Other
  *
- * This is effectively dummy class that fulfils the requirements of a selectable "Other" default sub-option for Another CDN.
+ * This is a fallback CDN where the user can add their own name.
  *
  * @package DeliciousBrains\WP_Offload_Media\Providers\Delivery
  */
-class Other extends Another_CDN {
+class Other extends Delivery_Provider {
 
 	/**
 	 * Can the displayed provider service name be overridden by the user?

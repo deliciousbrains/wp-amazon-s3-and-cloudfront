@@ -73,21 +73,21 @@ trait BatchTrait
      */
     public function send(array $items)
     {
-        $start = microtime(true);
+        $start = \microtime(\true);
         try {
-            call_user_func_array($this->getCallback(), [$items]);
+            \call_user_func_array($this->getCallback(), [$items]);
         } catch (\Exception $e) {
             if ($this->debugOutput) {
-                fwrite($this->debugOutputResource, $e->getMessage() . PHP_EOL . PHP_EOL . $e->getTraceAsString() . PHP_EOL);
+                \fwrite($this->debugOutputResource, $e->getMessage() . \PHP_EOL . \PHP_EOL . $e->getTraceAsString() . \PHP_EOL);
             }
-            return false;
+            return \false;
         }
-        $end = microtime(true);
+        $end = \microtime(\true);
         if ($this->debugOutput) {
-            fwrite($this->debugOutputResource, sprintf('%f seconds for %s: %d items' . PHP_EOL, $end - $start, $this->batchMethod, count($items)));
-            fwrite($this->debugOutputResource, sprintf('memory used: %d' . PHP_EOL, memory_get_usage()));
+            \fwrite($this->debugOutputResource, \sprintf('%f seconds for %s: %d items' . \PHP_EOL, $end - $start, $this->batchMethod, \count($items)));
+            \fwrite($this->debugOutputResource, \sprintf('memory used: %d' . \PHP_EOL, \memory_get_usage()));
         }
-        return true;
+        return \true;
     }
     /**
      * Returns an array representation of a callback which will be used to write
@@ -141,11 +141,11 @@ trait BatchTrait
         $this->setSerializableClientOptions($options);
         $this->batchMethod = $options['batchMethod'];
         $this->identifier = $options['identifier'];
-        $this->debugOutputResource = isset($options['debugOutputResource']) ? $options['debugOutputResource'] : fopen('php://stderr', 'w');
-        $this->debugOutput = isset($options['debugOutput']) ? $options['debugOutput'] : false;
+        $this->debugOutputResource = isset($options['debugOutputResource']) ? $options['debugOutputResource'] : \fopen('php://stderr', 'w');
+        $this->debugOutput = isset($options['debugOutput']) ? $options['debugOutput'] : \false;
         $batchOptions = isset($options['batchOptions']) ? $options['batchOptions'] : [];
         $this->batchOptions = $batchOptions + ['batchSize' => 1000, 'callPeriod' => 2.0, 'numWorkers' => 2];
-        $this->batchRunner = isset($options['batchRunner']) ? $options['batchRunner'] : new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchRunner();
+        $this->batchRunner = isset($options['batchRunner']) ? $options['batchRunner'] : new BatchRunner();
         $this->batchRunner->registerJob($this->identifier, [$this, 'send'], $this->batchOptions);
     }
 }

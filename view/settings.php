@@ -1,11 +1,11 @@
-<?php
-/* @var \Amazon_S3_And_CloudFront|\Amazon_S3_And_CloudFront_Pro $this */
-?>
+<div id="as3cf-settings" class="wpome">
+</div>
 
-<?php $this->render_view( 'settings/media' ) ?>
-<?php $this->render_view( 'settings/addons' ) ?>
-<?php $this->render_view( 'settings/support' ) ?>
-
-<?php do_action( 'as3cf_after_settings' ); ?>
-
-<?php $this->render_view( 'sidebar' ); ?>
+<script>
+	new AS3CF_Settings( {
+		target: document.getElementById( 'as3cf-settings' ),
+		props: {
+			init: as3cf_settings
+		}
+	} );
+</script>

@@ -11,7 +11,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
  */
-class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\TransferException implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Client\RequestExceptionInterface
+class RequestException extends TransferException implements RequestExceptionInterface
 {
     /**
      * @var RequestInterface
@@ -25,7 +25,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
      * @var array
      */
     private $handlerContext;
-    public function __construct(string $message, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, \Throwable $previous = null, array $handlerContext = [])
+    public function __construct(string $message, RequestInterface $request, ResponseInterface $response = null, \Throwable $previous = null, array $handlerContext = [])
     {
         // Set the code of the exception if the response is set and not future.
         $code = $response ? $response->getStatusCode() : 0;
@@ -37,9 +37,9 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
     /**
      * Wrap non-RequestExceptions with a RequestException
      */
-    public static function wrapException(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \Throwable $e) : RequestException
+    public static function wrapException(RequestInterface $request, \Throwable $e) : RequestException
     {
-        return $e instanceof RequestException ? $e : new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException($e->getMessage(), $request, null, $e);
+        return $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
     }
     /**
      * Factory method to create a new exception with a normalized error message
@@ -50,7 +50,7 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
      * @param array                        $handlerContext Optional handler context
      * @param BodySummarizerInterface|null $bodySummarizer Optional body summarizer
      */
-    public static function create(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, \Throwable $previous = null, array $handlerContext = [], \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\BodySummarizerInterface $bodySummarizer = null) : self
+    public static function create(RequestInterface $request, ResponseInterface $response = null, \Throwable $previous = null, array $handlerContext = [], BodySummarizerInterface $bodySummarizer = null) : self
     {
         if (!$response) {
             return new self('Error completing request', $request, null, $previous, $handlerContext);
@@ -58,10 +58,10 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
         $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ClientException::class;
+            $className = ClientException::class;
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ServerException::class;
+            $className = ServerException::class;
         } else {
             $label = 'Unsuccessful request';
             $className = __CLASS__;
@@ -70,8 +70,8 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
         $uri = static::obfuscateUri($uri);
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
-        $message = \sprintf('%s: `%s %s` resulted in a `%s %s` response', $label, $request->getMethod(), $uri, $response->getStatusCode(), $response->getReasonPhrase());
-        $summary = ($bodySummarizer ?? new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\BodySummarizer())->summarize($response);
+        $message = \sprintf('%s: `%s %s` resulted in a `%s %s` response', $label, $request->getMethod(), $uri->__toString(), $response->getStatusCode(), $response->getReasonPhrase());
+        $summary = ($bodySummarizer ?? new BodySummarizer())->summarize($response);
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
         }
@@ -80,10 +80,10 @@ class RequestException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
     /**
      * Obfuscates URI if there is a username and a password present
      */
-    private static function obfuscateUri(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface $uri) : UriInterface
+    private static function obfuscateUri(UriInterface $uri) : UriInterface
     {
         $userInfo = $uri->getUserInfo();
-        if (false !== ($pos = \strpos($userInfo, ':'))) {
+        if (\false !== ($pos = \strpos($userInfo, ':'))) {
             return $uri->withUserInfo(\substr($userInfo, 0, $pos), '***');
         }
         return $uri;

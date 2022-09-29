@@ -27,14 +27,14 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch;
  */
 trait InterruptTrait
 {
-    private $shutdown = false;
+    private $shutdown = \false;
     private function setupSignalHandlers()
     {
         // setup signal handlers
-        pcntl_signal(SIGTERM, [$this, "sigHandler"]);
-        pcntl_signal(SIGINT, [$this, "sigHandler"]);
-        pcntl_signal(SIGHUP, [$this, "sigHandler"]);
-        pcntl_signal(SIGALRM, [$this, "sigHandler"]);
+        \pcntl_signal(\SIGTERM, [$this, "sigHandler"]);
+        \pcntl_signal(\SIGINT, [$this, "sigHandler"]);
+        \pcntl_signal(\SIGHUP, [$this, "sigHandler"]);
+        \pcntl_signal(\SIGALRM, [$this, "sigHandler"]);
     }
     /**
      * A signal handler for setting the terminate switch.
@@ -49,9 +49,9 @@ trait InterruptTrait
     public function sigHandler($signo, $siginfo = null)
     {
         switch ($signo) {
-            case SIGINT:
-            case SIGTERM:
-                $this->shutdown = true;
+            case \SIGINT:
+            case \SIGTERM:
+                $this->shutdown = \true;
                 break;
         }
     }

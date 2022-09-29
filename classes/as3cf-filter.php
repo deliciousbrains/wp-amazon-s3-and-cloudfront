@@ -599,9 +599,7 @@ abstract class AS3CF_Filter {
 	 * Get post cache
 	 *
 	 * @param null|int|WP_Post $post           Optional. Post ID or post object. Defaults to current post.
-	 * @param bool             $transform_ints Optional. If true (default), convert integer hits to array with id and source_type keys.
-	 *                                         If false, return integer hits as integers
-	 *
+	 * @param bool             $transform_ints Optional. If true (default), convert integer hits to array with id and source_type keys. If false, return integer hits as integers
 	 *
 	 * @return array|int
 	 */
@@ -644,7 +642,7 @@ abstract class AS3CF_Filter {
 	 * Set the cache for the given post.
 	 *
 	 * @param null|int|WP_Post $post Optional. Post ID or post object. Defaults to current post.
-	 * @param                  $data
+	 * @param mixed            $data
 	 */
 	protected function set_post_cache( $post, $data ) {
 		$post_id = AS3CF_Utils::get_post_id( $post );
@@ -664,7 +662,7 @@ abstract class AS3CF_Filter {
 	/**
 	 * Set the option cache with the given data.
 	 *
-	 * @param $data
+	 * @param mixed $data
 	 */
 	protected function set_option_cache( $data ) {
 		if ( wp_using_ext_object_cache() ) {

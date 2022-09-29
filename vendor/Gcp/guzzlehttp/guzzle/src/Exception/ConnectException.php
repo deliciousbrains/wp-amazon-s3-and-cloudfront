@@ -9,7 +9,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  *
  * Note that no response is present for a ConnectException
  */
-class ConnectException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\TransferException implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Client\NetworkExceptionInterface
+class ConnectException extends TransferException implements NetworkExceptionInterface
 {
     /**
      * @var RequestInterface
@@ -19,7 +19,7 @@ class ConnectException extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\
      * @var array
      */
     private $handlerContext;
-    public function __construct(string $message, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, \Throwable $previous = null, array $handlerContext = [])
+    public function __construct(string $message, RequestInterface $request, \Throwable $previous = null, array $handlerContext = [])
     {
         parent::__construct($message, 0, $previous);
         $this->request = $request;

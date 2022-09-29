@@ -27,23 +27,23 @@ abstract class RestSerializer
      * @param Service $api      Service API description
      * @param string  $endpoint Endpoint to connect to
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, $endpoint)
+    public function __construct(Service $api, $endpoint)
     {
         $this->api = $api;
-        $this->endpoint = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\uri_for($endpoint);
+        $this->endpoint = Psr7\Utils::uriFor($endpoint);
     }
     /**
      * @param CommandInterface $command Command to serialized
      *
      * @return RequestInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command)
+    public function __invoke(CommandInterface $command)
     {
         $operation = $this->api->getOperation($command->getName());
         $args = $command->toArray();
         $opts = $this->serialize($operation, $args);
         $uri = $this->buildEndpoint($operation, $args, $opts);
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request($operation['http']['method'], $uri, isset($opts['headers']) ? $opts['headers'] : [], isset($opts['body']) ? $opts['body'] : null);
+        return new Psr7\Request($operation['http']['method'], $uri, isset($opts['headers']) ? $opts['headers'] : [], isset($opts['body']) ? $opts['body'] : null);
     }
     /**
      * Modifies a hash of request options for a payload body.
@@ -52,8 +52,8 @@ abstract class RestSerializer
      * @param array            $value   Value to serialize
      * @param array            $opts    Request options to modify.
      */
-    protected abstract function payload(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $member, array $value, array &$opts);
-    private function serialize(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation $operation, array $args)
+    protected abstract function payload(StructureShape $member, array $value, array &$opts);
+    private function serialize(Operation $operation, array $args)
     {
         $opts = [];
         $input = $operation->getInput();
@@ -78,10 +78,14 @@ abstract class RestSerializer
         }
         if (isset($bodyMembers)) {
             $this->payload($operation->getInput(), $bodyMembers, $opts);
+        } else {
+            if (!isset($opts['body']) && $this->hasPayloadParam($input, $payload)) {
+                $this->payload($operation->getInput(), [], $opts);
+            }
         }
         return $opts;
     }
-    private function applyPayload(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape $input, $name, array $args, array &$opts)
+    private function applyPayload(StructureShape $input, $name, array $args, array &$opts)
     {
         if (!isset($args[$name])) {
             return;
@@ -90,52 +94,54 @@ abstract class RestSerializer
         if ($m['streaming'] || ($m['type'] == 'string' || $m['type'] == 'blob')) {
             // Streaming bodies or payloads that are strings are
             // always just a stream of data.
-            $opts['body'] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($args[$name]);
+            $opts['body'] = Psr7\Utils::streamFor($args[$name]);
             return;
         }
         $this->payload($m, $args[$name], $opts);
     }
-    private function applyHeader($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, $value, array &$opts)
+    private function applyHeader($name, Shape $member, $value, array &$opts)
     {
         if ($member->getType() === 'timestamp') {
             $timestampFormat = !empty($member['timestampFormat']) ? $member['timestampFormat'] : 'rfc822';
-            $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
+            $value = TimestampShape::format($value, $timestampFormat);
+        } elseif ($member->getType() === 'boolean') {
+            $value = $value ? 'true' : 'false';
         }
         if ($member['jsonvalue']) {
-            $value = json_encode($value);
-            if (empty($value) && JSON_ERROR_NONE !== json_last_error()) {
-                throw new \InvalidArgumentException('Unable to encode the provided value' . ' with \'json_encode\'. ' . json_last_error_msg());
+            $value = \json_encode($value);
+            if (empty($value) && \JSON_ERROR_NONE !== \json_last_error()) {
+                throw new \InvalidArgumentException('Unable to encode the provided value' . ' with \'json_encode\'. ' . \json_last_error_msg());
             }
-            $value = base64_encode($value);
+            $value = \base64_encode($value);
         }
         $opts['headers'][$member['locationName'] ?: $name] = $value;
     }
     /**
      * Note: This is currently only present in the Amazon S3 model.
      */
-    private function applyHeaderMap($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, array $value, array &$opts)
+    private function applyHeaderMap($name, Shape $member, array $value, array &$opts)
     {
         $prefix = $member['locationName'];
         foreach ($value as $k => $v) {
             $opts['headers'][$prefix . $k] = $v;
         }
     }
-    private function applyQuery($name, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape $member, $value, array &$opts)
+    private function applyQuery($name, Shape $member, $value, array &$opts)
     {
         if ($member instanceof MapShape) {
-            $opts['query'] = isset($opts['query']) && is_array($opts['query']) ? $opts['query'] + $value : $value;
+            $opts['query'] = isset($opts['query']) && \is_array($opts['query']) ? $opts['query'] + $value : $value;
         } elseif ($value !== null) {
             $type = $member->getType();
             if ($type === 'boolean') {
                 $value = $value ? 'true' : 'false';
             } elseif ($type === 'timestamp') {
                 $timestampFormat = !empty($member['timestampFormat']) ? $member['timestampFormat'] : 'iso8601';
-                $value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape::format($value, $timestampFormat);
+                $value = TimestampShape::format($value, $timestampFormat);
             }
             $opts['query'][$member['locationName'] ?: $name] = $value;
         }
     }
-    private function buildEndpoint(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation $operation, array $args, array $opts)
+    private function buildEndpoint(Operation $operation, array $args, array $opts)
     {
         $varspecs = [];
         // Create an associative array of varspecs used in expansions
@@ -144,29 +150,51 @@ abstract class RestSerializer
                 $varspecs[$member['locationName'] ?: $name] = isset($args[$name]) ? $args[$name] : null;
             }
         }
-        $relative = preg_replace_callback('/\\{([^\\}]+)\\}/', function (array $matches) use($varspecs) {
-            $isGreedy = substr($matches[1], -1, 1) == '+';
-            $k = $isGreedy ? substr($matches[1], 0, -1) : $matches[1];
+        $relative = \preg_replace_callback('/\\{([^\\}]+)\\}/', function (array $matches) use($varspecs) {
+            $isGreedy = \substr($matches[1], -1, 1) == '+';
+            $k = $isGreedy ? \substr($matches[1], 0, -1) : $matches[1];
             if (!isset($varspecs[$k])) {
                 return '';
             }
             if ($isGreedy) {
-                return str_replace('%2F', '/', rawurlencode($varspecs[$k]));
+                return \str_replace('%2F', '/', \rawurlencode($varspecs[$k]));
             }
-            return rawurlencode($varspecs[$k]);
+            return \rawurlencode($varspecs[$k]);
         }, $operation['http']['requestUri']);
         // Add the query string variables or appending to one if needed.
         if (!empty($opts['query'])) {
-            $append = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\build_query($opts['query']);
-            $relative .= strpos($relative, '?') ? "&{$append}" : "?{$append}";
+            $append = Psr7\Query::build($opts['query']);
+            $relative .= \strpos($relative, '?') ? "&{$append}" : "?{$append}";
         }
         // If endpoint has path, remove leading '/' to preserve URI resolution.
         $path = $this->endpoint->getPath();
         if ($path && $relative[0] === '/') {
-            $relative = substr($relative, 1);
+            $relative = \substr($relative, 1);
         }
         // Expand path place holders using Amazon's slightly different URI
         // template syntax.
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver::resolve($this->endpoint, new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($relative));
+        return UriResolver::resolve($this->endpoint, new Uri($relative));
+    }
+    /**
+     * @param StructureShape $input
+     */
+    private function hasPayloadParam(StructureShape $input, $payload)
+    {
+        if ($payload) {
+            $potentiallyEmptyTypes = ['blob', 'string'];
+            if ($this->api->getMetadata('protocol') == 'rest-xml') {
+                $potentiallyEmptyTypes[] = 'structure';
+            }
+            $payloadMember = $input->getMember($payload);
+            if (\in_array($payloadMember['type'], $potentiallyEmptyTypes)) {
+                return \false;
+            }
+        }
+        foreach ($input->getMembers() as $member) {
+            if (!isset($member['location'])) {
+                return \true;
+            }
+        }
+        return \false;
     }
 }

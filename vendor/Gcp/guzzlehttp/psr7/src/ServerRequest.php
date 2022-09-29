@@ -1,12 +1,13 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ServerRequestInterface;
-use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UploadedFileInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UriInterface;
 /**
  * Server-side HTTP request
  *
@@ -21,7 +22,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\UploadedFileInterface;
  * implemented such that they retain the internal state of the current
  * message and return a new instance that contains the changed state.
  */
-class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ServerRequestInterface
+class ServerRequest extends Request implements ServerRequestInterface
 {
     /**
      * @var array
@@ -32,7 +33,7 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
      */
     private $cookieParams = [];
     /**
-     * @var null|array|object
+     * @var array|object|null
      */
     private $parsedBody;
     /**
@@ -50,12 +51,12 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
     /**
      * @param string                               $method       HTTP method
      * @param string|UriInterface                  $uri          URI
-     * @param array                                $headers      Request headers
-     * @param string|null|resource|StreamInterface $body         Request body
+     * @param array<string, string|string[]>       $headers      Request headers
+     * @param string|resource|StreamInterface|null $body         Request body
      * @param string                               $version      Protocol version
      * @param array                                $serverParams Typically the $_SERVER superglobal
      */
-    public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1', array $serverParams = [])
+    public function __construct(string $method, $uri, array $headers = [], $body = null, string $version = '1.1', array $serverParams = [])
     {
         $this->serverParams = $serverParams;
         parent::__construct($method, $uri, $headers, $body, $version);
@@ -63,25 +64,23 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
     /**
      * Return an UploadedFile instance array.
      *
-     * @param array $files A array which respect $_FILES structure
-     *
-     * @return array
+     * @param array $files An array which respect $_FILES structure
      *
      * @throws InvalidArgumentException for unrecognized values
      */
-    public static function normalizeFiles(array $files)
+    public static function normalizeFiles(array $files) : array
     {
         $normalized = [];
         foreach ($files as $key => $value) {
             if ($value instanceof UploadedFileInterface) {
                 $normalized[$key] = $value;
-            } elseif (is_array($value) && isset($value['tmp_name'])) {
+            } elseif (\is_array($value) && isset($value['tmp_name'])) {
                 $normalized[$key] = self::createUploadedFileFromSpec($value);
-            } elseif (is_array($value)) {
+            } elseif (\is_array($value)) {
                 $normalized[$key] = self::normalizeFiles($value);
                 continue;
             } else {
-                throw new \InvalidArgumentException('Invalid value in files specification');
+                throw new InvalidArgumentException('Invalid value in files specification');
             }
         }
         return $normalized;
@@ -93,14 +92,15 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
      * delegate to normalizeNestedFileSpec() and return that return value.
      *
      * @param array $value $_FILES struct
-     * @return array|UploadedFileInterface
+     *
+     * @return UploadedFileInterface|UploadedFileInterface[]
      */
     private static function createUploadedFileFromSpec(array $value)
     {
-        if (is_array($value['tmp_name'])) {
+        if (\is_array($value['tmp_name'])) {
             return self::normalizeNestedFileSpec($value);
         }
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
+        return new UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
     }
     /**
      * Normalize an array of file specifications.
@@ -108,13 +108,12 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
      * Loops through all nested files and returns a normalized array of
      * UploadedFileInterface instances.
      *
-     * @param array $files
      * @return UploadedFileInterface[]
      */
-    private static function normalizeNestedFileSpec(array $files = [])
+    private static function normalizeNestedFileSpec(array $files = []) : array
     {
         $normalizedFiles = [];
-        foreach (array_keys($files['tmp_name']) as $key) {
+        foreach (\array_keys($files['tmp_name']) as $key) {
             $spec = ['tmp_name' => $files['tmp_name'][$key], 'size' => $files['size'][$key], 'error' => $files['error'][$key], 'name' => $files['name'][$key], 'type' => $files['type'][$key]];
             $normalizedFiles[$key] = self::createUploadedFileFromSpec($spec);
         }
@@ -127,47 +126,43 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
      * $_COOKIE
      * $_FILES
      * $_SERVER
-     *
-     * @return ServerRequestInterface
      */
-    public static function fromGlobals()
+    public static function fromGlobals() : ServerRequestInterface
     {
-        $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        $headers = getallheaders();
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $headers = \getallheaders();
         $uri = self::getUriFromGlobals();
-        $body = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\CachingStream(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\LazyOpenStream('php://input', 'r+'));
-        $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
-        $serverRequest = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
+        $body = new CachingStream(new LazyOpenStream('php://input', 'r+'));
+        $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? \str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
+        $serverRequest = new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
         return $serverRequest->withCookieParams($_COOKIE)->withQueryParams($_GET)->withParsedBody($_POST)->withUploadedFiles(self::normalizeFiles($_FILES));
     }
-    private static function extractHostAndPortFromAuthority($authority)
+    private static function extractHostAndPortFromAuthority(string $authority) : array
     {
         $uri = 'http://' . $authority;
-        $parts = parse_url($uri);
-        if (false === $parts) {
+        $parts = \parse_url($uri);
+        if (\false === $parts) {
             return [null, null];
         }
-        $host = isset($parts['host']) ? $parts['host'] : null;
-        $port = isset($parts['port']) ? $parts['port'] : null;
+        $host = $parts['host'] ?? null;
+        $port = $parts['port'] ?? null;
         return [$host, $port];
     }
     /**
      * Get a Uri populated with values from $_SERVER.
-     *
-     * @return UriInterface
      */
-    public static function getUriFromGlobals()
+    public static function getUriFromGlobals() : UriInterface
     {
-        $uri = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Uri('');
+        $uri = new Uri('');
         $uri = $uri->withScheme(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
-        $hasPort = false;
+        $hasPort = \false;
         if (isset($_SERVER['HTTP_HOST'])) {
-            list($host, $port) = self::extractHostAndPortFromAuthority($_SERVER['HTTP_HOST']);
+            [$host, $port] = self::extractHostAndPortFromAuthority($_SERVER['HTTP_HOST']);
             if ($host !== null) {
                 $uri = $uri->withHost($host);
             }
             if ($port !== null) {
-                $hasPort = true;
+                $hasPort = \true;
                 $uri = $uri->withPort($port);
             }
         } elseif (isset($_SERVER['SERVER_NAME'])) {
@@ -178,12 +173,12 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
         if (!$hasPort && isset($_SERVER['SERVER_PORT'])) {
             $uri = $uri->withPort($_SERVER['SERVER_PORT']);
         }
-        $hasQuery = false;
+        $hasQuery = \false;
         if (isset($_SERVER['REQUEST_URI'])) {
-            $requestUriParts = explode('?', $_SERVER['REQUEST_URI'], 2);
+            $requestUriParts = \explode('?', $_SERVER['REQUEST_URI'], 2);
             $uri = $uri->withPath($requestUriParts[0]);
             if (isset($requestUriParts[1])) {
-                $hasQuery = true;
+                $hasQuery = \true;
                 $uri = $uri->withQuery($requestUriParts[1]);
             }
         }
@@ -192,56 +187,35 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
         }
         return $uri;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getServerParams()
+    public function getServerParams() : array
     {
         return $this->serverParams;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getUploadedFiles()
+    public function getUploadedFiles() : array
     {
         return $this->uploadedFiles;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withUploadedFiles(array $uploadedFiles)
+    public function withUploadedFiles(array $uploadedFiles) : ServerRequestInterface
     {
         $new = clone $this;
         $new->uploadedFiles = $uploadedFiles;
         return $new;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getCookieParams()
+    public function getCookieParams() : array
     {
         return $this->cookieParams;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withCookieParams(array $cookies)
+    public function withCookieParams(array $cookies) : ServerRequestInterface
     {
         $new = clone $this;
         $new->cookieParams = $cookies;
         return $new;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getQueryParams()
+    public function getQueryParams() : array
     {
         return $this->queryParams;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withQueryParams(array $query)
+    public function withQueryParams(array $query) : ServerRequestInterface
     {
         $new = clone $this;
         $new->queryParams = $query;
@@ -249,52 +223,44 @@ class ServerRequest extends \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr
     }
     /**
      * {@inheritdoc}
+     *
+     * @return array|object|null
      */
     public function getParsedBody()
     {
         return $this->parsedBody;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withParsedBody($data)
+    public function withParsedBody($data) : ServerRequestInterface
     {
         $new = clone $this;
         $new->parsedBody = $data;
         return $new;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getAttributes()
+    public function getAttributes() : array
     {
         return $this->attributes;
     }
     /**
      * {@inheritdoc}
+     *
+     * @return mixed
      */
     public function getAttribute($attribute, $default = null)
     {
-        if (false === array_key_exists($attribute, $this->attributes)) {
+        if (\false === \array_key_exists($attribute, $this->attributes)) {
             return $default;
         }
         return $this->attributes[$attribute];
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withAttribute($attribute, $value)
+    public function withAttribute($attribute, $value) : ServerRequestInterface
     {
         $new = clone $this;
         $new->attributes[$attribute] = $value;
         return $new;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function withoutAttribute($attribute)
+    public function withoutAttribute($attribute) : ServerRequestInterface
     {
-        if (false === array_key_exists($attribute, $this->attributes)) {
+        if (\false === \array_key_exists($attribute, $this->attributes)) {
             return $this;
         }
         $new = clone $this;

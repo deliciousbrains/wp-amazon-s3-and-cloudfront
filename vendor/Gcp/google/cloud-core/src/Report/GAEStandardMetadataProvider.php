@@ -20,13 +20,13 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report;
 /**
  * An MetadataProvider for GAE Standard.
  */
-class GAEStandardMetadataProvider extends \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Report\GAEMetadataProvider
+class GAEStandardMetadataProvider extends GAEMetadataProvider
 {
     protected function getTraceValue($server)
     {
-        $traceId = substr($server['HTTP_X_CLOUD_TRACE_CONTEXT'], 0, 32);
+        $traceId = \substr($server['HTTP_X_CLOUD_TRACE_CONTEXT'], 0, 32);
         if (isset($server['GOOGLE_CLOUD_PROJECT'])) {
-            return sprintf('projects/%s/traces/%s', $server['GOOGLE_CLOUD_PROJECT'], $traceId);
+            return \sprintf('projects/%s/traces/%s', $server['GOOGLE_CLOUD_PROJECT'], $traceId);
         }
         return $traceId;
     }

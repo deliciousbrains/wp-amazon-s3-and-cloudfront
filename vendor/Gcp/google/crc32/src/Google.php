@@ -25,22 +25,22 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface;
  * This uses the C++ https://github.com/google/crc32c library, thus depends on
  * the `crc32c` PHP extension.
  */
-final class Google implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface
+final class Google implements CRCInterface
 {
     public static function supports($algo)
     {
-        return $algo === \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32::CASTAGNOLI;
+        return $algo === CRC32::CASTAGNOLI;
     }
     public function __construct()
     {
-        if (!function_exists('crc32c')) {
+        if (!\function_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\crc32c')) {
             throw new \InvalidArgumentException("crc32c function not found. Please load the 'crc32c' extension.");
         }
         $this->reset();
     }
     public function reset()
     {
-        $this->crc = hex2bin('00000000');
+        $this->crc = \hex2bin('00000000');
     }
     public function update($data)
     {
@@ -48,10 +48,10 @@ final class Google implements \DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32
     }
     public function hash($raw_output = null)
     {
-        if ($raw_output === true) {
+        if ($raw_output === \true) {
             return $this->crc;
         }
-        return bin2hex($this->crc);
+        return \bin2hex($this->crc);
     }
     public function version()
     {

@@ -53,7 +53,7 @@ class HmacKey
      * @param string $accessId The key identifier.
      * @param array|null $info The key metadata.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\ConnectionInterface $connection, $projectId, $accessId, array $info = [])
+    public function __construct(ConnectionInterface $connection, $projectId, $accessId, array $info = [])
     {
         $this->connection = $connection;
         $this->projectId = $projectId;

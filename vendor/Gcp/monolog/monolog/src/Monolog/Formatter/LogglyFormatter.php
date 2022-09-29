@@ -16,13 +16,13 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter;
  *
  * @author Adam Pancutt <adam@pancutt.com>
  */
-class LogglyFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\JsonFormatter
+class LogglyFormatter extends JsonFormatter
 {
     /**
      * Overrides the default batch mode to new lines for compatibility with the
      * Loggly bulk API.
      */
-    public function __construct(int $batchMode = self::BATCH_MODE_NEWLINES, bool $appendNewline = false)
+    public function __construct(int $batchMode = self::BATCH_MODE_NEWLINES, bool $appendNewline = \false)
     {
         parent::__construct($batchMode, $appendNewline);
     }

@@ -77,9 +77,26 @@ class DigitalOcean_Spaces_CDN extends Delivery_Provider {
 	protected $console_url_prefix_param = '?path=';
 
 	/**
-	 * @inheritDoc
+	 * Get the link to the provider's console.
+	 *
+	 * @param string $bucket
+	 * @param string $prefix
+	 * @param string $region
+	 *
+	 * @return string
+	 *
+	 * NOTE: DigitalOcean Spaces CDN is tied to the Space and does not have a separate means of access.
 	 */
-	public function features_description() {
-		return __( 'Fast, No Private Media', 'amazon-s3-and-cloudfront' );
+	public function get_console_url( string $bucket = '', string $prefix = '', string $region = '' ): string {
+		return $this->as3cf->get_storage_provider()->get_console_url( $bucket, $prefix, $region );
+	}
+
+	/**
+	 * Title to be shown for provider's console link.
+	 *
+	 * @return string
+	 */
+	public static function get_console_title(): string {
+		return _x( 'Control Panel', 'Provider console link text', 'amazon-s3-and-cloudfront' );
 	}
 }

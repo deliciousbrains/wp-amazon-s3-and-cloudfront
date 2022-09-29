@@ -44,7 +44,7 @@ class Key
      */
     public function __destruct()
     {
-        if (extension_loaded('sodium') && function_exists('sodium_memzero')) {
+        if (\extension_loaded('sodium') && \function_exists('sodium_memzero')) {
             try {
                 \sodium_memzero($this->internalString);
             } catch (\SodiumException $ex) {

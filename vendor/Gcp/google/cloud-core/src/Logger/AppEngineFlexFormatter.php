@@ -23,7 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
  *
  * If you are using Monolog 2.x, use {@see \Google\Cloud\Core\Logger\AppEngineFlexFormatterV2} instead.
  */
-class AppEngineFlexFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter
+class AppEngineFlexFormatter extends LineFormatter
 {
     use FormatterTrait;
     /**
@@ -31,9 +31,9 @@ class AppEngineFlexFormatter extends \DeliciousBrains\WP_Offload_Media\Gcp\Monol
      * @param string $dateFormat [optional] The format of the timestamp
      * @param bool $ignoreEmptyContextAndExtra [optional]
      */
-    public function __construct($format = null, $dateFormat = null, $ignoreEmptyContextAndExtra = false)
+    public function __construct($format = null, $dateFormat = null, $ignoreEmptyContextAndExtra = \false)
     {
-        parent::__construct($format, $dateFormat, true, $ignoreEmptyContextAndExtra);
+        parent::__construct($format, $dateFormat, \true, $ignoreEmptyContextAndExtra);
     }
     /**
      * Get the plain text message with LineFormatter's format method and add

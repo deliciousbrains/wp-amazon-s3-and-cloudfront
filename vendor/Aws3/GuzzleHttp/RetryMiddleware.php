@@ -44,7 +44,7 @@ class RetryMiddleware
      */
     public static function exponentialDelay($retries)
     {
-        return (int) pow(2, $retries - 1) * 1000;
+        return (int) \pow(2, $retries - 1) * 1000;
     }
     /**
      * @param RequestInterface $request
@@ -52,7 +52,7 @@ class RetryMiddleware
      *
      * @return PromiseInterface
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options)
     {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
@@ -65,10 +65,10 @@ class RetryMiddleware
      *
      * @return mixed
      */
-    private function onFulfilled(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
+    private function onFulfilled(RequestInterface $req, array $options)
     {
         return function ($value) use($req, $options) {
-            if (!call_user_func($this->decider, $options['retries'], $req, $value, null)) {
+            if (!\call_user_func($this->decider, $options['retries'], $req, $value, null)) {
                 return $value;
             }
             return $this->doRetry($req, $options, $value);
@@ -79,10 +79,10 @@ class RetryMiddleware
      *
      * @return callable
      */
-    private function onRejected(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $req, array $options)
+    private function onRejected(RequestInterface $req, array $options)
     {
         return function ($reason) use($req, $options) {
-            if (!call_user_func($this->decider, $options['retries'], $req, null, $reason)) {
+            if (!\call_user_func($this->decider, $options['retries'], $req, null, $reason)) {
                 return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\rejection_for($reason);
             }
             return $this->doRetry($req, $options);
@@ -91,9 +91,9 @@ class RetryMiddleware
     /**
      * @return self
      */
-    private function doRetry(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\ResponseInterface $response = null)
+    private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
-        $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);
+        $options['delay'] = \call_user_func($this->delay, ++$options['retries'], $response);
         return $this($request, $options);
     }
 }

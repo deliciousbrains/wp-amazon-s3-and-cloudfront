@@ -6,7 +6,7 @@ class CookieSigner
 {
     /** @var Signer */
     private $signer;
-    private static $schemes = ['http' => true, 'https' => true];
+    private static $schemes = ['http' => \true, 'https' => \true];
     /**
      * @param $keyPairId  string ID of the key pair
      * @param $privateKey string Path to the private key used for signing
@@ -16,7 +16,7 @@ class CookieSigner
      */
     public function __construct($keyPairId, $privateKey)
     {
-        $this->signer = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CloudFront\Signer($keyPairId, $privateKey);
+        $this->signer = new Signer($keyPairId, $privateKey);
     }
     /**
      * Create a signed Amazon CloudFront Cookie.
@@ -49,8 +49,8 @@ class CookieSigner
     }
     private function validateUrl($url)
     {
-        $scheme = str_replace('*', '', explode('://', $url)[0]);
-        if (empty(self::$schemes[strtolower($scheme)])) {
+        $scheme = \str_replace('*', '', \explode('://', $url)[0]);
+        if (empty(self::$schemes[\strtolower($scheme)])) {
             throw new \InvalidArgumentException('Invalid or missing URI scheme');
         }
     }

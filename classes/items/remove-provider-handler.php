@@ -105,6 +105,20 @@ class Remove_Provider_Handler extends Item_Handler {
 	 * @return bool|WP_Error
 	 */
 	protected function handle_item( Item $as3cf_item, Manifest $manifest, array $options ) {
+		// This test is "late" so that we don't raise the error if there is nothing to remove.
+		// If the provider of this item is different from what's currently configured,
+		// we'll return an error.
+		$current_provider = $this->as3cf->get_storage_provider();
+		if ( ! is_null( $current_provider ) && $current_provider::get_provider_key_name() !== $as3cf_item->provider() ) {
+			$error_msg = sprintf(
+				__( '%1$s with ID %2$d is offloaded to a different provider than currently configured', 'amazon-s3-and-cloudfront' ),
+				$this->as3cf->get_source_type_name( $as3cf_item->source_type() ),
+				$as3cf_item->source_id()
+			);
+
+			return $this->return_handler_error( $error_msg );
+		}
+
 		$chunks = array_chunk( $manifest->objects, 1000 );
 		$region = $as3cf_item->region();
 		$bucket = $as3cf_item->bucket();

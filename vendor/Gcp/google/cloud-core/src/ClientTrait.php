@@ -19,10 +19,8 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials;
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException;
-use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7;
 /**
  * Provides functionality common to each service client.
  */
@@ -45,10 +43,10 @@ trait ClientTrait
     {
         $isGrpcExtensionLoaded = $this->isGrpcLoaded();
         $defaultTransport = $isGrpcExtensionLoaded ? 'grpc' : 'rest';
-        $transport = isset($config['transport']) ? strtolower($config['transport']) : $defaultTransport;
+        $transport = isset($config['transport']) ? \strtolower($config['transport']) : $defaultTransport;
         if ($transport === 'grpc') {
             if (!$isGrpcExtensionLoaded) {
-                throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('gRPC support has been requested but required dependencies ' . 'have not been found. ' . $this->getGrpcInstallationMessage());
+                throw new GoogleException('gRPC support has been requested but required dependencies ' . 'have not been found. ' . $this->getGrpcInstallationMessage());
             }
         }
         return $transport;
@@ -61,7 +59,7 @@ trait ClientTrait
     private function requireGrpc()
     {
         if (!$this->isGrpcLoaded()) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('The requested client requires the gRPC extension. ' . $this->getGrpcInstallationMessage());
+            throw new GoogleException('The requested client requires the gRPC extension. ' . $this->getGrpcInstallationMessage());
         }
     }
     /**
@@ -105,17 +103,17 @@ trait ClientTrait
             return $config['keyFile'];
         }
         if ($config['keyFilePath']) {
-            if (!file_exists($config['keyFilePath'])) {
-                throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException(sprintf('Given keyfile path %s does not exist', $config['keyFilePath']));
+            if (!\file_exists($config['keyFilePath'])) {
+                throw new GoogleException(\sprintf('Given keyfile path %s does not exist', $config['keyFilePath']));
             }
             try {
-                $keyFileData = $this->jsonDecode(file_get_contents($config['keyFilePath']), true);
+                $keyFileData = $this->jsonDecode(\file_get_contents($config['keyFilePath']), \true);
             } catch (\InvalidArgumentException $ex) {
-                throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException(sprintf('Given keyfile at path %s was invalid', $config['keyFilePath']));
+                throw new GoogleException(\sprintf('Given keyfile at path %s was invalid', $config['keyFilePath']));
             }
             return $keyFileData;
         }
-        return \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromEnv() ?: \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader::fromWellKnownFile();
+        return CredentialsLoader::fromEnv() ?: CredentialsLoader::fromWellKnownFile();
     }
     /**
      * Detect and return a project ID.
@@ -137,7 +135,7 @@ trait ClientTrait
      */
     private function detectProjectId(array $config)
     {
-        $config += ['httpHandler' => null, 'projectId' => null, 'projectIdRequired' => false, 'hasEmulator' => false, 'preferNumericProjectId' => false, 'suppressKeyFileNotice' => false];
+        $config += ['httpHandler' => null, 'projectId' => null, 'projectIdRequired' => \false, 'hasEmulator' => \false, 'preferNumericProjectId' => \false, 'suppressKeyFileNotice' => \false];
         if ($config['projectId']) {
             return $config['projectId'];
         }
@@ -148,16 +146,16 @@ trait ClientTrait
             if (isset($config['keyFile']['project_id'])) {
                 return $config['keyFile']['project_id'];
             }
-            if ($config['suppressKeyFileNotice'] !== true) {
+            if ($config['suppressKeyFileNotice'] !== \true) {
                 $serviceAccountUri = 'https://cloud.google.com/iam/docs/' . 'creating-managing-service-account-keys#creating_service_account_keys';
-                trigger_error(sprintf('A keyfile was given, but it does not contain a project ' . 'ID. This can indicate an old and obsolete keyfile, ' . 'in which case you should create a new one. To suppress ' . 'this message, set `suppressKeyFileNotice` to `true` in your client configuration. ' . 'To learn more about generating new keys, see this URL: %s', $serviceAccountUri), E_USER_NOTICE);
+                \trigger_error(\sprintf('A keyfile was given, but it does not contain a project ' . 'ID. This can indicate an old and obsolete keyfile, ' . 'in which case you should create a new one. To suppress ' . 'this message, set `suppressKeyFileNotice` to `true` in your client configuration. ' . 'To learn more about generating new keys, see this URL: %s', $serviceAccountUri), \E_USER_NOTICE);
             }
         }
-        if (getenv('GOOGLE_CLOUD_PROJECT')) {
-            return getenv('GOOGLE_CLOUD_PROJECT');
+        if (\getenv('GOOGLE_CLOUD_PROJECT')) {
+            return \getenv('GOOGLE_CLOUD_PROJECT');
         }
-        if (getenv('GCLOUD_PROJECT')) {
-            return getenv('GCLOUD_PROJECT');
+        if (\getenv('GCLOUD_PROJECT')) {
+            return \getenv('GCLOUD_PROJECT');
         }
         if ($this->onGce($config['httpHandler'])) {
             $metadata = $this->getMetaData();
@@ -167,7 +165,7 @@ trait ClientTrait
             }
         }
         if ($config['projectIdRequired']) {
-            throw new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
+            throw new GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
         }
     }
     /**
@@ -178,7 +176,7 @@ trait ClientTrait
      */
     protected function onGce($httpHandler)
     {
-        return \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler);
+        return GCECredentials::onGce($httpHandler);
     }
     /**
      * Abstract the Metadata instantiation for unit testing
@@ -188,7 +186,7 @@ trait ClientTrait
      */
     protected function getMetaData()
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Compute\Metadata();
+        return new Metadata();
     }
     /**
      * Abstract the checking of the grpc extension for unit testing.
@@ -198,6 +196,6 @@ trait ClientTrait
      */
     protected function isGrpcLoaded()
     {
-        return extension_loaded('grpc');
+        return \extension_loaded('grpc');
     }
 }

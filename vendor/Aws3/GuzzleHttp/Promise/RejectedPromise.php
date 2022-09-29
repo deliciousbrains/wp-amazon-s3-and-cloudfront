@@ -8,12 +8,12 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onRejected callback
  * immediately and ignore other callbacks.
  */
-class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface
+class RejectedPromise implements PromiseInterface
 {
     private $reason;
     public function __construct($reason)
     {
-        if (is_object($reason) && method_exists($reason, 'then')) {
+        if (\is_object($reason) && \method_exists($reason, 'then')) {
             throw new \InvalidArgumentException('You cannot create a RejectedPromise with a promise.');
         }
         $this->reason = $reason;
@@ -24,11 +24,11 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
         if (!$onRejected) {
             return $this;
         }
-        $queue = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Utils::queue();
+        $queue = Utils::queue();
         $reason = $this->reason;
-        $p = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $p = new Promise([$queue, 'run']);
         $queue->add(static function () use($p, $reason, $onRejected) {
-            if (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Is::pending($p)) {
+            if (Is::pending($p)) {
                 try {
                     // Return a resolved promise if onRejected does not throw.
                     $p->resolve($onRejected($reason));
@@ -47,10 +47,10 @@ class RejectedPromise implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHt
     {
         return $this->then(null, $onRejected);
     }
-    public function wait($unwrap = true, $defaultDelivery = null)
+    public function wait($unwrap = \true, $defaultDelivery = null)
     {
         if ($unwrap) {
-            throw \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Create::exceptionFor($this->reason);
+            throw Create::exceptionFor($this->reason);
         }
         return null;
     }

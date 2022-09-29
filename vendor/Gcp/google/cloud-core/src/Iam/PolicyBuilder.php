@@ -88,7 +88,7 @@ class PolicyBuilder
         if (isset($policy['bindings'])) {
             $this->setBindings($policy['bindings']);
         } elseif (!empty($policy)) {
-            throw new \InvalidArgumentException('Invalid Policy');
+            throw new InvalidArgumentException('Invalid Policy');
         }
         if (isset($policy['etag'])) {
             $this->setEtag($policy['etag']);
@@ -189,22 +189,22 @@ class PolicyBuilder
         $bindings = $this->bindings;
         foreach ((array) $bindings as $i => $binding) {
             if ($binding['role'] == $role) {
-                $newMembers = array_diff($binding['members'], $members);
-                if (count($newMembers) != count($binding['members']) - count($members)) {
-                    throw new \InvalidArgumentException('One or more role-members were not found.');
+                $newMembers = \array_diff($binding['members'], $members);
+                if (\count($newMembers) != \count($binding['members']) - \count($members)) {
+                    throw new InvalidArgumentException('One or more role-members were not found.');
                 }
                 if (empty($newMembers)) {
                     unset($bindings[$i]);
-                    $bindings = array_values($bindings);
+                    $bindings = \array_values($bindings);
                 } else {
-                    $binding['members'] = array_values($newMembers);
+                    $binding['members'] = \array_values($newMembers);
                     $bindings[$i] = $binding;
                 }
                 $this->bindings = $bindings;
                 return $this;
             }
         }
-        throw new \InvalidArgumentException('The role was not found.');
+        throw new InvalidArgumentException('The role was not found.');
     }
     /**
      * Update the etag on the policy.
@@ -252,12 +252,12 @@ class PolicyBuilder
      */
     public function result()
     {
-        return array_filter(['etag' => $this->etag, 'bindings' => $this->bindings, 'version' => $this->version]);
+        return \array_filter(['etag' => $this->etag, 'bindings' => $this->bindings, 'version' => $this->version]);
     }
     private function validatePolicyVersion()
     {
         if (isset($this->version) && $this->version > 1) {
-            throw new \BadMethodCallException("Helper methods cannot be " . "invoked on policies with version {$this->version}.");
+            throw new BadMethodCallException("Helper methods cannot be " . "invoked on policies with version {$this->version}.");
         }
         $this->validateConditions();
     }
@@ -268,7 +268,7 @@ class PolicyBuilder
         }
         foreach ($this->bindings as $binding) {
             if (isset($binding['condition'])) {
-                throw new \BadMethodCallException("Helper methods cannot " . "be invoked on policies containing conditions.");
+                throw new BadMethodCallException("Helper methods cannot " . "be invoked on policies containing conditions.");
             }
         }
     }

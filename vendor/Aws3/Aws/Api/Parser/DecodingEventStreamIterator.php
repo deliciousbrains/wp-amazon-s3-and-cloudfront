@@ -11,7 +11,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserExcepti
  * @internal Implements a decoder for a binary encoded event stream that will
  * decode, validate, and provide individual events from the stream.
  */
-class DecodingEventStreamIterator implements \Iterator
+class DecodingEventStreamIterator implements Iterator
 {
     const HEADERS = 'headers';
     const PAYLOAD = 'payload';
@@ -38,7 +38,7 @@ class DecodingEventStreamIterator implements \Iterator
      *
      * @param StreamInterface $stream
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream)
+    public function __construct(StreamInterface $stream)
     {
         $this->stream = $stream;
         $this->rewind();
@@ -56,7 +56,7 @@ class DecodingEventStreamIterator implements \Iterator
             list($value, $numBytes) = $this->{$f}();
             $bytesRead += $numBytes;
             if (isset($headers[$key])) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Duplicate key in event headers.');
+                throw new ParserException('Duplicate key in event headers.');
             }
             $headers[$key] = $value;
         }
@@ -69,16 +69,16 @@ class DecodingEventStreamIterator implements \Iterator
         $calculatedCrc = null;
         foreach (self::$preludeFormat as $key => $decodeFunction) {
             if ($key === self::CRC_PRELUDE) {
-                $hashCopy = hash_copy($this->hashContext);
-                $calculatedCrc = hash_final($this->hashContext, true);
+                $hashCopy = \hash_copy($this->hashContext);
+                $calculatedCrc = \hash_final($this->hashContext, \true);
                 $this->hashContext = $hashCopy;
             }
             list($value, $numBytes) = $this->{$decodeFunction}();
             $bytesRead += $numBytes;
             $prelude[$key] = $value;
         }
-        if (unpack('N', $calculatedCrc)[1] !== $prelude[self::CRC_PRELUDE]) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Prelude checksum mismatch.');
+        if (\unpack('N', $calculatedCrc)[1] !== $prelude[self::CRC_PRELUDE]) {
+            throw new ParserException('Prelude checksum mismatch.');
         }
         return [$prelude, $bytesRead];
     }
@@ -86,22 +86,22 @@ class DecodingEventStreamIterator implements \Iterator
     {
         $event = [];
         if ($this->stream->tell() < $this->stream->getSize()) {
-            $this->hashContext = hash_init('crc32b');
+            $this->hashContext = \hash_init('crc32b');
             $bytesLeft = $this->stream->getSize() - $this->stream->tell();
             list($prelude, $numBytes) = $this->parsePrelude();
             if ($prelude[self::LENGTH_TOTAL] > $bytesLeft) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Message length too long.');
+                throw new ParserException('Message length too long.');
             }
             $bytesLeft -= $numBytes;
             if ($prelude[self::LENGTH_HEADERS] > $bytesLeft) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Headers length too long.');
+                throw new ParserException('Headers length too long.');
             }
             list($event[self::HEADERS], $numBytes) = $this->parseHeaders($prelude[self::LENGTH_HEADERS]);
-            $event[self::PAYLOAD] = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for($this->readAndHashBytes($prelude[self::LENGTH_TOTAL] - self::BYTES_PRELUDE - $numBytes - self::BYTES_TRAILING));
-            $calculatedCrc = hash_final($this->hashContext, true);
+            $event[self::PAYLOAD] = Psr7\Utils::streamFor($this->readAndHashBytes($prelude[self::LENGTH_TOTAL] - self::BYTES_PRELUDE - $numBytes - self::BYTES_TRAILING));
+            $calculatedCrc = \hash_final($this->hashContext, \true);
             $messageCrc = $this->stream->read(4);
             if ($calculatedCrc !== $messageCrc) {
-                throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Message checksum mismatch.');
+                throw new ParserException('Message checksum mismatch.');
             }
         }
         return $event;
@@ -110,6 +110,7 @@ class DecodingEventStreamIterator implements \Iterator
     /**
      * @return array
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->currentEvent;
@@ -117,10 +118,12 @@ class DecodingEventStreamIterator implements \Iterator
     /**
      * @return int
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->key;
     }
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->currentPosition = $this->stream->tell();
@@ -129,6 +132,7 @@ class DecodingEventStreamIterator implements \Iterator
             $this->currentEvent = $this->parseEvent();
         }
     }
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->stream->rewind();
@@ -139,6 +143,7 @@ class DecodingEventStreamIterator implements \Iterator
     /**
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         return $this->currentPosition < $this->stream->getSize();
@@ -147,20 +152,20 @@ class DecodingEventStreamIterator implements \Iterator
     private function readAndHashBytes($num)
     {
         $bytes = $this->stream->read($num);
-        hash_update($this->hashContext, $bytes);
+        \hash_update($this->hashContext, $bytes);
         return $bytes;
     }
     private function decodeBooleanTrue()
     {
-        return [true, 0];
+        return [\true, 0];
     }
     private function decodeBooleanFalse()
     {
-        return [false, 0];
+        return [\false, 0];
     }
     private function uintToInt($val, $size)
     {
-        $signedCap = pow(2, $size - 1);
+        $signedCap = \pow(2, $size - 1);
         if ($val > $signedCap) {
             $val -= 2 * $signedCap;
         }
@@ -168,30 +173,30 @@ class DecodingEventStreamIterator implements \Iterator
     }
     private function decodeInt8()
     {
-        $val = (int) unpack('C', $this->readAndHashBytes(1))[1];
+        $val = (int) \unpack('C', $this->readAndHashBytes(1))[1];
         return [$this->uintToInt($val, 8), 1];
     }
     private function decodeUint8()
     {
-        return [unpack('C', $this->readAndHashBytes(1))[1], 1];
+        return [\unpack('C', $this->readAndHashBytes(1))[1], 1];
     }
     private function decodeInt16()
     {
-        $val = (int) unpack('n', $this->readAndHashBytes(2))[1];
+        $val = (int) \unpack('n', $this->readAndHashBytes(2))[1];
         return [$this->uintToInt($val, 16), 2];
     }
     private function decodeUint16()
     {
-        return [unpack('n', $this->readAndHashBytes(2))[1], 2];
+        return [\unpack('n', $this->readAndHashBytes(2))[1], 2];
     }
     private function decodeInt32()
     {
-        $val = (int) unpack('N', $this->readAndHashBytes(4))[1];
+        $val = (int) \unpack('N', $this->readAndHashBytes(4))[1];
         return [$this->uintToInt($val, 32), 4];
     }
     private function decodeUint32()
     {
-        return [unpack('N', $this->readAndHashBytes(4))[1], 4];
+        return [\unpack('N', $this->readAndHashBytes(4))[1], 4];
     }
     private function decodeInt64()
     {
@@ -204,16 +209,16 @@ class DecodingEventStreamIterator implements \Iterator
     }
     private function unpackInt64($bytes)
     {
-        if (version_compare(PHP_VERSION, '5.6.3', '<')) {
-            $d = unpack('N2', $bytes);
+        if (\version_compare(\PHP_VERSION, '5.6.3', '<')) {
+            $d = \unpack('N2', $bytes);
             return [1 => $d[1] << 32 | $d[2]];
         }
-        return unpack('J', $bytes);
+        return \unpack('J', $bytes);
     }
     private function decodeBytes($lengthBytes = 2)
     {
         if (!isset(self::$lengthFormatMap[$lengthBytes])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Undefined variable length format.');
+            throw new ParserException('Undefined variable length format.');
         }
         $f = self::$lengthFormatMap[$lengthBytes];
         list($len, $bytes) = $this->{$f}();
@@ -222,7 +227,7 @@ class DecodingEventStreamIterator implements \Iterator
     private function decodeString($lengthBytes = 2)
     {
         if (!isset(self::$lengthFormatMap[$lengthBytes])) {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\Exception\ParserException('Undefined variable length format.');
+            throw new ParserException('Undefined variable length format.');
         }
         $f = self::$lengthFormatMap[$lengthBytes];
         list($len, $bytes) = $this->{$f}();
@@ -231,11 +236,11 @@ class DecodingEventStreamIterator implements \Iterator
     private function decodeTimestamp()
     {
         list($val, $bytes) = $this->decodeInt64();
-        return [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\DateTimeResult::createFromFormat('U.u', $val / 1000), $bytes];
+        return [DateTimeResult::createFromFormat('U.u', $val / 1000), $bytes];
     }
     private function decodeUuid()
     {
-        $val = unpack('H32', $this->readAndHashBytes(16))[1];
-        return [substr($val, 0, 8) . '-' . substr($val, 8, 4) . '-' . substr($val, 12, 4) . '-' . substr($val, 16, 4) . '-' . substr($val, 20, 12), 16];
+        $val = \unpack('H32', $this->readAndHashBytes(16))[1];
+        return [\substr($val, 0, 8) . '-' . \substr($val, 8, 4) . '-' . \substr($val, 12, 4) . '-' . \substr($val, 16, 4) . '-' . \substr($val, 20, 12), 16];
     }
 }

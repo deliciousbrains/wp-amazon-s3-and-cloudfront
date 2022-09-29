@@ -8,12 +8,12 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onFulfilled callback
  * immediately and ignore other callbacks.
  */
-class FulfilledPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\PromiseInterface
+class FulfilledPromise implements PromiseInterface
 {
     private $value;
     public function __construct($value)
     {
-        if (is_object($value) && method_exists($value, 'then')) {
+        if (\is_object($value) && \method_exists($value, 'then')) {
             throw new \InvalidArgumentException('You cannot create a FulfilledPromise with a promise.');
         }
         $this->value = $value;
@@ -24,11 +24,11 @@ class FulfilledPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHt
         if (!$onFulfilled) {
             return $this;
         }
-        $queue = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Utils::queue();
-        $p = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $queue = Utils::queue();
+        $p = new Promise([$queue, 'run']);
         $value = $this->value;
         $queue->add(static function () use($p, $value, $onFulfilled) {
-            if (\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Is::pending($p)) {
+            if (Is::pending($p)) {
                 try {
                     $p->resolve($onFulfilled($value));
                 } catch (\Throwable $e) {
@@ -44,7 +44,7 @@ class FulfilledPromise implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHt
     {
         return $this->then(null, $onRejected);
     }
-    public function wait($unwrap = true, $defaultDelivery = null)
+    public function wait($unwrap = \true, $defaultDelivery = null)
     {
         return $unwrap ? $this->value : null;
     }

@@ -9,12 +9,12 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface;
 /**
  * PSR-7 request implementation.
  */
-class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface
+class Request implements RequestInterface
 {
     use MessageTrait;
     /** @var string */
     private $method;
-    /** @var null|string */
+    /** @var string|null */
     private $requestTarget;
     /** @var UriInterface */
     private $uri;
@@ -22,16 +22,16 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
      * @param string                               $method  HTTP method
      * @param string|UriInterface                  $uri     URI
      * @param array                                $headers Request headers
-     * @param string|null|resource|StreamInterface $body    Request body
+     * @param string|resource|StreamInterface|null $body    Request body
      * @param string                               $version Protocol version
      */
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1')
     {
         $this->assertMethod($method);
         if (!$uri instanceof UriInterface) {
-            $uri = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($uri);
+            $uri = new Uri($uri);
         }
-        $this->method = strtoupper($method);
+        $this->method = \strtoupper($method);
         $this->uri = $uri;
         $this->setHeaders($headers);
         $this->protocol = $version;
@@ -39,7 +39,7 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
             $this->updateHostFromUri();
         }
         if ($body !== '' && $body !== null) {
-            $this->stream = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor($body);
+            $this->stream = Utils::streamFor($body);
         }
     }
     public function getRequestTarget()
@@ -58,8 +58,8 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
     }
     public function withRequestTarget($requestTarget)
     {
-        if (preg_match('#\\s#', $requestTarget)) {
-            throw new \InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
+        if (\preg_match('#\\s#', $requestTarget)) {
+            throw new InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
         }
         $new = clone $this;
         $new->requestTarget = $requestTarget;
@@ -73,14 +73,14 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
     {
         $this->assertMethod($method);
         $new = clone $this;
-        $new->method = strtoupper($method);
+        $new->method = \strtoupper($method);
         return $new;
     }
     public function getUri()
     {
         return $this->uri;
     }
-    public function withUri(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\UriInterface $uri, $preserveHost = false)
+    public function withUri(UriInterface $uri, $preserveHost = \false)
     {
         if ($uri === $this->uri) {
             return $this;
@@ -113,7 +113,7 @@ class Request implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message
     }
     private function assertMethod($method)
     {
-        if (!is_string($method) || $method === '') {
+        if (!\is_string($method) || $method === '') {
             throw new \InvalidArgumentException('Method must be a non-empty string.');
         }
     }

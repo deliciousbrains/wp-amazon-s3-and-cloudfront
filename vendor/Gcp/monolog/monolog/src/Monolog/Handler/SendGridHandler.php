@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @author Ricardo Fontanelli <ricardo.fontanelli@hotmail.com>
  */
-class SendGridHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\MailHandler
+class SendGridHandler extends MailHandler
 {
     /**
      * The SendGrid API User
@@ -36,7 +36,7 @@ class SendGridHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     protected $from;
     /**
      * The email addresses to which the message will be sent
-     * @var array
+     * @var string[]
      */
     protected $to;
     /**
@@ -45,16 +45,17 @@ class SendGridHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      */
     protected $subject;
     /**
-     * @param string       $apiUser The SendGrid API User
-     * @param string       $apiKey  The SendGrid API Key
-     * @param string       $from    The sender of the email
-     * @param string|array $to      The recipients of the email
-     * @param string       $subject The subject of the mail
-     * @param int|string   $level   The minimum logging level at which this handler will be triggered
-     * @param bool         $bubble  Whether the messages that are handled can bubble up the stack or not
+     * @param string          $apiUser The SendGrid API User
+     * @param string          $apiKey  The SendGrid API Key
+     * @param string          $from    The sender of the email
+     * @param string|string[] $to      The recipients of the email
+     * @param string          $subject The subject of the mail
      */
-    public function __construct(string $apiUser, string $apiKey, string $from, $to, string $subject, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, bool $bubble = true)
+    public function __construct(string $apiUser, string $apiKey, string $from, $to, string $subject, $level = Logger::ERROR, bool $bubble = \true)
     {
+        if (!\extension_loaded('curl')) {
+            throw new MissingExtensionException('The curl extension is needed to use the SendGridHandler');
+        }
         parent::__construct($level, $bubble);
         $this->apiUser = $apiUser;
         $this->apiKey = $apiKey;
@@ -63,7 +64,7 @@ class SendGridHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
         $this->subject = $subject;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function send(string $content, array $records) : void
     {
@@ -75,17 +76,17 @@ class SendGridHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
             $message['to[]'] = $recipient;
         }
         $message['subject'] = $this->subject;
-        $message['date'] = date('r');
+        $message['date'] = \date('r');
         if ($this->isHtmlBody($content)) {
             $message['html'] = $content;
         } else {
             $message['text'] = $content;
         }
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://api.sendgrid.com/api/mail.send.json');
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($message));
-        \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Curl\Util::execute($ch, 2);
+        $ch = \curl_init();
+        \curl_setopt($ch, \CURLOPT_URL, 'https://api.sendgrid.com/api/mail.send.json');
+        \curl_setopt($ch, \CURLOPT_POST, 1);
+        \curl_setopt($ch, \CURLOPT_RETURNTRANSFER, 1);
+        \curl_setopt($ch, \CURLOPT_POSTFIELDS, \http_build_query($message));
+        Curl\Util::execute($ch, 2);
     }
 }

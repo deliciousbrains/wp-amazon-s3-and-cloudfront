@@ -23,7 +23,7 @@ abstract class Abstraction
      * @param array  $params
      * @return null|string
      */
-    public function expand(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, array $params = array())
+    public function expand(Parser $parser, array $params = array())
     {
         return $this->token;
     }
@@ -36,12 +36,12 @@ abstract class Abstraction
      * @param bool $strict
      * @return null|array `uri and params` or `null` if not match and $strict is true
      */
-    public function match(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, $uri, $params = array(), $strict = false)
+    public function match(Parser $parser, $uri, $params = array(), $strict = \false)
     {
         // match literal string from start to end
-        $length = strlen($this->token);
-        if (substr($uri, 0, $length) === $this->token) {
-            $uri = substr($uri, $length);
+        $length = \strlen($this->token);
+        if (\substr($uri, 0, $length) === $this->token) {
+            $uri = \substr($uri, $length);
         } else {
             if ($strict) {
                 return null;

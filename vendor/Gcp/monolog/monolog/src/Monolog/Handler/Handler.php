@@ -16,10 +16,10 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-abstract class Handler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface
+abstract class Handler implements HandlerInterface
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function handleBatch(array $records) : void
     {
@@ -28,7 +28,7 @@ abstract class Handler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
         }
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close() : void
     {
@@ -44,6 +44,6 @@ abstract class Handler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
     public function __sleep()
     {
         $this->close();
-        return array_keys(get_object_vars($this));
+        return \array_keys(\get_object_vars($this));
     }
 }

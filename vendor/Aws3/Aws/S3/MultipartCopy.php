@@ -6,11 +6,13 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
-class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart\AbstractUploadManager
+class MultipartCopy extends AbstractUploadManager
 {
     use MultipartUploadingTrait;
-    /** @var string */
+    /** @var string|array */
     private $source;
+    /** @var string */
+    private $sourceVersionId;
     /** @var ResultInterface */
     private $sourceMetadata;
     /**
@@ -49,19 +51,20 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
      *   result of executing a HeadObject command on the copy source.
      *
      * @param S3ClientInterface $client Client used for the upload.
-     * @param string $source Location of the data to be copied
-     *                                  (in the form /<bucket>/<key>).
+     * @param string|array $source Location of the data to be copied (in the
+     *                       form /<bucket>/<key>).  If the key contains a '?'
+     *                       character, instead pass an array of source_key,
+     *                       source_bucket, and source_version_id.
      * @param array $config Configuration used to perform the upload.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\S3ClientInterface $client, $source, array $config = [])
+    public function __construct(S3ClientInterface $client, $source, array $config = [])
     {
-        if (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\ArnParser::isArn($source)) {
-            $this->source = '';
+        if (\is_array($source)) {
+            $this->source = $source;
         } else {
-            $this->source = "/";
+            $this->source = $this->getInputSource($source);
         }
-        $this->source .= ltrim($source, '/');
-        parent::__construct($client, array_change_key_case($config) + ['source_metadata' => null]);
+        parent::__construct($client, \array_change_key_case($config) + ['source_metadata' => null]);
     }
     /**
      * An alias of the self::upload method.
@@ -78,7 +81,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
     }
     protected function getUploadCommands(callable $resultHandler)
     {
-        $parts = ceil($this->getSourceSize() / $this->determinePartSize());
+        $parts = \ceil($this->getSourceSize() / $this->determinePartSize());
         for ($partNumber = 1; $partNumber <= $parts; $partNumber++) {
             // If we haven't already uploaded this part, yield a new part.
             if (!$this->state->hasPartBeenUploaded($partNumber)) {
@@ -97,9 +100,19 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
         foreach ($params as $k => $v) {
             $data[$k] = $v;
         }
-        list($bucket, $key) = explode('/', ltrim($this->source, '/'), 2);
-        $data['CopySource'] = '/' . $bucket . '/' . implode('/', array_map('urlencode', explode('/', rawurldecode($key))));
+        // The source parameter here is usually a string, but can be overloaded as an array
+        // if the key contains a '?' character to specify where the query parameters start
+        if (\is_array($this->source)) {
+            $key = \str_replace('%2F', '/', \rawurlencode($this->source['source_key']));
+            $data['CopySource'] = '/' . $this->source['source_bucket'] . '/' . $key;
+        } else {
+            list($bucket, $key) = \explode('/', \ltrim($this->source, '/'), 2);
+            $data['CopySource'] = '/' . $bucket . '/' . \implode('/', \array_map('urlencode', \explode('/', \rawurldecode($key))));
+        }
         $data['PartNumber'] = $partNumber;
+        if (!empty($this->sourceVersionId)) {
+            $data['CopySource'] .= "?versionId=" . $this->sourceVersionId;
+        }
         $defaultPartSize = $this->determinePartSize();
         $startByte = $defaultPartSize * ($partNumber - 1);
         $data['ContentLength'] = $partNumber < $partsCount ? $defaultPartSize : $this->getSourceSize() - $defaultPartSize * ($partsCount - 1);
@@ -107,7 +120,7 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
         $data['CopySourceRange'] = "bytes={$startByte}-{$endByte}";
         return $data;
     }
-    protected function extractETag(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result)
+    protected function extractETag(ResultInterface $result)
     {
         return $result->search('CopyPartResult.ETag');
     }
@@ -131,16 +144,44 @@ class MultipartCopy extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Multipart
         if ($this->config['source_metadata'] instanceof ResultInterface) {
             return $this->config['source_metadata'];
         }
-        list($bucket, $key) = explode('/', ltrim($this->source, '/'), 2);
-        $headParams = ['Bucket' => $bucket, 'Key' => $key];
-        if (strpos($key, '?')) {
-            list($key, $query) = explode('?', $key, 2);
-            $headParams['Key'] = $key;
-            $query = \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\parse_query($query, false);
-            if (isset($query['versionId'])) {
-                $headParams['VersionId'] = $query['versionId'];
+        //if the source variable was overloaded with an array, use the inputs for key and bucket
+        if (\is_array($this->source)) {
+            $headParams = ['Key' => $this->source['source_key'], 'Bucket' => $this->source['source_bucket']];
+            if (isset($this->source['source_version_id'])) {
+                $this->sourceVersionId = $this->source['source_version_id'];
+                $headParams['VersionId'] = $this->sourceVersionId;
+            }
+            //otherwise, use the default source parsing behavior
+        } else {
+            list($bucket, $key) = \explode('/', \ltrim($this->source, '/'), 2);
+            $headParams = ['Bucket' => $bucket, 'Key' => $key];
+            if (\strpos($key, '?')) {
+                list($key, $query) = \explode('?', $key, 2);
+                $headParams['Key'] = $key;
+                $query = Psr7\Query::parse($query, \false);
+                if (isset($query['versionId'])) {
+                    $this->sourceVersionId = $query['versionId'];
+                    $headParams['VersionId'] = $this->sourceVersionId;
+                }
             }
         }
         return $this->client->headObject($headParams);
+    }
+    /**
+     * Get the url decoded input source, starting with a slash if it is not an
+     * ARN to standardize the source location syntax.
+     *
+     * @param string $inputSource The source that was passed to the constructor
+     * @return string The source, starting with a slash if it's not an arn
+     */
+    private function getInputSource($inputSource)
+    {
+        if (ArnParser::isArn($inputSource)) {
+            $sourceBuilder = '';
+        } else {
+            $sourceBuilder = "/";
+        }
+        $sourceBuilder .= \ltrim(\rawurldecode($inputSource), '/');
+        return $sourceBuilder;
     }
 }

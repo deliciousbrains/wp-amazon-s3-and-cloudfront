@@ -9,18 +9,18 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException;
 /**
  * @internal
  */
-class AccessPointArn extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArn implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\AccessPointArnInterface
+class AccessPointArn extends BaseAccessPointArn implements AccessPointArnInterface
 {
     /**
      * Validation specific to AccessPointArn
      *
      * @param array $data
      */
-    protected static function validate(array $data)
+    public static function validate(array $data)
     {
         parent::validate($data);
         if ($data['service'] !== 's3') {
-            throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\Exception\InvalidArnException("The 3rd component of an S3 access" . " point ARN represents the region and must be 's3'.");
+            throw new InvalidArnException("The 3rd component of an S3 access" . " point ARN represents the region and must be 's3'.");
         }
     }
 }

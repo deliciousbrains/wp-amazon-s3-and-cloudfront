@@ -44,7 +44,7 @@ interface CipherMethod
      *                          only supports a full rewind ($offset === 0 &&
      *                          $whence === SEEK_SET)
      */
-    public function seek($offset, $whence = SEEK_SET);
+    public function seek($offset, $whence = \SEEK_SET);
     /**
      * Take account of the last cipher text block to adjust the return of
      * this::getCurrentIv

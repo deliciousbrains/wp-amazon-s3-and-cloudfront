@@ -7,7 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface;
 /**
  * Represents an error interacting with retry configuration
  */
-class ConfigurationException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface
+class ConfigurationException extends \RuntimeException implements MonitoringEventsInterface
 {
     use HasMonitoringEventsTrait;
 }

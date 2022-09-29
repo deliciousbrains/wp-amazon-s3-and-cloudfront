@@ -87,7 +87,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	/**
 	 * Switch to the given blog, and update blog-specific state.
 	 *
-	 * @param $blog_id
+	 * @param int $blog_id
 	 */
 	protected function switch_to_blog( $blog_id ) {
 		parent::switch_to_blog( $blog_id );
@@ -118,7 +118,6 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	 * @return bool
 	 * @throws Batch_Limits_Exceeded_Exception
 	 * @throws Too_Many_Errors_Exception
-	 *
 	 */
 	protected function upgrade_item( $item ) {
 		$limit            = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_sql_limit', 100000 );
@@ -144,7 +143,7 @@ abstract class Upgrade_Filter_Post extends Upgrade {
 	/**
 	 * Perform any actions necessary after the given item is completed.
 	 *
-	 * @param $item
+	 * @param mixed $item
 	 */
 	protected function item_upgrade_completed( $item ) {
 		parent::item_upgrade_completed( $item );

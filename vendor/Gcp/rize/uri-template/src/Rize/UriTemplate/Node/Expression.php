@@ -7,7 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Operator;
 /**
  * Description
  */
-class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Node\Abstraction
+class Expression extends Abstraction
 {
     /**
      * @var Operator\Abstraction
@@ -22,7 +22,7 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
      * @var string
      */
     private $forwardLookupSeparator;
-    public function __construct($token, \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Operator\Abstraction $operator, array $variables = null, $forwardLookupSeparator = null)
+    public function __construct($token, Operator\Abstraction $operator, array $variables = null, $forwardLookupSeparator = null)
     {
         parent::__construct($token);
         $this->operator = $operator;
@@ -62,7 +62,7 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
      * @param array $params
      * @return null|string
      */
-    public function expand(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, array $params = array())
+    public function expand(Parser $parser, array $params = array())
     {
         $data = array();
         $op = $this->operator;
@@ -70,11 +70,11 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
         foreach ($this->variables as $var) {
             $val = $op->expand($parser, $var, $params);
             // skip null value
-            if (!is_null($val)) {
+            if (!\is_null($val)) {
                 $data[] = $val;
             }
         }
-        return $data ? $op->first . implode($op->sep, $data) : null;
+        return $data ? $op->first . \implode($op->sep, $data) : null;
     }
     /**
      * Matches given URI against current node
@@ -85,7 +85,7 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
      * @param bool $strict
      * @return null|array `uri and params` or `null` if not match and $strict is true
      */
-    public function match(\DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\Parser $parser, $uri, $params = array(), $strict = false)
+    public function match(Parser $parser, $uri, $params = array(), $strict = \false)
     {
         $op = $this->operator;
         // check expression operator first
@@ -94,7 +94,7 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
         }
         // remove operator from input
         if ($op->id) {
-            $uri = substr($uri, 1);
+            $uri = \substr($uri, 1);
         }
         foreach ($this->sortVariables($this->variables) as $var) {
             /** @var \Rize\UriTemplate\Node\Variable $regex */
@@ -104,13 +104,13 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
             $remainingUri = '';
             $preparedUri = $uri;
             if ($this->forwardLookupSeparator) {
-                $lastOccurrenceOfSeparator = stripos($uri, $this->forwardLookupSeparator);
-                $preparedUri = substr($uri, 0, $lastOccurrenceOfSeparator);
-                $remainingUri = substr($uri, $lastOccurrenceOfSeparator);
+                $lastOccurrenceOfSeparator = \stripos($uri, $this->forwardLookupSeparator);
+                $preparedUri = \substr($uri, 0, $lastOccurrenceOfSeparator);
+                $remainingUri = \substr($uri, $lastOccurrenceOfSeparator);
             }
-            if (preg_match($regex, $preparedUri, $match)) {
+            if (\preg_match($regex, $preparedUri, $match)) {
                 // remove matched part from input
-                $preparedUri = preg_replace($regex, '', $preparedUri, $limit = 1);
+                $preparedUri = \preg_replace($regex, '', $preparedUri, $limit = 1);
                 $val = $op->extract($parser, $var, $match[0]);
             } else {
                 if ($strict) {
@@ -131,7 +131,7 @@ class Expression extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate\
      */
     protected function sortVariables(array $vars)
     {
-        usort($vars, function ($a, $b) {
+        \usort($vars, function ($a, $b) {
             return $a->options['modifier'] >= $b->options['modifier'] ? 1 : -1;
         });
         return $vars;

@@ -21,7 +21,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Slack\SlackRecord;
  * @author Haralan Dobrev <hkdobrev@gmail.com>
  * @see    https://api.slack.com/incoming-webhooks
  */
-class SlackWebhookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class SlackWebhookHandler extends AbstractProcessingHandler
 {
     /**
      * Slack Webhook token
@@ -41,15 +41,16 @@ class SlackWebhookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
      * @param string|null $iconEmoji              The emoji name to use (or null)
      * @param bool        $useShortAttachment     Whether the the context/extra messages added to Slack as attachments are in a short style
      * @param bool        $includeContextAndExtra Whether the attachment should include context and extra data
-     * @param string|int  $level                  The minimum logging level at which this handler will be triggered
-     * @param bool        $bubble                 Whether the messages that are handled can bubble up the stack or not
-     * @param array       $excludeFields          Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
+     * @param string[]    $excludeFields          Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
      */
-    public function __construct(string $webhookUrl, ?string $channel = null, ?string $username = null, bool $useAttachment = true, ?string $iconEmoji = null, bool $useShortAttachment = false, bool $includeContextAndExtra = false, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL, bool $bubble = true, array $excludeFields = array())
+    public function __construct(string $webhookUrl, ?string $channel = null, ?string $username = null, bool $useAttachment = \true, ?string $iconEmoji = null, bool $useShortAttachment = \false, bool $includeContextAndExtra = \false, $level = Logger::CRITICAL, bool $bubble = \true, array $excludeFields = array())
     {
+        if (!\extension_loaded('curl')) {
+            throw new MissingExtensionException('The curl extension is needed to use the SlackWebhookHandler');
+        }
         parent::__construct($level, $bubble);
         $this->webhookUrl = $webhookUrl;
-        $this->slackRecord = new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Slack\SlackRecord($channel, $username, $useAttachment, $iconEmoji, $useShortAttachment, $includeContextAndExtra, $excludeFields);
+        $this->slackRecord = new SlackRecord($channel, $username, $useAttachment, $iconEmoji, $useShortAttachment, $includeContextAndExtra, $excludeFields);
     }
     public function getSlackRecord() : SlackRecord
     {
@@ -60,23 +61,21 @@ class SlackWebhookHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\
         return $this->webhookUrl;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @param array $record
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
         $postData = $this->slackRecord->getSlackData($record);
-        $postString = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils::jsonEncode($postData);
-        $ch = curl_init();
-        $options = array(CURLOPT_URL => $this->webhookUrl, CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => array('Content-type: application/json'), CURLOPT_POSTFIELDS => $postString);
-        if (defined('CURLOPT_SAFE_UPLOAD')) {
-            $options[CURLOPT_SAFE_UPLOAD] = true;
+        $postString = Utils::jsonEncode($postData);
+        $ch = \curl_init();
+        $options = array(\CURLOPT_URL => $this->webhookUrl, \CURLOPT_POST => \true, \CURLOPT_RETURNTRANSFER => \true, \CURLOPT_HTTPHEADER => array('Content-type: application/json'), \CURLOPT_POSTFIELDS => $postString);
+        if (\defined('CURLOPT_SAFE_UPLOAD')) {
+            $options[\CURLOPT_SAFE_UPLOAD] = \true;
         }
-        curl_setopt_array($ch, $options);
-        \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\Curl\Util::execute($ch);
+        \curl_setopt_array($ch, $options);
+        Curl\Util::execute($ch);
     }
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
         parent::setFormatter($formatter);
         $this->slackRecord->setFormatter($formatter);

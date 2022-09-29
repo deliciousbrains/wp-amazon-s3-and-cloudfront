@@ -6,13 +6,15 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 /**
  * Lazily reads or writes to a file that is opened only after an IO operation
  * take place on the stream.
+ *
+ * @final
  */
-class LazyOpenStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
+class LazyOpenStream implements StreamInterface
 {
     use StreamDecoratorTrait;
     /** @var string File to open */
     private $filename;
-    /** @var string $mode */
+    /** @var string */
     private $mode;
     /**
      * @param string $filename File to lazily open
@@ -30,6 +32,6 @@ class LazyOpenStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\
      */
     protected function createStream()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::tryFopen($this->filename, $this->mode));
+        return Utils::streamFor(Utils::tryFopen($this->filename, $this->mode));
     }
 }

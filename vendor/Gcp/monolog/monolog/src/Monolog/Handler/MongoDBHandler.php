@@ -11,8 +11,8 @@ declare (strict_types=1);
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\MongoDB\Driver\BulkWrite;
-use DeliciousBrains\WP_Offload_Media\Gcp\MongoDB\Driver\Manager;
+use MongoDB\Driver\BulkWrite;
+use MongoDB\Driver\Manager;
 use DeliciousBrains\WP_Offload_Media\Gcp\MongoDB\Client;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
@@ -30,10 +30,13 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\MongoDBFormatter;
  * The above examples uses the MongoDB PHP library's client class; however, the
  * MongoDB\Driver\Manager class from ext-mongodb is also supported.
  */
-class MongoDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class MongoDBHandler extends AbstractProcessingHandler
 {
+    /** @var \MongoDB\Collection */
     private $collection;
+    /** @var Client|Manager */
     private $manager;
+    /** @var string */
     private $namespace;
     /**
      * Constructor.
@@ -41,10 +44,8 @@ class MongoDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
      * @param Client|Manager $mongodb    MongoDB library or driver client
      * @param string         $database   Database name
      * @param string         $collection Collection name
-     * @param string|int     $level      The minimum logging level at which this handler will be triggered
-     * @param bool           $bubble     Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct($mongodb, string $database, string $collection, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct($mongodb, string $database, string $collection, $level = Logger::DEBUG, bool $bubble = \true)
     {
         if (!($mongodb instanceof Client || $mongodb instanceof Manager)) {
             throw new \InvalidArgumentException('MongoDB\\Client or MongoDB\\Driver\\Manager instance required');
@@ -63,7 +64,7 @@ class MongoDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
             $this->collection->insertOne($record['formatted']);
         }
         if (isset($this->manager, $this->namespace)) {
-            $bulk = new \DeliciousBrains\WP_Offload_Media\Gcp\MongoDB\Driver\BulkWrite();
+            $bulk = new BulkWrite();
             $bulk->insert($record["formatted"]);
             $this->manager->executeBulkWrite($this->namespace, $bulk);
         }
@@ -73,6 +74,6 @@ class MongoDBHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\MongoDBFormatter();
+        return new MongoDBFormatter();
     }
 }

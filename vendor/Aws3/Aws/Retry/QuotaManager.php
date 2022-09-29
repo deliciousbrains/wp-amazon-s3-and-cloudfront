@@ -33,10 +33,10 @@ class QuotaManager
             $this->capacityAmount = $this->retryCost;
         }
         if ($this->capacityAmount > $this->availableCapacity) {
-            return false;
+            return \false;
         }
         $this->availableCapacity -= $this->capacityAmount;
-        return true;
+        return \true;
     }
     public function releaseToQuota($result)
     {
@@ -54,7 +54,7 @@ class QuotaManager
                 $amount = $this->noRetryIncrement;
                 $this->availableCapacity += $amount;
             }
-            $this->availableCapacity = min($this->availableCapacity, $this->maxCapacity);
+            $this->availableCapacity = \min($this->availableCapacity, $this->maxCapacity);
         }
         return isset($amount) ? $amount : 0;
     }

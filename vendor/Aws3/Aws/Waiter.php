@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
  * The configuration for the waiter must include information about the operation
  * and the conditions for wait completion.
  */
-class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
+class Waiter implements PromisorInterface
 {
     /** @var AwsClientInterface Client used to execute each attempt. */
     private $client;
@@ -47,7 +47,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
      *
      * @throws \InvalidArgumentException if the configuration is incomplete.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClientInterface $client, $name, array $args = [], array $config = [])
+    public function __construct(AwsClientInterface $client, $name, array $args = [], array $config = [])
     {
         $this->client = $client;
         $this->name = $name;
@@ -59,13 +59,13 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
                 throw new \InvalidArgumentException('The provided waiter configuration was incomplete.');
             }
         }
-        if ($this->config['before'] && !is_callable($this->config['before'])) {
+        if ($this->config['before'] && !\is_callable($this->config['before'])) {
             throw new \InvalidArgumentException('The provided "before" callback is not callable.');
         }
     }
     public function promise()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\coroutine(function () {
+        return Promise\Coroutine::of(function () {
             $name = $this->config['operation'];
             for ($state = 'retry', $attempt = 1; $state === 'retry'; $attempt++) {
                 // Execute the operation.
@@ -88,10 +88,10 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
                     if ($result instanceof \Exception) {
                         $msg .= ' Reason: ' . $result->getMessage();
                     }
-                    (yield new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException($msg)));
+                    (yield new RejectedPromise(new \RuntimeException($msg)));
                 } elseif ($state === 'retry' && $attempt >= $this->config['maxAttempts']) {
                     $state = 'failed';
-                    (yield new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise(new \RuntimeException("The {$this->name} waiter failed after attempt #{$attempt}.")));
+                    (yield new RejectedPromise(new \RuntimeException("The {$this->name} waiter failed after attempt #{$attempt}.")));
                 }
             }
         });
@@ -108,7 +108,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
         $args = $this->args;
         // Determine the delay.
         $delay = $attempt === 1 ? $this->config['initDelay'] : $this->config['delay'];
-        if (is_callable($delay)) {
+        if (\is_callable($delay)) {
             $delay = $delay($attempt);
         }
         // Set the delay. (Note: handlers except delay in milliseconds.)
@@ -130,7 +130,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
     private function determineState($result)
     {
         foreach ($this->config['acceptors'] as $acceptor) {
-            $matcher = 'matches' . ucfirst($acceptor['matcher']);
+            $matcher = 'matches' . \ucfirst($acceptor['matcher']);
             if ($this->{$matcher}($result, $acceptor)) {
                 return $acceptor['state'];
             }
@@ -145,7 +145,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
      */
     private function matchesPath($result, array $acceptor)
     {
-        return !$result instanceof ResultInterface ? false : $acceptor['expected'] == $result->search($acceptor['argument']);
+        return !$result instanceof ResultInterface ? \false : $acceptor['expected'] == $result->search($acceptor['argument']);
     }
     /**
      * @param Result $result   Result or exception.
@@ -156,15 +156,15 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
     private function matchesPathAll($result, array $acceptor)
     {
         if (!$result instanceof ResultInterface) {
-            return false;
+            return \false;
         }
         $actuals = $result->search($acceptor['argument']) ?: [];
         foreach ($actuals as $actual) {
             if ($actual != $acceptor['expected']) {
-                return false;
+                return \false;
             }
         }
-        return true;
+        return \true;
     }
     /**
      * @param Result $result   Result or exception.
@@ -175,10 +175,10 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
     private function matchesPathAny($result, array $acceptor)
     {
         if (!$result instanceof ResultInterface) {
-            return false;
+            return \false;
         }
         $actuals = $result->search($acceptor['argument']) ?: [];
-        return in_array($acceptor['expected'], $actuals);
+        return \in_array($acceptor['expected'], $actuals);
     }
     /**
      * @param Result $result   Result or exception.
@@ -194,7 +194,7 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
         if ($result instanceof AwsException && ($response = $result->getResponse())) {
             return $acceptor['expected'] == $response->getStatusCode();
         }
-        return false;
+        return \false;
     }
     /**
      * @param Result $result   Result or exception.
@@ -207,6 +207,6 @@ class Waiter implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promis
         if ($result instanceof AwsException) {
             return $result->isConnectionError() || $result->getAwsErrorCode() == $acceptor['expected'];
         }
-        return false;
+        return \false;
     }
 }

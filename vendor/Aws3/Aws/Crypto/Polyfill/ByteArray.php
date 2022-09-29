@@ -37,7 +37,7 @@ class ByteArray extends \SplFixedArray
             $arr = [];
             if (!empty($tmp)) {
                 foreach ($tmp as $t) {
-                    if (strlen($t) < 1) {
+                    if (\strlen($t) < 1) {
                         continue;
                     }
                     $arr[] = \unpack('C', $t)[1] & 0xff;
@@ -71,16 +71,16 @@ class ByteArray extends \SplFixedArray
      */
     public static function enc32be($num)
     {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray(\pack('N', $num));
+        return new ByteArray(\pack('N', $num));
     }
     /**
      * @param ByteArray $other
      * @return bool
      */
-    public function equals(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray $other)
+    public function equals(ByteArray $other)
     {
         if ($this->count() !== $other->count()) {
-            return false;
+            return \false;
         }
         $d = 0;
         for ($i = $this->count() - 1; $i >= 0; --$i) {
@@ -92,7 +92,7 @@ class ByteArray extends \SplFixedArray
      * @param ByteArray $array
      * @return ByteArray
      */
-    public function exclusiveOr(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray $array)
+    public function exclusiveOr(ByteArray $array)
     {
         self::needs($this->count() === $array->count(), 'Both ByteArrays must be equal size for exclusiveOr()');
         $out = clone $this;
@@ -113,7 +113,7 @@ class ByteArray extends \SplFixedArray
         $index = $clone->count();
         while ($index > 0) {
             --$index;
-            $tmp = $clone[$index] + $increase & PHP_INT_MAX;
+            $tmp = $clone[$index] + $increase & \PHP_INT_MAX;
             $clone[$index] = $tmp & 0xff;
             $increase = $tmp >> 8;
         }
@@ -156,7 +156,7 @@ class ByteArray extends \SplFixedArray
      * @param ByteArray $right
      * @return ByteArray
      */
-    public static function select($select, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray $left, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray $right)
+    public static function select($select, ByteArray $left, ByteArray $right)
     {
         self::needs($left->count() === $right->count(), 'Both ByteArrays must be equal size for select()');
         $rightLength = $right->count();
@@ -178,10 +178,10 @@ class ByteArray extends \SplFixedArray
      * @param int|null $length
      * @return self
      */
-    public function set(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray $input, $offset = 0, $length = null)
+    public function set(ByteArray $input, $offset = 0, $length = null)
     {
-        self::needs(is_int($offset) && $offset >= 0, 'Offset must be a positive integer or zero');
-        if (is_null($length)) {
+        self::needs(\is_int($offset) && $offset >= 0, 'Offset must be a positive integer or zero');
+        if (\is_null($length)) {
             $length = $input->count();
         }
         $i = 0;
@@ -202,7 +202,7 @@ class ByteArray extends \SplFixedArray
      */
     public function slice($start = 0, $length = null)
     {
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\ByteArray(\array_slice($this->toArray(), $start, $length));
+        return new ByteArray(\array_slice($this->toArray(), $start, $length));
     }
     /**
      * Mutates the current state and sets all values to zero.

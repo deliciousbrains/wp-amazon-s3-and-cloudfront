@@ -16,7 +16,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  *
  * @final
  */
-class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactoryInterface
+class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
     /**
@@ -38,13 +38,13 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
     {
         $this->maxHandles = $maxHandles;
     }
-    public function create(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : EasyHandle
+    public function create(RequestInterface $request, array $options) : EasyHandle
     {
         if (isset($options['curl']['body_as_string'])) {
             $options['_body_as_string'] = $options['curl']['body_as_string'];
             unset($options['curl']['body_as_string']);
         }
-        $easy = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle();
+        $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
         $conf = $this->getDefaultConf($easy);
@@ -58,10 +58,10 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         }
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         $easy->handle = $this->handles ? \array_pop($this->handles) : \curl_init();
-        curl_setopt_array($easy->handle, $conf);
+        \curl_setopt_array($easy->handle, $conf);
         return $easy;
     }
-    public function release(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy) : void
+    public function release(EasyHandle $easy) : void
     {
         $resource = $easy->handle;
         unset($easy->handle);
@@ -87,7 +87,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
      * @param callable(RequestInterface, array): PromiseInterface $handler
      * @param CurlFactoryInterface                                $factory Dictates how the handle is released
      */
-    public static function finish(callable $handler, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactoryInterface $factory) : PromiseInterface
+    public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory) : PromiseInterface
     {
         if (isset($easy->options['on_stats'])) {
             self::invokeStats($easy);
@@ -102,19 +102,19 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         if ($body->isSeekable()) {
             $body->rewind();
         }
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\FulfilledPromise($easy->response);
+        return new FulfilledPromise($easy->response);
     }
-    private static function invokeStats(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy) : void
+    private static function invokeStats(EasyHandle $easy) : void
     {
         $curlStats = \curl_getinfo($easy->handle);
         $curlStats['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
-        $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
+        $stats = new TransferStats($easy->request, $easy->response, $curlStats['total_time'], $easy->errno, $curlStats);
         $easy->options['on_stats']($stats);
     }
     /**
      * @param callable(RequestInterface, array): PromiseInterface $handler
      */
-    private static function finishError(callable $handler, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\CurlFactoryInterface $factory) : PromiseInterface
+    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory) : PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = ['errno' => $easy->errno, 'error' => \curl_error($easy->handle), 'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME)] + \curl_getinfo($easy->handle);
@@ -126,32 +126,32 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         }
         return self::createRejection($easy, $ctx);
     }
-    private static function createRejection(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, array $ctx) : PromiseInterface
+    private static function createRejection(EasyHandle $easy, array $ctx) : PromiseInterface
     {
-        static $connectionErrors = [\CURLE_OPERATION_TIMEOUTED => true, \CURLE_COULDNT_RESOLVE_HOST => true, \CURLE_COULDNT_CONNECT => true, \CURLE_SSL_CONNECT_ERROR => true, \CURLE_GOT_NOTHING => true];
+        static $connectionErrors = [\CURLE_OPERATION_TIMEOUTED => \true, \CURLE_COULDNT_RESOLVE_HOST => \true, \CURLE_COULDNT_CONNECT => \true, \CURLE_SSL_CONNECT_ERROR => \true, \CURLE_GOT_NOTHING => \true];
         if ($easy->createResponseException) {
-            return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException('An error was encountered while creating the response', $easy->request, $easy->response, $easy->createResponseException, $ctx));
+            return P\Create::rejectionFor(new RequestException('An error was encountered while creating the response', $easy->request, $easy->response, $easy->createResponseException, $ctx));
         }
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
-            return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor(new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
+            return P\Create::rejectionFor(new RequestException('An error was encountered during the on_headers event', $easy->request, $easy->response, $easy->onHeadersException, $ctx));
         }
         $message = \sprintf('cURL error %s: %s (%s)', $ctx['errno'], $ctx['error'], 'see https://curl.haxx.se/libcurl/c/libcurl-errors.html');
         $uriString = (string) $easy->request->getUri();
-        if ($uriString !== '' && false === \strpos($ctx['error'], $uriString)) {
+        if ($uriString !== '' && \false === \strpos($ctx['error'], $uriString)) {
             $message .= \sprintf(' for %s', $uriString);
         }
         // Create a connection exception if it was a specific error code.
-        $error = isset($connectionErrors[$easy->errno]) ? new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ConnectException($message, $easy->request, null, $ctx) : new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException($message, $easy->request, $easy->response, null, $ctx);
-        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($error);
+        $error = isset($connectionErrors[$easy->errno]) ? new ConnectException($message, $easy->request, null, $ctx) : new RequestException($message, $easy->request, $easy->response, null, $ctx);
+        return P\Create::rejectionFor($error);
     }
     /**
      * @return array<int|string, mixed>
      */
-    private function getDefaultConf(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy) : array
+    private function getDefaultConf(EasyHandle $easy) : array
     {
-        $conf = ['_headers' => $easy->request->getHeaders(), \CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(), \CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''), \CURLOPT_RETURNTRANSFER => false, \CURLOPT_HEADER => false, \CURLOPT_CONNECTTIMEOUT => 150];
+        $conf = ['_headers' => $easy->request->getHeaders(), \CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(), \CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''), \CURLOPT_RETURNTRANSFER => \false, \CURLOPT_HEADER => \false, \CURLOPT_CONNECTTIMEOUT => 150];
         if (\defined('CURLOPT_PROTOCOLS')) {
             $conf[\CURLOPT_PROTOCOLS] = \CURLPROTO_HTTP | \CURLPROTO_HTTPS;
         }
@@ -165,7 +165,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         }
         return $conf;
     }
-    private function applyMethod(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyMethod(EasyHandle $easy, array &$conf) : void
     {
         $body = $easy->request->getBody();
         $size = $body->getSize();
@@ -180,11 +180,11 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
                 $conf[\CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
             }
         } elseif ($method === 'HEAD') {
-            $conf[\CURLOPT_NOBODY] = true;
+            $conf[\CURLOPT_NOBODY] = \true;
             unset($conf[\CURLOPT_WRITEFUNCTION], $conf[\CURLOPT_READFUNCTION], $conf[\CURLOPT_FILE], $conf[\CURLOPT_INFILE]);
         }
     }
-    private function applyBody(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, array &$conf) : void
+    private function applyBody(RequestInterface $request, array $options, array &$conf) : void
     {
         $size = $request->hasHeader('Content-Length') ? (int) $request->getHeaderLine('Content-Length') : null;
         // Send the body as a string if the size is less than 1MB OR if the
@@ -195,7 +195,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
-            $conf[\CURLOPT_UPLOAD] = true;
+            $conf[\CURLOPT_UPLOAD] = \true;
             if ($size !== null) {
                 $conf[\CURLOPT_INFILESIZE] = $size;
                 $this->removeHeader('Content-Length', $conf);
@@ -217,7 +217,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             $conf[\CURLOPT_HTTPHEADER][] = 'Content-Type:';
         }
     }
-    private function applyHeaders(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyHeaders(EasyHandle $easy, array &$conf) : void
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
@@ -251,17 +251,17 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             }
         }
     }
-    private function applyHandlerOptions(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyHandlerOptions(EasyHandle $easy, array &$conf) : void
     {
         $options = $easy->options;
         if (isset($options['verify'])) {
-            if ($options['verify'] === false) {
+            if ($options['verify'] === \false) {
                 unset($conf[\CURLOPT_CAINFO]);
                 $conf[\CURLOPT_SSL_VERIFYHOST] = 0;
-                $conf[\CURLOPT_SSL_VERIFYPEER] = false;
+                $conf[\CURLOPT_SSL_VERIFYPEER] = \false;
             } else {
                 $conf[\CURLOPT_SSL_VERIFYHOST] = 2;
-                $conf[\CURLOPT_SSL_VERIFYPEER] = true;
+                $conf[\CURLOPT_SSL_VERIFYPEER] = \true;
                 if (\is_string($options['verify'])) {
                     // Throw an error if the file/folder/link path is not valid or doesn't exist.
                     if (!\file_exists($options['verify'])) {
@@ -269,7 +269,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
                     }
                     // If it's a directory or a link to a directory use CURLOPT_CAPATH.
                     // If not, it's probably a file, or a link to a file, so use CURLOPT_CAINFO.
-                    if (\is_dir($options['verify']) || \is_link($options['verify']) === true && ($verifyLink = \readlink($options['verify'])) !== false && \is_dir($verifyLink)) {
+                    if (\is_dir($options['verify']) || \is_link($options['verify']) === \true && ($verifyLink = \readlink($options['verify'])) !== \false && \is_dir($verifyLink)) {
                         $conf[\CURLOPT_CAPATH] = $options['verify'];
                     } else {
                         $conf[\CURLOPT_CAINFO] = $options['verify'];
@@ -282,29 +282,32 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             if ($accept) {
                 $conf[\CURLOPT_ENCODING] = $accept;
             } else {
+                // The empty string enables all available decoders and implicitly
+                // sets a matching 'Accept-Encoding' header.
                 $conf[\CURLOPT_ENCODING] = '';
-                // Don't let curl send the header over the wire
+                // But as the user did not specify any acceptable encodings we need
+                // to overwrite this implicit header with an empty one.
                 $conf[\CURLOPT_HTTPHEADER][] = 'Accept-Encoding:';
             }
         }
         if (!isset($options['sink'])) {
             // Use a default temp stream if no sink was set.
-            $options['sink'] = \fopen('php://temp', 'w+');
+            $options['sink'] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
         if (!\is_string($sink)) {
-            $sink = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\stream_for($sink);
+            $sink = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.
             throw new \RuntimeException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink));
         } else {
-            $sink = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\LazyOpenStream($sink, 'w+');
+            $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
         $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use($sink) : int {
             return $sink->write($write);
         };
-        $timeoutRequiresNoSignal = false;
+        $timeoutRequiresNoSignal = \false;
         if (isset($options['timeout'])) {
             $timeoutRequiresNoSignal |= $options['timeout'] < 1;
             $conf[\CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
@@ -322,7 +325,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
         if ($timeoutRequiresNoSignal && \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN') {
-            $conf[\CURLOPT_NOSIGNAL] = true;
+            $conf[\CURLOPT_NOSIGNAL] = \true;
         }
         if (isset($options['proxy'])) {
             if (!\is_array($options['proxy'])) {
@@ -331,7 +334,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
                 $scheme = $easy->request->getUri()->getScheme();
                 if (isset($options['proxy'][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
-                    if (!isset($options['proxy']['no']) || !\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
+                    if (!isset($options['proxy']['no']) || !Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
                         $conf[\CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }
                 }
@@ -345,6 +348,12 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             }
             if (!\file_exists($cert)) {
                 throw new \InvalidArgumentException("SSL certificate not found: {$cert}");
+            }
+            # OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
+            # see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
+            $ext = \pathinfo($cert, \PATHINFO_EXTENSION);
+            if (\preg_match('#^(der|p12)$#i', $ext)) {
+                $conf[\CURLOPT_SSLCERTTYPE] = \strtoupper($ext);
             }
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
@@ -367,14 +376,14 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
             if (!\is_callable($progress)) {
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
-            $conf[\CURLOPT_NOPROGRESS] = false;
+            $conf[\CURLOPT_NOPROGRESS] = \false;
             $conf[\CURLOPT_PROGRESSFUNCTION] = static function ($resource, int $downloadSize, int $downloaded, int $uploadSize, int $uploaded) use($progress) {
                 $progress($downloadSize, $downloaded, $uploadSize, $uploaded);
             };
         }
         if (!empty($options['debug'])) {
-            $conf[\CURLOPT_STDERR] = \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::debugResource($options['debug']);
-            $conf[\CURLOPT_VERBOSE] = true;
+            $conf[\CURLOPT_STDERR] = Utils::debugResource($options['debug']);
+            $conf[\CURLOPT_VERBOSE] = \true;
         }
     }
     /**
@@ -388,7 +397,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
      *
      * @param callable(RequestInterface, array): PromiseInterface $handler
      */
-    private static function retryFailedRewind(callable $handler, \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy, array $ctx) : PromiseInterface
+    private static function retryFailedRewind(callable $handler, EasyHandle $easy, array $ctx) : PromiseInterface
     {
         try {
             // Only rewind if the body has been read from.
@@ -411,7 +420,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         }
         return $handler($easy->request, $easy->options);
     }
-    private function createHeaderFn(\DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Handler\EasyHandle $easy) : callable
+    private function createHeaderFn(EasyHandle $easy) : callable
     {
         if (isset($easy->options['on_headers'])) {
             $onHeaders = $easy->options['on_headers'];
@@ -424,7 +433,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
         return static function ($ch, $h) use($onHeaders, $easy, &$startingResponse) {
             $value = \trim($h);
             if ($value === '') {
-                $startingResponse = true;
+                $startingResponse = \true;
                 try {
                     $easy->createResponse();
                 } catch (\Exception $e) {
@@ -442,7 +451,7 @@ class CurlFactory implements \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Ha
                     }
                 }
             } elseif ($startingResponse) {
-                $startingResponse = false;
+                $startingResponse = \false;
                 $easy->headers = [$value];
             } else {
                 $easy->headers[] = $value;

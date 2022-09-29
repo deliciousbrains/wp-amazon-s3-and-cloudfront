@@ -44,6 +44,7 @@ class ObjectPageIterator implements \Iterator
      *
      * @return array|null
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         if (!$this->page) {
@@ -62,7 +63,7 @@ class ObjectPageIterator implements \Iterator
     private function updatePrefixes()
     {
         foreach ($this->page['prefixes'] as $prefix) {
-            if (!in_array($prefix, $this->prefixes)) {
+            if (!\in_array($prefix, $this->prefixes)) {
                 $this->prefixes[] = $prefix;
             }
         }

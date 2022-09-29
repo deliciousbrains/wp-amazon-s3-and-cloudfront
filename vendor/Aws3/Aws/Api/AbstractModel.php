@@ -15,7 +15,7 @@ abstract class AbstractModel implements \ArrayAccess
      * @param array    $definition Service description
      * @param ShapeMap $shapeMap   Shapemap used for creating shapes
      */
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, ShapeMap $shapeMap)
     {
         $this->definition = $definition;
         $this->shapeMap = $shapeMap;
@@ -24,18 +24,34 @@ abstract class AbstractModel implements \ArrayAccess
     {
         return $this->definition;
     }
+    /**
+     * @return mixed|null
+     */
+    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         return isset($this->definition[$offset]) ? $this->definition[$offset] : null;
     }
+    /**
+     * @return void
+     */
+    #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
         $this->definition[$offset] = $value;
     }
+    /**
+     * @return bool
+     */
+    #[\ReturnTypeWillChange]
     public function offsetExists($offset)
     {
         return isset($this->definition[$offset]);
     }
+    /**
+     * @return void
+     */
+    #[\ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
         unset($this->definition[$offset]);
@@ -49,6 +65,6 @@ abstract class AbstractModel implements \ArrayAccess
     }
     protected function shapeFor(array $definition)
     {
-        return isset($definition['shape']) ? $this->shapeMap->resolve($definition) : \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape::create($definition, $this->shapeMap);
+        return isset($definition['shape']) ? $this->shapeMap->resolve($definition) : Shape::create($definition, $this->shapeMap);
     }
 }

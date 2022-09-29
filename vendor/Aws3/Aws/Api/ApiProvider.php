@@ -58,7 +58,7 @@ class ApiProvider
     {
         // Execute the provider and return the result, if there is one.
         $result = $provider($type, $service, $version);
-        if (is_array($result)) {
+        if (\is_array($result)) {
             if (!isset($result['metadata']['serviceIdentifier'])) {
                 $result['metadata']['serviceIdentifier'] = $service;
             }
@@ -66,13 +66,13 @@ class ApiProvider
         }
         // Throw an exception with a message depending on the inputs.
         if (!isset(self::$typeMap[$type])) {
-            $msg = "The type must be one of: " . implode(', ', self::$typeMap);
+            $msg = "The type must be one of: " . \implode(', ', self::$typeMap);
         } elseif ($service) {
             $msg = "The {$service} service does not have version: {$version}.";
         } else {
             $msg = "You must specify a service name to retrieve its API data.";
         }
-        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\UnresolvedApiException($msg);
+        throw new UnresolvedApiException($msg);
     }
     /**
      * Default SDK API provider.
@@ -145,7 +145,7 @@ class ApiProvider
         if (!isset($this->manifest[$service]['versions'])) {
             return [];
         }
-        return array_values(array_unique($this->manifest[$service]['versions']));
+        return \array_values(\array_unique($this->manifest[$service]['versions']));
     }
     /**
      * Execute the provider.
@@ -186,8 +186,8 @@ class ApiProvider
     private function __construct($modelsDir, array $manifest = null)
     {
         $this->manifest = $manifest;
-        $this->modelsDir = rtrim($modelsDir, '/');
-        if (!is_dir($this->modelsDir)) {
+        $this->modelsDir = \rtrim($modelsDir, '/');
+        if (!\is_dir($this->modelsDir)) {
             throw new \InvalidArgumentException("The specified models directory, {$modelsDir}, was not found.");
         }
     }
@@ -197,16 +197,16 @@ class ApiProvider
     private function buildVersionsList($service)
     {
         $dir = "{$this->modelsDir}/{$service}/";
-        if (!is_dir($dir)) {
+        if (!\is_dir($dir)) {
             return;
         }
         // Get versions, remove . and .., and sort in descending order.
-        $results = array_diff(scandir($dir, SCANDIR_SORT_DESCENDING), ['..', '.']);
+        $results = \array_diff(\scandir($dir, \SCANDIR_SORT_DESCENDING), ['..', '.']);
         if (!$results) {
             $this->manifest[$service] = ['versions' => []];
         } else {
             $this->manifest[$service] = ['versions' => ['latest' => $results[0]]];
-            $this->manifest[$service]['versions'] += array_combine($results, $results);
+            $this->manifest[$service]['versions'] += \array_combine($results, $results);
         }
     }
 }

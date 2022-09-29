@@ -33,12 +33,12 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  *
  * @author Kris Buist <krisbuist@gmail.com>
  */
-class OverflowHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
+class OverflowHandler extends AbstractHandler implements FormattableHandlerInterface
 {
     /** @var HandlerInterface */
     private $handler;
     /** @var int[] */
-    private $thresholdMap = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 0, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 0];
+    private $thresholdMap = [Logger::DEBUG => 0, Logger::INFO => 0, Logger::NOTICE => 0, Logger::WARNING => 0, Logger::ERROR => 0, Logger::CRITICAL => 0, Logger::ALERT => 0, Logger::EMERGENCY => 0];
     /**
      * Buffer of all messages passed to the handler before the threshold was reached
      *
@@ -48,10 +48,8 @@ class OverflowHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
     /**
      * @param HandlerInterface $handler
      * @param int[]            $thresholdMap Dictionary of logger level => threshold
-     * @param int|string       $level        The minimum logging level at which this handler will be triggered
-     * @param bool             $bubble
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler, array $thresholdMap = [], $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true)
+    public function __construct(HandlerInterface $handler, array $thresholdMap = [], $level = Logger::DEBUG, bool $bubble = \true)
     {
         $this->handler = $handler;
         foreach ($thresholdMap as $thresholdLevel => $threshold) {
@@ -69,15 +67,12 @@ class OverflowHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
      * Unless the bubbling is interrupted (by returning true), the Logger class will keep on
      * calling further handlers in the stack with a given log record.
      *
-     * @param array $record The record to handle
-     *
-     * @return Boolean true means that this handler handled the record, and that bubbling is not permitted.
-     *                 false means the record was either not processed or that this handler allows bubbling.
+     * {@inheritDoc}
      */
     public function handle(array $record) : bool
     {
         if ($record['level'] < $this->level) {
-            return false;
+            return \false;
         }
         $level = $record['level'];
         if (!isset($this->thresholdMap[$level])) {
@@ -87,7 +82,7 @@ class OverflowHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
             // The overflow threshold is not yet reached, so we're buffering the record and lowering the threshold by 1
             $this->thresholdMap[$level]--;
             $this->buffer[$level][] = $record;
-            return false === $this->bubble;
+            return \false === $this->bubble;
         }
         if ($this->thresholdMap[$level] == 0) {
             // This current message is breaking the threshold. Flush the buffer and continue handling the current record
@@ -98,21 +93,27 @@ class OverflowHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Hand
             unset($this->buffer[$level]);
         }
         $this->handler->handle($record);
-        return false === $this->bubble;
+        return \false === $this->bubble;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
-        $this->handler->setFormatter($formatter);
-        return $this;
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            $this->handler->setFormatter($formatter);
+            return $this;
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($this->handler) . ' does not support formatters.');
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getFormatter() : FormatterInterface
     {
-        return $this->handler->getFormatter();
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            return $this->handler->getFormatter();
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($this->handler) . ' does not support formatters.');
     }
 }

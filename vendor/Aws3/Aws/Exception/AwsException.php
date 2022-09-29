@@ -15,7 +15,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
 /**
  * Represents an AWS exception that is thrown when a command fails.
  */
-class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\MonitoringEventsInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResponseContainerInterface, \ArrayAccess
+class AwsException extends \RuntimeException implements MonitoringEventsInterface, ResponseContainerInterface, \ArrayAccess
 {
     use HasDataTrait;
     use HasMonitoringEventsTrait;
@@ -38,7 +38,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
      * @param array            $context Exception context
      * @param \Exception       $previous  Previous exception (if any)
      */
-    public function __construct($message, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, array $context = [], \Exception $previous = null)
+    public function __construct($message, CommandInterface $command, array $context = [], \Exception $previous = null)
     {
         $this->data = isset($context['body']) ? $context['body'] : [];
         $this->command = $command;
@@ -53,7 +53,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
         $this->transferInfo = isset($context['transfer_stats']) ? $context['transfer_stats'] : [];
         $this->errorMessage = isset($context['message']) ? $context['message'] : null;
         $this->monitoringEvents = [];
-        $this->maxRetriesExceeded = false;
+        $this->maxRetriesExceeded = \false;
         parent::__construct($message, 0, $previous);
     }
     public function __toString()
@@ -67,7 +67,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
         // might not even get shown, causing developers to attempt to catch
         // the inner exception instead of the actual exception because they
         // can't see the outer exception's __toString output.
-        return sprintf("exception '%s' with message '%s'\n\n%s", get_class($this), $this->getMessage(), parent::__toString());
+        return \sprintf("exception '%s' with message '%s'\n\n%s", \get_class($this), $this->getMessage(), parent::__toString());
     }
     /**
      * Get the command that was executed.
@@ -209,7 +209,7 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
      */
     public function setMaxRetriesExceeded()
     {
-        $this->maxRetriesExceeded = true;
+        $this->maxRetriesExceeded = \true;
     }
     public function hasKey($name)
     {
@@ -221,6 +221,6 @@ class AwsException extends \RuntimeException implements \DeliciousBrains\WP_Offl
     }
     public function search($expression)
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\JmesPath\Env::search($expression, $this->toArray());
+        return JmesPath::search($expression, $this->toArray());
     }
 }

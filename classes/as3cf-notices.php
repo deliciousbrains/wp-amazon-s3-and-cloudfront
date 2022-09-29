@@ -39,27 +39,28 @@ class AS3CF_Notices {
 
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_action( 'network_admin_notices', array( $this, 'admin_notices' ) );
-		add_action( 'as3cf_pre_tab_render', array( $this, 'admin_notices' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_notice_scripts' ) );
 		add_action( 'wp_ajax_as3cf-dismiss-notice', array( $this, 'ajax_dismiss_notice' ) );
+
+		add_filter( $this->as3cf->get_plugin_prefix() . '_api_response', array( $this, 'api_response' ) );
 	}
 
 	/**
-	 * As this class is a singelton it should not be clone-able
+	 * As this class is a singleton it should not be clone-able
 	 */
 	protected function __clone() {
 		// Singleton
 	}
 
 	/**
-	 * Create a notice
+	 * Build a notice.
 	 *
 	 * @param string $message
 	 * @param array  $args
 	 *
-	 * @return string notice ID
+	 * @return array
 	 */
-	public function add_notice( $message, $args = array() ) {
+	public function build_notice( $message, $args = array() ) {
 		$defaults = array(
 			'type'                  => 'notice-info',
 			'dismissible'           => true,
@@ -76,12 +77,18 @@ class AS3CF_Notices {
 			'callback_args'         => array(), // Arguments to pass to the callback.
 			'lock_key'              => '', // If lock key set, do not show message until lock released.
 			'pre_render_callback'   => false, // Callback to call before notice render.
+			'dashboard'             => false, // Being shown on the dashboard rather than settings page?
+			'heading'               => '', // Optional heading.
+			'extra'                 => '', // Optional extra content to be shown in paragraph below message.
+			'links'                 => array(), // Optional list of links to be shown at bottom of notice.
+			'dismiss_url'           => '', // Optional dismiss URL override.
+			'created_at'            => 0, // Optional timestamp, defaults to now.
 		);
 
 		$notice                 = array_intersect_key( array_merge( $defaults, $args ), $defaults );
 		$notice['message']      = $message;
 		$notice['triggered_by'] = get_current_user_id();
-		$notice['created_at']   = time();
+		$notice['created_at']   = empty( $notice['created_at'] ) ? time() : $notice['created_at'];
 
 		if ( $notice['custom_id'] ) {
 			$notice['id'] = $notice['custom_id'];
@@ -89,9 +96,19 @@ class AS3CF_Notices {
 			$notice['id'] = apply_filters( 'as3cf_notice_id_prefix', 'as3cf-notice-' ) . sha1( trim( $notice['message'] ) . trim( $notice['lock_key'] ) );
 		}
 
-		if ( isset( $notice['only_show_on_tab'] ) && false !== $notice['only_show_on_tab'] ) {
-			$notice['inline'] = true;
-		}
+		return $notice;
+	}
+
+	/**
+	 * Create a notice
+	 *
+	 * @param string $message
+	 * @param array  $args
+	 *
+	 * @return string notice ID
+	 */
+	public function add_notice( $message, $args = array() ) {
+		$notice = $this->build_notice( $message, $args );
 
 		$this->save_notice( $notice );
 
@@ -116,14 +133,21 @@ class AS3CF_Notices {
 			$notices = array();
 		}
 
-		if ( ! array_key_exists( $notice['id'], $notices ) ) {
-			$notices[ $notice['id'] ] = $notice;
+		// If the notice has not changed, don't update it.
+		if (
+			! empty( $notices ) &&
+			array_key_exists( $notice['id'], $notices ) &&
+			empty( AS3CF_Utils::array_diff_assoc_recursive( $notice, $notices[ $notice['id'] ] ) )
+		) {
+			return;
+		}
 
-			if ( $notice['only_show_to_user'] ) {
-				update_user_meta( $user_id, 'as3cf_notices', $notices );
-			} else {
-				set_site_transient( 'as3cf_notices', $notices );
-			}
+		$notices[ $notice['id'] ] = $notice;
+
+		if ( $notice['only_show_to_user'] ) {
+			update_user_meta( $user_id, 'as3cf_notices', $notices );
+		} else {
+			set_site_transient( 'as3cf_notices', $notices );
 		}
 	}
 
@@ -173,7 +197,11 @@ class AS3CF_Notices {
 	 *
 	 * @param string $notice_id
 	 */
-	protected function dismiss_notice( $notice_id ) {
+	public function dismiss_notice( $notice_id ) {
+		if ( empty( $notice_id ) ) {
+			return;
+		}
+
 		$user_id = get_current_user_id();
 
 		$notice = $this->find_notice_by_id( $notice_id );
@@ -263,6 +291,10 @@ class AS3CF_Notices {
 	 * @return array|null
 	 */
 	public function find_notice_by_id( $notice_id ) {
+		if ( empty( $notice_id ) ) {
+			return null;
+		}
+
 		$user_id = get_current_user_id();
 
 		$user_notices = get_user_meta( $user_id, 'as3cf_notices', true );
@@ -284,11 +316,17 @@ class AS3CF_Notices {
 	}
 
 	/**
-	 * Show the notices
+	 * Get notices that should be shown.
 	 *
-	 * @param string $tab
+	 * @param string $tab      Optionally restrict to notifications for a specific tab.
+	 * @param bool   $all_tabs Optionally return all tab specific notices regardless of tab.
+	 *                         Only applies if $tab is not empty.
+	 *
+	 * @return array
 	 */
-	public function admin_notices( $tab = '' ) {
+	public function get_notices( $tab = '', $all_tabs = false ) {
+		$notices = array();
+
 		if ( empty( $tab ) ) {
 			// Callbacks with no $tab property return empty string, so convert to bool.
 			$tab = false;
@@ -304,16 +342,79 @@ class AS3CF_Notices {
 		$user_notices = $this->cleanup_corrupt_user_notices( $user_id, $user_notices );
 		if ( is_array( $user_notices ) && ! empty( $user_notices ) ) {
 			foreach ( $user_notices as $notice ) {
-				$this->maybe_show_notice( $notice, $dismissed_notices, $tab );
+				if ( $this->should_show_notice( $notice, $dismissed_notices, $tab, $all_tabs ) ) {
+					$notices[] = $notice;
+				}
 			}
 		}
 
 		$global_notices = get_site_transient( 'as3cf_notices' );
 		if ( is_array( $global_notices ) && ! empty( $global_notices ) ) {
 			foreach ( $global_notices as $notice ) {
-				$this->maybe_show_notice( $notice, $dismissed_notices, $tab );
+				if ( $this->should_show_notice( $notice, $dismissed_notices, $tab, $all_tabs ) ) {
+					$notices[] = $notice;
+				}
 			}
 		}
+
+		/**
+		 * Filter retrieved notices.
+		 *
+		 * @param array  $notices
+		 * @param string $tab      Notices have been optionally restricted to those for a specific tab.
+		 * @param bool   $all_tabs All tab specific notices have optionally been retrieved regardless of tab.
+		 *                         Only applies if $tab is not empty.
+		 *
+		 * @return array
+		 */
+		return apply_filters( 'as3cf_get_notices', $notices, $tab, $all_tabs );
+	}
+
+	/**
+	 * Show notices via the standard WordPress mechanism.
+	 *
+	 * @param string $tab Optionally restrict to notifications for a specific tab.
+	 */
+	public function admin_notices( $tab = '' ) {
+		$plugin_name = $this->as3cf->get_plugin_name();
+
+		foreach ( $this->get_notices( $tab ) as $notice ) {
+			// Admin dashboard notices need to specify which plugin they relate to.
+			$notice['message'] = '<strong>' . $plugin_name . '</strong> &mdash; ' . $notice['message'];
+
+			if ( 'info' === $notice['type'] ) {
+				$notice['type'] = 'notice-info';
+			}
+
+			// TODO: Maybe remove this unused functionality?
+			if ( ! empty( $notice['pre_render_callback'] ) && is_callable( $notice['pre_render_callback'] ) ) {
+				call_user_func( $notice['pre_render_callback'] );
+			}
+
+			$this->as3cf->render_view( 'notice', $notice );
+
+			// Flash notices are only relevant in this context and can be removed once shown.
+			if ( $notice['flash'] ) {
+				$this->remove_notice( $notice );
+			}
+		}
+	}
+
+	/**
+	 * If an API response is an array without any notifications, add in the current notifications.
+	 *
+	 * @param mixed $response
+	 *
+	 * @return mixed
+	 */
+	public function api_response( $response ) {
+		if ( empty( $response ) || is_wp_error( $response ) || ! is_array( $response ) || isset( $response['notifications'] ) ) {
+			return $response;
+		}
+
+		$response['notifications'] = $this->get_notices( '', true );
+
+		return $response;
 	}
 
 	/**
@@ -343,50 +444,42 @@ class AS3CF_Notices {
 	}
 
 	/**
-	 * If it should be shown, display an individual notice
+	 * Should the given notice be shown?
 	 *
-	 * @param array       $notice
-	 * @param array       $dismissed_notices
-	 * @param string|bool $tab
+	 * @param array       $notice            The notice.
+	 * @param array       $dismissed_notices Notices already dismissed by user.
+	 * @param string|bool $tab               Optionally restrict to notifications for a specific tab.
+	 * @param bool        $all_tabs          Optionally return all tab specific notices regardless of tab.
+	 *                                       Only applies if $tab is not empty.
+	 *
+	 * @return bool
 	 */
-	protected function maybe_show_notice( $notice, $dismissed_notices, $tab ) {
-		if ( $notice['only_show_in_settings'] && ! $this->as3cf->our_screen() ) {
-			return;
+	protected function should_show_notice( $notice, $dismissed_notices, $tab, $all_tabs ) {
+		if ( $notice['only_show_in_settings'] && ! $this->as3cf->our_screen() && ! AS3CF_Utils::is_rest_api() ) {
+			return false;
 		}
 
 		if ( ! $notice['only_show_to_user'] && in_array( $notice['id'], $dismissed_notices ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! isset( $notice['only_show_on_tab'] ) && false !== $tab ) {
-			return;
+			return false;
 		}
 
-		if ( isset( $notice['only_show_on_tab'] ) && $tab !== $notice['only_show_on_tab'] ) {
-			return;
+		if ( isset( $notice['only_show_on_tab'] ) && $tab !== $notice['only_show_on_tab'] && true !== $all_tabs ) {
+			return false;
 		}
 
 		if ( ! $this->check_capability_for_notice( $notice ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! empty( $notice['lock_key'] ) && class_exists( 'AS3CF_Tool' ) && AS3CF_Tool::lock_key_exists( $notice['lock_key'] ) ) {
-			return;
+			return false;
 		}
 
-		if ( 'info' === $notice['type'] ) {
-			$notice['type'] = 'notice-info';
-		}
-
-		if ( ! empty( $notice['pre_render_callback'] ) && is_callable( $notice['pre_render_callback'] ) ) {
-			call_user_func( $notice['pre_render_callback'] );
-		}
-
-		$this->as3cf->render_view( 'notice', $notice );
-
-		if ( $notice['flash'] ) {
-			$this->remove_notice( $notice );
-		}
+		return true;
 	}
 
 	/**
@@ -441,7 +534,14 @@ class AS3CF_Notices {
 	public function ajax_dismiss_notice() {
 		$this->as3cf->verify_ajax_request();
 
-		if ( ! isset( $_POST['notice_id'] ) || ! ( $notice_id = sanitize_text_field( $_POST['notice_id'] ) ) ) {
+		if ( empty( $_POST['notice_id'] ) ) {
+			$out = array( 'error' => __( 'Invalid notice ID.', 'amazon-s3-and-cloudfront' ) );
+			$this->as3cf->end_ajax( $out );
+		}
+
+		$notice_id = sanitize_text_field( $_POST['notice_id'] );
+
+		if ( empty( $notice_id ) ) {
 			$out = array( 'error' => __( 'Invalid notice ID.', 'amazon-s3-and-cloudfront' ) );
 			$this->as3cf->end_ajax( $out );
 		}

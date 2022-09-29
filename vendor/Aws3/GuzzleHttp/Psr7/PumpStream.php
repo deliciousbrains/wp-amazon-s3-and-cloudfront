@@ -12,8 +12,10 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
  * returned by the provided callable is buffered internally until drained using
  * the read() function of the PumpStream. The provided callable MUST return
  * false when there is no more data to read.
+ *
+ * @final
  */
-class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface
+class PumpStream implements StreamInterface
 {
     /** @var callable */
     private $source;
@@ -26,26 +28,26 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     /** @var BufferStream */
     private $buffer;
     /**
-     * @param callable $source Source of the stream data. The callable MAY
-     *                         accept an integer argument used to control the
-     *                         amount of data to return. The callable MUST
-     *                         return a string when called, or false on error
-     *                         or EOF.
-     * @param array $options   Stream options:
-     *                         - metadata: Hash of metadata to use with stream.
-     *                         - size: Size of the stream, if known.
+     * @param callable $source  Source of the stream data. The callable MAY
+     *                          accept an integer argument used to control the
+     *                          amount of data to return. The callable MUST
+     *                          return a string when called, or false on error
+     *                          or EOF.
+     * @param array    $options Stream options:
+     *                          - metadata: Hash of metadata to use with stream.
+     *                          - size: Size of the stream, if known.
      */
     public function __construct(callable $source, array $options = [])
     {
         $this->source = $source;
         $this->size = isset($options['size']) ? $options['size'] : null;
         $this->metadata = isset($options['metadata']) ? $options['metadata'] : [];
-        $this->buffer = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\BufferStream();
+        $this->buffer = new BufferStream();
     }
     public function __toString()
     {
         try {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::copyToString($this);
+            return Utils::copyToString($this);
         } catch (\Exception $e) {
             return '';
         }
@@ -56,7 +58,7 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     }
     public function detach()
     {
-        $this->tellPos = false;
+        $this->tellPos = \false;
         $this->source = null;
         return null;
     }
@@ -74,19 +76,19 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     }
     public function isSeekable()
     {
-        return false;
+        return \false;
     }
     public function rewind()
     {
         $this->seek(0);
     }
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET)
     {
         throw new \RuntimeException('Cannot seek a PumpStream');
     }
     public function isWritable()
     {
-        return false;
+        return \false;
     }
     public function write($string)
     {
@@ -94,18 +96,18 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     }
     public function isReadable()
     {
-        return true;
+        return \true;
     }
     public function read($length)
     {
         $data = $this->buffer->read($length);
-        $readLen = strlen($data);
+        $readLen = \strlen($data);
         $this->tellPos += $readLen;
         $remaining = $length - $readLen;
         if ($remaining) {
             $this->pump($remaining);
             $data .= $this->buffer->read($remaining);
-            $this->tellPos += strlen($data) - $readLen;
+            $this->tellPos += \strlen($data) - $readLen;
         }
         return $data;
     }
@@ -128,13 +130,13 @@ class PumpStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Mess
     {
         if ($this->source) {
             do {
-                $data = call_user_func($this->source, $length);
-                if ($data === false || $data === null) {
+                $data = \call_user_func($this->source, $length);
+                if ($data === \false || $data === null) {
                     $this->source = null;
                     return;
                 }
                 $this->buffer->write($data);
-                $length -= strlen($data);
+                $length -= \strlen($data);
             } while ($length > 0);
         }
     }

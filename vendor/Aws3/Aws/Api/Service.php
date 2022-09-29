@@ -8,7 +8,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\QueryParser;
 /**
  * Represents a web service API model.
  */
-class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractModel
+class Service extends AbstractModel
 {
     /** @var callable */
     private $apiProvider;
@@ -35,7 +35,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
         $definition['metadata'] += $defaultMeta;
         $this->definition = $definition;
         $this->apiProvider = $provider;
-        parent::__construct($definition, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap($definition['shapes']));
+        parent::__construct($definition, new ShapeMap($definition['shapes']));
         if (isset($definition['metadata']['serviceIdentifier'])) {
             $this->serviceName = $this->getServiceName();
         } else {
@@ -52,7 +52,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
      * @return callable
      * @throws \UnexpectedValueException
      */
-    public static function createSerializer(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api, $endpoint)
+    public static function createSerializer(Service $api, $endpoint)
     {
         static $mapping = ['json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Serializer\\JsonRpcSerializer', 'query' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Serializer\\QuerySerializer', 'rest-json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Serializer\\RestJsonSerializer', 'rest-xml' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Serializer\\RestXmlSerializer'];
         $proto = $api->getProtocol();
@@ -60,7 +60,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
             return new $mapping[$proto]($api, $endpoint);
         }
         if ($proto == 'ec2') {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\QuerySerializer($api, $endpoint, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Serializer\Ec2ParamBuilder());
+            return new QuerySerializer($api, $endpoint, new Ec2ParamBuilder());
         }
         throw new \UnexpectedValueException('Unknown protocol: ' . $api->getProtocol());
     }
@@ -74,7 +74,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
      * @return callable
      * @throws \UnexpectedValueException
      */
-    public static function createErrorParser($protocol, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api = null)
+    public static function createErrorParser($protocol, Service $api = null)
     {
         static $mapping = ['json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ErrorParser\\JsonRpcErrorParser', 'query' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ErrorParser\\XmlErrorParser', 'rest-json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ErrorParser\\RestJsonErrorParser', 'rest-xml' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ErrorParser\\XmlErrorParser', 'ec2' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\ErrorParser\\XmlErrorParser'];
         if (isset($mapping[$protocol])) {
@@ -89,7 +89,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
      * @return callable
      * @throws \UnexpectedValueException
      */
-    public static function createParser(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $api)
+    public static function createParser(Service $api)
     {
         static $mapping = ['json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Parser\\JsonRpcParser', 'query' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Parser\\QueryParser', 'rest-json' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Parser\\RestJsonParser', 'rest-xml' => 'DeliciousBrains\\WP_Offload_Media\\Aws3\\Aws\\Api\\Parser\\RestXmlParser'];
         $proto = $api->getProtocol();
@@ -97,7 +97,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
             return new $mapping[$proto]($api);
         }
         if ($proto == 'ec2') {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Parser\QueryParser($api, null, false);
+            return new QueryParser($api, null, \false);
         }
         throw new \UnexpectedValueException('Unknown protocol: ' . $api->getProtocol());
     }
@@ -209,7 +209,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
             if (!isset($this->definition['operations'][$name])) {
                 throw new \InvalidArgumentException("Unknown operation: {$name}");
             }
-            $this->operations[$name] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Operation($this->definition['operations'][$name], $this->shapeMap);
+            $this->operations[$name] = new Operation($this->definition['operations'][$name], $this->shapeMap);
         }
         return $this->operations[$name];
     }
@@ -237,7 +237,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
         foreach ($this->definition['shapes'] as $name => $definition) {
             if (!empty($definition['exception'])) {
                 $definition['name'] = $name;
-                $result[] = new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape($definition, $this->getShapeMap());
+                $result[] = new StructureShape($definition, $this->getShapeMap());
             }
         }
         return $result;
@@ -270,7 +270,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
     public function getPaginators()
     {
         if (!isset($this->paginators)) {
-            $res = call_user_func($this->apiProvider, 'paginator', $this->serviceName, $this->apiVersion);
+            $res = \call_user_func($this->apiProvider, 'paginator', $this->serviceName, $this->apiVersion);
             $this->paginators = isset($res['pagination']) ? $res['pagination'] : [];
         }
         return $this->paginators;
@@ -313,7 +313,7 @@ class Service extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\AbstractMod
     public function getWaiters()
     {
         if (!isset($this->waiters)) {
-            $res = call_user_func($this->apiProvider, 'waiter', $this->serviceName, $this->apiVersion);
+            $res = \call_user_func($this->apiProvider, 'waiter', $this->serviceName, $this->apiVersion);
             $this->waiters = isset($res['waiters']) ? $res['waiters'] : [];
         }
         return $this->waiters;

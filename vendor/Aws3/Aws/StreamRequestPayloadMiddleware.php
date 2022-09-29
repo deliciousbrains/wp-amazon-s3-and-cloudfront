@@ -18,31 +18,31 @@ class StreamRequestPayloadMiddleware
      * @param Service $service
      * @return \Closure
      */
-    public static function wrap(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service)
+    public static function wrap(Service $service)
     {
         return function (callable $handler) use($service) {
             return new self($handler, $service);
         };
     }
-    public function __construct(callable $nextHandler, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Service $service)
+    public function __construct(callable $nextHandler, Service $service)
     {
         $this->nextHandler = $nextHandler;
         $this->service = $service;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request)
+    public function __invoke(CommandInterface $command, RequestInterface $request)
     {
         $nextHandler = $this->nextHandler;
         $operation = $this->service->getOperation($command->getName());
         $contentLength = $request->getHeader('content-length');
-        $hasStreaming = false;
-        $requiresLength = false;
+        $hasStreaming = \false;
+        $requiresLength = \false;
         // Check if any present input member is a stream and requires the
         // content length
         foreach ($operation->getInput()->getMembers() as $name => $member) {
             if (!empty($member['streaming']) && isset($command[$name])) {
-                $hasStreaming = true;
+                $hasStreaming = \true;
                 if (!empty($member['requiresLength'])) {
-                    $requiresLength = true;
+                    $requiresLength = \true;
                 }
             }
         }
@@ -55,8 +55,8 @@ class StreamRequestPayloadMiddleware
             } else {
                 if (empty($contentLength)) {
                     $size = $request->getBody()->getSize();
-                    if (is_null($size)) {
-                        throw new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\IncalculablePayloadException('Payload' . ' content length is required and can not be' . ' calculated.');
+                    if (\is_null($size)) {
+                        throw new IncalculablePayloadException('Payload' . ' content length is required and can not be' . ' calculated.');
                     }
                     $request = $request->withHeader('content-length', $size);
                 }

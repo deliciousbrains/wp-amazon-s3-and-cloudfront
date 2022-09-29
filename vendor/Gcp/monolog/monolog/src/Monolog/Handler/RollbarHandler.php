@@ -30,42 +30,42 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *
  * @author Paul Statezny <paulstatezny@gmail.com>
  */
-class RollbarHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class RollbarHandler extends AbstractProcessingHandler
 {
     /**
      * @var RollbarLogger
      */
     protected $rollbarLogger;
-    protected $levelMap = [\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG => 'debug', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::INFO => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::NOTICE => 'info', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::WARNING => 'warning', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR => 'error', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::CRITICAL => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ALERT => 'critical', \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::EMERGENCY => 'critical'];
+    /** @var string[] */
+    protected $levelMap = [Logger::DEBUG => 'debug', Logger::INFO => 'info', Logger::NOTICE => 'info', Logger::WARNING => 'warning', Logger::ERROR => 'error', Logger::CRITICAL => 'critical', Logger::ALERT => 'critical', Logger::EMERGENCY => 'critical'];
     /**
      * Records whether any log records have been added since the last flush of the rollbar notifier
      *
      * @var bool
      */
-    private $hasRecords = false;
-    protected $initialized = false;
+    private $hasRecords = \false;
+    /** @var bool */
+    protected $initialized = \false;
     /**
      * @param RollbarLogger $rollbarLogger RollbarLogger object constructed with valid token
-     * @param string|int    $level         The minimum logging level at which this handler will be triggered
-     * @param bool          $bubble        Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Rollbar\RollbarLogger $rollbarLogger, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::ERROR, bool $bubble = true)
+    public function __construct(RollbarLogger $rollbarLogger, $level = Logger::ERROR, bool $bubble = \true)
     {
         $this->rollbarLogger = $rollbarLogger;
         parent::__construct($level, $bubble);
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function write(array $record) : void
     {
         if (!$this->initialized) {
             // __destructor() doesn't get called on Fatal errors
-            register_shutdown_function(array($this, 'close'));
-            $this->initialized = true;
+            \register_shutdown_function(array($this, 'close'));
+            $this->initialized = \true;
         }
         $context = $record['context'];
-        $context = array_merge($context, $record['extra'], ['level' => $this->levelMap[$record['level']], 'monolog_level' => $record['level_name'], 'channel' => $record['channel'], 'datetime' => $record['datetime']->format('U')]);
+        $context = \array_merge($context, $record['extra'], ['level' => $this->levelMap[$record['level']], 'monolog_level' => $record['level_name'], 'channel' => $record['channel'], 'datetime' => $record['datetime']->format('U')]);
         if (isset($context['exception']) && $context['exception'] instanceof Throwable) {
             $exception = $context['exception'];
             unset($context['exception']);
@@ -73,25 +73,26 @@ class RollbarHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handl
         } else {
             $toLog = $record['message'];
         }
+        // @phpstan-ignore-next-line
         $this->rollbarLogger->log($context['level'], $toLog, $context);
-        $this->hasRecords = true;
+        $this->hasRecords = \true;
     }
     public function flush() : void
     {
         if ($this->hasRecords) {
             $this->rollbarLogger->flush();
-            $this->hasRecords = false;
+            $this->hasRecords = \false;
         }
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close() : void
     {
         $this->flush();
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function reset()
     {

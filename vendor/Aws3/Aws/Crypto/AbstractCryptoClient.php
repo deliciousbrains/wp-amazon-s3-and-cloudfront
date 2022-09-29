@@ -15,7 +15,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream;
 abstract class AbstractCryptoClient
 {
     public static $supportedCiphers = ['cbc', 'gcm'];
-    public static $supportedKeyWraps = [\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\KmsMaterialsProvider::WRAP_ALGORITHM_NAME];
+    public static $supportedKeyWraps = [KmsMaterialsProvider::WRAP_ALGORITHM_NAME];
     /**
      * Returns if the passed cipher name is supported for encryption by the SDK.
      *
@@ -25,7 +25,7 @@ abstract class AbstractCryptoClient
      */
     public static function isSupportedCipher($cipherName)
     {
-        return in_array($cipherName, self::$supportedCiphers);
+        return \in_array($cipherName, self::$supportedCiphers);
     }
     /**
      * Returns an identifier recognizable by `openssl_*` functions, such as
@@ -81,7 +81,7 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function encrypt(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream $plaintext, array $cipherOptions, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProvider $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    public abstract function encrypt(Stream $plaintext, array $cipherOptions, MaterialsProvider $provider, MetadataEnvelope $envelope);
     /**
      * Dependency to provide an interface for building a decryption stream for
      * cipher text given metadata and materials to do so.
@@ -98,5 +98,5 @@ abstract class AbstractCryptoClient
      *
      * @internal
      */
-    public abstract function decrypt($cipherText, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MaterialsProviderInterface $provider, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope, array $cipherOptions = []);
+    public abstract function decrypt($cipherText, MaterialsProviderInterface $provider, MetadataEnvelope $envelope, array $cipherOptions = []);
 }

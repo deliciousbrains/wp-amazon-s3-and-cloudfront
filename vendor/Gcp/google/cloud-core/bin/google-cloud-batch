@@ -17,7 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch;
 
-$foundAutoloader = false;
+$foundAutoloader = \false;
 $autoloaderCandidates = [
     '/../vendor/autoload.php',
     // Git clone of google-cloud-php-core
@@ -28,9 +28,9 @@ $autoloaderCandidates = [
     '/../../../../autoload.php',
 ];
 foreach ($autoloaderCandidates as $candidate) {
-    if (file_exists(__DIR__ . $candidate)) {
+    if (\file_exists(__DIR__ . $candidate)) {
         require_once __DIR__ . $candidate;
-        $foundAutoloader = true;
+        $foundAutoloader = \true;
         break;
     }
 }
@@ -41,12 +41,12 @@ function showUsageAndDie()
 {
     die("usage: " . __FILE__ . " [daemon|retry] {id}");
 }
-if (count($argv) < 2) {
+if (\count($argv) < 2) {
     showUsageAndDie();
 }
 if ($argv[1] === 'daemon') {
-    $daemon = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\BatchDaemon(__FILE__);
-    if (count($argv) == 2) {
+    $daemon = new BatchDaemon(__FILE__);
+    if (\count($argv) == 2) {
         $daemon->run();
     } else {
         $idNum = (int) $argv[2];
@@ -54,7 +54,7 @@ if ($argv[1] === 'daemon') {
         $job->run();
     }
 } elseif ($argv[1] === 'retry') {
-    $retry = new \DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\Retry();
+    $retry = new Retry();
     $retry->retryAll();
 } else {
     showUsageAndDie();

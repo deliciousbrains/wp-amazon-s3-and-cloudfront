@@ -17,11 +17,15 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Cache;
 
+use DateTime;
+use DateTimeInterface;
+use DateTimeZone;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemInterface;
+use TypeError;
 /**
  * A cache item.
  */
-final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemInterface
+final class Item implements CacheItemInterface
 {
     /**
      * @var string
@@ -32,13 +36,13 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
      */
     private $value;
     /**
-     * @var \DateTime|null
+     * @var DateTimeInterface|null
      */
     private $expiration;
     /**
      * @var bool
      */
-    private $isHit = false;
+    private $isHit = \false;
     /**
      * @param string $key
      */
@@ -66,10 +70,10 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
     public function isHit()
     {
         if (!$this->isHit) {
-            return false;
+            return \false;
         }
         if ($this->expiration === null) {
-            return true;
+            return \true;
         }
         return $this->currentTime()->getTimestamp() < $this->expiration->getTimestamp();
     }
@@ -78,7 +82,7 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
      */
     public function set($value)
     {
-        $this->isHit = true;
+        $this->isHit = \true;
         $this->value = $value;
         return $this;
     }
@@ -91,16 +95,15 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
             $this->expiration = $expiration;
             return $this;
         }
-        $implementationMessage = interface_exists('DateTimeInterface') ? 'implement interface DateTimeInterface' : 'be an instance of DateTime';
-        $error = sprintf('Argument 1 passed to %s::expiresAt() must %s, %s given', get_class($this), $implementationMessage, gettype($expiration));
-        $this->handleError($error);
+        $error = \sprintf('Argument 1 passed to %s::expiresAt() must implement interface DateTimeInterface, %s given', \get_class($this), \gettype($expiration));
+        throw new TypeError($error);
     }
     /**
      * {@inheritdoc}
      */
     public function expiresAfter($time)
     {
-        if (is_int($time)) {
+        if (\is_int($time)) {
             $this->expiration = $this->currentTime()->add(new \DateInterval("PT{$time}S"));
         } elseif ($time instanceof \DateInterval) {
             $this->expiration = $this->currentTime()->add($time);
@@ -108,23 +111,10 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
             $this->expiration = $time;
         } else {
             $message = 'Argument 1 passed to %s::expiresAfter() must be an ' . 'instance of DateInterval or of the type integer, %s given';
-            $error = sprintf($message, get_class($this), gettype($time));
-            $this->handleError($error);
+            $error = \sprintf($message, \get_class($this), \gettype($time));
+            throw new TypeError($error);
         }
         return $this;
-    }
-    /**
-     * Handles an error.
-     *
-     * @param string $error
-     * @throws \TypeError
-     */
-    private function handleError($error)
-    {
-        if (class_exists('TypeError')) {
-            throw new \TypeError($error);
-        }
-        trigger_error($error, E_USER_ERROR);
     }
     /**
      * Determines if an expiration is valid based on the rules defined by PSR6.
@@ -135,21 +125,18 @@ final class Item implements \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\Cach
     private function isValidExpiration($expiration)
     {
         if ($expiration === null) {
-            return true;
+            return \true;
         }
-        // We test for two types here due to the fact the DateTimeInterface
-        // was not introduced until PHP 5.5. Checking for the DateTime type as
-        // well allows us to support 5.4.
-        if ($expiration instanceof \DateTimeInterface) {
-            return true;
+        if ($expiration instanceof DateTimeInterface) {
+            return \true;
         }
-        if ($expiration instanceof \DateTime) {
-            return true;
-        }
-        return false;
+        return \false;
     }
+    /**
+     * @return DateTime
+     */
     protected function currentTime()
     {
-        return new \DateTime('now', new \DateTimeZone('UTC'));
+        return new DateTime('now', new DateTimeZone('UTC'));
     }
 }

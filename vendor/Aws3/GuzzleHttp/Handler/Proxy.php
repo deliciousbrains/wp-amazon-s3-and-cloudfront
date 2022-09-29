@@ -20,8 +20,8 @@ class Proxy
      */
     public static function wrapSync(callable $default, callable $sync)
     {
-        return function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $sync) {
-            return empty($options[\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\RequestOptions::SYNCHRONOUS]) ? $default($request, $options) : $sync($request, $options);
+        return function (RequestInterface $request, array $options) use($default, $sync) {
+            return empty($options[RequestOptions::SYNCHRONOUS]) ? $default($request, $options) : $sync($request, $options);
         };
     }
     /**
@@ -39,7 +39,7 @@ class Proxy
      */
     public static function wrapStreaming(callable $default, callable $streaming)
     {
-        return function (\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options) use($default, $streaming) {
+        return function (RequestInterface $request, array $options) use($default, $streaming) {
             return empty($options['stream']) ? $default($request, $options) : $streaming($request, $options);
         };
     }

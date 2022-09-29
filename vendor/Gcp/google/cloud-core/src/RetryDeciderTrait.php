@@ -39,33 +39,33 @@ trait RetryDeciderTrait
      *        on the failure message.
      * @return callable
      */
-    private function getRetryFunction($shouldRetryMessages = true)
+    private function getRetryFunction($shouldRetryMessages = \true)
     {
         $httpRetryCodes = $this->httpRetryCodes;
         $httpRetryMessages = $this->httpRetryMessages;
         return function (\Exception $ex) use($httpRetryCodes, $httpRetryMessages, $shouldRetryMessages) {
             $statusCode = $ex->getCode();
-            if (in_array($statusCode, $httpRetryCodes)) {
-                return true;
+            if (\in_array($statusCode, $httpRetryCodes)) {
+                return \true;
             }
             if (!$shouldRetryMessages) {
-                return false;
+                return \false;
             }
             $message = $ex instanceof RequestException && $ex->hasResponse() ? (string) $ex->getResponse()->getBody() : $ex->getMessage();
             try {
-                $message = $this->jsonDecode($message, true);
+                $message = $this->jsonDecode($message, \true);
             } catch (\InvalidArgumentException $ex) {
-                return false;
+                return \false;
             }
             if (!isset($message['error']['errors'])) {
-                return false;
+                return \false;
             }
             foreach ($message['error']['errors'] as $error) {
-                if (in_array($error['reason'], $httpRetryMessages)) {
-                    return true;
+                if (\in_array($error['reason'], $httpRetryMessages)) {
+                    return \true;
                 }
             }
-            return false;
+            return \false;
         };
     }
     /**

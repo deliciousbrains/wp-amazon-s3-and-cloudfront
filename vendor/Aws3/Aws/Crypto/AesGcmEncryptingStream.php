@@ -11,7 +11,7 @@ use RuntimeException;
 /**
  * @internal Represents a stream of data to be gcm encrypted.
  */
-class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterface, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\AesStreamInterfaceV2
+class AesGcmEncryptingStream implements AesStreamInterface, AesStreamInterfaceV2
 {
     use StreamDecoratorTrait;
     private $aad;
@@ -39,7 +39,7 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
      * @param int $tagLength
      * @param int $keySize
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $plaintext, $key, $initializationVector, $aad = '', $tagLength = 16, $keySize = 256)
+    public function __construct(StreamInterface $plaintext, $key, $initializationVector, $aad = '', $tagLength = 16, $keySize = 256)
     {
         $this->plaintext = $plaintext;
         $this->key = $key;
@@ -67,10 +67,10 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
     }
     public function createStream()
     {
-        if (version_compare(PHP_VERSION, '7.1', '<')) {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\AesGcm::encrypt((string) $this->plaintext, $this->initializationVector, new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\Polyfill\Key($this->key), $this->aad, $this->tag, $this->keySize));
+        if (\version_compare(\PHP_VERSION, '7.1', '<')) {
+            return Psr7\Utils::streamFor(AesGcm::encrypt((string) $this->plaintext, $this->initializationVector, new Key($this->key), $this->aad, $this->tag, $this->keySize));
         } else {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\stream_for(\openssl_encrypt((string) $this->plaintext, $this->getOpenSslName(), $this->key, OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad, $this->tagLength));
+            return Psr7\Utils::streamFor(\openssl_encrypt((string) $this->plaintext, $this->getOpenSslName(), $this->key, \OPENSSL_RAW_DATA, $this->initializationVector, $this->tag, $this->aad, $this->tagLength));
         }
     }
     /**
@@ -82,6 +82,6 @@ class AesGcmEncryptingStream implements \DeliciousBrains\WP_Offload_Media\Aws3\A
     }
     public function isWritable()
     {
-        return false;
+        return \false;
     }
 }

@@ -37,7 +37,7 @@ class Upgrade_WPOS3_To_AS3CF extends Upgrade {
 	}
 
 	/**
-	 * update record key to use as3cf prefix instead of wpos3.
+	 * Update record key to use as3cf prefix instead of wpos3.
 	 *
 	 * @param mixed $item
 	 *

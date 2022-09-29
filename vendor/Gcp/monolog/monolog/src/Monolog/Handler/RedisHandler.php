@@ -24,22 +24,25 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  *   $log->pushHandler($redis);
  *
  * @author Thomas Tourlourat <thomas@tourlourat.com>
+ *
+ * @phpstan-import-type FormattedRecord from AbstractProcessingHandler
  */
-class RedisHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractProcessingHandler
+class RedisHandler extends AbstractProcessingHandler
 {
+    /** @var \Predis\Client|\Redis */
     private $redisClient;
+    /** @var string */
     private $redisKey;
+    /** @var int */
     protected $capSize;
     /**
      * @param \Predis\Client|\Redis $redis   The redis instance
      * @param string                $key     The key name to push records to
-     * @param string|int            $level   The minimum logging level at which this handler will be triggered
-     * @param bool                  $bubble  Whether the messages that are handled can bubble up the stack or not
      * @param int                   $capSize Number of entries to limit list size to, 0 = unlimited
      */
-    public function __construct($redis, string $key, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true, int $capSize = 0)
+    public function __construct($redis, string $key, $level = Logger::DEBUG, bool $bubble = \true, int $capSize = 0)
     {
-        if (!($redis instanceof \Predis\Client || $redis instanceof \Redis)) {
+        if (!($redis instanceof \DeliciousBrains\WP_Offload_Media\Gcp\Predis\Client || $redis instanceof \Redis)) {
             throw new \InvalidArgumentException('Predis\\Client or Redis instance required');
         }
         $this->redisClient = $redis;
@@ -61,11 +64,13 @@ class RedisHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
     /**
      * Write and cap the collection
      * Writes the record to the redis list and caps its
+     *
+     * @phpstan-param FormattedRecord $record
      */
     protected function writeCapped(array $record) : void
     {
         if ($this->redisClient instanceof \Redis) {
-            $mode = defined('\\Redis::MULTI') ? \Redis::MULTI : 1;
+            $mode = \defined('\\Redis::MULTI') ? \Redis::MULTI : 1;
             $this->redisClient->multi($mode)->rpush($this->redisKey, $record["formatted"])->ltrim($this->redisKey, -$this->capSize, -1)->exec();
         } else {
             $redisKey = $this->redisKey;
@@ -81,6 +86,6 @@ class RedisHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter();
+        return new LineFormatter();
     }
 }

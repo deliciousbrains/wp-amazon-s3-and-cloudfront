@@ -19,10 +19,10 @@ final class Utils
     {
         $result = [];
         foreach ($keys as &$key) {
-            $key = strtolower($key);
+            $key = \strtolower($key);
         }
         foreach ($data as $k => $v) {
-            if (!in_array(strtolower($k), $keys)) {
+            if (!\in_array(\strtolower($k), $keys)) {
                 $result[$k] = $v;
             }
         }
@@ -39,7 +39,7 @@ final class Utils
      *
      * @throws \RuntimeException on error.
      */
-    public static function copyToStream(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $source, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $dest, $maxLen = -1)
+    public static function copyToStream(StreamInterface $source, StreamInterface $dest, $maxLen = -1)
     {
         $bufferSize = 8192;
         if ($maxLen === -1) {
@@ -51,8 +51,8 @@ final class Utils
         } else {
             $remaining = $maxLen;
             while ($remaining > 0 && !$source->eof()) {
-                $buf = $source->read(min($bufferSize, $remaining));
-                $len = strlen($buf);
+                $buf = $source->read(\min($bufferSize, $remaining));
+                $len = \strlen($buf);
                 if (!$len) {
                     break;
                 }
@@ -68,11 +68,12 @@ final class Utils
      * @param StreamInterface $stream Stream to read
      * @param int             $maxLen Maximum number of bytes to read. Pass -1
      *                                to read the entire stream.
+     *
      * @return string
      *
      * @throws \RuntimeException on error.
      */
-    public static function copyToString(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLen = -1)
+    public static function copyToString(StreamInterface $stream, $maxLen = -1)
     {
         $buffer = '';
         if ($maxLen === -1) {
@@ -94,7 +95,7 @@ final class Utils
                 break;
             }
             $buffer .= $buf;
-            $len = strlen($buffer);
+            $len = \strlen($buffer);
         }
         return $buffer;
     }
@@ -112,17 +113,17 @@ final class Utils
      *
      * @throws \RuntimeException on error.
      */
-    public static function hash(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $algo, $rawOutput = false)
+    public static function hash(StreamInterface $stream, $algo, $rawOutput = \false)
     {
         $pos = $stream->tell();
         if ($pos > 0) {
             $stream->rewind();
         }
-        $ctx = hash_init($algo);
+        $ctx = \hash_init($algo);
         while (!$stream->eof()) {
-            hash_update($ctx, $stream->read(1048576));
+            \hash_update($ctx, $stream->read(1048576));
         }
-        $out = hash_final($ctx, (bool) $rawOutput);
+        $out = \hash_final($ctx, (bool) $rawOutput);
         $stream->seek($pos);
         return $out;
     }
@@ -146,7 +147,7 @@ final class Utils
      *
      * @return RequestInterface
      */
-    public static function modifyRequest(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $changes)
+    public static function modifyRequest(RequestInterface $request, array $changes)
     {
         if (!$changes) {
             return $request;
@@ -172,16 +173,20 @@ final class Utils
             $headers = self::caselessRemove($changes['remove_headers'], $headers);
         }
         if (!empty($changes['set_headers'])) {
-            $headers = self::caselessRemove(array_keys($changes['set_headers']), $headers);
+            $headers = self::caselessRemove(\array_keys($changes['set_headers']), $headers);
             $headers = $changes['set_headers'] + $headers;
         }
         if (isset($changes['query'])) {
             $uri = $uri->withQuery($changes['query']);
         }
         if ($request instanceof ServerRequestInterface) {
-            return (new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\ServerRequest(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion(), $request->getServerParams()))->withParsedBody($request->getParsedBody())->withQueryParams($request->getQueryParams())->withCookieParams($request->getCookieParams())->withUploadedFiles($request->getUploadedFiles());
+            $new = (new ServerRequest(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion(), $request->getServerParams()))->withParsedBody($request->getParsedBody())->withQueryParams($request->getQueryParams())->withCookieParams($request->getCookieParams())->withUploadedFiles($request->getUploadedFiles());
+            foreach ($request->getAttributes() as $key => $value) {
+                $new = $new->withAttribute($key, $value);
+            }
+            return $new;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion());
+        return new Request(isset($changes['method']) ? $changes['method'] : $request->getMethod(), $uri, $headers, isset($changes['body']) ? $changes['body'] : $request->getBody(), isset($changes['version']) ? $changes['version'] : $request->getProtocolVersion());
     }
     /**
      * Read a line from the stream up to the maximum allowed buffer length.
@@ -191,7 +196,7 @@ final class Utils
      *
      * @return string
      */
-    public static function readLine(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface $stream, $maxLength = null)
+    public static function readLine(StreamInterface $stream, $maxLength = null)
     {
         $buffer = '';
         $size = 0;
@@ -237,7 +242,7 @@ final class Utils
      *   number of requested bytes are available. Any additional bytes will be
      *   buffered and used in subsequent reads.
      *
-     * @param resource|string|null|int|float|bool|StreamInterface|callable|\Iterator $resource Entity body data
+     * @param resource|string|int|float|bool|StreamInterface|callable|\Iterator|null $resource Entity body data
      * @param array                                                                  $options  Additional options
      *
      * @return StreamInterface
@@ -246,40 +251,51 @@ final class Utils
      */
     public static function streamFor($resource = '', array $options = [])
     {
-        if (is_scalar($resource)) {
-            $stream = fopen('php://temp', 'r+');
+        if (\is_scalar($resource)) {
+            $stream = self::tryFopen('php://temp', 'r+');
             if ($resource !== '') {
-                fwrite($stream, $resource);
-                fseek($stream, 0);
+                \fwrite($stream, $resource);
+                \fseek($stream, 0);
             }
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($stream, $options);
+            return new Stream($stream, $options);
         }
-        switch (gettype($resource)) {
+        switch (\gettype($resource)) {
             case 'resource':
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream($resource, $options);
+                /*
+                 * The 'php://input' is a special stream with quirks and inconsistencies.
+                 * We avoid using that stream by reading it into php://temp
+                 */
+                $metaData = \stream_get_meta_data($resource);
+                if (isset($metaData['uri']) && $metaData['uri'] === 'php://input') {
+                    $stream = self::tryFopen('php://temp', 'w+');
+                    \fwrite($stream, \stream_get_contents($resource));
+                    \fseek($stream, 0);
+                    $resource = $stream;
+                }
+                return new Stream($resource, $options);
             case 'object':
                 if ($resource instanceof StreamInterface) {
                     return $resource;
                 } elseif ($resource instanceof \Iterator) {
-                    return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\PumpStream(function () use($resource) {
+                    return new PumpStream(function () use($resource) {
                         if (!$resource->valid()) {
-                            return false;
+                            return \false;
                         }
                         $result = $resource->current();
                         $resource->next();
                         return $result;
                     }, $options);
-                } elseif (method_exists($resource, '__toString')) {
-                    return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::streamFor((string) $resource, $options);
+                } elseif (\method_exists($resource, '__toString')) {
+                    return Utils::streamFor((string) $resource, $options);
                 }
                 break;
             case 'NULL':
-                return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Stream(fopen('php://temp', 'r+'), $options);
+                return new Stream(self::tryFopen('php://temp', 'r+'), $options);
         }
-        if (is_callable($resource)) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\PumpStream($resource, $options);
+        if (\is_callable($resource)) {
+            return new PumpStream($resource, $options);
         }
-        throw new \InvalidArgumentException('Invalid resource type: ' . gettype($resource));
+        throw new \InvalidArgumentException('Invalid resource type: ' . \gettype($resource));
     }
     /**
      * Safely opens a PHP stream resource using a filename.
@@ -297,11 +313,16 @@ final class Utils
     public static function tryFopen($filename, $mode)
     {
         $ex = null;
-        set_error_handler(function () use($filename, $mode, &$ex) {
-            $ex = new \RuntimeException(sprintf('Unable to open %s using mode %s: %s', $filename, $mode, func_get_args()[1]));
+        \set_error_handler(function () use($filename, $mode, &$ex) {
+            $ex = new \RuntimeException(\sprintf('Unable to open "%s" using mode "%s": %s', $filename, $mode, \func_get_args()[1]));
+            return \true;
         });
-        $handle = fopen($filename, $mode);
-        restore_error_handler();
+        try {
+            $handle = \fopen($filename, $mode);
+        } catch (\Throwable $e) {
+            $ex = new \RuntimeException(\sprintf('Unable to open "%s" using mode "%s": %s', $filename, $mode, $e->getMessage()), 0, $e);
+        }
+        \restore_error_handler();
         if ($ex) {
             /** @var $ex \RuntimeException */
             throw $ex;
@@ -326,8 +347,8 @@ final class Utils
         if ($uri instanceof UriInterface) {
             return $uri;
         }
-        if (is_string($uri)) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri($uri);
+        if (\is_string($uri)) {
+            return new Uri($uri);
         }
         throw new \InvalidArgumentException('URI must be a string or UriInterface');
     }

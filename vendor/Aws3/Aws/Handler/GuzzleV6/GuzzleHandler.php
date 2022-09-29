@@ -20,9 +20,9 @@ class GuzzleHandler
     /**
      * @param ClientInterface $client
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface $client = null)
+    public function __construct(ClientInterface $client = null)
     {
-        $this->client = $client ?: new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Client();
+        $this->client = $client ?: new Client();
     }
     /**
      * @param Psr7Request $request
@@ -30,15 +30,15 @@ class GuzzleHandler
      *
      * @return Promise\Promise
      */
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request, array $options = [])
+    public function __invoke(Psr7Request $request, array $options = [])
     {
         $request = $request->withHeader('User-Agent', $request->getHeaderLine('User-Agent') . ' ' . \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\default_user_agent());
-        return $this->client->sendAsync($request, $this->parseOptions($options))->otherwise(static function (\Exception $e) {
+        return $this->client->sendAsync($request, $this->parseOptions($options))->otherwise(static function ($e) {
             $error = ['exception' => $e, 'connection_error' => $e instanceof ConnectException, 'response' => null];
             if ($e instanceof RequestException && $e->getResponse()) {
                 $error['response'] = $e->getResponse();
             }
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($error);
+            return new Promise\RejectedPromise($error);
         });
     }
     private function parseOptions(array $options)
@@ -47,8 +47,8 @@ class GuzzleHandler
             $fn = $options['http_stats_receiver'];
             unset($options['http_stats_receiver']);
             $prev = isset($options['on_stats']) ? $options['on_stats'] : null;
-            $options['on_stats'] = static function (\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\TransferStats $stats) use($fn, $prev) {
-                if (is_callable($prev)) {
+            $options['on_stats'] = static function (TransferStats $stats) use($fn, $prev) {
+                if (\is_callable($prev)) {
                     $prev($stats);
                 }
                 $transferStats = ['total_time' => $stats->getTransferTime()];

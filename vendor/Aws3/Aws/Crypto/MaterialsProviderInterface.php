@@ -21,7 +21,7 @@ interface MaterialsProviderInterface
      *
      * @internal
      */
-    public function fromDecryptionEnvelope(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope $envelope);
+    public function fromDecryptionEnvelope(MetadataEnvelope $envelope);
     /**
      * Returns the wrap algorithm name for this Provider.
      *

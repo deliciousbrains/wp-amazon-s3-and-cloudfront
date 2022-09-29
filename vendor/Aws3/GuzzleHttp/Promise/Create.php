@@ -17,14 +17,14 @@ final class Create
             return $value;
         }
         // Return a Guzzle promise that shadows the given promise.
-        if (is_object($value) && method_exists($value, 'then')) {
-            $wfn = method_exists($value, 'wait') ? [$value, 'wait'] : null;
-            $cfn = method_exists($value, 'cancel') ? [$value, 'cancel'] : null;
-            $promise = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Promise($wfn, $cfn);
+        if (\is_object($value) && \method_exists($value, 'then')) {
+            $wfn = \method_exists($value, 'wait') ? [$value, 'wait'] : null;
+            $cfn = \method_exists($value, 'cancel') ? [$value, 'cancel'] : null;
+            $promise = new Promise($wfn, $cfn);
             $value->then([$promise, 'resolve'], [$promise, 'reject']);
             return $promise;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\FulfilledPromise($value);
+        return new FulfilledPromise($value);
     }
     /**
      * Creates a rejected promise for a reason if the reason is not a promise.
@@ -39,7 +39,7 @@ final class Create
         if ($reason instanceof PromiseInterface) {
             return $reason;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise($reason);
+        return new RejectedPromise($reason);
     }
     /**
      * Create an exception for a rejected promise value.
@@ -53,7 +53,7 @@ final class Create
         if ($reason instanceof \Exception || $reason instanceof \Throwable) {
             return $reason;
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectionException($reason);
+        return new RejectionException($reason);
     }
     /**
      * Returns an iterator for the given value.
@@ -67,7 +67,7 @@ final class Create
         if ($value instanceof \Iterator) {
             return $value;
         }
-        if (is_array($value)) {
+        if (\is_array($value)) {
             return new \ArrayIterator($value);
         }
         return new \ArrayIterator([$value]);

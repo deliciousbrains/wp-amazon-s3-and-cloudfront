@@ -13,7 +13,7 @@ class Core extends Integration {
 	 *
 	 * @return bool
 	 */
-	public static function is_installed() {
+	public static function is_installed(): bool {
 		return true;
 	}
 

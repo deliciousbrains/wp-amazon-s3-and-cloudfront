@@ -6,6 +6,6 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate as Template;
 /**
  * Future compatibility
  */
-class UriTemplate extends \DeliciousBrains\WP_Offload_Media\Gcp\Rize\UriTemplate
+class UriTemplate extends Template
 {
 }

@@ -2,13 +2,14 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Providers\Storage;
 
-use AS3CF_Utils;
+use AS3CF_Plugin_Base;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\GoogleException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ServiceBuilder;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Bucket;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageObject;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Streams\GCP_GCS_Stream_Wrapper;
+use Exception;
 
 class GCP_Provider extends Storage_Provider {
 
@@ -87,33 +88,44 @@ class GCP_Provider extends Storage_Provider {
 	/**
 	 * @var array
 	 */
-	protected $regions = array(
+	protected static $regions = array(
 		'asia'                    => 'Asia (Multi-Regional)',
 		'eu'                      => 'European Union (Multi-Regional)',
 		'us'                      => 'United States (Multi-Regional)',
-		'northamerica-northeast1' => 'Montréal',
 		'us-central1'             => 'Iowa',
 		'us-east1'                => 'South Carolina',
 		'us-east4'                => 'Northern Virginia',
+		'us-east5'                => 'Columbus',
 		'us-west1'                => 'Oregon',
 		'us-west2'                => 'Los Angeles',
 		'us-west3'                => 'Salt Lake City',
 		'us-west4'                => 'Las Vegas',
+		'us-south1'               => 'Dallas',
+		'northamerica-northeast1' => 'Montréal',
+		'northamerica-northeast2' => 'Toronto',
 		'southamerica-east1'      => 'São Paulo',
+		'southamerica-west1'      => 'Santiago',
+		'europe-central2'         => 'Warsaw',
 		'europe-north1'           => 'Finland',
 		'europe-west1'            => 'Belgium',
 		'europe-west2'            => 'London',
 		'europe-west3'            => 'Frankfurt',
 		'europe-west4'            => 'Netherlands',
 		'europe-west6'            => 'Zürich',
+		'europe-west8'            => 'Milan',
+		'europe-west9'            => 'Paris',
+		'europe-southwest1'       => 'Madrid',
 		'asia-east1'              => 'Taiwan',
 		'asia-east2'              => 'Hong Kong',
 		'asia-northeast1'         => 'Tokyo',
 		'asia-northeast2'         => 'Osaka',
 		'asia-northeast3'         => 'Seoul',
 		'asia-south1'             => 'Mumbai',
+		'asia-south2'             => 'Dehli',
 		'asia-southeast1'         => 'Singapore',
+		'asia-southeast2'         => 'Jakarta',
 		'australia-southeast1'    => 'Sydney',
+		'australia-southeast2'    => 'Melbourne',
 		'eur4'                    => 'EUR4 (Finland/Netherlands Dual-Region)',
 		'nam4'                    => 'NAM4 (Iowa/South Carolina Dual-Region)',
 	);
@@ -121,7 +133,7 @@ class GCP_Provider extends Storage_Provider {
 	/**
 	 * @var string
 	 */
-	protected $default_region = 'us';
+	protected static $default_region = 'us';
 
 	/**
 	 * @var string
@@ -138,15 +150,15 @@ class GCP_Provider extends Storage_Provider {
 	 */
 	protected $console_url_prefix_param = '/';
 
-	const PUBLIC_ACL = 'publicRead';
+	const PUBLIC_ACL  = 'publicRead';
 	const PRIVATE_ACL = 'projectPrivate';
 
 	/**
 	 * GCP_Provider constructor.
 	 *
-	 * @param \AS3CF_Plugin_Base $as3cf
+	 * @param AS3CF_Plugin_Base $as3cf
 	 */
-	public function __construct( \AS3CF_Plugin_Base $as3cf ) {
+	public function __construct( AS3CF_Plugin_Base $as3cf ) {
 		parent::__construct( $as3cf );
 
 		// Autoloader.
@@ -395,11 +407,11 @@ class GCP_Provider extends Storage_Provider {
 	 *
 	 * @param array $args
 	 *
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function update_object_acl( array $args ) {
 		if ( empty( $args['ACL'] ) ) {
-			throw new \Exception( __METHOD__ . ' called without "ACL" arg.' );
+			throw new Exception( __METHOD__ . ' called without "ACL" arg.' );
 		}
 
 		$this->storage->bucket( $args['Bucket'] )->object( $args['Key'] )->update( array( 'predefinedAcl' => $args['ACL'] ) );
@@ -419,7 +431,7 @@ class GCP_Provider extends Storage_Provider {
 		foreach ( $items as $item ) {
 			try {
 				$this->update_object_acl( $item );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$failures[] = array(
 					'Key'     => $item['Key'],
 					'Message' => $e->getMessage(),
@@ -435,7 +447,7 @@ class GCP_Provider extends Storage_Provider {
 	 *
 	 * @param array $args
 	 *
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function upload_object( array $args ) {
 		if ( ! empty( $args['SourceFile'] ) ) {
@@ -443,7 +455,7 @@ class GCP_Provider extends Storage_Provider {
 		} elseif ( ! empty( $args['Body'] ) ) {
 			$file = $args['Body'];
 		} else {
-			throw new \Exception( __METHOD__ . ' called without either "SourceFile" or "Body" arg.' );
+			throw new Exception( __METHOD__ . ' called without either "SourceFile" or "Body" arg.' );
 		}
 
 		$options = array(
@@ -464,7 +476,7 @@ class GCP_Provider extends Storage_Provider {
 
 		// TODO: Potentially strip out known keys from $args and then put rest in $options['metadata']['metadata'].
 
-		$object = $this->storage->bucket( $args['Bucket'] )->upload( $file, $options );
+		$object = $this->storage->bucket( $args['Bucket'] )->upload( $file, $options ); // phpcs:ignore
 	}
 
 	/**
@@ -546,7 +558,7 @@ class GCP_Provider extends Storage_Provider {
 
 			try {
 				$this->storage->bucket( $bucket )->object( $key )->copy( $item['Bucket'], $options );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$failures[] = array(
 					'Key'     => $item['Key'],
 					'Message' => $e->getMessage(),
@@ -615,7 +627,7 @@ class GCP_Provider extends Storage_Provider {
 			) );
 
 			return true;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// If we encounter an error that isn't from Google, throw that error.
 			if ( ! $e instanceof GoogleException ) {
 				return $e->getMessage();
@@ -660,7 +672,7 @@ class GCP_Provider extends Storage_Provider {
 	}
 
 	/**
-	 * Get the suffix param to append to the link to the bucket on the provider's console.
+	 * Get the suffix param to append to the link to the provider's console.
 	 *
 	 * @param string $bucket
 	 * @param string $prefix
@@ -668,7 +680,7 @@ class GCP_Provider extends Storage_Provider {
 	 *
 	 * @return string
 	 */
-	protected function get_console_url_suffix_param( $bucket = '', $prefix = '', $region = '' ) {
+	protected function get_console_url_suffix_param( string $bucket = '', string $prefix = '', string $region = '' ): string {
 		if ( ! empty( $this->get_project_id() ) ) {
 			return '?project=' . $this->get_project_id();
 		}

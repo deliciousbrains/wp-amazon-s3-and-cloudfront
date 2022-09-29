@@ -44,7 +44,7 @@ interface ConfigStorageInterface
      * @param JobConfig $config A JobConfig to save.
      * @return bool true on success, false on failure
      */
-    public function save(\DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Batch\JobConfig $config);
+    public function save(JobConfig $config);
     /**
      * loads the JobConfig from the storage
      *

@@ -39,21 +39,13 @@ class GCECache
     const GCE_CACHE_KEY = 'google_auth_on_gce_cache';
     use CacheTrait;
     /**
-     * @var array
-     */
-    private $cacheConfig;
-    /**
-     * @var CacheItemPoolInterface
-     */
-    private $cache;
-    /**
-     * @param array $cacheConfig Configuration for the cache
+     * @param array<mixed> $cacheConfig Configuration for the cache
      * @param CacheItemPoolInterface $cache
      */
-    public function __construct(array $cacheConfig = null, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface $cache = null)
+    public function __construct(array $cacheConfig = null, CacheItemPoolInterface $cache = null)
     {
         $this->cache = $cache;
-        $this->cacheConfig = array_merge(['lifetime' => 1500, 'prefix' => ''], (array) $cacheConfig);
+        $this->cacheConfig = \array_merge(['lifetime' => 1500, 'prefix' => ''], (array) $cacheConfig);
     }
     /**
      * Caches the result of onGce so the metadata server is not called multiple
@@ -64,13 +56,13 @@ class GCECache
      */
     public function onGce(callable $httpHandler = null)
     {
-        if (is_null($this->cache)) {
-            return \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler);
+        if (\is_null($this->cache)) {
+            return GCECredentials::onGce($httpHandler);
         }
         $cacheKey = self::GCE_CACHE_KEY;
         $onGce = $this->getCachedValue($cacheKey);
-        if (is_null($onGce)) {
-            $onGce = \DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\GCECredentials::onGce($httpHandler);
+        if (\is_null($onGce)) {
+            $onGce = GCECredentials::onGce($httpHandler);
             $this->setCachedValue($cacheKey, $onGce);
         }
         return $onGce;

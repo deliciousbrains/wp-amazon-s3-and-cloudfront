@@ -21,24 +21,30 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
  * sending one per log message.
  *
  * @author Christophe Coevoet <stof@notk.org>
+ *
+ * @phpstan-import-type Record from \Monolog\Logger
  */
-class BufferHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\AbstractHandler implements \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\ProcessableHandlerInterface, \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\FormattableHandlerInterface
+class BufferHandler extends AbstractHandler implements ProcessableHandlerInterface, FormattableHandlerInterface
 {
     use ProcessableHandlerTrait;
+    /** @var HandlerInterface */
     protected $handler;
+    /** @var int */
     protected $bufferSize = 0;
+    /** @var int */
     protected $bufferLimit;
+    /** @var bool */
     protected $flushOnOverflow;
+    /** @var Record[] */
     protected $buffer = [];
-    protected $initialized = false;
+    /** @var bool */
+    protected $initialized = \false;
     /**
      * @param HandlerInterface $handler         Handler.
      * @param int              $bufferLimit     How many entries should be buffered at most, beyond that the oldest items are removed from the buffer.
-     * @param string|int       $level           The minimum logging level at which this handler will be triggered
-     * @param bool             $bubble          Whether the messages that are handled can bubble up the stack or not
      * @param bool             $flushOnOverflow If true, the buffer is flushed when the max size has been reached, by default oldest entries are discarded
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler\HandlerInterface $handler, int $bufferLimit = 0, $level = \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger::DEBUG, bool $bubble = true, bool $flushOnOverflow = false)
+    public function __construct(HandlerInterface $handler, int $bufferLimit = 0, $level = Logger::DEBUG, bool $bubble = \true, bool $flushOnOverflow = \false)
     {
         parent::__construct($level, $bubble);
         $this->handler = $handler;
@@ -46,32 +52,33 @@ class BufferHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
         $this->flushOnOverflow = $flushOnOverflow;
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function handle(array $record) : bool
     {
         if ($record['level'] < $this->level) {
-            return false;
+            return \false;
         }
         if (!$this->initialized) {
             // __destructor() doesn't get called on Fatal errors
-            register_shutdown_function([$this, 'close']);
-            $this->initialized = true;
+            \register_shutdown_function([$this, 'close']);
+            $this->initialized = \true;
         }
         if ($this->bufferLimit > 0 && $this->bufferSize === $this->bufferLimit) {
             if ($this->flushOnOverflow) {
                 $this->flush();
             } else {
-                array_shift($this->buffer);
+                \array_shift($this->buffer);
                 $this->bufferSize--;
             }
         }
         if ($this->processors) {
+            /** @var Record $record */
             $record = $this->processRecord($record);
         }
         $this->buffer[] = $record;
         $this->bufferSize++;
-        return false === $this->bubble;
+        return \false === $this->bubble;
     }
     public function flush() : void
     {
@@ -88,7 +95,7 @@ class BufferHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
         // GC'd until the end of the request
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close() : void
     {
@@ -113,18 +120,24 @@ class BufferHandler extends \DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handle
         }
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function setFormatter(\DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface $formatter) : HandlerInterface
+    public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
-        $this->handler->setFormatter($formatter);
-        return $this;
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            $this->handler->setFormatter($formatter);
+            return $this;
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($this->handler) . ' does not support formatters.');
     }
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getFormatter() : FormatterInterface
     {
-        return $this->handler->getFormatter();
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            return $this->handler->getFormatter();
+        }
+        throw new \UnexpectedValueException('The nested handler of type ' . \get_class($this->handler) . ' does not support formatters.');
     }
 }

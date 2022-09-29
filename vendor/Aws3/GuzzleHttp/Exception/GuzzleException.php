@@ -3,7 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Exception;
 
 use Throwable;
-if (interface_exists(\Throwable::class)) {
+if (\interface_exists(Throwable::class)) {
     interface GuzzleException extends Throwable
     {
     }

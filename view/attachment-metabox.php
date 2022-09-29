@@ -51,8 +51,7 @@ $media_integration = $this->get_integration_manager()->get_integration( 'mlib' )
 				<?php echo $media_integration->get_acl_value_string( $provider_object['acl'], $post->ID ); ?>
 			</div>
 		</div>
-		<?php
-		if ( isset( $provider_object['is_verified'] ) && empty( $provider_object['is_verified'] ) ) : ?>
+		<?php if ( isset( $provider_object['is_verified'] ) && empty( $provider_object['is_verified'] ) ) : ?>
 			<div class="misc-pub-section">
 				<div class="s3-key"><?php echo $media_integration->get_media_action_strings( 'is_verified' ); ?>:</div>
 				<div id="as3cf-is-verified" class="s3-value"><?php echo $media_integration->get_media_action_strings( 'not_verified' ); ?></div>

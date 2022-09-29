@@ -20,10 +20,10 @@ trait CryptoParamsTrait
     }
     protected function determineGetObjectStrategy($result, $instructionFileSuffix)
     {
-        if (isset($result['Metadata'][\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Crypto\MetadataEnvelope::CONTENT_KEY_V2_HEADER])) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy();
+        if (isset($result['Metadata'][MetadataEnvelope::CONTENT_KEY_V2_HEADER])) {
+            return new HeadersMetadataStrategy();
         }
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
+        return new InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
     }
     protected function getMetadataStrategy(array $args, $instructionFileSuffix)
     {
@@ -31,12 +31,12 @@ trait CryptoParamsTrait
             if ($args['@MetadataStrategy'] instanceof MetadataStrategyInterface) {
                 return $args['@MetadataStrategy'];
             }
-            if (is_string($args['@MetadataStrategy'])) {
+            if (\is_string($args['@MetadataStrategy'])) {
                 switch ($args['@MetadataStrategy']) {
-                    case \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy::class:
-                        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\HeadersMetadataStrategy();
-                    case \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\InstructionFileMetadataStrategy::class:
-                        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
+                    case HeadersMetadataStrategy::class:
+                        return new HeadersMetadataStrategy();
+                    case InstructionFileMetadataStrategy::class:
+                        return new InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
                     default:
                         throw new \InvalidArgumentException('Could not match the' . ' specified string in "MetadataStrategy" to a' . ' predefined strategy.');
                 }
@@ -44,7 +44,7 @@ trait CryptoParamsTrait
                 throw new \InvalidArgumentException('The metadata strategy that' . ' was passed to "MetadataStrategy" was unrecognized.');
             }
         } elseif ($instructionFileSuffix) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Crypto\InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
+            return new InstructionFileMetadataStrategy($this->client, $instructionFileSuffix);
         }
         return null;
     }

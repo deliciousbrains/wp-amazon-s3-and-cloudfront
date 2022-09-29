@@ -5,13 +5,13 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api;
 /**
  * Represents a map shape.
  */
-class MapShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
+class MapShape extends Shape
 {
     /** @var Shape */
     private $value;
     /** @var Shape */
     private $key;
-    public function __construct(array $definition, \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\ShapeMap $shapeMap)
+    public function __construct(array $definition, ShapeMap $shapeMap)
     {
         $definition['type'] = 'map';
         parent::__construct($definition, $shapeMap);
@@ -26,7 +26,7 @@ class MapShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
             if (!isset($this->definition['value'])) {
                 throw new \RuntimeException('No value specified');
             }
-            $this->value = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape::create($this->definition['value'], $this->shapeMap);
+            $this->value = Shape::create($this->definition['value'], $this->shapeMap);
         }
         return $this->value;
     }
@@ -36,7 +36,7 @@ class MapShape extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape
     public function getKey()
     {
         if (!$this->key) {
-            $this->key = isset($this->definition['key']) ? \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape::create($this->definition['key'], $this->shapeMap) : new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape(['type' => 'string'], $this->shapeMap);
+            $this->key = isset($this->definition['key']) ? Shape::create($this->definition['key'], $this->shapeMap) : new Shape(['type' => 'string'], $this->shapeMap);
         }
         return $this->key;
     }

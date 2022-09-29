@@ -32,10 +32,10 @@ class PutObjectUrlMiddleware
     {
         $this->nextHandler = $nextHandler;
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface $command, \DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface $request = null)
+    public function __invoke(CommandInterface $command, RequestInterface $request = null)
     {
         $next = $this->nextHandler;
-        return $next($command, $request)->then(function (\DeliciousBrains\WP_Offload_Media\Aws3\Aws\ResultInterface $result) use($command) {
+        return $next($command, $request)->then(function (ResultInterface $result) use($command) {
             $name = $command->getName();
             switch ($name) {
                 case 'PutObject':

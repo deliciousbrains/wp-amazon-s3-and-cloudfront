@@ -1,5 +1,7 @@
 <?php
 
+namespace DeliciousBrains\WP_Offload_Media\Gcp;
+
 /*
  * Copyright 2014 Google Inc.
  *

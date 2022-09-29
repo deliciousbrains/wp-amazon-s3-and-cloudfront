@@ -41,14 +41,14 @@ use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
  * $config = $promise->wait();
  * </code>
  */
-class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AbstractConfigurationProvider implements \DeliciousBrains\WP_Offload_Media\Aws3\Aws\ConfigurationProviderInterface
+class ConfigurationProvider extends AbstractConfigurationProvider implements ConfigurationProviderInterface
 {
     const ENV_ENDPOINTS_TYPE = 'AWS_S3_US_EAST_1_REGIONAL_ENDPOINT';
     const INI_ENDPOINTS_TYPE = 's3_us_east_1_regional_endpoint';
     const DEFAULT_ENDPOINTS_TYPE = 'legacy';
     public static $cacheKey = 'aws_s3_us_east_1_regional_endpoint_config';
-    protected static $interfaceClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\ConfigurationInterface::class;
-    protected static $exceptionClass = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Exception\ConfigurationException::class;
+    protected static $interfaceClass = ConfigurationInterface::class;
+    protected static $exceptionClass = ConfigurationException::class;
     /**
      * Create a default config provider that first checks for environment
      * variables, then checks for a specified profile in the environment-defined
@@ -67,11 +67,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function defaultProvider(array $config = [])
     {
         $configProviders = [self::env()];
-        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != false) {
+        if (!isset($config['use_aws_shared_config_files']) || $config['use_aws_shared_config_files'] != \false) {
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
         if (isset($config['s3_us_east_1_regional_endpoint']) && $config['s3_us_east_1_regional_endpoint'] instanceof CacheInterface) {
             return self::cache($memo, $config['s3_us_east_1_regional_endpoint'], self::$cacheKey);
         }
@@ -81,9 +81,9 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     {
         return function () {
             // Use config from environment variables, if available
-            $endpointsType = getenv(self::ENV_ENDPOINTS_TYPE);
+            $endpointsType = \getenv(self::ENV_ENDPOINTS_TYPE);
             if (!empty($endpointsType)) {
-                return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Configuration($endpointsType));
+                return Promise\Create::promiseFor(new Configuration($endpointsType));
             }
             return self::reject('Could not find environment variable config' . ' in ' . self::ENV_ENDPOINTS_TYPE);
         };
@@ -103,13 +103,13 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function ini($profile = null, $filename = null)
     {
         $filename = $filename ?: self::getDefaultConfigFilename();
-        $profile = $profile ?: (getenv(self::ENV_PROFILE) ?: 'default');
+        $profile = $profile ?: (\getenv(self::ENV_PROFILE) ?: 'default');
         return function () use($profile, $filename) {
-            if (!is_readable($filename)) {
+            if (!@\is_readable($filename)) {
                 return self::reject("Cannot read configuration from {$filename}");
             }
-            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, true);
-            if ($data === false) {
+            $data = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\parse_ini_file($filename, \true);
+            if ($data === \false) {
                 return self::reject("Invalid config file: {$filename}");
             }
             if (!isset($data[$profile])) {
@@ -118,7 +118,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
             if (!isset($data[$profile][self::INI_ENDPOINTS_TYPE])) {
                 return self::reject("Required S3 regional endpoint config values \n                    not present in INI profile '{$profile}' ({$filename})");
             }
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Configuration($data[$profile][self::INI_ENDPOINTS_TYPE]));
+            return Promise\Create::promiseFor(new Configuration($data[$profile][self::INI_ENDPOINTS_TYPE]));
         };
     }
     /**
@@ -129,7 +129,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
     public static function fallback()
     {
         return function () {
-            return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\promise_for(new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Configuration(self::DEFAULT_ENDPOINTS_TYPE));
+            return Promise\Create::promiseFor(new Configuration(self::DEFAULT_ENDPOINTS_TYPE));
         };
     }
     /**
@@ -142,7 +142,7 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
      */
     public static function unwrap($config)
     {
-        if (is_callable($config)) {
+        if (\is_callable($config)) {
             $config = $config();
         }
         if ($config instanceof Promise\PromiseInterface) {
@@ -151,11 +151,11 @@ class ConfigurationProvider extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\A
         if ($config instanceof ConfigurationInterface) {
             return $config;
         }
-        if (is_string($config)) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Configuration($config);
+        if (\is_string($config)) {
+            return new Configuration($config);
         }
-        if (is_array($config) && isset($config['endpoints_type'])) {
-            return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\RegionalEndpoint\Configuration($config['endpoints_type']);
+        if (\is_array($config) && isset($config['endpoints_type'])) {
+            return new Configuration($config['endpoints_type']);
         }
         throw new \InvalidArgumentException('Not a valid S3 regional endpoint ' . 'configuration argument.');
     }

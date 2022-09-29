@@ -48,7 +48,7 @@ class MockHandler implements \Countable
      */
     public static function createWithMiddleware(array $queue = null, callable $onFulfilled = null, callable $onRejected = null) : HandlerStack
     {
-        return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
+        return HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
     }
     /**
      * The passed in value must be an array of
@@ -65,10 +65,10 @@ class MockHandler implements \Countable
         $this->onRejected = $onRejected;
         if ($queue) {
             // array_values included for BC
-            $this->append(...array_values($queue));
+            $this->append(...\array_values($queue));
         }
     }
-    public function __invoke(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options) : PromiseInterface
+    public function __invoke(RequestInterface $request, array $options) : PromiseInterface
     {
         if (!$this->queue) {
             throw new \OutOfBoundsException('Mock queue is empty');
@@ -87,13 +87,13 @@ class MockHandler implements \Countable
                 $options['on_headers']($response);
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
-                $response = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException($msg, $request, $response, $e);
+                $response = new RequestException($msg, $request, $response, $e);
             }
         }
         if (\is_callable($response)) {
             $response = $response($request, $options);
         }
-        $response = $response instanceof \Throwable ? \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($response) : \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::promiseFor($response);
+        $response = $response instanceof \Throwable ? P\Create::rejectionFor($response) : P\Create::promiseFor($response);
         return $response->then(function (?ResponseInterface $value) use($request, $options) {
             $this->invokeStats($request, $options, $value);
             if ($this->onFulfilled) {
@@ -116,7 +116,7 @@ class MockHandler implements \Countable
             if ($this->onRejected) {
                 ($this->onRejected)($reason);
             }
-            return \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Promise\Create::rejectionFor($reason);
+            return P\Create::rejectionFor($reason);
         });
     }
     /**
@@ -131,7 +131,7 @@ class MockHandler implements \Countable
             if ($value instanceof ResponseInterface || $value instanceof \Throwable || $value instanceof PromiseInterface || \is_callable($value)) {
                 $this->queue[] = $value;
             } else {
-                throw new \TypeError('Expected a Response, Promise, Throwable or callable. Found ' . \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Utils::describeType($value));
+                throw new \TypeError('Expected a Response, Promise, Throwable or callable. Found ' . Utils::describeType($value));
             }
         }
     }
@@ -163,11 +163,11 @@ class MockHandler implements \Countable
     /**
      * @param mixed $reason Promise or reason.
      */
-    private function invokeStats(\DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface $request, array $options, \DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface $response = null, $reason = null) : void
+    private function invokeStats(RequestInterface $request, array $options, ResponseInterface $response = null, $reason = null) : void
     {
         if (isset($options['on_stats'])) {
             $transferTime = $options['transfer_time'] ?? 0;
-            $stats = new \DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\TransferStats($request, $response, $transferTime, $reason);
+            $stats = new TransferStats($request, $response, $transferTime, $reason);
             $options['on_stats']($stats);
         }
     }

@@ -28,7 +28,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\google\protobuf\Struct;
  * @deprecated
  * @codeCoverageIgnore
  */
-class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Codec\PhpArray
+class PhpArray extends Protobuf\Codec\PhpArray
 {
     /**
      * @var array
@@ -44,7 +44,7 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
      * @param bool $useCamelCase Whether to convert key casing to camelCase.
      * }
      */
-    public function __construct(array $customFilters = [], $useCamelCase = true)
+    public function __construct(array $customFilters = [], $useCamelCase = \true)
     {
         $this->customFilters = $customFilters;
         $this->useCamelCase = $useCamelCase;
@@ -54,14 +54,14 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
      * With this approach we are able to transform the response with minimal
      * overhead.
      */
-    protected function encodeMessage(\DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Message $message)
+    protected function encodeMessage(Protobuf\Message $message)
     {
-        $descriptor = \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf::getRegistry()->getDescriptor($message);
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
         $data = [];
         foreach ($descriptor->getFields() as $tag => $field) {
             $empty = !$message->_has($tag);
             if ($field->isRequired() && $empty) {
-                throw new \UnexpectedValueException(sprintf('Message %s\'s field tag %s(%s) is required but has no value', get_class($message), $tag, $field->getName()));
+                throw new \UnexpectedValueException(\sprintf('Message %s\'s field tag %s(%s) is required but has no value', \get_class($message), $tag, $field->getName()));
             }
             if ($empty) {
                 continue;
@@ -70,7 +70,7 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
             $v = $message->_get($tag);
             if ($field->isRepeated()) {
                 // Make sure the value is an array of values
-                $v = is_array($v) ? $v : array($v);
+                $v = \is_array($v) ? $v : array($v);
                 $arr = [];
                 foreach ($v as $k => $vv) {
                     // Skip nullified repeated values
@@ -79,7 +79,7 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
                     }
                     $filteredValue = $this->filterValue($vv, $field);
                     if ($this->isKeyValueMessage($vv)) {
-                        $arr[key($filteredValue)] = current($filteredValue);
+                        $arr[\key($filteredValue)] = \current($filteredValue);
                     } else {
                         $arr[$k] = $filteredValue;
                     }
@@ -90,7 +90,7 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
             }
             $key = $this->useCamelCase ? $this->toCamelCase($key) : $key;
             if (isset($this->customFilters[$key])) {
-                $v = call_user_func($this->customFilters[$key], $v);
+                $v = \call_user_func($this->customFilters[$key], $v);
             }
             $data[$key] = $v;
         }
@@ -100,22 +100,22 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
      * Borrowed heavily from {@see DrSlump\Protobuf\Codec\PhpArray::decodeMessage()}.
      * The only addition here is converting camel case field names to snake case.
      */
-    protected function decodeMessage(\DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Message $message, $data)
+    protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
-        $descriptor = \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf::getRegistry()->getDescriptor($message);
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
         foreach ($data as $key => $v) {
             // Get the field by tag number or name
             $field = $this->useTagNumber ? $descriptor->getField($key) : $descriptor->getFieldByName($this->toSnakeCase($key));
             // Unknown field found
             if (!$field) {
-                $unknown = new \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Codec\PhpArray\Unknown($key, gettype($v), $v);
+                $unknown = new Protobuf\Codec\PhpArray\Unknown($key, \gettype($v), $v);
                 $message->addUnknown($unknown);
                 continue;
             }
             if ($field->isRepeated()) {
                 // Make sure the value is an array of values
-                $v = is_array($v) && is_int(key($v)) ? $v : array($v);
+                $v = \is_array($v) && \is_int(\key($v)) ? $v : array($v);
                 foreach ($v as $k => $vv) {
                     $v[$k] = $this->filterValue($vv, $field);
                 }
@@ -126,9 +126,9 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
         }
         return $message;
     }
-    protected function filterValue($value, \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Field $field)
+    protected function filterValue($value, Protobuf\Field $field)
     {
-        if (trim($field->getReference(), '\\') === \DeliciousBrains\WP_Offload_Media\Gcp\google\protobuf\NullValue::class) {
+        if (\trim($field->getReference(), '\\') === NullValue::class) {
             return null;
         }
         if ($value instanceof Protobuf\Message) {
@@ -171,14 +171,14 @@ class PhpArray extends \DeliciousBrains\WP_Offload_Media\Gcp\DrSlump\Protobuf\Co
     }
     private function toSnakeCase($key)
     {
-        return strtolower(preg_replace(['/([a-z\\d])([A-Z])/', '/([^_])([A-Z][a-z])/'], '$1_$2', $key));
+        return \strtolower(\preg_replace(['/([a-z\\d])([A-Z])/', '/([^_])([A-Z][a-z])/'], '$1_$2', $key));
     }
     private function toCamelCase($key)
     {
-        return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))));
+        return \lcfirst(\str_replace(' ', '', \ucwords(\str_replace('_', ' ', $key))));
     }
     private function isKeyValueMessage($value)
     {
-        return property_exists($value, 'key') && property_exists($value, 'value');
+        return \property_exists($value, 'key') && \property_exists($value, 'value');
     }
 }

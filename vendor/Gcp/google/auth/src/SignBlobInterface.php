@@ -31,7 +31,7 @@ interface SignBlobInterface extends FetchAuthTokenInterface
      *        `false`.
      * @return string The resulting signature. Value should be base64-encoded.
      */
-    public function signBlob($stringToSign, $forceOpenssl = false);
+    public function signBlob($stringToSign, $forceOpenssl = \false);
     /**
      * Returns the current Client Name.
      *

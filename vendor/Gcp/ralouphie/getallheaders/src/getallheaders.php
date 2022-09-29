@@ -1,5 +1,7 @@
 <?php
 
+namespace DeliciousBrains\WP_Offload_Media\Gcp;
+
 if (!\function_exists('getallheaders')) {
     /**
      * Get all HTTP header key/values as an associative array for the current request.

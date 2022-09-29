@@ -27,7 +27,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\Configuratio
  * @method \Aws\Result getSessionToken(array $args = [])
  * @method \GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
  */
-class StsClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient
+class StsClient extends AwsClient
 {
     /**
      * {@inheritdoc}
@@ -51,7 +51,7 @@ class StsClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient
     public function __construct(array $args)
     {
         if (!isset($args['sts_regional_endpoints']) || $args['sts_regional_endpoints'] instanceof CacheInterface) {
-            $args['sts_regional_endpoints'] = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints\ConfigurationProvider::defaultProvider($args);
+            $args['sts_regional_endpoints'] = ConfigurationProvider::defaultProvider($args);
         }
         parent::__construct($args);
     }
@@ -63,12 +63,12 @@ class StsClient extends \DeliciousBrains\WP_Offload_Media\Aws3\Aws\AwsClient
      * @return Credentials
      * @throws \InvalidArgumentException if the result contains no credentials
      */
-    public function createCredentials(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result $result)
+    public function createCredentials(Result $result)
     {
         if (!$result->hasKey('Credentials')) {
             throw new \InvalidArgumentException('Result contains no credentials');
         }
         $c = $result['Credentials'];
-        return new \DeliciousBrains\WP_Offload_Media\Aws3\Aws\Credentials\Credentials($c['AccessKeyId'], $c['SecretAccessKey'], isset($c['SessionToken']) ? $c['SessionToken'] : null, isset($c['Expiration']) && $c['Expiration'] instanceof \DateTimeInterface ? (int) $c['Expiration']->format('U') : null);
+        return new Credentials($c['AccessKeyId'], $c['SecretAccessKey'], isset($c['SessionToken']) ? $c['SessionToken'] : null, isset($c['Expiration']) && $c['Expiration'] instanceof \DateTimeInterface ? (int) $c['Expiration']->format('U') : null);
     }
 }

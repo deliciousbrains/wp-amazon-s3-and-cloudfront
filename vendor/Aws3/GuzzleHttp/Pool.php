@@ -17,7 +17,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  * "request_options" array that should be merged on top of any existing
  * options, and the function MUST then return a wait-able promise.
  */
-class Pool implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface
+class Pool implements PromisorInterface
 {
     /** @var EachPromise */
     private $each;
@@ -31,7 +31,7 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\
      *     - fulfilled: (callable) Function to invoke when a request completes.
      *     - rejected: (callable) Function to invoke when a request is rejected.
      */
-    public function __construct(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $config = [])
+    public function __construct(ClientInterface $client, $requests, array $config = [])
     {
         // Backwards compatibility.
         if (isset($config['pool_size'])) {
@@ -50,14 +50,14 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     (yield $key => $client->sendAsync($rfn, $opts));
-                } elseif (is_callable($rfn)) {
+                } elseif (\is_callable($rfn)) {
                     (yield $key => $rfn($opts));
                 } else {
                     throw new \InvalidArgumentException('Each value yielded by ' . 'the iterator must be a Psr7\\Http\\Message\\RequestInterface ' . 'or a callable that returns a promise that fulfills ' . 'with a Psr7\\Message\\Http\\ResponseInterface object.');
                 }
             }
         };
-        $this->each = new \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\EachPromise($requests(), $config);
+        $this->each = new EachPromise($requests(), $config);
     }
     /**
      * Get promise
@@ -85,14 +85,14 @@ class Pool implements \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\
      *               in the same order that the requests were sent.
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(\DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\ClientInterface $client, $requests, array $options = [])
+    public static function batch(ClientInterface $client, $requests, array $options = [])
     {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);
         $pool = new static($client, $requests, $options);
         $pool->promise()->wait();
-        ksort($res);
+        \ksort($res);
         return $res;
     }
     /**
