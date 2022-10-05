@@ -13,22 +13,18 @@
 
 #s3-actions.postbox .s3-details .misc-pub-section {
     clear: both;
-    float: left;
-    width: 100%;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
 }
 
 #s3-actions.postbox .s3-details .misc-pub-section .s3-key {
-    float: left;
-    width: 20%;
+    display: inline-block;
     white-space: nowrap;
 }
 
 #s3-actions.postbox .s3-details .misc-pub-section .s3-value {
+    display: inline-block;
     font-weight: bold;
-    float: left;
-    width: 80%;
 }
 
 #s3-actions.postbox .s3-details .misc-pub-section .s3-value .more-info {

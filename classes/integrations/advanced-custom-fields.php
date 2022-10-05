@@ -2,8 +2,10 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Integrations;
 
+use AS3CF_Error;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use DeliciousBrains\WP_Offload_Media\Items\Remove_Local_Handler;
+use Exception;
 use WP_Error;
 
 class Advanced_Custom_Fields extends Integration {
@@ -176,7 +178,13 @@ class Advanced_Custom_Fields extends Integration {
 	 * @return array
 	 */
 	public function acf_load_config( array $config ): array {
-		$filtered_config = unserialize( $this->as3cf->filter_local->filter_post( serialize( $config ) ) );
+		try {
+			$filtered_config = unserialize( $this->as3cf->filter_local->filter_post( serialize( $config ) ) );
+		} catch ( Exception $e ) {
+			AS3CF_Error::log( __METHOD__ . ' ' . $e->getMessage() );
+
+			return $config;
+		}
 
 		return is_array( $filtered_config ) ? $filtered_config : $config;
 	}
