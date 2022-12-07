@@ -3,7 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws;
 
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\AwsException;
-use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Coroutine;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\RejectedPromise;
 /**
@@ -63,9 +63,12 @@ class Waiter implements PromisorInterface
             throw new \InvalidArgumentException('The provided "before" callback is not callable.');
         }
     }
+    /**
+     * @return Coroutine
+     */
     public function promise()
     {
-        return Promise\Coroutine::of(function () {
+        return Coroutine::of(function () {
             $name = $this->config['operation'];
             for ($state = 'retry', $attempt = 1; $state === 'retry'; $attempt++) {
                 // Execute the operation.

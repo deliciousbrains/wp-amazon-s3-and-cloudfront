@@ -466,8 +466,11 @@ abstract class Storage_Provider extends Provider {
 	 */
 	public static function get_regions() {
 		$regions = apply_filters( static::$provider_key_name . '_get_regions', static::$regions ); // Backwards compatibility, e.g. 'aws_get_regions'.
+		$regions = apply_filters( 'as3cf_' . static::$provider_key_name . '_get_regions', $regions );
 
-		return apply_filters( 'as3cf_' . static::$provider_key_name . '_get_regions', $regions );
+		natsort( $regions );
+
+		return $regions;
 	}
 
 	/**

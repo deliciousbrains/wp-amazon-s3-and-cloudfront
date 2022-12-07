@@ -45,7 +45,7 @@ class StorageClient
 {
     use ArrayTrait;
     use ClientTrait;
-    const VERSION = '1.26.3';
+    const VERSION = '1.28.1';
     const FULL_CONTROL_SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
     const READ_ONLY_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only';
     const READ_WRITE_SCOPE = 'https://www.googleapis.com/auth/devstorage.read_write';
@@ -229,11 +229,14 @@ class StorageClient
      *     @type array $defaultObjectAcl Default access controls to apply to new
      *           objects when no ACL is provided.
      *     @type array|Lifecycle $lifecycle The bucket's lifecycle configuration.
-     *     @type string $location The location of the bucket. A dual-region can
-     *           be specified as a string (e.g. "US-CENTRAL1+US-WEST1"). For
-     *           more information, see
+     *     @type string $location The location of the bucket. If specifying
+     *           a dual-region, the `customPlacementConfig` property should be
+     *           set in conjunction. For more information, see
      *           [Bucket Locations](https://cloud.google.com/storage/docs/locations).
      *           **Defaults to** `"US"`.
+     *     @type array $customPlacementConfig The bucket's dual regions. For more
+     *           information, see
+     *           [Bucket Locations](https://cloud.google.com/storage/docs/locations).
      *     @type array $logging The bucket's logging configuration, which
      *           defines the destination bucket and optional name prefix for the
      *           current bucket's logs.

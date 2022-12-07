@@ -33,13 +33,13 @@ use DeliciousBrains\WP_Offload_Media\Providers\Storage\DigitalOcean_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\GCP_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Null_Provider;
 use DeliciousBrains\WP_Offload_Media\Providers\Storage\Storage_Provider;
-use DeliciousBrains\WP_Offload_Media\Upgrades\Clear_Postmeta_Cache;
-use DeliciousBrains\WP_Offload_Media\Upgrades\Fix_Broken_Item_Extra_Data;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Clear_Postmeta_Cache;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Content_Replace_URLs;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_EDD_Replace_URLs;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_File_Sizes;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Filter_Post_Excerpt;
+use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Fix_Broken_Item_Extra_Data;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Item_Extra_Data;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Items_Table;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Upgrade_Meta_WP_Error;
@@ -236,21 +236,24 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$this->set_storage_provider();
 		$this->set_delivery_provider();
 
-		// Bundled SDK may require AWS setup before data migrations.
+		// Bundled SDK may require AWS setup before any use.
 		$this->handle_aws_access_key_migration();
 
-		new Upgrade_Region_Meta( $this );
-		new Upgrade_File_Sizes( $this );
-		new Upgrade_Meta_WP_Error( $this );
-		new Upgrade_Content_Replace_URLs( $this );
-		new Upgrade_EDD_Replace_URLs( $this );
-		new Upgrade_Filter_Post_Excerpt( $this );
-		new Upgrade_WPOS3_To_AS3CF( $this );
-		new Upgrade_Items_Table( $this );
-		new Upgrade_Tools_Errors( $this );
-		new Upgrade_Item_Extra_Data( $this );
-		new Clear_Postmeta_Cache( $this );
-		new Fix_Broken_Item_Extra_Data( $this );
+		// Only instantiate upgrade classes on single site installs or primary subsite.
+		if ( ! is_multisite() || is_network_admin() || $this->is_current_blog( get_current_blog_id() ) ) {
+			new Upgrade_Region_Meta( $this );
+			new Upgrade_File_Sizes( $this );
+			new Upgrade_Meta_WP_Error( $this );
+			new Upgrade_Content_Replace_URLs( $this );
+			new Upgrade_EDD_Replace_URLs( $this );
+			new Upgrade_Filter_Post_Excerpt( $this );
+			new Upgrade_WPOS3_To_AS3CF( $this );
+			new Upgrade_Items_Table( $this );
+			new Upgrade_Tools_Errors( $this );
+			new Upgrade_Item_Extra_Data( $this );
+			new Upgrade_Clear_Postmeta_Cache( $this );
+			new Upgrade_Fix_Broken_Item_Extra_Data( $this );
+		}
 
 		// Plugin setup
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
@@ -268,7 +271,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		add_action( 'as3cf_init', array( $this, 'enable_integrations' ) );
 
 		// Register REST API Endpoints once everything has been initialized.
-		add_action( 'as3cf_init', array( $this, 'register_api_endpoints' ) );
+		if ( is_admin() || AS3CF_Utils::is_rest_api() ) {
+			add_action( 'as3cf_init', array( $this, 'register_api_endpoints' ) );
+		}
 
 		// Content filtering
 		$this->filter_local    = new AS3CF_Local_To_S3( $this );
@@ -784,7 +789,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			in_array( $key, array( 'copy-to-s3', 'serve-from-s3' ) ) &&
 			! isset( $settings[ $key ] )
 		) {
-			return '1';
+			return true;
 		}
 
 		// Some settings should default to true on first set up.
@@ -808,7 +813,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 
 		// Turn on object versioning by default
 		if ( 'object-versioning' == $key && ! isset( $settings['object-versioning'] ) ) {
-			return '1';
+			return true;
 		}
 
 		// Default object prefix
@@ -821,18 +826,20 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			return get_option( 'uploads_use_yearmonth_folders' );
 		}
 
-		// Default enable object prefix - enabled unless path is empty
+		// Default enable object prefix - enabled unless path is empty in db (defined empty can be intentional, legacy).
 		if ( 'enable-object-prefix' == $key ) {
-			if ( isset( $settings['enable-object-prefix'] ) && '0' == $settings['enable-object-prefix'] ) {
-				return 0;
+			if ( isset( $settings['enable-object-prefix'] ) && empty( $settings['enable-object-prefix'] ) ) {
+				return false;
 			}
 
-			if ( isset( $settings['object-prefix'] ) && '' == trim( $settings['object-prefix'] ) ) {
-				if ( false === $this->get_defined_setting( 'object-prefix', false ) ) {
-					return 0;
-				}
+			if (
+				isset( $settings['object-prefix'] ) &&
+				empty( $settings['object-prefix'] ) &&
+				false === $this->get_defined_setting( 'object-prefix', false )
+			) {
+				return false;
 			} else {
-				return 1;
+				return true;
 			}
 		}
 
@@ -2174,6 +2181,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				'create_bucket_name_short'              => __( 'Bucket name too short.', 'amazon-s3-and-cloudfront' ),
 				'create_bucket_name_long'               => __( 'Bucket name too long.', 'amazon-s3-and-cloudfront' ),
 				'create_bucket_invalid_chars'           => __( 'Invalid character. Bucket names can contain lowercase letters, numbers, periods and hyphens.', 'amazon-s3-and-cloudfront' ),
+				'select_bucket_invalid_chars'           => __( 'Invalid character. Bucket names can contain lowercase letters, numbers, periods and hyphens. Legacy buckets may also include uppercase letters and underscores.', 'amazon-s3-and-cloudfront' ),
 				'no_bucket_selected'                    => __( 'No bucket selected.', 'amazon-s3-and-cloudfront' ),
 				'defined_region_invalid'                => __( 'Invalid region defined in wp-config.', 'amazon-s3-and-cloudfront' ),
 				'save_bucket_error'                     => __( 'Error saving bucket', 'amazon-s3-and-cloudfront' ),
@@ -3385,20 +3393,23 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 		$output .= "\r\n";
 
-		$output .= 'Copy Files to Bucket: ';
+		$output .= 'Offload Media: ';
 		$output .= $this->on_off( 'copy-to-s3' );
 		$output .= "\r\n";
-		$output .= 'Enable Path: ';
+		$output .= 'Remove Local Media: ';
+		$output .= $this->on_off( 'remove-local-file' );
+		$output .= "\r\n";
+		$output .= 'Enable Add Prefix to Bucket Path: ';
 		$output .= $this->on_off( 'enable-object-prefix' );
 		$output .= "\r\n";
 		$value  = $this->get_setting( 'object-prefix' );
-		$output .= 'Custom Path: ';
+		$output .= 'Custom Prefix for Bucket Path: ';
 		$output .= empty( $value ) ? '(none)' : esc_html( $value );
 		$output .= "\r\n";
-		$output .= 'Use Year/Month: ';
+		$output .= 'Add Year & Month to Bucket Path: ';
 		$output .= $this->on_off( 'use-yearmonth-folders' );
 		$output .= "\r\n";
-		$output .= 'Object Versioning: ';
+		$output .= 'Add Object Version to Bucket Path: ';
 		$output .= $this->on_off( 'object-versioning' );
 		$output .= "\r\n";
 		$output .= "\r\n";
@@ -3411,12 +3422,12 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		} else {
 			$output .= 'Delivery Provider: ' . $delivery_provider::get_provider_service_name();
 			$output .= "\r\n";
-			$output .= 'Rewrite Media URLs: ';
+			$output .= 'Deliver Offloaded Media: ';
 			$output .= $this->on_off( 'serve-from-s3' );
 			$output .= "\r\n";
 
 			if ( $delivery_provider::delivery_domain_allowed() ) {
-				$output .= 'Enable Custom Domain (CNAME): ';
+				$output .= 'Use Custom Domain Name (CNAME): ';
 				$output .= $this->on_off( 'enable-delivery-domain' );
 				$output .= "\r\n";
 				$value  = $this->get_setting( 'delivery-domain' );
@@ -3426,18 +3437,18 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			}
 
 			if ( $delivery_provider::use_signed_urls_key_file_allowed() ) {
-				$output .= 'Enable Signed URLs: ';
+				$output .= 'Serve Private Media: ';
 				$output .= $this->on_off( 'enable-signed-urls' );
 				$output .= "\r\n";
-				$output .= 'Signed URLs Key ID Set: ';
+				$output .= 'Public Key ID Set: ';
 				$output .= $delivery_provider->get_signed_urls_key_id() ? 'Yes' : 'No';
 				$output .= "\r\n";
 				$value  = $this->get_setting( 'signed-urls-key-file-path' );
-				$output .= 'Signed URLs Key File Path: ';
+				$output .= 'Private Key File Path: ';
 				$output .= empty( $value ) ? '(none)' : esc_html( $value );
 				$output .= "\r\n";
 				$value  = $this->get_setting( 'signed-urls-object-prefix' );
-				$output .= 'Signed URLs Private Prefix: ';
+				$output .= 'Private Bucket Path: ';
 				$output .= empty( $value ) ? '(none)' : esc_html( $value );
 				$output .= "\r\n";
 			}
@@ -3448,10 +3459,6 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$output .= $this->on_off( 'force-https' );
 		$output .= "\r\n";
 		$output .= "\r\n";
-
-		$output .= 'Remove Files From Server: ';
-		$output .= $this->on_off( 'remove-local-file' );
-		$output .= "\r\n\r\n";
 
 		$output = apply_filters( 'as3cf_diagnostic_info', $output );
 		if ( has_action( 'as3cf_diagnostic_info' ) ) {
@@ -3798,21 +3805,41 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 *
 	 * @param bool $skip_transient Whether to force database query and skip transient, default false
 	 * @param bool $force          Whether to force database query and skip static cache, implies $skip_transient, default false
+	 * @param int  $forced_blog_id Optional, restrict the force count of media items to only this blog ID, ignored if $force is false
 	 *
 	 * @return array
 	 */
-	public function media_counts( $skip_transient = false, $force = false ) {
+	public function media_counts( bool $skip_transient = false, bool $force = false, int $forced_blog_id = 0 ): array {
 		if ( $skip_transient || false === ( $attachment_counts = get_site_transient( 'as3cf_attachment_counts' ) ) ) {
 			$table_prefixes = $this->get_all_blog_table_prefixes();
 			$total          = 0;
 			$offloaded      = 0;
 			$not_offloaded  = 0;
 
+			$skip_transient_requested = $skip_transient;
+			$force_requested          = $force;
+
 			foreach ( $table_prefixes as $blog_id => $table_prefix ) {
 				$this->switch_to_blog( $blog_id );
 
+				$skip_transient = $skip_transient_requested;
+				$force          = $force_requested;
+
+				// If forcing an update from database for a specific blog ID, get others from transients if possible.
+				if ( $force && ! empty( $forced_blog_id ) && $forced_blog_id !== $blog_id ) {
+					$skip_transient = false;
+					$force          = false;
+				}
+
+				// If on a multisite and not doing a blog specific update, don't skip transient.
+				if ( is_multisite() && $skip_transient && empty( $forced_blog_id ) ) {
+					$skip_transient = false;
+					$force          = false;
+				}
+
+				/** @var Item $class */
 				foreach ( $this->get_source_type_classes() as $class ) {
-					$counts        = $class::count_items( $skip_transient, $force );
+					$counts        = $class::count_items( $skip_transient, $force, $blog_id );
 					$total         += $counts['total'];
 					$offloaded     += $counts['offloaded'];
 					$not_offloaded += $counts['not_offloaded'];
@@ -3827,7 +3854,21 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 				'not_offloaded' => $not_offloaded,
 			);
 
-			set_site_transient( 'as3cf_attachment_counts', $attachment_counts, 5 * MINUTE_IN_SECONDS );
+			ksort( $attachment_counts );
+
+			/**
+			 * How many minutes should total media counts be cached?
+			 *
+			 * Min: 1 minute.
+			 * Max: 1 day (1440 minutes).
+			 *
+			 * @param int $minutes Default 5.
+			 *
+			 * @retun int
+			 */
+			$timeout = min( max( 1, (int) apply_filters( 'as3cf_media_counts_timeout', 5 ) ), 1440 );
+
+			set_site_transient( 'as3cf_attachment_counts', $attachment_counts, $timeout * MINUTE_IN_SECONDS );
 		}
 
 		return $attachment_counts;
@@ -4268,9 +4309,9 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	 * Migrate access keys from AWS database setting to this plugin's settings record and raise any notices.
 	 */
 	private function handle_aws_access_key_migration() {
-		add_action( 'aws_access_key_form_header', array( $this, 'handle_aws_access_key_form_header' ) );
-
 		if ( is_plugin_active( 'amazon-web-services/amazon-web-services.php' ) ) {
+			add_action( 'aws_access_key_form_header', array( $this, 'handle_aws_access_key_form_header' ) );
+
 			$message = sprintf(
 				__( '<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of version 1.6 of WP Offload Media, the <a href="%1$s">Amazon Web Services</a> plugin is no longer required. We have removed the dependency by bundling a small portion of the AWS SDK into WP Offload Media. As long as none of your other active plugins or themes depend on the Amazon Web Services plugin, it should be safe to deactivate and delete it. %2$s', 'amazon-s3-and-cloudfront' ),
 				'https://wordpress.org/plugins/amazon-web-services/',

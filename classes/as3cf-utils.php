@@ -139,7 +139,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string
 		 */
 		public static function reduce_url( $url ) {
-			$parts = self::parse_url( $url );
+			$parts = static::parse_url( $url );
 			$host  = isset( $parts['host'] ) ? $parts['host'] : '';
 			$port  = isset( $parts['port'] ) ? ":{$parts['port']}" : '';
 			$path  = isset( $parts['path'] ) ? $parts['path'] : '';
@@ -180,12 +180,12 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Is the string a URL?
 		 *
-		 * @param string $string
+		 * @param mixed $string
 		 *
 		 * @return bool
 		 */
-		public static function is_url( $string ) {
-			if ( ! is_string( $string ) ) {
+		public static function is_url( $string ): bool {
+			if ( empty( $string ) || ! is_string( $string ) ) {
 				return false;
 			}
 
@@ -833,6 +833,34 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return $output;
+		}
+
+		/**
+		 * Is the given string a usable URL?
+		 *
+		 * We need URLs that include at least a domain and filename with extension
+		 * for URL rewriting in either direction.
+		 *
+		 * @param mixed $url
+		 *
+		 * @return bool
+		 */
+		public static function usable_url( $url ): bool {
+			if ( ! static::is_url( $url ) ) {
+				return false;
+			}
+
+			$parts = static::parse_url( $url );
+
+			if (
+				empty( $parts['host'] ) ||
+				empty( $parts['path'] ) ||
+				! pathinfo( $parts['path'], PATHINFO_EXTENSION )
+			) {
+				return false;
+			}
+
+			return true;
 		}
 
 		/**

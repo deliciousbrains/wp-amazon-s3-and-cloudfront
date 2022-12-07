@@ -3696,7 +3696,7 @@
     }
 
     // (121:3) {#if extra}
-    function create_if_block_1$b(ctx) {
+    function create_if_block_1$c(ctx) {
     	let p;
 
     	const block = {
@@ -3717,7 +3717,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$b.name,
+    		id: create_if_block_1$c.name,
     		type: "if",
     		source: "(121:3) {#if extra}",
     		ctx
@@ -3774,7 +3774,7 @@
     	let if_block1 = (/*heading*/ ctx[8] || /*dismissible*/ ctx[9] || /*expandable*/ ctx[12]) && create_if_block_2$8(ctx);
     	const default_slot_template = /*#slots*/ ctx[23].default;
     	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[22], null);
-    	let if_block2 = /*extra*/ ctx[11] && create_if_block_1$b(ctx);
+    	let if_block2 = /*extra*/ ctx[11] && create_if_block_1$c(ctx);
     	let if_block3 = /*linksHTML*/ ctx[16] && create_if_block$p(ctx);
     	const details_slot_template = /*#slots*/ ctx[23].details;
     	const details_slot = create_slot(details_slot_template, ctx, /*$$scope*/ ctx[22], get_details_slot_context);
@@ -3887,7 +3887,7 @@
     				if (if_block2) {
     					if_block2.p(ctx, dirty);
     				} else {
-    					if_block2 = create_if_block_1$b(ctx);
+    					if_block2 = create_if_block_1$c(ctx);
     					if_block2.c();
     					if_block2.m(div0, t3);
     				}
@@ -4498,7 +4498,7 @@
     }
 
     // (13:3) {#if !notification.dismissed && (notification.only_show_on_tab === tab || notification.only_show_on_tab === tabParent || !notification.only_show_on_tab)}
-    function create_if_block_1$a(ctx) {
+    function create_if_block_1$b(ctx) {
     	let switch_instance;
     	let switch_instance_anchor;
     	let current;
@@ -4581,7 +4581,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$a.name,
+    		id: create_if_block_1$b.name,
     		type: "if",
     		source: "(13:3) {#if !notification.dismissed && (notification.only_show_on_tab === tab || notification.only_show_on_tab === tabParent || !notification.only_show_on_tab)}",
     		ctx
@@ -4672,7 +4672,7 @@
     	let first;
     	let if_block_anchor;
     	let current;
-    	let if_block = !/*notification*/ ctx[4].dismissed && (/*notification*/ ctx[4].only_show_on_tab === /*tab*/ ctx[1] || /*notification*/ ctx[4].only_show_on_tab === /*tabParent*/ ctx[2] || !/*notification*/ ctx[4].only_show_on_tab) && create_if_block_1$a(ctx);
+    	let if_block = !/*notification*/ ctx[4].dismissed && (/*notification*/ ctx[4].only_show_on_tab === /*tab*/ ctx[1] || /*notification*/ ctx[4].only_show_on_tab === /*tabParent*/ ctx[2] || !/*notification*/ ctx[4].only_show_on_tab) && create_if_block_1$b(ctx);
 
     	const block = {
     		key: key_1,
@@ -4700,7 +4700,7 @@
     						transition_in(if_block, 1);
     					}
     				} else {
-    					if_block = create_if_block_1$a(ctx);
+    					if_block = create_if_block_1$b(ctx);
     					if_block.c();
     					transition_in(if_block, 1);
     					if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -5603,7 +5603,7 @@
     }
 
     // (18:3) {#if progress && index < (displayItems.length - 1)}
-    function create_if_block_1$9(ctx) {
+    function create_if_block_1$a(ctx) {
     	let li;
     	let img;
     	let img_src_value;
@@ -5637,7 +5637,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$9.name,
+    		id: create_if_block_1$a.name,
     		type: "if",
     		source: "(18:3) {#if progress && index < (displayItems.length - 1)}",
     		ctx
@@ -5658,7 +5658,7 @@
     			$$inline: true
     		});
 
-    	let if_block = /*progress*/ ctx[2] && /*index*/ ctx[8] < /*displayItems*/ ctx[3].length - 1 && create_if_block_1$9(ctx);
+    	let if_block = /*progress*/ ctx[2] && /*index*/ ctx[8] < /*displayItems*/ ctx[3].length - 1 && create_if_block_1$a(ctx);
 
     	const block = {
     		c: function create() {
@@ -5683,7 +5683,7 @@
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
-    					if_block = create_if_block_1$9(ctx);
+    					if_block = create_if_block_1$a(ctx);
     					if_block.c();
     					if_block.m(if_block_anchor.parentNode, if_block_anchor);
     				}
@@ -7836,7 +7836,7 @@
     }
 
     // (81:4) {#if helpURL}
-    function create_if_block_1$8(ctx) {
+    function create_if_block_1$9(ctx) {
     	let helpbutton;
     	let current;
 
@@ -7878,7 +7878,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$8.name,
+    		id: create_if_block_1$9.name,
     		type: "if",
     		source: "(81:4) {#if helpURL}",
     		ctx
@@ -7916,7 +7916,7 @@
     		});
 
     	let if_block1 = /*storageProvider*/ ctx[9] && create_if_block_3$4(ctx);
-    	const if_block_creators_1 = [create_if_block_1$8, create_if_block_2$6];
+    	const if_block_creators_1 = [create_if_block_1$9, create_if_block_2$6];
     	const if_blocks_1 = [];
 
     	function select_block_type_2(ctx, dirty) {
@@ -10095,7 +10095,7 @@
     }
 
     // (126:1) {#if toggleName}
-    function create_if_block_1$7(ctx) {
+    function create_if_block_1$8(ctx) {
     	let settingnotifications;
     	let current;
 
@@ -10133,7 +10133,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$7.name,
+    		id: create_if_block_1$8.name,
     		type: "if",
     		source: "(126:1) {#if toggleName}",
     		ctx
@@ -10220,7 +10220,7 @@
     		});
 
     	let if_block0 = /*input*/ ctx[10] && create_if_block_2$5(ctx);
-    	let if_block1 = /*toggleName*/ ctx[7] && create_if_block_1$7(ctx);
+    	let if_block1 = /*toggleName*/ ctx[7] && create_if_block_1$8(ctx);
     	let if_block2 = /*textName*/ ctx[8] && create_if_block$e(ctx);
     	const default_slot_template = /*#slots*/ ctx[22].default;
     	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[25], null);
@@ -10313,7 +10313,7 @@
     						transition_in(if_block1, 1);
     					}
     				} else {
-    					if_block1 = create_if_block_1$7(ctx);
+    					if_block1 = create_if_block_1$8(ctx);
     					if_block1.c();
     					transition_in(if_block1, 1);
     					if_block1.m(div, t3);
@@ -11728,7 +11728,7 @@
 
     	binding_callbacks.push(() => bind(settingspaneloption, 'toggle', settingspaneloption_toggle_binding));
     	binding_callbacks.push(() => bind(settingspaneloption, 'text', settingspaneloption_text_binding));
-    	let if_block = /*$delivery_provider*/ ctx[1].use_signed_urls_key_file_allowed && /*$settings*/ ctx[2]["enable-delivery-domain"] && create_if_block_1$6(ctx);
+    	let if_block = /*$delivery_provider*/ ctx[1].use_signed_urls_key_file_allowed && /*$settings*/ ctx[2]["enable-delivery-domain"] && create_if_block_1$7(ctx);
 
     	const block = {
     		c: function create() {
@@ -11771,7 +11771,7 @@
     						transition_in(if_block, 1);
     					}
     				} else {
-    					if_block = create_if_block_1$6(ctx);
+    					if_block = create_if_block_1$7(ctx);
     					if_block.c();
     					transition_in(if_block, 1);
     					if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -11817,7 +11817,7 @@
     }
 
     // (51:2) {#if $delivery_provider.use_signed_urls_key_file_allowed && $settings[ "enable-delivery-domain" ]}
-    function create_if_block_1$6(ctx) {
+    function create_if_block_1$7(ctx) {
     	let settingspaneloption;
     	let updating_toggle;
     	let current;
@@ -11886,7 +11886,7 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$6.name,
+    		id: create_if_block_1$7.name,
     		type: "if",
     		source: "(51:2) {#if $delivery_provider.use_signed_urls_key_file_allowed && $settings[ \\\"enable-delivery-domain\\\" ]}",
     		ctx
@@ -13661,8 +13661,8 @@
     /* src/amazon-s3-and-cloudfront/ui/components/MediaPage.svelte generated by Svelte v3.49.0 */
     const file$r = "src/amazon-s3-and-cloudfront/ui/components/MediaPage.svelte";
 
-    // (44:0) <Page {name} on:routeEvent>
-    function create_default_slot$c(ctx) {
+    // (52:1) {#if render}
+    function create_if_block_1$6(ctx) {
     	let notifications;
     	let t0;
     	let div;
@@ -13688,7 +13688,7 @@
     	subnav = new SubNav({
     			props: {
     				name: /*name*/ ctx[0],
-    				items: /*items*/ ctx[3],
+    				items: /*items*/ ctx[4],
     				subpage: true
     			},
     			$$inline: true
@@ -13697,7 +13697,7 @@
     	subpages = new SubPages({
     			props: {
     				name: /*name*/ ctx[0],
-    				routes: /*routes*/ ctx[2]
+    				routes: /*routes*/ ctx[3]
     			},
     			$$inline: true
     		});
@@ -13720,7 +13720,7 @@
     			create_component(urlpreview.$$.fragment);
     			attr_dev(div, "id", "provider-warning-notifications");
     			attr_dev(div, "class", "notifications wrapper");
-    			add_location(div, file$r, 45, 1, 1496);
+    			add_location(div, file$r, 53, 2, 1633);
     		},
     		m: function mount(target, anchor) {
     			mount_component(notifications, target, anchor);
@@ -13784,16 +13784,82 @@
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_default_slot$c.name,
-    		type: "slot",
-    		source: "(44:0) <Page {name} on:routeEvent>",
+    		id: create_if_block_1$6.name,
+    		type: "if",
+    		source: "(52:1) {#if render}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (55:0) {#if sidebar}
+    // (51:0) <Page {name} on:routeEvent>
+    function create_default_slot$c(ctx) {
+    	let if_block_anchor;
+    	let current;
+    	let if_block = /*render*/ ctx[2] && create_if_block_1$6(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*render*/ ctx[2]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+
+    					if (dirty & /*render*/ 4) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block_1$6(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot$c.name,
+    		type: "slot",
+    		source: "(51:0) <Page {name} on:routeEvent>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (64:0) {#if sidebar && render}
     function create_if_block$a(ctx) {
     	let switch_instance;
     	let switch_instance_anchor;
@@ -13863,7 +13929,7 @@
     		block,
     		id: create_if_block$a.name,
     		type: "if",
-    		source: "(55:0) {#if sidebar}",
+    		source: "(64:0) {#if sidebar && render}",
     		ctx
     	});
 
@@ -13886,10 +13952,10 @@
     			$$inline: true
     		});
 
-    	page.$on("routeEvent", /*routeEvent_handler*/ ctx[5]);
-    	let if_block = /*sidebar*/ ctx[1] && create_if_block$a(ctx);
+    	page.$on("routeEvent", /*routeEvent_handler*/ ctx[6]);
+    	let if_block = /*sidebar*/ ctx[1] && /*render*/ ctx[2] && create_if_block$a(ctx);
     	footer = new Footer({ $$inline: true });
-    	footer.$on("routeEvent", /*routeEvent_handler_1*/ ctx[6]);
+    	footer.$on("routeEvent", /*routeEvent_handler_1*/ ctx[7]);
 
     	const block = {
     		c: function create() {
@@ -13914,17 +13980,17 @@
     			const page_changes = {};
     			if (dirty & /*name*/ 1) page_changes.name = /*name*/ ctx[0];
 
-    			if (dirty & /*$$scope, name*/ 513) {
+    			if (dirty & /*$$scope, name, render*/ 2053) {
     				page_changes.$$scope = { dirty, ctx };
     			}
 
     			page.$set(page_changes);
 
-    			if (/*sidebar*/ ctx[1]) {
+    			if (/*sidebar*/ ctx[1] && /*render*/ ctx[2]) {
     				if (if_block) {
     					if_block.p(ctx, dirty);
 
-    					if (dirty & /*sidebar*/ 2) {
+    					if (dirty & /*sidebar, render*/ 6) {
     						transition_in(if_block, 1);
     					}
     				} else {
@@ -13977,15 +14043,19 @@
     }
 
     function instance$t($$self, $$props, $$invalidate) {
+    	let $is_plugin_setup;
     	let $strings;
+    	validate_store(is_plugin_setup, 'is_plugin_setup');
+    	component_subscribe($$self, is_plugin_setup, $$value => $$invalidate(8, $is_plugin_setup = $$value));
     	validate_store(strings, 'strings');
-    	component_subscribe($$self, strings, $$value => $$invalidate(7, $strings = $$value));
+    	component_subscribe($$self, strings, $$value => $$invalidate(9, $strings = $$value));
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('MediaPage', slots, []);
     	let { name = "media" } = $$props;
     	let { params = {} } = $$props;
     	const _params = params; // Stops compiler warning for params;
     	let sidebar = null;
+    	let render = false;
 
     	if (hasContext('sidebar')) {
     		sidebar = getContext('sidebar');
@@ -14010,6 +14080,12 @@
     		}
     	];
 
+    	onMount(() => {
+    		if ($is_plugin_setup) {
+    			$$invalidate(2, render = true);
+    		}
+    	});
+
     	const writable_props = ['name', 'params'];
 
     	Object.keys($$props).forEach(key => {
@@ -14026,13 +14102,15 @@
 
     	$$self.$$set = $$props => {
     		if ('name' in $$props) $$invalidate(0, name = $$props.name);
-    		if ('params' in $$props) $$invalidate(4, params = $$props.params);
+    		if ('params' in $$props) $$invalidate(5, params = $$props.params);
     	};
 
     	$$self.$capture_state = () => ({
     		getContext,
     		hasContext,
+    		onMount,
     		setContext,
+    		is_plugin_setup,
     		settingsLocked,
     		strings,
     		Page,
@@ -14048,28 +14126,40 @@
     		params,
     		_params,
     		sidebar,
+    		render,
     		routes,
     		items,
+    		$is_plugin_setup,
     		$strings
     	});
 
     	$$self.$inject_state = $$props => {
     		if ('name' in $$props) $$invalidate(0, name = $$props.name);
-    		if ('params' in $$props) $$invalidate(4, params = $$props.params);
+    		if ('params' in $$props) $$invalidate(5, params = $$props.params);
     		if ('sidebar' in $$props) $$invalidate(1, sidebar = $$props.sidebar);
+    		if ('render' in $$props) $$invalidate(2, render = $$props.render);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [name, sidebar, routes, items, params, routeEvent_handler, routeEvent_handler_1];
+    	return [
+    		name,
+    		sidebar,
+    		render,
+    		routes,
+    		items,
+    		params,
+    		routeEvent_handler,
+    		routeEvent_handler_1
+    	];
     }
 
     class MediaPage extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$t, create_fragment$t, safe_not_equal, { name: 0, params: 4 });
+    		init(this, options, instance$t, create_fragment$t, safe_not_equal, { name: 0, params: 5 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -19209,7 +19299,7 @@
     			if (if_block) if_block.c();
     			attr_dev(label, "class", "input-label");
     			attr_dev(label, "for", "bucket-name");
-    			add_location(label, file$f, 286, 7, 7764);
+    			add_location(label, file$f, 286, 7, 7863);
     			attr_dev(input, "type", "text");
     			attr_dev(input, "id", "bucket-name");
     			attr_dev(input, "class", "bucket-name");
@@ -19218,11 +19308,11 @@
     			attr_dev(input, "placeholder", input_placeholder_value = /*$strings*/ ctx[14].enter_bucket_name_placeholder);
     			input.disabled = /*disabled*/ ctx[11];
     			toggle_class(input, "disabled", /*disabled*/ ctx[11]);
-    			add_location(input, file$f, 287, 7, 7847);
+    			add_location(input, file$f, 287, 7, 7946);
     			attr_dev(div0, "class", "new-bucket-details flex-column");
-    			add_location(div0, file$f, 285, 6, 7712);
+    			add_location(div0, file$f, 285, 6, 7811);
     			attr_dev(div1, "class", "flex-row align-center row");
-    			add_location(div1, file$f, 284, 5, 7666);
+    			add_location(div1, file$f, 284, 5, 7765);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div1, anchor);
@@ -19354,15 +19444,15 @@
 
     			attr_dev(label, "class", "input-label");
     			attr_dev(label, "for", "region");
-    			add_location(label, file$f, 301, 8, 8221);
+    			add_location(label, file$f, 301, 8, 8320);
     			attr_dev(select, "name", "region");
     			attr_dev(select, "id", "region");
     			select.disabled = /*newRegionDisabled*/ ctx[12];
     			if (/*newRegion*/ ctx[8] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[26].call(select));
     			toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
-    			add_location(select, file$f, 304, 8, 8367);
+    			add_location(select, file$f, 304, 8, 8466);
     			attr_dev(div, "class", "region flex-column");
-    			add_location(div, file$f, 300, 7, 8180);
+    			add_location(div, file$f, 300, 7, 8279);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -19473,7 +19563,7 @@
     			option.__value = option_value_value = /*regionKey*/ ctx[39];
     			option.value = option.__value;
     			option.selected = option_selected_value = /*regionKey*/ ctx[39] === /*newRegion*/ ctx[8];
-    			add_location(option, file$f, 306, 10, 8594);
+    			add_location(option, file$f, 306, 10, 8693);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, option, anchor);
@@ -19656,13 +19746,13 @@
 
     			attr_dev(label, "class", "input-label");
     			attr_dev(label, "for", "list-region");
-    			add_location(label, file$f, 321, 6, 8913);
+    			add_location(label, file$f, 321, 6, 9012);
     			attr_dev(select, "name", "region");
     			attr_dev(select, "id", "list-region");
     			select.disabled = /*newRegionDisabled*/ ctx[12];
     			if (/*newRegion*/ ctx[8] === void 0) add_render_callback(() => /*select_change_handler_1*/ ctx[27].call(select));
     			toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
-    			add_location(select, file$f, 324, 6, 9058);
+    			add_location(select, file$f, 324, 6, 9157);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, label, anchor);
@@ -19774,7 +19864,7 @@
     			option.__value = option_value_value = /*regionKey*/ ctx[39];
     			option.value = option.__value;
     			option.selected = option_selected_value = /*regionKey*/ ctx[39] === /*newRegion*/ ctx[8];
-    			add_location(option, file$f, 326, 8, 9286);
+    			add_location(option, file$f, 326, 8, 9385);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, option, anchor);
@@ -19848,7 +19938,7 @@
     			ul = element("ul");
     			if_block.c();
     			attr_dev(ul, "class", "bucket-list");
-    			add_location(ul, file$f, 338, 6, 9539);
+    			add_location(ul, file$f, 338, 6, 9638);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, ul, anchor);
@@ -19898,9 +19988,9 @@
     			li = element("li");
     			p = element("p");
     			t = text(t_value);
-    			add_location(p, file$f, 357, 9, 10304);
+    			add_location(p, file$f, 357, 9, 10403);
     			attr_dev(li, "class", "row nothing-found");
-    			add_location(li, file$f, 356, 8, 10264);
+    			add_location(li, file$f, 356, 8, 10363);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -20007,7 +20097,7 @@
     			if (!src_url_equal(img.src, img_src_value = /*$urls*/ ctx[15].assets + 'img/icon/licence-checked.svg')) attr_dev(img, "src", img_src_value);
     			attr_dev(img, "type", "image/svg+xml");
     			attr_dev(img, "alt", img_alt_value = /*$strings*/ ctx[14].selected_desc);
-    			add_location(img, file$f, 351, 11, 10064);
+    			add_location(img, file$f, 351, 11, 10163);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, img, anchor);
@@ -20072,12 +20162,12 @@
     			attr_dev(img, "class", "icon bucket");
     			if (!src_url_equal(img.src, img_src_value = /*$urls*/ ctx[15].assets + 'img/icon/bucket.svg')) attr_dev(img, "src", img_src_value);
     			attr_dev(img, "alt", img_alt_value = /*$strings*/ ctx[14].bucket_icon);
-    			add_location(img, file$f, 348, 10, 9882);
-    			add_location(p, file$f, 349, 10, 9990);
+    			add_location(img, file$f, 348, 10, 9981);
+    			add_location(p, file$f, 349, 10, 10089);
     			attr_dev(li, "class", "row");
     			attr_dev(li, "data-bucket-name", li_data_bucket_name_value = /*bucket*/ ctx[44].Name);
     			toggle_class(li, "active", /*newBucket*/ ctx[2] === /*bucket*/ ctx[44].Name);
-    			add_location(li, file$f, 341, 9, 9635);
+    			add_location(li, file$f, 341, 9, 9734);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -20205,7 +20295,7 @@
     			p = element("p");
     			t = text(/*invalidBucketNameMessage*/ ctx[10]);
     			attr_dev(p, "class", "input-error");
-    			add_location(p, file$f, 364, 5, 10439);
+    			add_location(p, file$f, 364, 5, 10538);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -20329,7 +20419,7 @@
     			if (if_block2) if_block2.c();
     			if_block2_anchor = empty();
     			attr_dev(div, "class", "flex-row align-center row radio-btns");
-    			add_location(div, file$f, 278, 4, 7304);
+    			add_location(div, file$f, 278, 4, 7403);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -20621,7 +20711,7 @@
     			option.__value = option_value_value = /*regionKey*/ ctx[39];
     			option.value = option.__value;
     			option.selected = option_selected_value = /*regionKey*/ ctx[39] === /*newRegion*/ ctx[8];
-    			add_location(option, file$f, 394, 8, 11601);
+    			add_location(option, file$f, 394, 8, 11700);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, option, anchor);
@@ -20668,7 +20758,7 @@
     			p = element("p");
     			t = text(/*invalidBucketNameMessage*/ ctx[10]);
     			attr_dev(p, "class", "input-error");
-    			add_location(p, file$f, 405, 5, 11824);
+    			add_location(p, file$f, 405, 5, 11923);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -20781,7 +20871,7 @@
     			if_block_anchor = empty();
     			attr_dev(label0, "class", "input-label");
     			attr_dev(label0, "for", "new-bucket-name");
-    			add_location(label0, file$f, 375, 6, 10827);
+    			add_location(label0, file$f, 375, 6, 10926);
     			attr_dev(input, "type", "text");
     			attr_dev(input, "id", "new-bucket-name");
     			attr_dev(input, "class", "bucket-name");
@@ -20790,22 +20880,22 @@
     			attr_dev(input, "placeholder", input_placeholder_value = /*$strings*/ ctx[14].enter_bucket_name_placeholder);
     			input.disabled = /*disabled*/ ctx[11];
     			toggle_class(input, "disabled", /*disabled*/ ctx[11]);
-    			add_location(input, file$f, 376, 6, 10913);
+    			add_location(input, file$f, 376, 6, 11012);
     			attr_dev(div0, "class", "new-bucket-details flex-column");
-    			add_location(div0, file$f, 374, 5, 10776);
+    			add_location(div0, file$f, 374, 5, 10875);
     			attr_dev(label1, "class", "input-label");
     			attr_dev(label1, "for", "new-region");
-    			add_location(label1, file$f, 389, 6, 11230);
+    			add_location(label1, file$f, 389, 6, 11329);
     			attr_dev(select, "name", "region");
     			attr_dev(select, "id", "new-region");
     			select.disabled = /*newRegionDisabled*/ ctx[12];
     			if (/*newRegion*/ ctx[8] === void 0) add_render_callback(() => /*select_change_handler_2*/ ctx[30].call(select));
     			toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
-    			add_location(select, file$f, 392, 6, 11374);
+    			add_location(select, file$f, 392, 6, 11473);
     			attr_dev(div1, "class", "region flex-column");
-    			add_location(div1, file$f, 388, 5, 11191);
+    			add_location(div1, file$f, 388, 5, 11290);
     			attr_dev(div2, "class", "flex-row align-center row");
-    			add_location(div2, file$f, 373, 4, 10731);
+    			add_location(div2, file$f, 373, 4, 10830);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div2, anchor);
@@ -21380,7 +21470,7 @@
     			return $strings.defined_region_invalid;
     		}
 
-    		const bucketNamePattern = /[^a-z0-9.-]/;
+    		const bucketNamePattern = source === "new" ? /[^a-z0-9.\-]/ : /[^a-zA-Z0-9.\-_]/;
     		let message = "";
 
     		if (bucket.trim().length < 1) {
@@ -21390,7 +21480,9 @@
     				message = $strings.create_bucket_name_missing;
     			}
     		} else if (true === bucketNamePattern.test(bucket)) {
-    			message = $strings.create_bucket_invalid_chars;
+    			message = source === "new"
+    			? $strings.create_bucket_invalid_chars
+    			: $strings.select_bucket_invalid_chars;
     		} else if (bucket.length < 3) {
     			message = $strings.create_bucket_name_short;
     		} else if (bucket.length > 63) {

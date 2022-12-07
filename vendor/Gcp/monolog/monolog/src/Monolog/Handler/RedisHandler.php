@@ -29,14 +29,14 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
  */
 class RedisHandler extends AbstractProcessingHandler
 {
-    /** @var \Predis\Client|\Redis */
+    /** @var \Predis\Client<\Predis\Client>|\Redis */
     private $redisClient;
     /** @var string */
     private $redisKey;
     /** @var int */
     protected $capSize;
     /**
-     * @param \Predis\Client|\Redis $redis   The redis instance
+     * @param \Predis\Client<\Predis\Client>|\Redis $redis   The redis instance
      * @param string                $key     The key name to push records to
      * @param int                   $capSize Number of entries to limit list size to, 0 = unlimited
      */

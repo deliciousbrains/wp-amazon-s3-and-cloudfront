@@ -23,7 +23,7 @@ class ArnParser
      */
     public static function isArn($string)
     {
-        return \strpos($string, 'arn:') === 0;
+        return $string !== null && \strpos($string, 'arn:') === 0;
     }
     /**
      * Parses a string and returns an instance of ArnInterface. Returns a

@@ -97,7 +97,7 @@ class CredentialProvider
                 }
             }
         }
-        return self::memoize(\call_user_func_array('self::chain', \array_values($defaultChain)));
+        return self::memoize(\call_user_func_array([CredentialProvider::class, 'chain'], \array_values($defaultChain)));
     }
     /**
      * Create a credential provider function from a set of static credentials.

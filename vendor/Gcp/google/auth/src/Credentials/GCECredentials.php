@@ -302,7 +302,7 @@ class GCECredentials extends CredentialsLoader implements SignBlobInterface, Pro
             $this->hasCheckedOnGce = \true;
         }
         if (!$this->isOnGce) {
-            return array();
+            return [];
             // return an empty array with no access token
         }
         $response = $this->getFromMetadata($httpHandler, $this->tokenUri);

@@ -74,7 +74,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback($config);
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['endpoint_discovery']) && $config['endpoint_discovery'] instanceof CacheInterface) {
             return self::cache($memo, $config['endpoint_discovery'], self::$cacheKey);
         }
@@ -156,7 +156,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
                 return self::reject("'{$profile}' not found in config file");
             }
             if (!isset($data[$profile]['endpoint_discovery_enabled'])) {
-                return self::reject("Required endpoint discovery config values \n                    not present in INI profile '{$profile}' ({$filename})");
+                return self::reject("Required endpoint discovery config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             return Promise\Create::promiseFor(new Configuration($data[$profile]['endpoint_discovery_enabled'], $cacheLimit));
         };

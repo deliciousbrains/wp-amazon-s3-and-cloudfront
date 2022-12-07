@@ -23,6 +23,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Swift;
  * @author Gyula Sallai
  *
  * @phpstan-import-type Record from \Monolog\Logger
+ * @deprecated Since Monolog 2.6. Use SymfonyMailerHandler instead.
  */
 class SwiftMailerHandler extends MailHandler
 {
@@ -39,6 +40,7 @@ class SwiftMailerHandler extends MailHandler
     public function __construct(\DeliciousBrains\WP_Offload_Media\Gcp\Swift_Mailer $mailer, $message, $level = Logger::ERROR, bool $bubble = \true)
     {
         parent::__construct($level, $bubble);
+        @\trigger_error('The SwiftMailerHandler is deprecated since Monolog 2.6. Use SymfonyMailerHandler instead.', \E_USER_DEPRECATED);
         $this->mailer = $mailer;
         $this->messageTemplate = $message;
     }

@@ -9,7 +9,7 @@ namespace DeliciousBrains\WP_Offload_Media\Upgrades;
  *
  * @since 2.6.1
  */
-class Clear_Postmeta_Cache extends Upgrade {
+class Upgrade_Clear_Postmeta_Cache extends Upgrade {
 
 	/**
 	 * @var int
@@ -50,7 +50,7 @@ class Clear_Postmeta_Cache extends Upgrade {
 	protected function upgrade_item( $item ) {
 		global $wpdb;
 
-		$sql = "DELETE FROM wp_postmeta WHERE meta_key = 'amazonS3_cache' AND meta_id <= %d LIMIT {$this->batch_limit}";
+		$sql = "DELETE FROM {$item}postmeta WHERE meta_key = 'amazonS3_cache' AND meta_id <= %d LIMIT {$this->batch_limit}";
 		$wpdb->query( $wpdb->prepare( $sql, array( $this->session[ $item ] ) ) );
 
 		return true;

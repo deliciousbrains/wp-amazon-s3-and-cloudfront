@@ -9,4 +9,3 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\Testing\ProtobufGPBEmpty
 \DeliciousBrains\WP_Offload_Media\Gcp\SebastianBergmann\Comparator\Factory::getInstance()->register(new MessageAwareArrayComparator());
 \DeliciousBrains\WP_Offload_Media\Gcp\SebastianBergmann\Comparator\Factory::getInstance()->register(new ProtobufMessageComparator());
 \DeliciousBrains\WP_Offload_Media\Gcp\SebastianBergmann\Comparator\Factory::getInstance()->register(new ProtobufGPBEmptyComparator());
-PHPUnit_Framework_Error_Deprecated::$enabled = \false;

@@ -76,7 +76,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['retries']) && $config['retries'] instanceof CacheInterface) {
             return self::cache($memo, $config['retries'], self::$cacheKey);
         }

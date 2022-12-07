@@ -73,7 +73,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['defaultsMode']) && $config['defaultsMode'] instanceof CacheInterface) {
             return self::cache($memo, $config['defaultsMode'], self::$cacheKey);
         }

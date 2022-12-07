@@ -2,6 +2,7 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3;
 
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromiseInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
@@ -45,6 +46,9 @@ class ObjectUploader implements PromisorInterface
         $this->acl = $acl;
         $this->options = $options + self::$defaults;
     }
+    /**
+     * @return PromiseInterface
+     */
     public function promise()
     {
         /** @var int $mup_threshold */

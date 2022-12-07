@@ -163,6 +163,10 @@ abstract class Upgrade {
 		$this->error_threshold          = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_error_threshold', 20 );
 		$this->max_items_processable    = apply_filters( 'as3cf_update_' . $this->upgrade_name . '_batch_size', $this->size_limit );
 
+		if ( $this->is_completed() ) {
+			return;
+		}
+
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );  // phpcs:ignore WordPress.WP.CronInterval
 		add_action( $this->cron_hook, array( $this, 'do_upgrade' ) );
 

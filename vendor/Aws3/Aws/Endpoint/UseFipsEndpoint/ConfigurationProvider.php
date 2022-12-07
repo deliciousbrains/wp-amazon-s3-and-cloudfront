@@ -70,7 +70,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback($config['region']);
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['use_fips_endpoint']) && $config['use_fips_endpoint'] instanceof CacheInterface) {
             return self::cache($memo, $config['use_fips_endpoint'], self::$cacheKey);
         }
@@ -121,7 +121,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
                 return self::reject("'{$profile}' not found in config file");
             }
             if (!isset($data[$profile][self::INI_USE_FIPS_ENDPOINT])) {
-                return self::reject("Required use fips endpoint config values \n                    not present in INI profile '{$profile}' ({$filename})");
+                return self::reject("Required use fips endpoint config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             // INI_SCANNER_NORMAL parses false-y values as an empty string
             if ($data[$profile][self::INI_USE_FIPS_ENDPOINT] === "") {

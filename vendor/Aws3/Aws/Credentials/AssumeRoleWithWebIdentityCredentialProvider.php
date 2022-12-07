@@ -75,7 +75,7 @@ class AssumeRoleWithWebIdentityCredentialProvider
             $result = null;
             while ($result == null) {
                 try {
-                    $token = @\is_readable($this->tokenFile) ? \file_get_contents($this->tokenFile) : \false;
+                    $token = @\file_get_contents($this->tokenFile);
                     if (\false === $token) {
                         \clearstatcache(\true, \dirname($this->tokenFile) . "/" . \readlink($this->tokenFile));
                         \clearstatcache(\true, \dirname($this->tokenFile) . "/" . \dirname(\readlink($this->tokenFile)));
@@ -83,11 +83,11 @@ class AssumeRoleWithWebIdentityCredentialProvider
                         if (!@\is_readable($this->tokenFile)) {
                             throw new CredentialsException("Unreadable tokenfile at location {$this->tokenFile}");
                         }
-                        $token = \file_get_contents($this->tokenFile);
+                        $token = @\file_get_contents($this->tokenFile);
                     }
                     if (empty($token)) {
                         if ($this->tokenFileReadAttempts < $this->retries) {
-                            \sleep(\pow(1.2, $this->tokenFileReadAttempts));
+                            \sleep((int) \pow(1.2, $this->tokenFileReadAttempts));
                             $this->tokenFileReadAttempts++;
                             continue;
                         }
@@ -102,7 +102,7 @@ class AssumeRoleWithWebIdentityCredentialProvider
                 } catch (AwsException $e) {
                     if ($e->getAwsErrorCode() == 'InvalidIdentityToken') {
                         if ($this->authenticationAttempts < $this->retries) {
-                            \sleep(\pow(1.2, $this->authenticationAttempts));
+                            \sleep((int) \pow(1.2, $this->authenticationAttempts));
                         } else {
                             throw new CredentialsException("InvalidIdentityToken, retries exhausted");
                         }

@@ -104,7 +104,7 @@ class AuthTokenMiddleware
      */
     private function fetchToken()
     {
-        $auth_tokens = $this->fetcher->fetchAuthToken($this->httpHandler);
+        $auth_tokens = (array) $this->fetcher->fetchAuthToken($this->httpHandler);
         if (\array_key_exists('access_token', $auth_tokens)) {
             // notify the callback if applicable
             if ($this->tokenCallback) {

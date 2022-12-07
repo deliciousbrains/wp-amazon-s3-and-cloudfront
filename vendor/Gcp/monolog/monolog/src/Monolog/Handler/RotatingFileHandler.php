@@ -154,7 +154,7 @@ class RotatingFileHandler extends StreamHandler
     protected function getGlobPattern() : string
     {
         $fileInfo = \pathinfo($this->filename);
-        $glob = \str_replace(['{filename}', '{date}'], [$fileInfo['filename'], '[0-9][0-9][0-9][0-9]*'], $fileInfo['dirname'] . '/' . $this->filenameFormat);
+        $glob = \str_replace(['{filename}', '{date}'], [$fileInfo['filename'], \str_replace(['Y', 'y', 'm', 'd'], ['[0-9][0-9][0-9][0-9]', '[0-9][0-9]', '[0-9][0-9]', '[0-9][0-9]'], $this->dateFormat)], $fileInfo['dirname'] . '/' . $this->filenameFormat);
         if (isset($fileInfo['extension'])) {
             $glob .= '.' . $fileInfo['extension'];
         }

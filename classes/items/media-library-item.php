@@ -35,9 +35,6 @@ class Media_Library_Item extends Item {
 	 */
 	protected static $source_fk = 'id';
 
-	private static $attachment_counts      = array();
-	private static $attachment_count_skips = array();
-
 	/**
 	 * Item constructor.
 	 *
@@ -209,6 +206,10 @@ class Media_Library_Item extends Item {
 			);
 
 			$extra_info['objects'][ $size ] = $new_object;
+
+			if ( empty( $original_filename ) && 'full-orig' === $size ) {
+				$original_filename = $new_object['source_file'];
+			}
 		}
 
 		return new self(
@@ -278,16 +279,6 @@ class Media_Library_Item extends Item {
 		}
 
 		return $url;
-	}
-
-	/**
-	 * (Re)initialize the static cache used for speeding up queries.
-	 */
-	public static function init_cache() {
-		parent::init_cache();
-
-		self::$attachment_counts      = array();
-		self::$attachment_count_skips = array();
 	}
 
 	/**
@@ -378,54 +369,6 @@ class Media_Library_Item extends Item {
 		global $as3cf;
 
 		return $as3cf->get_acl_for_intermediate_size( $this->source_id(), $object_key, $bucket, $this );
-	}
-
-	/**
-	 * Count attachments on current site.
-	 *
-	 * @param bool $skip_transient Whether to force database query and skip transient, default false
-	 * @param bool $force          Whether to force database query and skip static cache, implies $skip_transient, default false
-	 *
-	 * @return array Keys:
-	 *               total: Total media count for site (current blog id)
-	 *               offloaded: Count of offloaded media for site (current blog id)
-	 *               not_offloaded: Difference between total and offloaded
-	 */
-	public static function count_items( $skip_transient = false, $force = false ) {
-		global $wpdb;
-
-		$transient_key = 'as3cf_' . get_current_blog_id() . '_attachment_counts';
-
-		// Been here, done it, won't do it again!
-		// Well, unless this is the first transient skip for the prefix, then we need to do it.
-		if ( ! $force && ! empty( self::$attachment_counts[ $transient_key ] ) && ( false === $skip_transient || ! empty( self::$attachment_count_skips[ $transient_key ] ) ) ) {
-			return self::$attachment_counts[ $transient_key ];
-		}
-
-		if ( $force || $skip_transient || false === ( $result = get_site_transient( $transient_key ) ) ) {
-			// Simplified media counting
-			$sql              = "SELECT count(id) FROM {$wpdb->posts} WHERE post_type = 'attachment'";
-			$attachment_count = (int) $wpdb->get_var( $sql );
-
-			$sql             = 'SELECT count(id) FROM ' . static::items_table() . ' WHERE source_type = %s';
-			$sql             = $wpdb->prepare( $sql, static::$source_type );
-			$offloaded_count = (int) $wpdb->get_var( $sql );
-
-			$result['total']         = $attachment_count;
-			$result['offloaded']     = $offloaded_count;
-			$result['not_offloaded'] = max( $attachment_count - $offloaded_count, 0 );
-
-			ksort( $result );
-
-			set_site_transient( $transient_key, $result, 5 * MINUTE_IN_SECONDS );
-
-			// One way or another we've skipped the transient.
-			self::$attachment_count_skips[ $transient_key ] = true;
-		}
-
-		self::$attachment_counts[ $transient_key ] = $result;
-
-		return $result;
 	}
 
 	/**
@@ -715,6 +658,42 @@ class Media_Library_Item extends Item {
 		}
 
 		return $paths;
+	}
+
+	/**
+	 * Returns the transient key to be used for storing blog specific item counts.
+	 *
+	 * @param int $blog_id
+	 *
+	 * @return string
+	 */
+	public static function transient_key_for_item_counts( int $blog_id ): string {
+		return 'as3cf_' . absint( $blog_id ) . '_attachment_counts';
+	}
+
+	/**
+	 * Count total, offloaded and not offloaded items on current site.
+	 *
+	 * @return array Keys:
+	 *               total: Total media count for site (current blog id)
+	 *               offloaded: Count of offloaded media for site (current blog id)
+	 *               not_offloaded: Difference between total and offloaded
+	 */
+	protected static function get_item_counts(): array {
+		global $wpdb;
+
+		$sql              = "SELECT count(id) FROM {$wpdb->posts} WHERE post_type = 'attachment'";
+		$attachment_count = (int) $wpdb->get_var( $sql );
+
+		$sql             = 'SELECT count(id) FROM ' . static::items_table() . ' WHERE source_type = %s';
+		$sql             = $wpdb->prepare( $sql, static::$source_type );
+		$offloaded_count = (int) $wpdb->get_var( $sql );
+
+		return array(
+			'total'         => $attachment_count,
+			'offloaded'     => $offloaded_count,
+			'not_offloaded' => max( $attachment_count - $offloaded_count, 0 ),
+		);
 	}
 
 	/*

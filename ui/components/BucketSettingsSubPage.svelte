@@ -157,7 +157,7 @@
 			return $strings.defined_region_invalid;
 		}
 
-		const bucketNamePattern = /[^a-z0-9.-]/;
+		const bucketNamePattern = source === "new" ? /[^a-z0-9.\-]/ : /[^a-zA-Z0-9.\-_]/;
 
 		let message = "";
 
@@ -169,7 +169,7 @@
 
 			}
 		} else if ( true === bucketNamePattern.test( bucket ) ) {
-			message = $strings.create_bucket_invalid_chars;
+			message = source === "new" ? $strings.create_bucket_invalid_chars : $strings.select_bucket_invalid_chars;
 		} else if ( bucket.length < 3 ) {
 			message = $strings.create_bucket_name_short;
 		} else if ( bucket.length > 63 ) {

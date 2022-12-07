@@ -7,6 +7,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Arn\S3\AccessPointArn;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Exception\MultipartUploadException;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Result;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\S3\Exception\S3Exception;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Coroutine;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\PromisorInterface;
 use InvalidArgumentException;
 /**
@@ -57,10 +58,12 @@ class ObjectCopier implements PromisorInterface
      * Perform the configured copy asynchronously. Returns a promise that is
      * fulfilled with the result of the CompleteMultipartUpload or CopyObject
      * operation or rejected with an exception.
+     *
+     * @return Coroutine
      */
     public function promise()
     {
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Promise\Coroutine::of(function () {
+        return Coroutine::of(function () {
             $headObjectCommand = $this->client->getCommand('HeadObject', $this->options['params'] + $this->source);
             if (\is_callable($this->options['before_lookup'])) {
                 $this->options['before_lookup']($headObjectCommand);

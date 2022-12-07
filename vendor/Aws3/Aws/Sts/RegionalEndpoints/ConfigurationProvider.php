@@ -73,7 +73,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['sts_regional_endpoints']) && $config['sts_regional_endpoints'] instanceof CacheInterface) {
             return self::cache($memo, $config['sts_regional_endpoints'], self::$cacheKey);
         }
@@ -134,7 +134,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
                 return self::reject("'{$profile}' not found in config file");
             }
             if (!isset($data[$profile][self::INI_ENDPOINTS_TYPE])) {
-                return self::reject("Required STS regional endpoints config values \n                    not present in INI profile '{$profile}' ({$filename})");
+                return self::reject("Required STS regional endpoints config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             return Promise\Create::promiseFor(new Configuration($data[$profile][self::INI_ENDPOINTS_TYPE]));
         };

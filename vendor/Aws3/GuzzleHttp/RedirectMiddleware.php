@@ -70,6 +70,10 @@ class RedirectMiddleware
         }
         $this->guardMax($request, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
+        // If authorization is handled by curl, unset it if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && \defined('\\CURLOPT_HTTPAUTH')) {
+            unset($options['curl'][\CURLOPT_HTTPAUTH], $options['curl'][\CURLOPT_USERPWD]);
+        }
         if (isset($options['allow_redirects']['on_redirect'])) {
             \call_user_func($options['allow_redirects']['on_redirect'], $request, $response, $nextRequest->getUri());
         }
@@ -100,7 +104,7 @@ class RedirectMiddleware
         });
     }
     /**
-     * Check for too many redirects
+     * Check for too many redirects.
      *
      * @return void
      *
@@ -135,7 +139,7 @@ class RedirectMiddleware
             $modify['method'] = 'GET';
             $modify['body'] = '';
         }
-        $uri = $this->redirectUri($request, $response, $protocols);
+        $uri = self::redirectUri($request, $response, $protocols);
         if (isset($options['idn_conversion']) && $options['idn_conversion'] !== \false) {
             $idnOptions = $options['idn_conversion'] === \true ? \IDNA_DEFAULT : $options['idn_conversion'];
             $uri = Utils::idnUriConvert($uri, $idnOptions);
@@ -150,14 +154,15 @@ class RedirectMiddleware
         } else {
             $modify['remove_headers'][] = 'Referer';
         }
-        // Remove Authorization header if host is different.
-        if ($request->getUri()->getHost() !== $modify['uri']->getHost()) {
+        // Remove Authorization and Cookie headers if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $modify['uri'])) {
             $modify['remove_headers'][] = 'Authorization';
+            $modify['remove_headers'][] = 'Cookie';
         }
         return Psr7\modify_request($request, $modify);
     }
     /**
-     * Set the appropriate URL on the request based on the location header
+     * Set the appropriate URL on the request based on the location header.
      *
      * @param RequestInterface  $request
      * @param ResponseInterface $response
@@ -165,7 +170,7 @@ class RedirectMiddleware
      *
      * @return UriInterface
      */
-    private function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols)
+    private static function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols)
     {
         $location = Psr7\UriResolver::resolve($request->getUri(), new Psr7\Uri($response->getHeaderLine('Location')));
         // Ensure that the redirect URI is allowed based on the protocols.

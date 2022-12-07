@@ -17,8 +17,11 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\BodySummarizer;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Client;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\ClientInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\HandlerStack;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Middleware;
 class HttpHandlerFactory
 {
     /**
@@ -30,7 +33,17 @@ class HttpHandlerFactory
      */
     public static function build(ClientInterface $client = null)
     {
-        $client = $client ?: new Client();
+        if (\is_null($client)) {
+            $stack = null;
+            if (\class_exists(BodySummarizer::class)) {
+                // double the # of characters before truncation by default
+                $bodySummarizer = new BodySummarizer(240);
+                $stack = HandlerStack::create();
+                $stack->remove('http_errors');
+                $stack->unshift(Middleware::httpErrors($bodySummarizer), 'http_errors');
+            }
+            $client = new Client(['handler' => $stack]);
+        }
         $version = null;
         if (\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
             $version = ClientInterface::MAJOR_VERSION;

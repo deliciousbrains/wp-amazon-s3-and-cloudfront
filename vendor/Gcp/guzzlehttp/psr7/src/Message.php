@@ -54,6 +54,7 @@ final class Message
         if ($size === 0) {
             return null;
         }
+        $body->rewind();
         $summary = $body->read($truncateAt);
         $body->rewind();
         if ($size > $truncateAt) {
@@ -139,6 +140,8 @@ final class Message
     public static function parseRequestUri(string $path, array $headers) : string
     {
         $hostKey = \array_filter(\array_keys($headers), function ($k) {
+            // Numeric array keys are converted to int by PHP.
+            $k = (string) $k;
             return \strtolower($k) === 'host';
         });
         // If no host is found, then a full URI cannot be constructed.

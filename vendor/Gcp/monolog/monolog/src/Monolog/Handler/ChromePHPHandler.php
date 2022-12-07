@@ -123,13 +123,13 @@ class ChromePHPHandler extends AbstractProcessingHandler
             self::$json['request_uri'] = $_SERVER['REQUEST_URI'] ?? '';
         }
         $json = Utils::jsonEncode(self::$json, Utils::DEFAULT_JSON_FLAGS & ~\JSON_UNESCAPED_UNICODE, \true);
-        $data = \base64_encode(\utf8_encode($json));
+        $data = \base64_encode($json);
         if (\strlen($data) > 3 * 1024) {
             self::$overflowed = \true;
             $record = ['message' => 'Incomplete logs, chrome header size limit reached', 'context' => [], 'level' => Logger::WARNING, 'level_name' => Logger::getLevelName(Logger::WARNING), 'channel' => 'monolog', 'datetime' => new \DateTimeImmutable(), 'extra' => []];
             self::$json['rows'][\count(self::$json['rows']) - 1] = $this->getFormatter()->format($record);
-            $json = Utils::jsonEncode(self::$json, null, \true);
-            $data = \base64_encode(\utf8_encode($json));
+            $json = Utils::jsonEncode(self::$json, Utils::DEFAULT_JSON_FLAGS & ~\JSON_UNESCAPED_UNICODE, \true);
+            $data = \base64_encode($json);
         }
         if (\trim($data) !== '') {
             $this->sendHeader(static::HEADER_NAME, $data);

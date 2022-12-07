@@ -328,6 +328,9 @@ class S3Client extends AwsClient implements S3ClientInterface
      */
     public static function isBucketDnsCompatible($bucket)
     {
+        if (!\is_string($bucket)) {
+            return \false;
+        }
         $bucketLen = \strlen($bucket);
         return $bucketLen >= 3 && $bucketLen <= 63 && !\filter_var($bucket, \FILTER_VALIDATE_IP) && \preg_match('/^[a-z0-9]([a-z0-9\\-\\.]*[a-z0-9])?$/', $bucket);
     }
@@ -353,9 +356,11 @@ class S3Client extends AwsClient implements S3ClientInterface
     {
         $command = clone $command;
         $command->getHandlerList()->remove('signer');
+        $request = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($command);
+        $signing_name = $this->getSigningName($request->getUri()->getHost());
         /** @var \Aws\Signature\SignatureInterface $signer */
-        $signer = \call_user_func($this->getSignatureProvider(), $this->getConfig('signature_version'), $this->getConfig('signing_name'), $this->getConfig('signing_region'));
-        return $signer->presign(\DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($command), $this->getCredentials()->wait(), $expires, $options);
+        $signer = \call_user_func($this->getSignatureProvider(), $this->getConfig('signature_version'), $signing_name, $this->getConfig('signing_region'));
+        return $signer->presign($request, $this->getCredentials()->wait(), $expires, $options);
     }
     /**
      * Returns the URL to an object identified by its bucket and key.
@@ -480,6 +485,20 @@ class S3Client extends AwsClient implements S3ClientInterface
                 });
             };
         };
+    }
+    /**
+     * Special handling for when the service name is s3-object-lambda.
+     * So, if the host contains s3-object-lambda, then the service name
+     * returned is s3-object-lambda, otherwise the default signing service is returned.
+     * @param string $host The host to validate if is a s3-object-lambda URL.
+     * @return string returns the signing service name to be used
+     */
+    private function getSigningName($host)
+    {
+        if (\strpos($host, 's3-object-lambda')) {
+            return 's3-object-lambda';
+        }
+        return $this->getConfig('signing_name');
     }
     /** @internal */
     public static function _applyRetryConfig($value, $args, HandlerList $list)

@@ -161,7 +161,7 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface, UpdateMetad
      */
     public function getUpdateMetadataFunc()
     {
-        return array($this, 'updateMetadata');
+        return [$this, 'updateMetadata'];
     }
     /**
      * Updates metadata with the authorization token.
@@ -178,11 +178,12 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface, UpdateMetad
             return $metadata;
         }
         $result = $this->fetchAuthToken($httpHandler);
-        if (!isset($result['access_token'])) {
-            return $metadata;
-        }
         $metadata_copy = $metadata;
-        $metadata_copy[self::AUTH_METADATA_KEY] = array('Bearer ' . $result['access_token']);
+        if (isset($result['access_token'])) {
+            $metadata_copy[self::AUTH_METADATA_KEY] = ['Bearer ' . $result['access_token']];
+        } elseif (isset($result['id_token'])) {
+            $metadata_copy[self::AUTH_METADATA_KEY] = ['Bearer ' . $result['id_token']];
+        }
         return $metadata_copy;
     }
     /**

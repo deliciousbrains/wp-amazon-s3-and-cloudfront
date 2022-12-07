@@ -29,6 +29,9 @@ abstract class Item {
 	protected static $items_cache_by_path        = array();
 	protected static $items_cache_by_source_path = array();
 
+	protected static $item_counts      = array();
+	protected static $item_count_skips = array();
+
 	/**
 	 * @var array Keys with array of fields that can be used for cache lookups.
 	 */
@@ -340,6 +343,9 @@ abstract class Item {
 		static::$items_cache_by_source_id   = array();
 		static::$items_cache_by_path        = array();
 		static::$items_cache_by_source_path = array();
+
+		static::$item_counts      = array();
+		static::$item_count_skips = array();
 	}
 
 	/**
@@ -1357,6 +1363,10 @@ abstract class Item {
 		/** @var Amazon_S3_And_CloudFront $as3cf */
 		global $as3cf;
 
+		if ( ! AS3CF_Utils::usable_url( $url ) ) {
+			return false;
+		}
+
 		$parts = AS3CF_Utils::parse_url( $url );
 		$path  = AS3CF_Utils::decode_filename_in_path( ltrim( $parts['path'], '/' ) );
 
@@ -2025,4 +2035,101 @@ abstract class Item {
 
 		return false;
 	}
+
+	/**
+	 * Count items on current site.
+	 *
+	 * @param bool $skip_transient Whether to force database query and skip transient, default false
+	 * @param bool $force          Whether to force database query and skip static cache, implies $skip_transient, default false
+	 * @param int  $blog_id        Optional, the blog ID to count media items for
+	 *
+	 * @return array Keys:
+	 *               total: Total media count for site (current blog id)
+	 *               offloaded: Count of offloaded media for site (current blog id)
+	 *               not_offloaded: Difference between total and offloaded
+	 */
+	public static function count_items( bool $skip_transient = false, bool $force = false, int $blog_id = 0 ): array {
+		if ( empty( $blog_id ) ) {
+			$blog_id = get_current_blog_id();
+		}
+
+		$transient_key = static::transient_key_for_item_counts( $blog_id );
+
+		// Been here, done it, won't do it again!
+		// Well, unless this is the first transient skip for the prefix, then we need to do it.
+		if ( ! $force && ! empty( static::$item_counts[ $transient_key ] ) && ( false === $skip_transient || ! empty( static::$item_count_skips[ $transient_key ] ) ) ) {
+			return static::$item_counts[ $transient_key ];
+		}
+
+		if ( $force || $skip_transient || false === ( $result = get_site_transient( $transient_key ) ) ) {
+			$result = static::get_item_counts();
+
+			ksort( $result );
+
+			// Timeout is randomised to ensure multisite subsites don't all try and update at the same time.
+			// Default 15 - 120 minutes range gives us 6300 possible timeouts, checked every 5 minutes,
+			// with each subsite getting at least 15 mins breather before records counted again.
+			$min = 15;
+			$max = 120;
+
+			/**
+			 * How many minutes minimum should a subsite's media counts be cached?
+			 *
+			 * Min: 1 minute.
+			 * Max: 1 day (1440 minutes).
+			 *
+			 * @param int    $minutes     Default 15.
+			 * @param int    $blog_id
+			 * @param string $source_type The source type currently being counted, e.g. 'media-library'.
+			 *
+			 * @retun int
+			 */
+			$min = min( max( 1, (int) apply_filters( 'as3cf_blog_media_counts_timeout_min', $min, $blog_id, static::source_type() ) ), 1440 );
+			$max = max( $min, $max );
+
+			/**
+			 * How many minutes maximum should a subsite's media counts be cached?
+			 *
+			 * Min: 1 minute (or minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type).
+			 * Max: 1 day (1440 minutes).
+			 *
+			 * @param int    $minutes     Default 15 (or larger minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type).
+			 * @param int    $blog_id
+			 * @param string $source_type The source type currently being counted, e.g. 'media-library'.
+			 *
+			 * @retun int
+			 */
+			$max = min( max( $min, (int) apply_filters( 'as3cf_blog_media_counts_timeout_max', $max, $blog_id, static::source_type() ) ), 1440 );
+
+			set_site_transient( $transient_key, $result, rand( $min, $max ) * MINUTE_IN_SECONDS );
+
+			// One way or another we've skipped the transient.
+			static::$item_count_skips[ $transient_key ] = true;
+		}
+
+		static::$item_counts[ $transient_key ] = $result;
+
+		return $result;
+	}
+
+	/**
+	 * Returns the transient key to be used for storing blog specific item counts.
+	 *
+	 * @param int $blog_id
+	 *
+	 * @return string
+	 */
+	public static function transient_key_for_item_counts( int $blog_id ): string {
+		return 'as3cf_' . absint( $blog_id ) . '_attachment_counts_' . static::$source_type;
+	}
+
+	/**
+	 * Count total, offloaded and not offloaded items on current site.
+	 *
+	 * @return array Keys:
+	 *               total: Total media count for site (current blog id)
+	 *               offloaded: Count of offloaded media for site (current blog id)
+	 *               not_offloaded: Difference between total and offloaded
+	 */
+	abstract protected static function get_item_counts(): array;
 }

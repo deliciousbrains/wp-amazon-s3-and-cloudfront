@@ -71,7 +71,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini($region);
         }
         $configProviders[] = self::fallback($region);
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['use_dual_stack_endpoint']) && $config['use_dual_stack_endpoint'] instanceof CacheInterface) {
             return self::cache($memo, $config['use_dual_stack_endpoint'], self::$cacheKey);
         }
@@ -122,7 +122,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
                 return self::reject("'{$profile}' not found in config file");
             }
             if (!isset($data[$profile][self::INI_USE_DUAL_STACK_ENDPOINT])) {
-                return self::reject("Required use dualstack endpoint config values \n                    not present in INI profile '{$profile}' ({$filename})");
+                return self::reject("Required use dualstack endpoint config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             // INI_SCANNER_NORMAL parses false-y values as an empty string
             if ($data[$profile][self::INI_USE_DUAL_STACK_ENDPOINT] === "") {

@@ -71,7 +71,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
             $configProviders[] = self::ini();
         }
         $configProviders[] = self::fallback();
-        $memo = self::memoize(\call_user_func_array('self::chain', $configProviders));
+        $memo = self::memoize(\call_user_func_array([ConfigurationProvider::class, 'chain'], $configProviders));
         if (isset($config['s3_us_east_1_regional_endpoint']) && $config['s3_us_east_1_regional_endpoint'] instanceof CacheInterface) {
             return self::cache($memo, $config['s3_us_east_1_regional_endpoint'], self::$cacheKey);
         }
@@ -116,7 +116,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
                 return self::reject("'{$profile}' not found in config file");
             }
             if (!isset($data[$profile][self::INI_ENDPOINTS_TYPE])) {
-                return self::reject("Required S3 regional endpoint config values \n                    not present in INI profile '{$profile}' ({$filename})");
+                return self::reject("Required S3 regional endpoint config values\n                    not present in INI profile '{$profile}' ({$filename})");
             }
             return Promise\Create::promiseFor(new Configuration($data[$profile][self::INI_ENDPOINTS_TYPE]));
         };

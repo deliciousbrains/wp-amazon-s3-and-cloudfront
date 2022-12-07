@@ -30,6 +30,10 @@ class FetchAuthTokenCache implements FetchAuthTokenInterface, GetQuotaProjectInt
      */
     private $fetcher;
     /**
+     * @var int
+     */
+    private $eagerRefreshThresholdSeconds = 10;
+    /**
      * @param FetchAuthTokenInterface $fetcher A credentials fetcher
      * @param array<mixed> $cacheConfig Configuration for the cache
      * @param CacheItemPoolInterface $cache
@@ -190,7 +194,7 @@ class FetchAuthTokenCache implements FetchAuthTokenInterface, GetQuotaProjectInt
                 // (for JwtAccess and ID tokens)
                 return $cached;
             }
-            if (\time() < $cached['expires_at']) {
+            if (\time() + $this->eagerRefreshThresholdSeconds < $cached['expires_at']) {
                 // access token is not expired
                 return $cached;
             }

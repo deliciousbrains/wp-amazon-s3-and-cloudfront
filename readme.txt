@@ -4,7 +4,7 @@ Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 3.0.2
+Stable tag: 3.1.0
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -84,6 +84,27 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 3.1.0 - 2022-12-07 =
+* New: PHP 8.1 compatibility is now improved
+* New: Amazon S3 regions Asia Pacific (Hyderabad), EU (Spain), EU (Zurich) and Middle East (UAE) are now selectable
+* New: Google Cloud Storage regions Middle East (Tel Aviv) and Dual-Region (Asia) are now selectable
+* New: DigitalOcean region Sydney (SYD1) is now selectable
+* New: AWS PHP SDK has been updated to v3.238.6
+* New: Google Cloud Storage SDK has been updated to v1.28.1
+* Improvement: Storage Provider regions are now listed alphabetically
+* Improvement: Google Cloud Storage regions are now grouped by geographic area
+* Bug fix: Pathless external URLs entered in a post no longer cause an error when saved
+* Bug fix: Media upload time no longer degrades as the Media Library grows
+* Bug fix: Periodic updates of media offload statistics no longer time out in large multisite installs
+* Bug fix: The clear post meta cache upgrade routine now works properly on multisite subsites
+* Bug fix: Completed upgrade routines no longer create redundant cron schedule entries
+* Bug fix: Upgrade routines no longer try to run on non-primary subsites
+* Bug fix: Custom table format upgrades no longer run unnecessarily
+* Bug fix: Settings REST API endpoints are no longer enabled if unusable
+* Bug fix: Only offloaded items with valid attachment IDs are retrieved from external cache
+* Bug fix: Legacy bucket names that include uppercase letters or underscores can now be selected
+* Bug fix: Offloading already-edited files no longer causes issues with filename uniqueness checks
 
 = WP Offload Media Lite 3.0.2 - 2022-10-05 =
 * Bug fix: ACF integration no longer breaks sites using closures in ACF field config (edge case)

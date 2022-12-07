@@ -39,7 +39,7 @@ class SignatureV4 implements SignatureInterface
      *
      * @return array
      */
-    private function getHeaderBlacklist()
+    protected function getHeaderBlacklist()
     {
         return ['cache-control' => \true, 'content-type' => \true, 'content-length' => \true, 'expect' => \true, 'max-forwards' => \true, 'pragma' => \true, 'range' => \true, 'te' => \true, 'if-match' => \true, 'if-none-match' => \true, 'if-modified-since' => \true, 'if-unmodified-since' => \true, 'if-range' => \true, 'accept' => \true, 'authorization' => \true, 'proxy-authorization' => \true, 'from' => \true, 'referer' => \true, 'user-agent' => \true, 'X-Amz-User-Agent' => \true, 'x-amzn-trace-id' => \true, 'aws-sdk-invocation-id' => \true, 'aws-sdk-retry' => \true];
     }

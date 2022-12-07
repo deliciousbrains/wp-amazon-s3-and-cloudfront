@@ -2,10 +2,10 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT;
 
+use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use TypeError;
-use InvalidArgumentException;
 class Key
 {
     /** @var string|resource|OpenSSLAsymmetricKey|OpenSSLCertificate */

@@ -18,6 +18,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
  *
  * @final
  */
+#[\AllowDynamicProperties]
 class CurlMultiHandler
 {
     /**

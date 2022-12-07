@@ -21,6 +21,7 @@ use DateTime;
 use Exception;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\ExpiredException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\JWT;
+use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\Key;
 use DeliciousBrains\WP_Offload_Media\Gcp\Firebase\JWT\SignatureInvalidException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Cache\MemoryCacheItemPool;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
@@ -122,8 +123,6 @@ class AccessToken
             // firebase/php-jwt 5+
         } catch (InvalidTokenException $e) {
             // simplejwt
-        } catch (DomainException $e) {
-            // @phpstan-ignore-line
         } catch (InvalidArgumentException $e) {
         } catch (UnexpectedValueException $e) {
         }
@@ -214,9 +213,9 @@ class AccessToken
             $rsa = new RSA();
             $rsa->loadKey(['n' => new BigInteger($this->callJwtStatic('urlsafeB64Decode', [$cert['n']]), 256), 'e' => new BigInteger($this->callJwtStatic('urlsafeB64Decode', [$cert['e']]), 256)]);
             // create an array of key IDs to certs for the JWT library
-            $keys[$cert['kid']] = $rsa->getPublicKey();
+            $keys[$cert['kid']] = new Key($rsa->getPublicKey(), 'RS256');
         }
-        $payload = $this->callJwtStatic('decode', [$token, $keys, ['RS256']]);
+        $payload = $this->callJwtStatic('decode', [$token, $keys]);
         if ($audience) {
             if (!\property_exists($payload, 'aud') || $payload->aud != $audience) {
                 throw new UnexpectedValueException('Audience does not match');

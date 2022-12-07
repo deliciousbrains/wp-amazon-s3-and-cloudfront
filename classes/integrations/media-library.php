@@ -125,30 +125,38 @@ class Media_Library extends Integration {
 		}
 
 		// Protect against updates of partially formed metadata since WordPress 5.3.
-		// Checks whether new upload currently has no subsizes recorded but is expected to have subsizes during upload,
+		// Checks whether new upload currently is expected to have subsizes during upload,
 		// and if so, are any of its currently missing sizes part of the set.
-		if ( ! empty( $data ) && function_exists( 'wp_get_registered_image_subsizes' ) && function_exists( 'wp_get_missing_image_subsizes' ) ) {
+		if (
+			! empty( $data ) &&
+			function_exists( 'wp_get_registered_image_subsizes' ) &&
+			function_exists( 'wp_get_missing_image_subsizes' ) &&
+			wp_attachment_is_image( $post_id )
+		) {
 
 			/**
 			 * Plugin compat may require that we wait for wp_generate_attachment_metadata
 			 * to be run before proceeding with uploading. I.e. Regenerate Thumbnails requires this.
 			 *
-			 * @param bool True if we should wait AND generate_attachment_metadata hasn't run yet
+			 * @param bool $wait True if we should wait AND generate_attachment_metadata hasn't run yet
 			 */
 			if ( apply_filters( 'as3cf_wait_for_generate_attachment_metadata', false ) ) {
 				return $data;
 			}
 
-			if ( empty( $data['sizes'] ) && wp_attachment_is_image( $post_id ) ) {
+			// There is no unified way of checking whether subsizes are expected, so we have to duplicate WordPress code here.
+			$new_sizes     = wp_get_registered_image_subsizes();
+			$new_sizes     = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
+			$missing_sizes = wp_get_missing_image_subsizes( $post_id );
 
-				// There is no unified way of checking whether subsizes are expected, so we have to duplicate WordPress code here.
-				$new_sizes     = wp_get_registered_image_subsizes();
-				$new_sizes     = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
-				$missing_sizes = wp_get_missing_image_subsizes( $post_id );
-
-				if ( ! empty( $new_sizes ) && ! empty( $missing_sizes ) && array_intersect_key( $missing_sizes, $new_sizes ) ) {
-					return $data;
-				}
+			// If any registered thumbnails smaller than the original are missing,
+			// and current filters still expect those sizes, wait until they're all ready.
+			if (
+				! empty( $new_sizes ) &&
+				! empty( $missing_sizes ) &&
+				! empty( array_intersect_key( $missing_sizes, $new_sizes ) )
+			) {
+				return $data;
 			}
 		}
 
