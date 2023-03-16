@@ -1,6 +1,7 @@
 <script>
 	import {pages} from "../js/routes";
 	import NavItem from "./NavItem.svelte";
+	import OffloadStatus from "./OffloadStatus.svelte";
 </script>
 
 <div class="nav">
@@ -12,6 +13,8 @@
 				{/if}
 			{/each}
 		</ul>
-		<slot/>
+		<slot>
+			<OffloadStatus/>
+		</slot>
 	</div>
 </div>

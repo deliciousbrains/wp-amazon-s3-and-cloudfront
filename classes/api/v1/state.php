@@ -36,14 +36,29 @@ class State extends API {
 	 * @return WP_REST_Response|mixed
 	 */
 	public function get_state( WP_REST_Request $request ) {
+		$params = $request->get_params();
+
+		$skip_transient = false;
+		$force          = false;
+		$forced_blog_id = 0;
+
+		if ( ! empty( $params['refreshMediaCounts'] ) ) {
+			$skip_transient = true;
+			$force          = true;
+			$forced_blog_id = -1;
+		}
+
 		return $this->rest_ensure_response(
 			'get',
 			static::name(),
 			array_merge(
 				$this->endpoint_common_response( Settings::name() ),
 				array(
-					'counts'   => $this->as3cf->media_counts(),
-					'upgrades' => $this->as3cf->get_upgrades_info(),
+					'counts'                   => $this->as3cf->media_counts( $skip_transient, $force, $forced_blog_id ),
+					'summary_counts'           => $this->as3cf->get_summary_counts(),
+					'offload_remaining_upsell' => $this->as3cf->get_offload_remaining_upsell_message(),
+					'upgrades'                 => $this->as3cf->get_upgrades_info(),
+					'settings_validation'      => $this->as3cf->settings_validation_status(),
 				)
 			)
 		);

@@ -1,6 +1,5 @@
 <script>
 	import {createEventDispatcher, setContext} from "svelte";
-	import {replace} from "svelte-spa-router";
 	import {
 		strings,
 		settings,
@@ -11,6 +10,7 @@
 		settingsLocked,
 		current_settings,
 		needs_refresh,
+		revalidatingSettings,
 		state
 	} from "../js/stores";
 	import {
@@ -125,20 +125,26 @@
 		if ( result.hasOwnProperty( "saved" ) && !result.saved ) {
 			settings.reset();
 			saving = false;
-			state.resumePeriodicFetch();
+			await state.resumePeriodicFetch();
 
 			scrollNotificationsIntoView();
 
 			return;
 		}
 
-		state.resumePeriodicFetch();
+		$revalidatingSettings = true;
+		const statePromise = state.resumePeriodicFetch();
 
 		dispatch( "routeEvent", {
 			event: "settings.save",
 			data: result,
 			default: "/media/delivery"
 		} );
+
+		// Just make sure periodic state fetch promise is done with,
+		// even though we don't really care about it.
+		await statePromise;
+		$revalidatingSettings = false;
 	}
 </script>
 

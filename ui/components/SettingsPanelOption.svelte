@@ -35,6 +35,8 @@
 	// Parent page may want to be locked.
 	let settingsLocked = writable( false );
 
+	let textDirty = false;
+
 	if ( hasContext( "settingsLocked" ) ) {
 		settingsLocked = getContext( "settingsLocked" );
 	}
@@ -44,19 +46,20 @@
 	$: textDisabled = $definedSettings.includes( textName ) || locked;
 
 	$: input = ((toggleName && toggle) || !toggleName || alwaysShowText) && textName;
-	$:headingName = input ? textName + "-heading" : toggleName;
+	$: headingName = input ? textName + "-heading" : toggleName;
 
 	/**
 	 * Validate the text if validator function supplied.
 	 *
 	 * @param {string} text
+	 * @param {bool} toggle
 	 *
 	 * @return {string}
 	 */
-	function validateText( text ) {
+	function validateText( text, toggle ) {
 		let message = "";
 
-		if ( validator !== undefined ) {
+		if ( validator !== undefined && toggle && !textDisabled ) {
 			message = validator( text );
 		}
 
@@ -73,7 +76,11 @@
 		return message;
 	}
 
-	$: validationError = validateText( text );
+	function onTextInput() {
+		textDirty = true;
+	}
+
+	$: validationError = validateText( text, toggle );
 
 	/**
 	 * If appropriate, clicking the header toggles to toggle switch.
@@ -107,6 +114,7 @@
 				id={textName}
 				name={textName}
 				bind:value={text}
+				on:input={onTextInput}
 				minlength="1"
 				size="10"
 				{placeholder}
@@ -118,7 +126,7 @@
 				{heading}
 			</label>
 		</PanelRow>
-		{#if validationError}
+		{#if validationError && textDirty}
 			<p class="input-error" transition:slide|local>{validationError}</p>
 		{/if}
 	{/if}

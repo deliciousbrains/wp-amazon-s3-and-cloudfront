@@ -16,6 +16,14 @@ class Buckets extends API {
 	/** @var string */
 	protected static $name = 'buckets';
 
+	/** @var array */
+	private $error_args = array(
+		'type'                  => 'error',
+		'only_show_in_settings' => true,
+		'only_show_on_tab'      => 'media',
+		'custom_id'             => 'bucket-error',
+	);
+
 	/**
 	 * Register REST API routes.
 	 */
@@ -65,8 +73,15 @@ class Buckets extends API {
 		$buckets = $this->as3cf->get_buckets( $region );
 
 		if ( is_wp_error( $buckets ) ) {
-			return $this->rest_ensure_response( 'get', static::name(), $buckets );
+			$this->as3cf->notices->add_notice(
+				$this->as3cf->get_storage_provider()->prepare_bucket_error( $buckets ),
+				$this->error_args
+			);
+
+			return $this->rest_ensure_response( 'get', static::name(), array() );
 		}
+
+		$this->as3cf->notices->dismiss_notice( $this->error_args['custom_id'] );
 
 		return $this->rest_ensure_response( 'get', static::name(), array(
 			'buckets' => $buckets,
@@ -83,20 +98,14 @@ class Buckets extends API {
 	 * @return WP_REST_Response|mixed
 	 */
 	public function post_buckets( WP_REST_Request $request ) {
-		$data       = $request->get_json_params();
-		$bucket     = empty( $data['bucket'] ) ? false : $data['bucket'];
-		$error_args = array(
-			'type'                  => 'error',
-			'only_show_in_settings' => true,
-			'only_show_on_tab'      => 'media',
-			'custom_id'             => 'create-bucket-error',
-		);
+		$data   = $request->get_json_params();
+		$bucket = empty( $data['bucket'] ) ? false : $data['bucket'];
 
 		// Front end validation should have caught this, it's all gone Pete Tong!
 		if ( ! $bucket ) {
 			$this->as3cf->notices->add_notice(
 				__( 'No bucket name provided.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
@@ -108,7 +117,7 @@ class Buckets extends API {
 		if ( ! $bucket ) {
 			$this->as3cf->notices->add_notice(
 				__( 'Bucket name not valid.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
@@ -120,7 +129,7 @@ class Buckets extends API {
 		if ( ! $region ) {
 			$this->as3cf->notices->add_notice(
 				__( 'No region provided.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
@@ -132,7 +141,7 @@ class Buckets extends API {
 		if ( ! empty( $defines['bucket'] ) && $defines['bucket'] !== $bucket ) {
 			$this->as3cf->notices->add_notice(
 				__( 'Bucket name does not match defined value.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
@@ -141,7 +150,7 @@ class Buckets extends API {
 		if ( ! empty( $defines['region'] ) && $defines['region'] !== $region ) {
 			$this->as3cf->notices->add_notice(
 				__( 'Region does not match defined value.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
@@ -152,13 +161,13 @@ class Buckets extends API {
 		if ( is_wp_error( $result ) ) {
 			$this->as3cf->notices->add_notice(
 				$this->as3cf->get_storage_provider()->prepare_bucket_error( $result ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => false ) );
 		}
 
-		$this->as3cf->notices->dismiss_notice( 'create-bucket-error' );
+		$this->as3cf->notices->dismiss_notice( $this->error_args['custom_id'] );
 
 		return $this->rest_ensure_response( 'post', static::name(), array( 'saved' => $result ) );
 	}
@@ -173,20 +182,22 @@ class Buckets extends API {
 	 * @return WP_REST_Response|mixed
 	 */
 	public function put_buckets( WP_REST_Request $request ) {
-		$data       = $request->get_json_params();
-		$bucket     = empty( $data['bucket'] ) ? false : $data['bucket'];
-		$error_args = array(
-			'type'                  => 'error',
-			'only_show_in_settings' => true,
-			'only_show_on_tab'      => 'media',
-			'custom_id'             => 'update-bucket-error',
-		);
+		$data   = $request->get_json_params();
+		$bucket = empty( $data['bucket'] ) ? false : $data['bucket'];
+
+		do_action( 'as3cf_pre_update_bucket' );
+
+		add_filter( 'as3cf_api_response_put_buckets', function ( $response ) {
+			do_action( 'as3cf_post_update_bucket', $response['saved'] );
+
+			return $response;
+		} );
 
 		// Front end validation should have caught this, it's all gone Pete Tong!
 		if ( ! $bucket ) {
 			$this->as3cf->notices->add_notice(
 				__( 'No bucket name provided.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
@@ -198,7 +209,7 @@ class Buckets extends API {
 		if ( ! $bucket ) {
 			$this->as3cf->notices->add_notice(
 				__( 'Bucket name not valid.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
@@ -218,7 +229,7 @@ class Buckets extends API {
 		if ( ! isset( $data['blockPublicAccess'] ) ) {
 			$this->as3cf->notices->add_notice(
 				__( 'No Block All Public Access status provided.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
@@ -227,7 +238,7 @@ class Buckets extends API {
 		if ( ! isset( $data['objectOwnershipEnforced'] ) ) {
 			$this->as3cf->notices->add_notice(
 				__( 'No Enforce Object Ownership status provided.', 'amazon-s3-and-cloudfront' ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
@@ -240,7 +251,7 @@ class Buckets extends API {
 		if ( is_wp_error( $result ) ) {
 			$this->as3cf->notices->add_notice(
 				$this->as3cf->get_storage_provider()->prepare_bucket_error( $result, true ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
@@ -253,13 +264,13 @@ class Buckets extends API {
 		if ( is_wp_error( $result ) ) {
 			$this->as3cf->notices->add_notice(
 				$this->as3cf->get_storage_provider()->prepare_bucket_error( $result, true ),
-				$error_args
+				$this->error_args
 			);
 
 			return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => false ) );
 		}
 
-		$this->as3cf->notices->dismiss_notice( 'update-bucket-error' );
+		$this->as3cf->notices->dismiss_notice( $this->error_args['custom_id'] );
 		$this->as3cf->bucket_changed();
 
 		return $this->rest_ensure_response( 'put', static::name(), array( 'saved' => true ) );

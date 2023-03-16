@@ -36,6 +36,20 @@ class Media_Library_Item extends Item {
 	protected static $source_fk = 'id';
 
 	/**
+	 * Item's summary type name.
+	 *
+	 * @var string
+	 */
+	protected static $summary_type_name = 'Media Library';
+
+	/**
+	 * Item's summary type.
+	 *
+	 * @var string
+	 */
+	protected static $summary_type = 'media-library';
+
+	/**
 	 * Item constructor.
 	 *
 	 * @param string $provider              Storage provider key name, e.g. "aws".

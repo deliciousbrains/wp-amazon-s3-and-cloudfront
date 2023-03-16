@@ -10,7 +10,7 @@ class Integration_Manager {
 	protected static $instance;
 
 	/**
-	 * @var array
+	 * @var Integration[]
 	 */
 	private $integrations;
 
@@ -20,6 +20,8 @@ class Integration_Manager {
 	 */
 	protected function __construct() {
 		$this->integrations = array();
+
+		add_action( 'as3cf_setup', array( $this, 'setup' ) );
 	}
 
 	/**
@@ -61,9 +63,20 @@ class Integration_Manager {
 	public function register_integration( $integration_key, Integration $integration ) {
 		if ( $integration::is_installed() ) {
 			$integration->init();
-		}
 
-		$this->integrations[ $integration_key ] = $integration;
+			$this->integrations[ $integration_key ] = $integration;
+		}
+	}
+
+	/**
+	 * Set up the registered integrations.
+	 *
+	 * @return void
+	 */
+	public function setup() {
+		foreach ( $this->integrations as $integration ) {
+			$integration->setup();
+		}
 	}
 
 	/**

@@ -7,7 +7,6 @@
 	} from "svelte";
 	import {writable} from "svelte/store";
 	import {slide} from "svelte/transition";
-	import {pop} from "svelte-spa-router";
 	import {
 		api,
 		settings,
@@ -17,6 +16,7 @@
 		urls,
 		current_settings,
 		needs_refresh,
+		revalidatingSettings,
 		state
 	} from "../js/stores";
 	import {scrollIntoView} from "../js/scrollIntoView";
@@ -229,13 +229,14 @@
 		if ( result.hasOwnProperty( "saved" ) && !result.saved ) {
 			settings.reset();
 			saving = false;
-			state.resumePeriodicFetch();
+			await state.resumePeriodicFetch();
 
 			scrollNotificationsIntoView();
 			return;
 		}
 
-		state.resumePeriodicFetch();
+		$revalidatingSettings = true;
+		const statePromise = state.resumePeriodicFetch();
 
 		result.bucketSource = bucketSource;
 		result.initialSettings = initialSettings;
@@ -245,6 +246,11 @@
 			data: result,
 			default: "/"
 		} );
+
+		// Just make sure periodic state fetch promise is done with,
+		// even though we don't really care about it.
+		await statePromise;
+		$revalidatingSettings = false;
 	}
 
 	onMount( () => {

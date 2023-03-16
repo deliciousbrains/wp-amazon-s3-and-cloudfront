@@ -21,6 +21,13 @@ class Core extends Integration {
 	 * Init integration.
 	 */
 	public function init() {
+		// Nothing to do.
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function setup() {
 		add_action( 'as3cf_post_handle_item_' . Upload_Handler::get_item_handler_key_name(), array( $this, 'maybe_remove_local_files' ), 10, 3 );
 	}
 

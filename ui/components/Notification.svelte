@@ -1,6 +1,8 @@
 <script>
-	import {slide} from "svelte/transition";
 	import {notifications, strings, urls} from "../js/stores";
+	import Button from "./Button.svelte";
+
+	const classes = $$props.class ? $$props.class : "";
 
 	export let notification = {};
 
@@ -79,7 +81,7 @@
 </script>
 
 <div
-	class="notification"
+	class="notification {classes}"
 	class:inline
 	class:wordpress
 	class:success
@@ -89,7 +91,6 @@
 	class:multiline
 	class:expandable
 	class:expanded
-	transition:slide|local
 >
 	<div class="content">
 		{#if iconURL}
@@ -109,9 +110,9 @@
 					{/if}
 					{#if dismissible && expandable}
 						<button class="dismiss" on:click|preventDefault={notifications.dismiss(unique_id)}>{$strings.dismiss_all}</button>
-						<button class="expandable" class:expanded on:click|preventDefault={() => expanded = !expanded} title={expanded ? $strings.hide_details : $strings.show_details}></button>
+						<Button expandable {expanded} on:click={() => expanded = !expanded} title={expanded ? $strings.hide_details : $strings.show_details}></Button>
 					{:else if expandable}
-						<button class="expandable" class:expanded on:click|preventDefault={() => expanded = !expanded} title={expanded ? $strings.hide_details : $strings.show_details}></button>
+						<Button expandable {expanded} on:click={() => expanded = !expanded} title={expanded ? $strings.hide_details : $strings.show_details}></Button>
 					{:else if dismissible}
 						<button class="icon close" title={$strings["dismiss_notice"]} on:click|preventDefault={() => notifications.dismiss(unique_id)}></button>
 					{/if}

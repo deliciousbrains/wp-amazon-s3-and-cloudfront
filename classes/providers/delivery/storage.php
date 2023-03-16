@@ -101,9 +101,9 @@ class Storage extends Delivery_Provider {
 	 * {@inheritDoc}
 	 */
 	public function get_url( Item $as3cf_item, $path, $domain, $scheme, $headers = array() ) {
-		$domain = $this->as3cf->get_storage_provider_instance( $as3cf_item->provider() )->get_url_domain( $as3cf_item->bucket(), $as3cf_item->region() );
+		$lookup_domain = $this->as3cf->get_storage_provider_instance( $as3cf_item->provider() )->get_url_domain( $as3cf_item->bucket(), $as3cf_item->region() );
 
-		return parent::get_url( $as3cf_item, $path, $domain, $scheme, $headers );
+		return parent::get_url( $as3cf_item, $path, $lookup_domain, $scheme, $headers );
 	}
 
 	/**

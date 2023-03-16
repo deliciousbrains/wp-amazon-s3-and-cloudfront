@@ -17,10 +17,12 @@ abstract class Item {
 	);
 	const CAN_USE_OBJECT_VERSIONING = true;
 
-	protected static $source_type_name = 'Item';
-	protected static $source_type      = '';
-	protected static $source_table     = '';
-	protected static $source_fk        = '';
+	protected static $source_type_name  = 'Item';
+	protected static $source_type       = '';
+	protected static $source_table      = '';
+	protected static $source_fk         = '';
+	protected static $summary_type_name = '';
+	protected static $summary_type      = '';
 
 	protected static $can_use_yearmonth = true;
 
@@ -870,6 +872,33 @@ abstract class Item {
 	 */
 	public static function source_type_name() {
 		return static::$source_type_name;
+	}
+
+	/**
+	 * Getter for item's summary type.
+	 *
+	 * @return string
+	 */
+	public static function summary_type(): string {
+		return static::$summary_type;
+	}
+
+	/**
+	 * Getter for item's summary type name.
+	 *
+	 * @return string
+	 */
+	public static function summary_type_name(): string {
+		return static::$summary_type_name;
+	}
+
+	/**
+	 * Is the item able to be included in a summary?
+	 *
+	 * @return bool
+	 */
+	public static function summary_enabled(): bool {
+		return ! empty( static::summary_type() ) && ! empty( static::summary_type_name() );
 	}
 
 	/**
@@ -2061,39 +2090,61 @@ abstract class Item {
 			return static::$item_counts[ $transient_key ];
 		}
 
+		static $sites_count;
+
 		if ( $force || $skip_transient || false === ( $result = get_site_transient( $transient_key ) ) ) {
 			$result = static::get_item_counts();
 
 			ksort( $result );
 
 			// Timeout is randomised to ensure multisite subsites don't all try and update at the same time.
-			// Default 15 - 120 minutes range gives us 6300 possible timeouts, checked every 5 minutes,
+			// Large site default of 15 - 120 minutes range gives us 6300 possible timeouts, checked every 5 minutes,
 			// with each subsite getting at least 15 mins breather before records counted again.
 			$min = 15;
 			$max = 120;
 
+			if ( empty( $sites_count ) ) {
+				$sites_count = is_multisite() ? count( AS3CF_Utils::get_blog_ids() ) : 1;
+			}
+
+			// For smaller media counts we can reduce the timeout to make changes more responsive
+			// without noticeably impacting performance.
+			if ( 5000 > $result['total'] && 50 > $sites_count ) {
+				$min = 0;
+				$max = 0;
+			} elseif ( 50000 > $result['total'] && 500 > $sites_count ) {
+				$min = 5;
+				$max = 15;
+			}
+
 			/**
 			 * How many minutes minimum should a subsite's media counts be cached?
 			 *
-			 * Min: 1 minute.
+			 * Min: 0 minutes.
 			 * Max: 1 day (1440 minutes).
 			 *
-			 * @param int    $minutes     Default 15.
+			 * Default 0 for small media counts, 5 for medium (5k <= X < 50k), 15 for larger (>= 50k).
+			 * However, on a multisite, 0 is only set for < 50 subsites, 5 for < 500 subsites, otherwise it's 15.
+			 *
+			 * @param int    $minutes
 			 * @param int    $blog_id
 			 * @param string $source_type The source type currently being counted, e.g. 'media-library'.
 			 *
 			 * @retun int
 			 */
-			$min = min( max( 1, (int) apply_filters( 'as3cf_blog_media_counts_timeout_min', $min, $blog_id, static::source_type() ) ), 1440 );
+			$min = min( max( 0, (int) apply_filters( 'as3cf_blog_media_counts_timeout_min', $min, $blog_id, static::source_type() ) ), 1440 );
 			$max = max( $min, $max );
 
 			/**
 			 * How many minutes maximum should a subsite's media counts be cached?
 			 *
-			 * Min: 1 minute (or minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type).
+			 * Min: 0 minutes (or minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type).
 			 * Max: 1 day (1440 minutes).
 			 *
-			 * @param int    $minutes     Default 15 (or larger minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type).
+			 * Default 0 for small media counts, 15 for medium (5k <= X < 50k), 120 for larger (>= 50k).
+			 * However, on a multisite, 0 is only set for < 50 subsites, 15 for < 500 subsites, otherwise it's 120.
+			 *
+			 * @param int    $minutes     Default or larger minimum set by as3cf_blog_media_counts_timeout_min filter for same blog id and source type.
 			 * @param int    $blog_id
 			 * @param string $source_type The source type currently being counted, e.g. 'media-library'.
 			 *
@@ -2101,7 +2152,14 @@ abstract class Item {
 			 */
 			$max = min( max( $min, (int) apply_filters( 'as3cf_blog_media_counts_timeout_max', $max, $blog_id, static::source_type() ) ), 1440 );
 
-			set_site_transient( $transient_key, $result, rand( $min, $max ) * MINUTE_IN_SECONDS );
+			// We lied, our real minimums are min 3 and max 15 seconds
+			// to ensure there's at least a tiny bit of caching,
+			// which helps combat some potential race conditions,
+			// and makes sure the transient has a timeout.
+			$min = max( $min, 0.05 );
+			$max = max( $max, 0.25 );
+
+			set_site_transient( $transient_key, $result, rand( $min * MINUTE_IN_SECONDS, $max * MINUTE_IN_SECONDS ) );
 
 			// One way or another we've skipped the transient.
 			static::$item_count_skips[ $transient_key ] = true;

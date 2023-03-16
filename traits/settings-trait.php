@@ -6,6 +6,13 @@ use AS3CF_Utils;
 
 trait Settings_Trait {
 	/**
+	 * Are only legacy defines in use?
+	 *
+	 * @var bool
+	 */
+	protected static $legacy_defines = false;
+
+	/**
 	 * @var array
 	 */
 	private $settings = array();
@@ -14,6 +21,11 @@ trait Settings_Trait {
 	 * @var array
 	 */
 	private $defined_settings = array();
+
+	/**
+	 * @var bool
+	 */
+	private $saving_settings = false;
 
 	/**
 	 * Returns keyed array of all settings values regardless of whether explicitly set or not.
@@ -130,6 +142,7 @@ trait Settings_Trait {
 
 			// If only legacy defines are in use, we can fake new style to allow for key based monitoring and db settings cleanup.
 			if ( ! static::settings_constant() ) {
+				static::$legacy_defines = true;
 				define( static::preferred_settings_constant(), serialize( $this->defined_settings ) );
 			}
 
@@ -139,6 +152,15 @@ trait Settings_Trait {
 		}
 
 		return $this->defined_settings;
+	}
+
+	/**
+	 * Are only legacy defines in use?
+	 *
+	 * @return bool
+	 */
+	public static function using_legacy_defines(): bool {
+		return static::$legacy_defines;
 	}
 
 	/**
@@ -427,5 +449,23 @@ trait Settings_Trait {
 		$value = $this->get_setting( $key, false );
 
 		return true === $value ? 'On' : 'Off';
+	}
+
+	/**
+	 * Getter for $saving_settings.
+	 *
+	 * @return bool
+	 */
+	public function saving_settings(): bool {
+		return $this->saving_settings;
+	}
+
+	/**
+	 * Setter for $saving_settings.
+	 *
+	 * @param bool $saving
+	 */
+	public function set_saving_settings( bool $saving ) {
+		$this->saving_settings = $saving;
 	}
 }

@@ -147,4 +147,18 @@ interface Settings_Interface {
 	 * @return array
 	 */
 	public function get_boolean_format_settings(): array;
+
+	/**
+	 * Getter for $saving_settings.
+	 *
+	 * @return bool
+	 */
+	public function saving_settings(): bool;
+
+	/**
+	 * Setter for $saving_settings.
+	 *
+	 * @param bool $saving
+	 */
+	public function set_saving_settings( bool $saving );
 }

@@ -34,6 +34,12 @@ export const diagnostics = derived( config, $config => $config.diagnostics );
 // Convenience readable store of counts, derived from config.
 export const counts = derived( config, $config => $config.counts );
 
+// Convenience readable store of summary counts, derived from config.
+export const summaryCounts = derived( config, $config => $config.summary_counts );
+
+// Convenience readable store of offload remaining upsell, derived from config.
+export const offloadRemainingUpsell = derived( config, $config => $config.offload_remaining_upsell );
+
 // Convenience readable store of upgrades, derived from config.
 export const upgrades = derived( config, $config => $config.upgrades );
 
@@ -49,6 +55,9 @@ export const needs_access_keys = derived( config, $config => $config.needs_acces
 // Convenience readable store of whether bucket is writable, derived from config.
 export const bucket_writable = derived( config, $config => $config.bucket_writable );
 
+// Convenience readable store of settings validation results, derived from config.
+export const settings_validation = derived( config, $config => $config.settings_validation );
+
 // Store of inline errors and warnings to be shown next to settings.
 // Format is a map using settings key for keys, values are an array of objects that can be used to instantiate a notification.
 export const settings_notifications = writable( new Map() );
@@ -56,6 +65,9 @@ export const settings_notifications = writable( new Map() );
 // Store of validation errors for settings.
 // Format is a map using settings key for keys, values are strings containing validation error.
 export const validationErrors = writable( new Map() );
+
+// Whether settings validations are being run.
+export const revalidatingSettings = writable( false );
 
 // Does the app need a page refresh to resolve conflicts?
 export const needs_refresh = writable( false );
@@ -86,7 +98,7 @@ function createSettings() {
 				return json;
 			}
 
-			return {};
+			return { 'saved': false };
 		},
 		reset() {
 			set( { ...get( current_settings ) } );
@@ -136,6 +148,9 @@ export const settings = createSettings();
 // Have the settings been changed from current server side settings?
 export const settings_changed = derived( [settings, current_settings], objectsDiffer );
 
+// Convenience readable store of default storage provider, derived from config.
+export const defaultStorageProvider = derived( config, $config => $config.default_storage_provider );
+
 // Convenience readable store of available storage providers.
 export const storage_providers = derived( [config, urls], ( [$config, $urls] ) => {
 	for ( const key in $config.storage_providers ) {
@@ -155,6 +170,9 @@ export const storage_provider = derived( [settings, storage_providers], ( [$sett
 		return [];
 	}
 } );
+
+// Convenience readable store of default delivery provider, derived from config.
+export const defaultDeliveryProvider = derived( config, $config => $config.default_delivery_provider );
 
 // Convenience readable store of available delivery providers.
 export const delivery_providers = derived( [config, urls, storage_provider], ( [$config, $urls, $storage_provider] ) => {
@@ -433,9 +451,11 @@ function createState() {
 				callable( json );
 			}
 		},
-		startPeriodicFetch() {
+		async startPeriodicFetch() {
 			stateFetchIntervalStarted = true;
 			stateFetchIntervalPaused = false;
+
+			await this.fetch();
 
 			stateFetchInterval = setInterval( async () => {
 				await this.fetch();
@@ -453,11 +473,11 @@ function createState() {
 				clearInterval( stateFetchInterval );
 			}
 		},
-		resumePeriodicFetch() {
+		async resumePeriodicFetch() {
 			stateFetchIntervalPaused = false;
 
 			if ( stateFetchIntervalStarted ) {
-				this.startPeriodicFetch();
+				await this.startPeriodicFetch();
 			}
 		}
 	};

@@ -79,7 +79,7 @@
 			border-bottom: 1px solid var(--as3cf-wordpress-border-color);
 
 			div.items {
-				max-width: 1220px;
+				max-width: 1110px;
 				display: flex;
 				flex-direction: row;
 				align-items: baseline;
@@ -108,7 +108,11 @@
 								color: var(--as3cf-color-primary-600);
 							}
 
-							&:focus {
+							&:focus, &:active {
+								box-shadow: none;
+							}
+
+							&:focus-visible {
 								color: var(--as3cf-color-primary-600);
 								box-shadow: 0 0 0 1.5px var(--as3cf-color-white), 0 0 0 3.5px var(--as3cf-color-primary-400);
 								border-radius: 3px;
@@ -125,6 +129,119 @@
 
 							a {
 								color: var(--as3cf-active-nav-color);
+							}
+						}
+					}
+				}
+
+				.nav-status-wrapper {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					margin-left: auto;
+					text-decoration: none;
+					gap: 0.5rem;
+					align-self: stretch;
+					min-width: 20px;
+
+					&:focus {
+						box-shadow: none;
+						outline: none;
+					}
+
+					.nav-status {
+						height: 100%;
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						gap: 0.5rem;
+						min-width: 20px;
+						cursor: pointer;
+					}
+
+					p {
+						font-size: 0.75rem;
+
+						&.status-text {
+							flex: 0 0 max-content;
+						}
+					}
+
+					& > p {
+						cursor: pointer;
+					}
+
+					.progress-bar {
+						cursor: pointer;
+						width: 200px;
+					}
+
+					button {
+						flex: 0 0 max-content;
+					}
+
+					.animation-running {
+						cursor: pointer;
+						display: none;
+
+						img {
+							height: 42px;
+						}
+					}
+
+					@media(max-width: 1120px) {
+						> button:not(.btn-expandable) {
+							display: none;
+						}
+						.animation-running {
+							display: block;
+						}
+					}
+
+					@media (max-width: 700px) {
+						.progress-bar {
+							display: none;
+						}
+					}
+
+					@media (max-width: 640px) {
+						display: none;
+					}
+
+					/* When complete there's an icon prefix that takes up more room. */
+					&.complete {
+						@media (max-width: 720px) {
+							.progress-bar {
+								display: none;
+							}
+						}
+
+						/* Remove complete icon before removing whole status. */
+						@media (max-width: 670px) {
+							img.icon.type {
+								display: none;
+							}
+						}
+					}
+
+					/* When a tool is running there is longer status text taking up room. */
+					&.tool-running {
+						@media (max-width: 800px) {
+							.progress-bar {
+								display: none;
+							}
+						}
+
+						/* Because there is an animated icon giving context we can reduce text. */
+						@media (max-width: 740px) {
+							.status-text {
+								strong {
+									font-size: 1.1rem;
+								}
+
+								span {
+									display: none;
+								}
 							}
 						}
 					}
@@ -161,6 +278,10 @@
 					margin: 0 2rem 0 0;
 				}
 
+				&.has-icon {
+					margin: 0 0.5625rem 0 0;
+				}
+
 				a {
 					color: var(--as3cf-color-gray-600);
 					text-decoration: none;
@@ -170,7 +291,12 @@
 						color: var(--as3cf-color-primary-600);
 					}
 
-					&:focus {
+					&:focus, &:active {
+						box-shadow: none;
+						outline: none;
+					}
+
+					&:focus-visible {
 						color: var(--as3cf-color-primary-600);
 						box-shadow: 0 0 0 1.5px var(--as3cf-wordpress-background-color), 0 0 0 3.5px var(--as3cf-color-primary-400);
 						border-radius: 3px;
@@ -197,86 +323,22 @@
 				display: flex !important;
 			}
 		}
-	}
 
-	&.wpomepro {
+		&.wpomepro {
 
-		//Header
-		> .header {
-			.header-wrapper {
-				width: 1220px;
-				max-width: 1220px;
-			}
-		}
-	}
-
-	#global-animation-wrapper {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		margin-left: auto;
-		cursor: pointer;
-		text-decoration: none;
-
-		&:focus {
-			box-shadow: none;
-			outline: none;
-		}
-
-		#animation-running {
-			position: relative;
-			display: flex;
-			flex-direction: row;
-			align-items: baseline;
-
-			.percentage {
-				margin-right: 58px;
-				margin-top: -0.7rem;
-				text-transform: none;
-				font-size: 1.2rem;
-				color: var(--as3cf-color-gray-900);
-				font-weight: 500;
-				text-align: right;
-			}
-
-			span {
-				font-size: 0.85rem;
-			}
-
-			img {
-				position: absolute;
-				right: 0;
-				top: -30px;
-				height: 42px;
-			}
-		}
-
-		#animation-complete {
-			display: flex;
-			align-items: center;
-			margin-top: -1.4rem;
-
-			p {
-				margin-right: 15px;
-				font-size: 0.8rem;
-				text-transform: none;
-				line-height: 1;
-
-				&.success {
-					font-weight: 400;
-					text-decoration: none;
-					color: var(--as3cf-color-gray-500);
-				}
-
-				&.error {
-					font-weight: 500;
-					color: var(--as3cf-notice-error-color);
-					text-decoration: underline;
+			// Header
+			> .header {
+				.header-wrapper {
+					width: 1220px;
+					max-width: 1220px;
 				}
 			}
 
-			img {
-				width: 19px;
+			// Nav
+			> .nav {
+				div.items {
+					max-width: 1220px;
+				}
 			}
 		}
 	}

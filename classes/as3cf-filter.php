@@ -23,7 +23,7 @@ abstract class AS3CF_Filter {
 	/**
 	 * @var array IDs which have already been purged this request.
 	 */
-	protected static $purged_ids = array();
+	private $purged_ids = array();
 
 	/**
 	 * @var Amazon_S3_And_CloudFront
@@ -42,17 +42,22 @@ abstract class AS3CF_Filter {
 	public function __construct( $as3cf ) {
 		$this->as3cf = $as3cf;
 
-		// Purge on attachment delete
-		add_action( 'delete_attachment', array( $this, 'purge_cache_on_attachment_delete' ) );
-
 		$this->init();
 	}
 
 	/**
-	 * Initialize the filter.
+	 * Initialize the filter handler.
 	 */
 	protected function init() {
-		// Optionally override in a sub-class.
+		add_action( 'as3cf_setup', array( $this, 'setup' ) );
+	}
+
+	/**
+	 * Set up the filter handler.
+	 */
+	public function setup() {
+		// Purge on attachment delete.
+		add_action( 'delete_attachment', array( $this, 'purge_cache_on_attachment_delete' ) );
 	}
 
 	/**
@@ -737,13 +742,13 @@ abstract class AS3CF_Filter {
 	 * @param int $post_id
 	 */
 	public function purge_cache_on_attachment_delete( $post_id ) {
-		if ( ! in_array( $post_id, self::$purged_ids ) ) {
+		if ( ! in_array( $post_id, $this->purged_ids ) ) {
 			$item_source = array(
 				'id'          => $post_id,
 				'source_type' => Media_Library_Item::source_type(),
 			);
 			$this->purge_from_cache( $this->get_url( $item_source ) );
-			self::$purged_ids[] = $post_id;
+			$this->purged_ids[] = $post_id;
 		}
 	}
 

@@ -46,4 +46,8 @@ abstract class Integration {
 	 */
 	abstract public function init();
 
+	/**
+	 * Set up the integration.
+	 */
+	abstract public function setup();
 }

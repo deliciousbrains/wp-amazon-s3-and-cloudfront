@@ -3,11 +3,19 @@
 namespace DeliciousBrains\WP_Offload_Media\Providers\Delivery;
 
 use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_Media\Settings_Validator_Trait;
 use DeliciousBrains\WP_Offload_Media\Items\Item;
 use DeliciousBrains\WP_Offload_Media\Providers\Provider;
+use DeliciousBrains\WP_Offload_Media\Settings\Delivery_Check;
+use DeliciousBrains\WP_Offload_Media\Settings\Domain_Check;
+use DeliciousBrains\WP_Offload_Media\Settings\Validator_Interface;
 use Exception;
+use WP_Error as AS3CF_Result;
 
-abstract class Delivery_Provider extends Provider {
+abstract class Delivery_Provider extends Provider implements Validator_Interface {
+	use Settings_Validator_Trait;
+
+	const VALIDATOR_KEY = 'delivery';
 
 	/**
 	 * @var string
@@ -68,6 +76,11 @@ abstract class Delivery_Provider extends Provider {
 	protected static $signed_urls_object_prefix_constants = array();
 
 	/**
+	 * @var int
+	 */
+	private $validator_priority = 10;
+
+	/**
 	 * A description for the Rewrite Media URLs setting.
 	 *
 	 * @return string
@@ -122,7 +135,7 @@ abstract class Delivery_Provider extends Provider {
 	 *
 	 * @return bool
 	 */
-	public function supports_storage( $storage_provider_key ) {
+	public static function supports_storage( $storage_provider_key ) {
 		if ( empty( static::$supported_storage_providers ) || in_array( $storage_provider_key, static::$supported_storage_providers ) ) {
 			return true;
 		}
@@ -200,6 +213,25 @@ abstract class Delivery_Provider extends Provider {
 	 */
 	public static function signed_urls_object_prefix_description() {
 		return '';
+	}
+
+	/**
+	 * Description used in settings notice when all tests pass.
+	 *
+	 * @param array $recommendations Array of hints/recommendation to add to the success message.
+	 *
+	 * @return string
+	 */
+	protected static function delivery_tests_pass_desc( array $recommendations = array() ): string {
+		$message = __( 'Delivery provider is successfully connected and serving offloaded media.', 'amazon-s3-and-cloudfront' );
+
+		if ( ! empty( $recommendations ) ) {
+			$message = __( 'Delivery settings validated.', 'amazon-s3-and-cloudfront' );
+			$message .= '<br><br>';
+			$message .= join( '<br><br>', $recommendations );
+		}
+
+		return $message;
 	}
 
 	/**
@@ -327,15 +359,23 @@ abstract class Delivery_Provider extends Provider {
 	 * @return bool|string
 	 */
 	public function validate_signed_urls_key_file_path( $signed_urls_key_file_path ) {
-		$notice_id = 'validate-signed-urls-key-file-path';
+		$notice_id = ( $this->as3cf->saving_settings() ? 'temp-' : '' ) . 'validate-signed-urls-key-file-path';
 		$this->as3cf->notices->remove_notice_by_id( $notice_id );
+
+		$notice_settings = array(
+			'type'                  => 'error',
+			'only_show_in_settings' => true,
+			'only_show_on_tab'      => 'media',
+			'custom_id'             => $notice_id,
+			'hide_on_parent'        => ! $this->as3cf->saving_settings(),
+		);
 
 		if ( empty( $signed_urls_key_file_path ) ) {
 			return false;
 		}
 
 		if ( ! file_exists( $signed_urls_key_file_path ) ) {
-			$this->as3cf->notices->add_notice( __( 'Given Signing Key File Path is invalid or could not be accessed.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+			$this->as3cf->notices->add_notice( __( 'Given Signing Key File Path is invalid or could not be accessed.', 'amazon-s3-and-cloudfront' ), $notice_settings );
 
 			return false;
 		}
@@ -345,12 +385,12 @@ abstract class Delivery_Provider extends Provider {
 
 			// An exception isn't always thrown, so check value instead.
 			if ( empty( $value ) ) {
-				$this->as3cf->notices->add_notice( __( 'Could not read Signing Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+				$this->as3cf->notices->add_notice( __( 'Could not read Signing Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), $notice_settings );
 
 				return false;
 			}
 		} catch ( Exception $e ) {
-			$this->as3cf->notices->add_notice( __( 'Could not read Signing Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+			$this->as3cf->notices->add_notice( __( 'Could not read Signing Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), $notice_settings );
 
 			return false;
 		}
@@ -540,6 +580,57 @@ abstract class Delivery_Provider extends Provider {
 	}
 
 	/**
+	 * Notice text for when a public file can't be accessed.
+	 *
+	 * @param string $error_message
+	 *
+	 * @return string
+	 */
+	public static function get_cannot_access_public_file_desc( string $error_message ): string {
+		return sprintf(
+			__(
+				'Offloaded media URLs may be broken. %1$s <a href="%2$s" target="_blank">Read more</a>',
+				'amazon-s3-and-cloudfront'
+			),
+			$error_message,
+			static::get_provider_service_quick_start_url()
+		);
+	}
+
+	/**
+	 * Notice text for when a private file can't be accessed using a signed private URL.
+	 *
+	 * @param string $error_message
+	 *
+	 * @return string
+	 */
+	public static function get_cannot_access_private_file_desc( string $error_message ): string {
+		return sprintf(
+			__(
+				'Private offloaded media URLs may be broken. %1$s <a href="%2$s" target="_blank">Read more</a>',
+				'amazon-s3-and-cloudfront'
+			),
+			$error_message,
+			static::get_provider_service_quick_start_url()
+		);
+	}
+
+	/**
+	 * Notice text for when a private file can be accessed using an unsigned URL.
+	 *
+	 * @return string
+	 */
+	public static function get_unsigned_url_can_access_private_file_desc(): string {
+		return sprintf(
+			__(
+				'Private media is currently exposed through unsigned URLs. Restore privacy by verifying the configuration of private media settings. <a href="%1$s" target="_blank">Read more</a>',
+				'amazon-s3-and-cloudfront'
+			),
+			static::get_provider_service_quick_start_url()
+		);
+	}
+
+	/**
 	 * Prompt text to confirm that everything is in place to enforce Object Ownership without issues for Delivery Provider.
 	 *
 	 * @return string
@@ -583,5 +674,262 @@ abstract class Delivery_Provider extends Provider {
 	 */
 	protected function get_console_url_suffix_param( string $bucket = '', string $prefix = '', string $region = '' ): string {
 		return '';
+	}
+
+	/**
+	 * Validate delivery settings for the configured provider for the delivery status indicator.
+	 *
+	 * @param bool $force Force time resource consuming or state altering tests to run.
+	 *
+	 * @return AS3CF_Result
+	 */
+	public function validate_settings( bool $force = false ): AS3CF_Result {
+		$storage_provider = $this->as3cf->get_storage_provider();
+		$bucket           = $this->as3cf->get_setting( 'bucket' );
+		$region           = $this->as3cf->get_setting( 'region' );
+		$recommendations  = array();
+
+		// Validate the delivery provider key.
+		$valid_delivery_provider_key = $this->validate_delivery_provider_key();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $valid_delivery_provider_key->get_error_code() ) {
+			return $valid_delivery_provider_key;
+		}
+
+		// The storage provider has lower priority and runs before delivery, so we should always have a fresh result.
+		if ( $this->is_result_code_unknown_or_error( $this->as3cf->validation_manager->get_validation_status( 'storage' ) ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_WARNING,
+				__( 'Delivery of offloaded media cannot be tested until the storage provider is successfully connected. See "Storage Settings" for more information.', 'amazon-s3-and-cloudfront' )
+			);
+		}
+
+		// Ensure the storage provider client is initiated before BAPA/OOE tests.
+		$storage_provider->get_client( array( 'region' => $region ) );
+
+		// Is storage BAPA setting is enabled, validate that it's supported by delivery provider.
+		if ( ! static::block_public_access_supported() && $storage_provider->public_access_blocked( $bucket ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				sprintf(
+					_x(
+						'Offloaded media cannot be delivered because <strong>Block All Public Access</strong> is enabled. <a href="%1$s">Edit bucket security</a>',
+						'Delivery setting notice for issue with BAPA enabled on Storage Provider',
+						'amazon-s3-and-cloudfront'
+					),
+					'#/storage/security'
+				)
+			);
+		}
+
+		// Object Ownership Policies enabled?
+		if ( ! static::object_ownership_supported() && $storage_provider->object_ownership_enforced( $bucket ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				sprintf(
+					_x(
+						'Offloaded media cannot be delivered due to the current <strong>Object Ownership</strong> configuration. <a href="%1$s">Edit bucket security</a>',
+						'Delivery setting notice for issue with Object Ownership enforced on Storage Provider',
+						'amazon-s3-and-cloudfront'
+					),
+					'#/storage/security'
+				)
+			);
+		}
+
+		$delivery_domain_settings = $this->validate_delivery_domain();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $delivery_domain_settings->get_error_code() ) {
+			return $delivery_domain_settings;
+		}
+
+		// Are settings for delivering signed URLs valid?
+		$signed_url_settings = $this->validate_signed_url_settings();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $signed_url_settings->get_error_code() ) {
+			return $signed_url_settings;
+		}
+
+		// Test accessing files via provider.
+		$connection_test = $this->provider_connection_test();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $connection_test->get_error_code() ) {
+			return $connection_test;
+		}
+
+		// Is Deliver Offloaded Media enabled?
+		$deliver_media = $this->validate_deliver_offloaded_media_enabled();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $deliver_media->get_error_code() ) {
+			return $deliver_media;
+		}
+
+		// All good.
+		return new AS3CF_Result(
+			count( $recommendations ) === 0 ? Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS : Validator_Interface::AS3CF_STATUS_MESSAGE_WARNING,
+			static::delivery_tests_pass_desc( $recommendations )
+		);
+	}
+
+	/**
+	 * Validate that the delivery provider key provided in settings is valid for the storage provider. This should
+	 * only happen if the user is using defines statements or has manually edited settings in the db.
+	 *
+	 * @return AS3CF_Result
+	 */
+	protected function validate_delivery_provider_key(): AS3CF_Result {
+		$storage_provider      = $this->as3cf->get_storage_provider();
+		$storage_provider_key  = $storage_provider->get_provider_key_name();
+		$delivery_provider_key = $this->as3cf->get_core_setting( 'delivery-provider' );
+
+		$valid_providers = array_keys( $this->as3cf->get_available_delivery_provider_details( $storage_provider_key ) );
+		if ( ! in_array( $delivery_provider_key, $valid_providers ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				sprintf(
+					__( 'An invalid delivery provider has been defined for the active storage provider. Please use %1$s.', 'amazon-s3-and-cloudfront' ),
+					"<code>" . AS3CF_Utils::human_readable_join( "</code>, <code>", "</code> or <code>", $valid_providers ) . "</code>"
+				)
+			);
+		}
+
+		return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+	}
+
+	/**
+	 * Validate settings for serving signed URLs.
+	 *
+	 * @return AS3CF_Result
+	 */
+	protected function validate_signed_url_settings(): AS3CF_Result {
+		return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+	}
+
+	/**
+	 * Validate Deliver Offloaded Media is enabled.
+	 *
+	 * @return AS3CF_Result
+	 */
+	protected function validate_deliver_offloaded_media_enabled(): AS3CF_Result {
+		if ( ! $this->as3cf->get_setting( 'serve-from-s3' ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_WARNING,
+				__(
+					'Delivery provider is successfully connected, but offloaded media will not be served until <strong>Deliver Offloaded Media</strong> is enabled. In the meantime, local media is being served if available.',
+					'amazon-s3-and-cloudfront'
+				)
+			);
+		}
+
+		return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+	}
+
+	/**
+	 * Test settings for custom delivery domain.
+	 *
+	 * @return AS3CF_Result
+	 */
+	protected function validate_delivery_domain(): AS3CF_Result {
+		$delivery_domain        = $this->as3cf->get_setting( 'delivery-domain' );
+		$enable_delivery_domain = $this->as3cf->get_setting( 'enable-delivery-domain' );
+
+		if ( ! static::delivery_domain_allowed() ) {
+			return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+		}
+
+		// Custom domain enabled?
+		if ( ! $enable_delivery_domain || empty( $delivery_domain ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_WARNING,
+				sprintf(
+					__(
+						'Offloaded media cannot be delivered from the CDN until a delivery domain is set. <a href="%1$s" target="_blank">Read more</a>',
+						'amazon-s3-and-cloudfront'
+					),
+					static::get_provider_service_quick_start_url() . '#configure-plugin'
+				)
+			);
+		}
+
+		// Is the custom domain name valid?
+		$domain_check = new Domain_Check( $delivery_domain );
+		$domain_issue = $domain_check->get_validation_issue();
+		if ( ! empty( $domain_issue ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				sprintf(
+					__(
+						'Offloaded media URLs may be broken due to an invalid delivery domain. %1$s <a href="%2$s">How to set a delivery domain</a>',
+						'amazon-s3-and-cloudfront'
+					),
+					$domain_issue,
+					static::get_provider_service_quick_start_url() . '#configure-plugin'
+				)
+			);
+		}
+
+		return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+	}
+
+	/**
+	 * Test public and private delivery from bucket using test files.
+	 *
+	 * @return AS3CF_Result
+	 */
+	protected function provider_connection_test(): AS3CF_Result {
+		$delivery_check = new Delivery_Check( $this->as3cf );
+
+		$setup_files = $delivery_check->setup_test_file( false );
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $setup_files->get_error_code() ) {
+			return new AS3CF_Result( $setup_files->get_error_code(), $setup_files->get_error_message() );
+		}
+
+		// Verify that the public file is accessible.
+		$delivery_issue = $delivery_check->test_public_file_access();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $delivery_issue->get_error_code() ) {
+			$delivery_check->remove_test_files();
+
+			return new AS3CF_Result(
+				$delivery_issue->get_error_code(),
+				static::get_cannot_access_public_file_desc( $delivery_issue->get_error_message() )
+			);
+		}
+
+		$setup_files = $delivery_check->setup_test_file( true );
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $setup_files->get_error_code() ) {
+			return new AS3CF_Result( $setup_files->get_error_code(), $setup_files->get_error_message() );
+		}
+
+		// Verify that the private file is accessible.
+		$delivery_issue = $delivery_check->test_private_file_access();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $delivery_issue->get_error_code() ) {
+			$delivery_check->remove_test_files();
+
+			return new AS3CF_Result(
+				$delivery_issue->get_error_code(),
+				static::get_cannot_access_private_file_desc( $delivery_issue->get_error_message() )
+			);
+		}
+
+		// Verify that the private file can't be accessed with unsigned URL.
+		$delivery_issue = $delivery_check->test_private_file_access_unsigned();
+		if ( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS !== $delivery_issue->get_error_code() ) {
+			$delivery_check->remove_test_files();
+
+			return new AS3CF_Result(
+				$delivery_issue->get_error_code(),
+				static::get_unsigned_url_can_access_private_file_desc()
+			);
+		}
+
+		// Ensure all test files are removed.
+		$delivery_check->remove_test_files();
+
+		return new AS3CF_Result( Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS );
+	}
+
+	/**
+	 * Get the name of the actions that are fired when the settings that the validator
+	 * is responsible for are saved.
+	 *
+	 * @return array
+	 */
+	public function post_save_settings_actions(): array {
+		return array( 'as3cf_post_save_settings', 'as3cf_post_update_bucket' );
 	}
 }

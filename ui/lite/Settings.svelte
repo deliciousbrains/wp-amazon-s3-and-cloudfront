@@ -3,6 +3,7 @@
 	import {
 		config,
 		current_settings,
+		defaultStorageProvider,
 		needs_access_keys,
 		needs_refresh,
 		notifications,
@@ -79,12 +80,13 @@
 		}
 
 		// Show a persistent error notice if bucket can't be accessed.
-		if ( $needs_access_keys ) {
+		if ( $needs_access_keys && ($settings.provider !== $defaultStorageProvider || $settings.bucket.length !== 0) ) {
 			const notification = {
 				id: "as3cf-needs-access-keys",
 				type: "error",
 				dismissible: false,
 				only_show_on_tab: "media",
+				hide_on_parent: true,
 				heading: $strings.needs_access_keys,
 				plainHeading: true
 			};

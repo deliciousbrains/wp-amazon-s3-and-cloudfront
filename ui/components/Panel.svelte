@@ -1,6 +1,7 @@
 <script>
-	import {getContext, hasContext} from "svelte";
+	import {createEventDispatcher, getContext, hasContext} from "svelte";
 	import {writable} from "svelte/store";
+	import {fade} from "svelte/transition";
 	import {link} from "svelte-spa-router";
 	import {defined_settings, strings} from "../js/stores";
 	import PanelContainer from "./PanelContainer.svelte";
@@ -8,15 +9,23 @@
 	import DefinedInWPConfig from "./DefinedInWPConfig.svelte";
 	import ToggleSwitch from "./ToggleSwitch.svelte";
 	import HelpButton from "./HelpButton.svelte";
+	import Button from "./Button.svelte";
 
 	const classes = $$props.class ? $$props.class : "";
+	const dispatch = createEventDispatcher();
 
+	export let ref = {};
 	export let name = "";
 	export let heading = "";
 	export let defined = false;
 	export let multi = false;
+	export let flyout = false;
 	export let toggleName = "";
 	export let toggle = false;
+	export let refresh = false;
+	export let refreshText = $strings.refresh_title;
+	export let refreshDesc = refreshText;
+	export let refreshing = false;
 	export let helpKey = "";
 	export let helpURL = "";
 	export let helpDesc = $strings.help_desc;
@@ -44,12 +53,37 @@
 			toggle = !toggle;
 		}
 	}
+
+	/**
+	 * Catch escape key and emit a custom cancel event.
+	 *
+	 * @param {KeyboardEvent} event
+	 */
+	function handleKeyup( event ) {
+		if ( event.key === "Escape" ) {
+			event.preventDefault();
+			dispatch( "cancel" );
+		}
+	}
 </script>
 
-<div class="panel {name}" class:multi class:locked>
+<div
+	class="panel {name}"
+	class:multi
+	class:flyout
+	class:locked
+	transition:fade|local={{duration: flyout ? 200 : 0}}
+	bind:this={ref}
+	on:focusout
+	on:mouseenter
+	on:mouseleave
+	on:mousedown
+	on:click
+	on:keyup={handleKeyup}
+>
 	{#if !multi && heading}
 		<div class="heading">
-			<h3>{heading}</h3>
+			<h2>{heading}</h2>
 			{#if helpURL}
 				<HelpButton url={helpURL} desc={helpDesc}/>
 			{:else if helpKey}
@@ -70,6 +104,9 @@
 					<h3>{heading}</h3>
 				{/if}
 				<DefinedInWPConfig {defined}/>
+				{#if refresh}
+					<Button refresh {refreshing} title={refreshDesc} on:click={() => dispatch("refresh")}>{@html refreshText}</Button>
+				{/if}
 				{#if storageProvider}
 					<div class="provider">
 						<a href="/storage/provider" use:link class="link">

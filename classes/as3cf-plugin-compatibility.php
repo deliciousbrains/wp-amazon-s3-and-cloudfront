@@ -928,16 +928,18 @@ class AS3CF_Plugin_Compatibility {
 	 * Display an admin message if PHP version is soon to be unsupported by plugin.
 	 *
 	 * NOTE: This is not added to AWS SDK compatibility checks as it is remaining compatible with earlier PHP versions.
-	 * This function should be removed or reworked once PHP 5.5 is required.
+	 *
+	 * This function should be reworked when the minimum supported version of PHP
+	 * is planned to be increased in a subsequent release.
 	 */
 	public function maybe_warn_about_php_version() {
-		$key_base = 'php-version-55';
+		$key_base = 'php-version-72';
 
-		if ( version_compare( PHP_VERSION, '5.5', '<' ) ) {
+		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
 			$message = sprintf(
 				__( '<strong>Warning:</strong> This site is using PHP %1$s, in a future update WP Offload Media will require PHP %2$s or later. %3$s', 'amazon-s3-and-cloudfront' ),
 				PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION,
-				'5.5',
+				'7.2',
 				$this->as3cf->more_info_link( '/wp-offload-media/doc/php-version-requirements/', 'upgrade-php-version' )
 			);
 

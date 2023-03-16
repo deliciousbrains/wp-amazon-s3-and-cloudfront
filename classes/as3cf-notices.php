@@ -70,6 +70,7 @@ class AS3CF_Notices {
 			'user_capabilities'     => array( 'as3cf_compat_check', 'check_capabilities' ), // A user with these capabilities can see the notice. Can be a callback with the first array item the name of global class instance.
 			'only_show_in_settings' => false,
 			'only_show_on_tab'      => false, // Only show on a specific WP Offload Media tab.
+			'hide_on_parent'        => false, // Hide the notice on a tab parent page (where an embedded notice is shown instead).
 			'custom_id'             => '',
 			'auto_p'                => true, // Automatically wrap the message in a <p>
 			'class'                 => '', // Extra classes for the notice
@@ -83,6 +84,7 @@ class AS3CF_Notices {
 			'links'                 => array(), // Optional list of links to be shown at bottom of notice.
 			'dismiss_url'           => '', // Optional dismiss URL override.
 			'created_at'            => 0, // Optional timestamp, defaults to now.
+			'short'                 => '', // Short version of the message.
 		);
 
 		$notice                 = array_intersect_key( array_merge( $defaults, $args ), $defaults );
@@ -415,6 +417,22 @@ class AS3CF_Notices {
 		$response['notifications'] = $this->get_notices( '', true );
 
 		return $response;
+	}
+
+	/**
+	 * If it exists, return the short version of the notice message.
+	 * If not, return the standard message.
+	 *
+	 * @param array $notice
+	 *
+	 * @return string
+	 */
+	public function get_short_message( array $notice ): string {
+		if ( ! empty( $notice['short'] ) ) {
+			return $notice['short'];
+		}
+
+		return $notice['message'];
 	}
 
 	/**

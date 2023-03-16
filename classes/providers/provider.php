@@ -376,7 +376,11 @@ abstract class Provider {
 	 * @return bool
 	 */
 	public static function requires_acls(): bool {
-		return ! static::block_public_access_supported() || ! static::object_ownership_supported();
+		if ( static::block_public_access_supported() || static::object_ownership_supported() ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

@@ -26,7 +26,7 @@
 <PanelRow header gradient class="delivery {providerType} {providerKey}">
 	<img src="{$delivery_provider.icon}" alt={$delivery_provider.provider_service_name}/>
 	<div class="provider-details">
-		<h4>{$delivery_provider.provider_service_name}</h4>
+		<h3>{$delivery_provider.provider_service_name}</h3>
 		<p class="console-details">
 			<a href={$urls.delivery_provider_console_url} class="console" target="_blank" title={$strings.view_provider_console}>{$delivery_provider.console_title}</a>
 		</p>
@@ -48,7 +48,7 @@
 		z-index: 1;
 	}
 
-	:global(#as3cf-settings.wpome div.panel) .provider-details h4 {
+	:global(#as3cf-settings.wpome div.panel) .provider-details h3 {
 		margin-left: 0;
 		margin-bottom: 0.5rem;
 	}

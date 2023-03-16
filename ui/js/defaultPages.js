@@ -5,7 +5,8 @@ import {
 	storage_provider,
 	is_plugin_setup_with_credentials,
 	is_plugin_setup,
-	needs_access_keys
+	needs_access_keys,
+	delivery_provider
 } from "./stores";
 
 // Components used for default pages.
@@ -106,18 +107,25 @@ export const defaultPages = [
 			"settings.save": ( data ) => {
 				// If currently in /storage/bucket route,
 				// and storage provider does not require ACLs,
-				// and bucket wasn't just created during initial set up,
+				// and bucket wasn't just created during initial set up
+				// with delivery provider compatible access control,
 				// then security is next.
 				if (
 					get( location ) === "/storage/bucket" &&
 					get( is_plugin_setup_with_credentials ) &&
 					!get( storage_provider ).requires_acls &&
 					(
-						!data.hasOwnProperty( "bucketSource" ) ||
-						data.bucketSource !== "new" ||
-						!data.hasOwnProperty( "initialSettings" ) ||
-						!data.initialSettings.hasOwnProperty( "bucket" ) ||
-						data.initialSettings.bucket.length > 0
+						!data.hasOwnProperty( "bucketSource" ) || // unexpected data issue
+						data.bucketSource !== "new" || // bucket not created
+						!data.hasOwnProperty( "initialSettings" ) || // unexpected data issue
+						!data.initialSettings.hasOwnProperty( "bucket" ) || // unexpected data issue
+						data.initialSettings.bucket.length > 0 || // bucket previously set
+						!data.hasOwnProperty( "settings" ) || // unexpected data issue
+						!data.settings.hasOwnProperty( "use-bucket-acls" ) || // unexpected data issue
+						(
+							!data.settings[ "use-bucket-acls" ] && // bucket not using ACLs ...
+							get( delivery_provider ).requires_acls // ... but delivery provider needs ACLs
+						)
 					)
 				) {
 					return true;

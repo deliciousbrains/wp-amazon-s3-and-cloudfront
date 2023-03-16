@@ -1,7 +1,6 @@
 <script>
 	import {createEventDispatcher, getContext, hasContext} from "svelte";
 	import {writable} from "svelte/store";
-	import {replace} from "svelte-spa-router";
 	import {
 		settings,
 		defined_settings,
@@ -11,6 +10,7 @@
 		counts,
 		current_settings,
 		needs_refresh,
+		revalidatingSettings,
 		state
 	} from "../js/stores";
 	import {
@@ -181,6 +181,7 @@
 		$settings.provider = storageProvider.provider_key_name;
 		$settings[ "access-key-id" ] = accessKeyId;
 		$settings[ "secret-access-key" ] = secretAccessKey;
+		$settings[ "use-server-roles" ] = authMethod === "server-role";
 		$settings[ "key-file" ] = keyFile;
 		const result = await settings.save();
 
@@ -188,15 +189,22 @@
 		if ( !result.hasOwnProperty( "saved" ) || !result.saved ) {
 			settings.reset();
 			saving = false;
-			state.resumePeriodicFetch();
+			await state.resumePeriodicFetch();
 
 			scrollNotificationsIntoView();
 
 			return;
 		}
 
-		state.resumePeriodicFetch();
+		$revalidatingSettings = true;
+		const statePromise = state.resumePeriodicFetch();
+
 		dispatch( "routeEvent", { event: "settings.save", data: result } );
+
+		// Just make sure periodic state fetch promise is done with,
+		// even though we don't really care about it.
+		await statePromise;
+		$revalidatingSettings = false;
 	}
 </script>
 
@@ -220,9 +228,9 @@
 				/>
 			{/each}
 
-			<div class="notice notice-qsg">
+			<Notification class="notice-qsg">
 				<p>{@html storageProvider.get_access_keys_help}</p>
-			</div>
+			</Notification>
 		</PanelRow>
 	</Panel>
 

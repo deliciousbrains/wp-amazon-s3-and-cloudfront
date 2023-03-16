@@ -175,6 +175,21 @@ abstract class AS3CF_Plugin_Base implements Settings_Interface {
 	}
 
 	/**
+	 * Which defined settings keys are from the standard settings constant?
+	 *
+	 * @return array
+	 */
+	public function get_non_legacy_defined_settings_keys(): array {
+		static $keys = null;
+
+		if ( is_null( $keys ) ) {
+			$keys = array_keys( array_diff_key( $this->get_defined_settings(), $this->get_legacy_defined_settings( array() ) ) );
+		}
+
+		return $keys;
+	}
+
+	/**
 	 * Allowed settings keys for this plugin.
 	 * Meant to be overridden in child classes.
 	 *

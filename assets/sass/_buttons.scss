@@ -88,6 +88,85 @@
 					border: 1px solid var(--as3cf-color-gray-400);
 				}
 			}
+
+			&.btn-expandable {
+				all: unset;
+				box-sizing: border-box;
+				cursor: pointer;
+				flex: 0 0 auto;
+				width: 24px;
+				height: 24px;
+				min-width: 24px;
+				min-height: 24px;
+
+				background: url(../img/icon/arrow.svg) no-repeat center/18px;
+				border-radius: 12px;
+
+				transition: all .2s ease-in;
+
+				&.btn-expanded {
+					transform: rotate(180deg);
+				}
+
+				&:hover, &:focus, &:active {
+					box-shadow: 0 0 0 1.5px var(--as3cf-color-white), 0 0 0 3.5px var(--as3cf-color-secondary-500);
+					outline: 0;
+				}
+			}
+
+			&.btn-refresh {
+				all: unset;
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+				box-sizing: border-box;
+				cursor: pointer;
+				flex: 0 0 auto;
+				font-size: 13px;
+				font-weight: 500;
+				color: var(--as3cf-link-color);
+				border-radius: 3px;
+				padding: 0.1rem;
+				margin-right: 0 -0.1rem;
+				text-decoration: underline;
+
+				img.refresh {
+					width: 12px;
+					height: 12px;
+					min-width: 12px;
+					min-height: 12px;
+
+					&.refreshing {
+						animation: spin 1s linear infinite;
+					}
+
+					@keyframes spin {
+						100% {
+							transform: rotate(360deg);
+						}
+					}
+				}
+
+				&.btn-refreshing {
+					cursor: default;
+				}
+
+				&:hover, &:active, &:focus {
+					text-decoration: none !important;
+					box-shadow: 0;
+				}
+
+				&:focus-visible {
+					text-decoration: none;
+					box-shadow: 0 0 0 1.5px var(--as3cf-color-white), 0 0 0 3.5px var(--as3cf-color-secondary-500);
+					outline: 0;
+				}
+
+				&:disabled {
+					color: var(--as3cf-color-gray-800);
+					text-decoration: none;
+				}
+			}
 		}
 
 		a,

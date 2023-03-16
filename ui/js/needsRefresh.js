@@ -20,7 +20,5 @@ export function needsRefresh( saving, previousSettings, currentSettings, previou
 		return true;
 	}
 
-	if ( objectsDiffer( [previousDefines, currentDefines] ) ) {
-		return true;
-	}
+	return objectsDiffer( [previousDefines, currentDefines] );
 }

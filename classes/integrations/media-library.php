@@ -46,6 +46,13 @@ class Media_Library extends Integration {
 	 * Init Media Library integration.
 	 */
 	public function init() {
+		Media_Library_Item::init_cache();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function setup() {
 		// Filter from WordPress media library handling, plugin needs to be set up
 		add_filter( 'wp_unique_filename', array( $this, 'wp_unique_filename' ), 10, 3 );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'wp_update_attachment_metadata' ), 110, 2 );
@@ -90,8 +97,6 @@ class Media_Library extends Integration {
 		add_filter( 'as3cf_pre_handle_item_' . Upload_Handler::get_item_handler_key_name(), array( $this, 'pre_handle_item_upload' ), 10, 3 );
 		add_filter( 'as3cf_upload_object_key_as_private', array( $this, 'filter_upload_object_key_as_private' ), 10, 3 );
 		add_action( 'as3cf_pre_upload_object', array( $this, 'action_pre_upload_object' ), 10, 2 );
-
-		Media_Library_Item::init_cache();
 	}
 
 	/**
@@ -145,9 +150,31 @@ class Media_Library extends Integration {
 			}
 
 			// There is no unified way of checking whether subsizes are expected, so we have to duplicate WordPress code here.
-			$new_sizes     = wp_get_registered_image_subsizes();
-			$new_sizes     = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
+			$new_sizes = wp_get_registered_image_subsizes();
+			$new_sizes = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
+
+			// Some images, particularly SVGs, don't create thumbnails but do have
+			// metadata for them. At the time `wp_get_missing_image_subsizes()` checks
+			// the saved metadata, it isn't there, but we already have it.
+			$func = function ( $value, $object_id, $meta_key, $single, $meta_type ) use ( $post_id, $data ) {
+				if (
+					is_null( $value ) &&
+					$object_id === $post_id &&
+					'_wp_attachment_metadata' === $meta_key &&
+					$single &&
+					'post' === $meta_type
+				) {
+					// For some reason the filter is expected return an array of values
+					// as if not doing a single record.
+					return array( $data );
+				}
+
+				return $value;
+			};
+
+			add_filter( 'get_post_metadata', $func, 10, 5 );
 			$missing_sizes = wp_get_missing_image_subsizes( $post_id );
+			remove_filter( 'get_post_metadata', $func );
 
 			// If any registered thumbnails smaller than the original are missing,
 			// and current filters still expect those sizes, wait until they're all ready.
@@ -1022,7 +1049,7 @@ class Media_Library extends Integration {
 	 */
 	public function image_file_matches_image_meta( $match, $image_location, $image_meta, $source_id ) {
 		// If already matched or the URL is local, there's nothing for us to do.
-		if ( $match || ! $this->as3cf->filter_local->url_needs_replacing( $image_location ) ) {
+		if ( $match || $this->as3cf->filter_local->url_needs_replacing( $image_location ) ) {
 			return $match;
 		}
 
@@ -1031,7 +1058,7 @@ class Media_Library extends Integration {
 			'source_type' => Media_Library_Item::source_type(),
 		);
 
-		return $this->as3cf->filter_local->item_matches_src( $item, $image_location );
+		return $this->as3cf->filter_provider->item_matches_src( $item, $image_location );
 	}
 
 	/**

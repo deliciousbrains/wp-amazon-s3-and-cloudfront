@@ -5,8 +5,11 @@
 	&.wpome {
 
 		.page-wrapper {
-			.page-title {
-				margin-bottom: 2.6rem;
+			h2.page-title {
+				font-size: 0.9375rem;
+				color: var(--as3cf-color-gray-900);
+				font-weight: 500;
+				margin: 0 0 1.25rem;
 			}
 		}
 
@@ -22,6 +25,10 @@
 
 			.page-wrapper {
 				width: 840px;
+
+				&.assets, &.tools {
+					width: 768px;
+				}
 			}
 
 			.page-wrapper.media {
@@ -139,6 +146,10 @@
 							flex: 0 0 auto;
 						}
 					}
+
+					.notification.notice-qsg {
+						width: 100%;
+					}
 				}
 			}
 		}
@@ -238,19 +249,15 @@
 
 		.assets-page.wrapper {
 			margin: 0;
-			max-width: 840px;
+			max-width: 768px;
 
 			.assets-panel {
 				padding: 0.45rem 0;
-				max-width: 640px;
+				max-width: 768px;
 			}
 
 			.notice {
 				margin-right: auto;
-			}
-
-			.notice-qsg {
-				display: inline-flex;
 			}
 
 			.settings {
@@ -298,7 +305,7 @@
 
 		.tools-page.wrapper {
 			margin: 0;
-			max-width: 760px;
+			max-width: 768px;
 
 			.panel.multi {
 				.panel-container.tools-panel {
@@ -324,7 +331,7 @@
 						&.body {
 							padding: 1.6rem 2.6rem 1.6rem 6.1rem;
 
-							&.progress-bar {
+							&.show-progress {
 								margin: 0;
 								display: flex;
 								flex-direction: column;
@@ -350,61 +357,9 @@
 									}
 								}
 
-								.indicator,
-								.progress {
-									height: 8px;
-									border-radius: 8px;
-								}
-
-								.progress {
+								.progress-bar {
 									width: 100%;
-									background: #E9E9EF;
 									margin-top: 1rem;
-
-
-									//Progress Bar Animation
-									&.stripe {
-										&.animate,
-										> .indicator.animate {
-											background-size: 30px 30px;
-											background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 25%, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-											background-image: -webkit-gradient(linear, left top, right bottom, color-stop(0%, rgba(255, 255, 255, 0.2)), color-stop(25%, rgba(255, 255, 255, 0.2)), color-stop(25%, rgba(255, 255, 255, 0)), color-stop(50%, rgba(255, 255, 255, 0)), color-stop(50%, rgba(255, 255, 255, 0.2)), color-stop(75%, rgba(255, 255, 255, 0.2)), color-stop(75%, rgba(255, 255, 255, 0)), color-stop(100%, rgba(255, 255, 255, 0)));
-											background-image: -webkit-linear-gradient(-45deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.3) 75%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-											background-image: -o-linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 25%, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-											background-image: -ms-linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 25%, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-											background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 25%, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-											animation: progress 5s linear infinite;
-										}
-
-										@keyframes progress {
-											from {
-												background-position: 0 0;
-											}
-											to {
-												background-position: -60px -60px;
-											}
-										}
-
-										&.animate {
-											background-color: var(--as3cf-secondary-color);
-										}
-									}
-
-									.indicator {
-										display: block;
-										background-color: var(--as3cf-color-primary-500);
-										width: 40%;
-
-										&.running {
-											background-color: var(--as3cf-color-secondary-500);
-										}
-
-										//just for demo
-										&.complete {
-											background-color: var(--as3cf-complete-color);
-											width: 100%;
-										}
-									}
 								}
 							}
 						}
@@ -515,7 +470,7 @@
 				gap: 0.5rem;
 			}
 
-			h3 {
+			h2 {
 				font-size: 0.9375rem;
 				color: var(--as3cf-color-gray-900);
 				font-weight: 500;
@@ -550,9 +505,11 @@
 
 					&.footer {
 						border-top: 1px solid var(--as3cf-separator-color);
+						border-bottom-left-radius: 5px;
+						border-bottom-right-radius: 5px;
 					}
 
-					h4 {
+					h3, h4 {
 						font-size: 0.875rem;
 						font-weight: 500;
 						color: var(--as3cf-color-gray-800);
@@ -907,6 +864,185 @@
 					}
 				}
 			}
+
+			&.flyout {
+				position: absolute;
+				top: 50px;
+				right: 0;
+				min-width: 384px;
+				z-index: 99;
+				cursor: default;
+
+				&.multi {
+					.panel-container {
+						.panel-row {
+							&.header {
+								height: auto;
+								padding: 1rem 1.5rem;
+								align-items: center;
+
+								h3 {
+									font-size: 13px;
+									font-weight: 600;
+									flex: 1 1 auto;
+								}
+							}
+
+							&.summary {
+								padding: 0;
+
+								table {
+									width: 100%;
+									border-collapse: collapse;
+
+									th, td {
+										padding: 0 0 1rem 2rem;
+
+										color: var(--as3cf-color-gray-800);
+										font-size: 12px;
+										text-align: left;
+
+										/* Make title column cell's width stretch, numerics are compact. */
+										width: 100%;
+									}
+
+									/* Indent the columns. */
+									th:first-of-type, td:first-of-type {
+										padding-left: 1.5rem;
+									}
+
+									th:last-of-type, td:last-of-type {
+										padding-right: 1.5rem;
+									}
+
+									/* Table header has different styling and vertical padding. */
+									thead {
+										background-color: var(--as3cf-color-gray-100);
+
+										tr {
+											border-bottom: 1px solid var(--as3cf-separator-color);
+
+											th {
+												padding-top: 10px;
+												padding-bottom: 10px;
+
+												color: var(--as3cf-color-gray-700);
+												font-weight: 500;
+												font-size: 10px;
+											}
+										}
+									}
+
+									/* Top and bottom rows have different vertical padding than between rows. */
+									tbody, tfoot {
+										tr:first-of-type {
+											td {
+												padding-top: 1rem;
+											}
+										}
+
+										tr:last-of-type {
+											td {
+												padding-bottom: 1rem;
+											}
+										}
+									}
+
+									tfoot {
+										/*
+										 * Hack in an indented border even though table header has
+										 * full width background and borders, without using extra
+										 * cells, and retaining relationship between header
+										 * and main body columns.
+										 *
+										 * PhpStorm will complain that there's no colours here, but there are!
+										 */
+										background-image: linear-gradient(var(--as3cf-separator-color), var(--as3cf-separator-color));
+										background-repeat: no-repeat;
+										background-size: calc(100% - 1.5rem - 1.5rem) 1px;
+										background-position: 1.5rem 0;
+
+										td {
+											font-weight: 500;
+										}
+									}
+
+									.numeric {
+										text-align: right;
+										width: max-content;
+										min-width: max-content;
+										white-space: nowrap;
+									}
+
+									a {
+										color: var(--as3cf-color-primary-500);
+									}
+								}
+							}
+
+							&.footer {
+								padding: 1.5rem;
+								display: flex;
+
+								&.upsell {
+									border-top: 1px solid var(--as3cf-color-primary-100);
+									background-color: var(--as3cf-color-primary-50);
+									flex-direction: column;
+
+									p {
+										margin-bottom: 0.5rem;
+										white-space: nowrap;
+									}
+
+									.button {
+										margin: 0;
+										width: 100%;
+									}
+								}
+
+								&.offload-remaining {
+									background-color: var(--as3cf-color-gray-100);
+
+									button {
+										flex: 100%;
+									}
+								}
+
+								&.licence {
+									display: flex;
+									align-items: center;
+									padding-top: 10px;
+									padding-bottom: 10px;
+									background-color: var(--as3cf-color-gray-200);
+									font-size: 12px;
+
+									.details {
+										flex: 1 1 auto;
+
+										p {
+											color: var(--as3cf-color-gray-600);
+											line-height: 18px;
+										}
+
+										.title {
+											color: var(--as3cf-color-gray-700);
+											font-size: 10px;
+										}
+									}
+
+									a {
+										color: var(--as3cf-color-primary-500);
+
+										&.upgrade {
+											margin-right: 1rem;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// Defined in wp-config.php
@@ -972,10 +1108,6 @@
 				text-decoration: underline;
 				font-size: 0.875rem !important;
 			}
-		}
-
-		.notice-qsg p a {
-			padding-right: 1rem;
 		}
 
 		//Support Form & Diagnostics
@@ -1075,7 +1207,7 @@
 
 		.upsell {
 			&.panel {
-				max-width: 840px;
+				max-width: 768px;
 			}
 
 			.panel-container {

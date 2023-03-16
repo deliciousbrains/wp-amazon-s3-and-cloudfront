@@ -26,6 +26,13 @@ class Advanced_Custom_Fields extends Integration {
 	 * Init integration.
 	 */
 	public function init() {
+		// Nothing to do.
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function setup() {
 		/*
 		 * Content Filtering
 		 */

@@ -515,7 +515,7 @@ abstract class Upgrade {
 		$this->boot_session();
 
 		if ( is_multisite() ) {
-			$all_blog_ids = $this->as3cf->get_blog_ids();
+			$all_blog_ids = AS3CF_Utils::get_blog_ids();
 			$decimal      = count( $this->processed_blogs_ids ) / count( $all_blog_ids );
 		} else {
 			// Set up any per-site state
@@ -823,7 +823,7 @@ abstract class Upgrade {
 		}
 
 		if ( ! $all_ids ) {
-			$all_ids = $this->as3cf->get_blog_ids();
+			$all_ids = AS3CF_Utils::get_blog_ids();
 		}
 
 		return in_array( $blog_id, $all_ids );

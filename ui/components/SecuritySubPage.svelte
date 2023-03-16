@@ -2,7 +2,6 @@
 	import {createEventDispatcher, getContext, hasContext} from "svelte";
 	import {writable} from "svelte/store";
 	import {slide} from "svelte/transition";
-	import {pop} from "svelte-spa-router";
 	import {
 		api,
 		settings,
@@ -11,7 +10,9 @@
 		storage_provider,
 		delivery_provider,
 		needs_refresh,
-		state, defined_settings
+		revalidatingSettings,
+		state,
+		defined_settings
 	} from "../js/stores";
 	import {
 		scrollNotificationsIntoView
@@ -180,13 +181,14 @@
 
 		if ( false === result ) {
 			saving = false;
-			state.resumePeriodicFetch();
+			await state.resumePeriodicFetch();
 
 			scrollNotificationsIntoView();
 			return;
 		}
 
-		state.resumePeriodicFetch();
+		$revalidatingSettings = true;
+		const statePromise = state.resumePeriodicFetch();
 
 		// Block All Public Access changed.
 		dispatch( "routeEvent", {
@@ -197,6 +199,11 @@
 			},
 			default: "/"
 		} );
+
+		// Just make sure periodic state fetch promise is done with,
+		// even though we don't really care about it.
+		await statePromise;
+		$revalidatingSettings = false;
 	}
 </script>
 
@@ -230,7 +237,7 @@
 		{#if !$current_settings[ "block-public-access" ] && blockPublicAccess && $delivery_provider.block_public_access_supported}
 			<div transition:slide|local>
 				<PanelRow class="body flex-column toggle-reveal" footer>
-					<Checkbox name="confirm-setup" bind:checked={bapaSetupConfirmed} disabled={$needs_refresh || $settingsLocked}>{@html $delivery_provider.block_public_access_confirm_setup_prompt}</Checkbox>
+					<Checkbox name="confirm-setup-bapa-oai" bind:checked={bapaSetupConfirmed} disabled={$needs_refresh || $settingsLocked}>{@html $delivery_provider.block_public_access_confirm_setup_prompt}</Checkbox>
 				</PanelRow>
 			</div>
 		{/if}
@@ -265,7 +272,7 @@
 		{#if !$current_settings[ "object-ownership-enforced" ] && objectOwnershipEnforced && $delivery_provider.object_ownership_supported}
 			<div transition:slide|local>
 				<PanelRow class="body flex-column toggle-reveal">
-					<Checkbox name="confirm-setup" bind:checked={ooeSetupConfirmed} disabled={$needs_refresh || $settingsLocked}>{@html $delivery_provider.object_ownership_confirm_setup_prompt}</Checkbox>
+					<Checkbox name="confirm-setup-ooe-oai" bind:checked={ooeSetupConfirmed} disabled={$needs_refresh || $settingsLocked}>{@html $delivery_provider.object_ownership_confirm_setup_prompt}</Checkbox>
 				</PanelRow>
 			</div>
 		{/if}

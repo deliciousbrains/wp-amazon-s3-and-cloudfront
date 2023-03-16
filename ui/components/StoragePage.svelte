@@ -2,7 +2,6 @@
 	import {afterUpdate, setContext} from "svelte";
 	import {location, push} from "svelte-spa-router";
 	import {
-		strings,
 		current_settings,
 		settingsLocked,
 		needs_access_keys
@@ -46,7 +45,6 @@
 
 <Page {name} subpage on:routeEvent>
 	<Notifications tab="media" tabParent="media"/>
-	<h2 class="page-title">{$strings.storage_title}</h2>
 
 	<SubNav {name} {items} progress/>
 

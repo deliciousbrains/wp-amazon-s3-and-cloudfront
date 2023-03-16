@@ -39,6 +39,10 @@
 					align-items: center;
 					justify-content: center;
 
+					&.in-panel {
+						align-self: auto;
+					}
+
 					img.icon.type {
 						width: 16px;
 						height: 16px;
@@ -51,6 +55,7 @@
 					line-height: 1.3rem;
 					font-weight: 600;
 					color: var(--as3cf-color-gray-900);
+					width: 100%;
 				}
 
 				p {
@@ -123,6 +128,11 @@
 							}
 						}
 					}
+
+					&.in-panel {
+						padding: .875rem 1.5rem .875rem 1.5rem;
+						gap: 16px;
+					}
 				}
 			}
 
@@ -139,39 +149,8 @@
 			}
 
 			&.expandable {
-				button {
-					color: var(--as3cf-link-color);
-					background-color: rgba(17, 17, 17, 0.04);
-					border: 1px solid rgba(17, 17, 17, 0.08);
-				}
-
 				.heading {
 					gap: 8px;
-
-					button.expandable {
-						all: unset;
-						box-sizing: border-box;
-						flex: 0 0 auto;
-						width: 22px;
-						height: 22px;
-						min-width: 22px;
-						min-height: 22px;
-
-						background: rgba(17, 17, 17, 0.04) url(../img/icon/arrow.svg) no-repeat center/11px;
-						border: 1px solid rgba(17, 17, 17, 0.08);
-						border-radius: 11px;
-						filter: invert(27%) sepia(84%) saturate(1886%) hue-rotate(177deg) brightness(90%) contrast(103%);
-
-						&.expanded {
-							transform: rotate(180deg);
-						}
-
-						&:hover, &:focus, &:active {
-							filter: brightness(90%);
-							box-shadow: 0 0 0 1.5px var(--as3cf-color-white), 0 0 0 3.5px var(--as3cf-color-secondary-500);
-							outline: 0;
-						}
-					}
 				}
 
 				&.expanded {
@@ -214,27 +193,49 @@
 					}
 				}
 
-				button.dismiss {
-					box-sizing: border-box;
-					flex: 0 0 auto;
+				button {
+					color: var(--as3cf-link-color);
+					background-color: rgba(17, 17, 17, 0.04);
+					border: 1px solid rgba(17, 17, 17, 0.08);
 
-					display: flex;
-					flex-direction: row;
-					align-items: center;
-					padding: 5px 10px;
-					gap: 4px;
+					&.btn-expandable {
+						width: 22px;
+						height: 22px;
+						min-width: 22px;
+						min-height: 22px;
+						background-size: 11px;
+						border-radius: 11px;
 
-					border-radius: 6px;
+						// Alter SVG arrow colour.
+						filter: invert(27%) sepia(84%) saturate(1886%) hue-rotate(177deg) brightness(90%) contrast(103%);
 
-					&:before {
-						content: url(../img/icon/x.svg);
-						width: 7.5px;
+						&:hover, &:focus, &:active {
+							filter: brightness(90%);
+						}
+					}
+
+					&.dismiss {
+						box-sizing: border-box;
+						flex: 0 0 auto;
+
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						padding: 5px 10px;
+						gap: 4px;
+
+						border-radius: 6px;
+
+						&:before {
+							content: url(../img/icon/x.svg);
+							width: 7.5px;
+						}
 					}
 				}
 			}
 
-			button {
-				&:hover, &:focus, &:active {
+			button:not(.btn-refresh) {
+				&:focus, &:active {
 					filter: brightness(90%);
 					box-shadow: 0 0 0 1.5px var(--as3cf-color-white), 0 0 0 3.5px var(--as3cf-color-secondary-500);
 					outline: 0;
@@ -295,6 +296,12 @@
 				&.expandable.expanded .details .item {
 					border-top: 1px solid rgba(232, 99, 94, 0.16);
 				}
+			}
+
+			&.in-panel {
+				border-left: 0;
+				border-right: 0;
+				border-radius: 0;
 			}
 
 			/* Probably redundant now, but keeping until verified post 3.0 release. */

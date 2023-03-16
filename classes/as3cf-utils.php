@@ -864,6 +864,85 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		}
 
 		/**
+		 * Join array elements with a string separator, using a separate separator
+		 * for the last element
+		 *
+		 * @param string $separator
+		 * @param string $last_separator
+		 * @param array  $arr
+		 *
+		 * @return string
+		 */
+		public static function human_readable_join( string $separator, string $last_separator, array $arr ): string {
+			if ( count( $arr ) < 2 ) {
+				return join( $separator, $arr );
+			}
+
+			$last = array_pop( $arr );
+
+			return join( $separator, $arr ) . $last_separator . $last;
+		}
+
+		/**
+		 * Get all the blog IDs for the multisite network used for table prefixes.
+		 *
+		 * @return false|array
+		 */
+		public static function get_blog_ids() {
+			if ( ! is_multisite() ) {
+				return false;
+			}
+
+			$args = array(
+				'limit'    => false, // Deprecated
+				'number'   => false, // WordPress 4.6+
+				'spam'     => 0,
+				'deleted'  => 0,
+				'archived' => 0,
+			);
+
+			$blogs    = get_sites( $args );
+			$blog_ids = array();
+
+			foreach ( $blogs as $blog ) {
+				$blog       = (array) $blog;
+				$blog_ids[] = (int) $blog['blog_id'];
+			}
+
+			return $blog_ids;
+		}
+
+		/**
+		 * Get all the table prefixes for the blogs in the site. MS compatible.
+		 *
+		 * @param array $exclude_blog_ids blog ids to exclude
+		 *
+		 * @return array associative array with blog ID as key, prefix as value
+		 */
+		public static function get_all_blog_table_prefixes( array $exclude_blog_ids = array() ): array {
+			global $wpdb;
+			$prefix = $wpdb->prefix;
+
+			$table_prefixes = array();
+
+			if ( ! in_array( 1, $exclude_blog_ids ) ) {
+				$table_prefixes[1] = $prefix;
+			}
+
+			if ( is_multisite() ) {
+				$blog_ids = static::get_blog_ids();
+				foreach ( $blog_ids as $blog_id ) {
+					if ( in_array( $blog_id, $exclude_blog_ids ) ) {
+						continue;
+					}
+					$table_prefixes[ $blog_id ] = $wpdb->get_blog_prefix( $blog_id );
+				}
+			}
+
+			return $table_prefixes;
+		}
+
+		/**
 		 * Fixes the broken string segments of a serialized data string.
 		 *
 		 * @param array $matches array of matched parts.

@@ -2,11 +2,14 @@
 	import {settings, strings} from "../js/stores";
 	import Panel from "./Panel.svelte";
 	import StorageSettingsHeadingRow from "./StorageSettingsHeadingRow.svelte";
+	import SettingsValidationStatusRow
+		from "./SettingsValidationStatusRow.svelte";
 	import SettingsPanelOption from "./SettingsPanelOption.svelte";
 </script>
 
 <Panel name="settings" heading={$strings.storage_settings_title} helpKey="storage-provider">
 	<StorageSettingsHeadingRow/>
+	<SettingsValidationStatusRow section="storage"/>
 	<SettingsPanelOption
 		heading={$strings.copy_files_to_bucket}
 		description={$strings.copy_files_to_bucket_desc}

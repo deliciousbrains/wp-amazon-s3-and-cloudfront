@@ -2,13 +2,20 @@
 
 namespace DeliciousBrains\WP_Offload_Media\Providers\Storage;
 
+use Amazon_S3_And_CloudFront;
 use AS3CF_Error;
 use AS3CF_Utils;
+use DeliciousBrains\WP_Offload_Media\Settings_Validator_Trait;
 use DeliciousBrains\WP_Offload_Media\Providers\Provider;
+use DeliciousBrains\WP_Offload_Media\Settings\Validator_Interface;
 use Exception;
 use WP_Error;
+use WP_Error as AS3CF_Result;
 
-abstract class Storage_Provider extends Provider {
+abstract class Storage_Provider extends Provider implements Validator_Interface {
+	use Settings_Validator_Trait;
+
+	const VALIDATOR_KEY = 'storage';
 
 	/**
 	 * @var mixed
@@ -82,6 +89,11 @@ abstract class Storage_Provider extends Provider {
 	protected static $default_region = '';
 
 	/**
+	 * @var int
+	 */
+	private $validator_priority = 5;
+
+	/**
 	 * Is the provider able to use access keys?
 	 *
 	 * @return bool
@@ -102,11 +114,19 @@ abstract class Storage_Provider extends Provider {
 			return false;
 		}
 
-		if ( static::use_key_file() ) {
+		if ( $this->use_key_file() ) {
 			return false;
 		}
 
-		return ! $this->are_access_keys_set();
+		if ( $this->are_access_keys_set() ) {
+			return false;
+		}
+
+		$this->add_validation_issue( 'miss_access_key_id', empty( $this->get_access_key_id() ) );
+		$this->add_validation_issue( 'miss_secret_access_key', empty( $this->get_secret_access_key() ) );
+		$this->add_validation_issue( 'miss_both_access_keys', empty( $this->get_access_key_id() ) && empty( $this->get_secret_access_key() ) );
+
+		return true;
 	}
 
 	/**
@@ -287,7 +307,15 @@ abstract class Storage_Provider extends Provider {
 	 * @return mixed
 	 */
 	public function get_key_file() {
-		return $this->as3cf->get_core_setting( static::$key_file_setting_name, false );
+		$key_file_content = $this->as3cf->get_core_setting( static::$key_file_setting_name, false );
+
+		if ( ! $key_file_content ) {
+			return false;
+		}
+
+		$this->validate_key_file_content( $key_file_content );
+
+		return $key_file_content;
 	}
 
 	/**
@@ -300,16 +328,20 @@ abstract class Storage_Provider extends Provider {
 	public function get_key_file_path() {
 		if ( static::is_key_file_path_constant_defined() ) {
 			$constant = static::key_file_path_constant();
-
-			if ( $constant ) {
-				return $this->validate_key_file_path( constant( $constant ) );
-			} else {
-				// Constant defined but value is not a non-empty string.
-				return false;
-			}
+			$path     = constant( $constant );
+		} else {
+			$path = $this->as3cf->get_core_setting( static::$key_file_path_setting_name, false );
 		}
 
-		return $this->validate_key_file_path( $this->as3cf->get_core_setting( static::$key_file_path_setting_name, false ) );
+		if ( ! $this->validate_key_file_path( $path ) ) {
+			return false;
+		}
+
+		// At this point, we know that the file is safe to read.
+		$key_file_content = $this->get_key_file_path_contents( $path );
+		$this->validate_key_file_content( $key_file_content );
+
+		return $path;
 	}
 
 	/**
@@ -320,7 +352,15 @@ abstract class Storage_Provider extends Provider {
 	 * @return bool|string
 	 */
 	public function validate_key_file_path( $key_file_path ) {
-		$notice_id = 'validate-key-file-path';
+		$notice_id   = 'validate-key-file-path';
+		$notice_args = array(
+			'type'                  => 'error',
+			'only_show_in_settings' => true,
+			'only_show_on_tab'      => 'media',
+			'hide_on_parent'        => true,
+			'custom_id'             => $notice_id,
+		);
+
 		$this->as3cf->notices->remove_notice_by_id( $notice_id );
 
 		if ( empty( $key_file_path ) ) {
@@ -328,7 +368,7 @@ abstract class Storage_Provider extends Provider {
 		}
 
 		if ( ! file_exists( $key_file_path ) ) {
-			$this->as3cf->notices->add_notice( __( 'Given Key File Path is invalid or could not be accessed.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+			$this->as3cf->notices->add_notice( __( 'Media cannot be offloaded due to an invalid key file path.', 'amazon-s3-and-cloudfront' ), $notice_args );
 
 			return false;
 		}
@@ -338,26 +378,40 @@ abstract class Storage_Provider extends Provider {
 
 			// An exception isn't always thrown, so check value instead.
 			if ( empty( $value ) ) {
-				$this->as3cf->notices->add_notice( __( 'Could not read Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+				$this->as3cf->notices->add_notice( __( 'Media cannot be offloaded due to an unreadable key file.', 'amazon-s3-and-cloudfront' ), $notice_args );
 
 				return false;
 			}
 		} catch ( Exception $e ) {
-			$this->as3cf->notices->add_notice( __( 'Could not read Key File Path\'s contents.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
+			$this->as3cf->notices->add_notice( __( 'Media cannot be offloaded due to an unreadable key file.', 'amazon-s3-and-cloudfront' ), $notice_args );
 
 			return false;
 		}
 
-		$value = json_decode( $value, true );
-
-		if ( empty( $value ) ) {
-			$this->as3cf->notices->add_notice( __( 'Given Key File Path does not contain valid JSON.', 'amazon-s3-and-cloudfront' ), array( 'type' => 'error', 'only_show_in_settings' => true, 'only_show_on_tab' => 'media', 'custom_id' => $notice_id ) );
-
-			return false;
-		}
-
-		// File exists and looks like JSON.
+		// File exists and is readable.
 		return $key_file_path;
+	}
+
+	/**
+	 * Read key file contents from path.
+	 *
+	 * @param string $path
+	 *
+	 * @return mixed
+	 */
+	protected function get_key_file_path_contents( string $path ) {
+		return file_get_contents( $path );
+	}
+
+	/**
+	 * Validate key file contents.
+	 *
+	 * @param mixed $key_file_content
+	 *
+	 * @return bool
+	 */
+	public function validate_key_file_content( $key_file_content ): bool {
+		return true;
 	}
 
 	/**
@@ -536,22 +590,22 @@ abstract class Storage_Provider extends Provider {
 			// 3. Key File contents define then setting.
 			// 4. Server Roles define then setting.
 
-			if ( static::are_access_keys_set() ) {
+			if ( $this->are_access_keys_set() ) {
 				$args = array_merge( array(
 					'credentials' => array(
 						'key'    => $this->get_access_key_id(),
 						'secret' => $this->get_secret_access_key(),
 					),
 				), $args );
-			} elseif ( static::use_key_file() ) {
+			} elseif ( $this->use_key_file() ) {
 				// Key File Path takes precedence over Key File contents.
-				if ( static::get_key_file_path() ) {
+				if ( $this->get_key_file_path() ) {
 					$args = array_merge( array(
-						'keyFilePath' => static::get_key_file_path(),
+						'keyFilePath' => $this->get_key_file_path(),
 					), $args );
 				} else {
 					$args = array_merge( array(
-						'keyFile' => static::get_key_file(),
+						'keyFile' => $this->get_key_file(),
 					), $args );
 				}
 			}
@@ -700,7 +754,29 @@ abstract class Storage_Provider extends Provider {
 	public static function get_needs_access_keys_desc() {
 		global $as3cf;
 
-		return sprintf( __( 'You must <a href="%s">set your Storage Provider access credentials</a> to enable bucket access.', 'amazon-s3-and-cloudfront' ), $as3cf::get_plugin_page_url() . '#/storage/provider' );
+		return sprintf( __( 'Media cannot be offloaded due to missing access keys. <a href="%s">Update access keys</a>', 'amazon-s3-and-cloudfront' ), $as3cf::get_plugin_page_url() . '#/storage/provider' );
+	}
+
+	/**
+	 * Returns notice text for when access key id is missing.
+	 *
+	 * @return string
+	 */
+	private static function get_needs_access_key_id_desc(): string {
+		global $as3cf;
+
+		return sprintf( __( 'Media cannot be offloaded due to a missing Access Key ID. <a href="%s">Update access keys</a>', 'amazon-s3-and-cloudfront' ), $as3cf::get_plugin_page_url() . '#/storage/provider' );
+	}
+
+	/**
+	 * Returns notice text for when secret access key is missing.
+	 *
+	 * @return string
+	 */
+	private static function get_needs_secret_access_key_desc(): string {
+		global $as3cf;
+
+		return sprintf( __( 'Media cannot be offloaded due to a missing Secret Access Key. <a href="%s">Update access keys</a>', 'amazon-s3-and-cloudfront' ), $as3cf::get_plugin_page_url() . '#/storage/provider' );
 	}
 
 	/**
@@ -747,12 +823,16 @@ abstract class Storage_Provider extends Provider {
 	public static function get_media_already_offloaded_warning( $offloaded = 0 ) {
 		global $as3cf;
 
-		if ( $offloaded ) {
-			$heading = sprintf( __( '<strong>Warning:</strong> You have %d offloaded Media Library items.', 'amazon-s3-and-cloudfront' ), $offloaded );
-		} else {
-			$heading = __( '<strong>Warning:</strong> You have offloaded Media Library items.', 'amazon-s3-and-cloudfront' );
-		}
 		$message = __( 'You should remove them from the bucket before changing storage provider.', 'amazon-s3-and-cloudfront' );
+
+		if ( 1 === $offloaded ) {
+			$heading = sprintf( __( '<strong>Warning:</strong> You have %d offloaded media item.', 'amazon-s3-and-cloudfront' ), $offloaded );
+			$message = __( 'You should remove it from the bucket before changing storage provider.', 'amazon-s3-and-cloudfront' );
+		} elseif ( 1 < $offloaded ) {
+			$heading = sprintf( __( '<strong>Warning:</strong> You have %d offloaded media items.', 'amazon-s3-and-cloudfront' ), $offloaded );
+		} else {
+			$heading = __( '<strong>Warning:</strong> You have offloaded media items.', 'amazon-s3-and-cloudfront' );
+		}
 		$message .= '&nbsp;' . $as3cf::more_info_link( '/wp-offload-media/doc/how-to-change-storage-provider/#mixed-provider' );
 
 		return array(
@@ -907,11 +987,11 @@ abstract class Storage_Provider extends Provider {
 	 *
 	 * @return array
 	 */
-	public static function used_access_keys_constants() {
+	public static function used_access_keys_constants(): array {
+		/** @var Amazon_S3_And_CloudFront $as3cf */
 		global $as3cf;
 
-		$defined_settings = $as3cf->get_defined_settings();
-		$defines          = array();
+		$defines = array();
 
 		// Access Keys defined in dedicated constant.
 		if ( static::is_any_access_key_constant_defined() ) {
@@ -928,8 +1008,12 @@ abstract class Storage_Provider extends Provider {
 			}
 		}
 
+		if ( $as3cf->using_legacy_defines() ) {
+			return $defines;
+		}
+
 		// Access Keys defined in standard settings constant.
-		if ( ! empty( $defined_settings['access-key-id'] ) || ! empty( $defined_settings['secret-access-key'] ) ) {
+		if ( in_array( 'access-key-id', $as3cf->get_non_legacy_defined_settings_keys() ) || in_array( 'secret-access-key', $as3cf->get_non_legacy_defined_settings_keys() ) ) {
 			$defines[] = $as3cf::settings_constant();
 		}
 
@@ -1126,14 +1210,128 @@ abstract class Storage_Provider extends Provider {
 			'utm_campaign' => 'error+messages',
 		), 'bucket-restrictions' );
 
-		$quick_start = sprintf( '<a class="js-link" href="%s">%s</a>', $url, __( 'Quick Start Guide', 'amazon-s3-and-cloudfront' ) );
+		$quick_start = sprintf( '<a class="js-link" href="%s" target="_blank">%s</a>', $url, __( 'How to set permissions', 'amazon-s3-and-cloudfront' ) );
 
-		$message = sprintf( __( "Looks like we don't have write access to this bucket. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+		$message = sprintf( __( 'Media cannot be offloaded due to access restrictions on the provided bucket. The provided credentials may not have the correct permissions. %s', 'amazon-s3-and-cloudfront' ), $quick_start );
 		if ( ! $single ) {
-			$message = sprintf( __( "Looks like we don't have access to the buckets. It's likely that the user you've provided credentials for hasn't been granted the correct permissions. Please see our %s for instructions on setting up permissions correctly.", 'amazon-s3-and-cloudfront' ), $quick_start );
+			$message = sprintf( __( 'Media cannot be offloaded due to access restrictions on the provided buckets. The provided credentials may not have the correct permissions. %s', 'amazon-s3-and-cloudfront' ), $quick_start );
 		}
 
 		return $message;
+	}
+
+	/**
+	 * Validate storage settings for the configured provider for the storage status indicator.
+	 *
+	 * @param bool $force Force time resource consuming or state altering tests to run.
+	 *
+	 * @return AS3CF_Result
+	 */
+	public function validate_settings( bool $force = false ): AS3CF_Result {
+		// Verify that the provider key provided in settings is valid.
+		$valid_providers = array_keys( $this->as3cf->get_provider_classes( 'storage' ) );
+		if ( ! in_array( $this->as3cf->get_core_setting( 'provider' ), $valid_providers ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				sprintf(
+					__( 'An invalid storage provider has been defined. Please use %s.', 'amazon-s3-and-cloudfront' ),
+					"<code>" . AS3CF_Utils::human_readable_join( "</code>, <code>", "</code> or <code>", $valid_providers ) . "</code>"
+				)
+			);
+		}
+
+		// If the current provider uses access keys, we may have recorded validation issues along the way.
+		if ( $this->has_validation_issue( 'miss_both_access_keys' ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				$this->get_needs_access_keys_desc()
+			);
+		}
+
+		if ( $this->has_validation_issue( 'miss_access_key_id' ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				$this->get_needs_access_key_id_desc()
+			);
+		}
+
+		if ( $this->has_validation_issue( 'miss_secret_access_key' ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				$this->get_needs_secret_access_key_desc()
+			);
+		}
+
+		// Force checking if a key file is in use and is valid.
+		$this->use_key_file();
+
+		// Did the key file path validation trigger any issues?
+		$key_file_notice = $this->as3cf->notices->find_notice_by_id( 'validate-key-file-path' );
+		if ( ! empty( $key_file_notice ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				ucfirst( $this->as3cf->notices->get_short_message( $key_file_notice ) )
+			);
+		}
+
+		// Did the key file content validation trigger any issues?
+		$key_file_content_notice = $this->as3cf->notices->find_notice_by_id( 'validate-key-file-content' );
+		if ( ! empty( $key_file_content_notice ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				ucfirst( $this->as3cf->notices->get_short_message( $key_file_content_notice ) )
+			);
+		}
+
+		// Do we have a bucket name?
+		if ( empty( $this->as3cf->get_core_setting( 'bucket' ) ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				__( 'Media cannot be offloaded due to a missing bucket name.', 'amazon-s3-and-cloudfront' )
+			);
+		}
+
+		if ( $force ) {
+			$this->as3cf->get_bucket_region( $this->as3cf->get_core_setting( 'bucket' ), false );
+		}
+
+		// Did the last bucket validation trigger any notices?
+		$bucket_error_notice = $this->as3cf->notices->find_notice_by_id( 'bucket-error' );
+		if ( ! empty( $bucket_error_notice ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				ucfirst( $this->as3cf->notices->get_short_message( $bucket_error_notice ) )
+			);
+		}
+		if ( ! $this->as3cf->bucket_writable( null, null, $force ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_ERROR,
+				$this->get_access_denied_notice_message()
+			);
+		}
+
+		// Test if offloading is enabled in settings.
+		if ( ! $this->as3cf->get_core_setting( 'copy-to-s3', false ) ) {
+			return new AS3CF_Result(
+				Validator_Interface::AS3CF_STATUS_MESSAGE_WARNING,
+				__( 'Storage provider is successfully connected, but new media will not be offloaded until <strong>Offload Media</strong> is enabled.', 'amazon-s3-and-cloudfront' )
+			);
+		}
+
+		return new AS3CF_Result(
+			Validator_Interface::AS3CF_STATUS_MESSAGE_SUCCESS,
+			__( 'Storage provider is successfully connected and ready to offload new media.', 'amazon-s3-and-cloudfront' )
+		);
+	}
+
+	/**
+	 * Get the name of the actions that are fired when the settings that the validator
+	 * is responsible for are saved.
+	 *
+	 * @return array
+	 */
+	public function post_save_settings_actions(): array {
+		return array( 'as3cf_post_save_settings' );
 	}
 
 	/**

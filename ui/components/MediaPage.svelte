@@ -1,11 +1,13 @@
 <script>
 	import {getContext, hasContext, onMount, setContext} from "svelte";
-	import {is_plugin_setup, settingsLocked, strings} from "../js/stores";
+	import {
+		is_plugin_setup,
+		settingsLocked,
+		strings,
+		settings_validation
+	} from "../js/stores";
 	import Page from "./Page.svelte";
 	import Notifications from "./Notifications.svelte";
-	import BlockPublicAccessWarning from "./BlockPublicAccessWarning.svelte";
-	import ObjectOwnershipEnforcedWarning
-		from "./ObjectOwnershipEnforcedWarning.svelte";
 	import SubNav from "./SubNav.svelte";
 	import SubPages from "./SubPages.svelte";
 	import MediaSettings from "./MediaSettings.svelte";
@@ -33,11 +35,16 @@
 		'*': MediaSettings,
 	}
 
-	const items = [
-		{ route: "/", title: () => $strings.storage_settings_title },
+	$: items = [
+		{
+			route: "/",
+			title: () => $strings.storage_settings_title,
+			noticeIcon: $settings_validation[ "storage" ].type
+		},
 		{
 			route: "/media/delivery",
-			title: () => $strings.delivery_settings_title
+			title: () => $strings.delivery_settings_title,
+			noticeIcon: $settings_validation[ "delivery" ].type
 		}
 	];
 
@@ -51,10 +58,6 @@
 <Page {name} on:routeEvent>
 	{#if render}
 		<Notifications tab={name}/>
-		<div id="provider-warning-notifications" class="notifications wrapper">
-			<BlockPublicAccessWarning/>
-			<ObjectOwnershipEnforcedWarning/>
-		</div>
 		<SubNav {name} {items} subpage/>
 		<SubPages {name} {routes}/>
 		<UrlPreview/>

@@ -3,6 +3,7 @@
 	import Panel from "./Panel.svelte";
 	import DeliverySettingsHeadingRow
 		from "./DeliverySettingsHeadingRow.svelte";
+	import SettingsValidationStatusRow from "./SettingsValidationStatusRow.svelte";
 	import SettingsPanelOption from "./SettingsPanelOption.svelte";
 
 	/**
@@ -31,6 +32,7 @@
 
 <Panel name="settings" heading={$strings.delivery_settings_title} helpKey="delivery-provider">
 	<DeliverySettingsHeadingRow/>
+	<SettingsValidationStatusRow section="delivery"/>
 	<SettingsPanelOption
 		heading={$strings.rewrite_media_urls}
 		description={$delivery_provider.rewrite_media_urls_desc}

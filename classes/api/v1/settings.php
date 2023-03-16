@@ -256,6 +256,13 @@ class Settings extends API {
 			$warnings[]       = sprintf( __( 'Delivery Provider has been reset to the default for %s', 'amazon-s3-and-cloudfront' ), $storage_provider->get_provider_service_name() );
 		}
 
+		// Last chance check that credentials in place,
+		// even if nothing else has changed,
+		// e.g. that defines are doing their job.
+		if ( $this->as3cf->get_storage_provider()->needs_access_keys() ) {
+			return $this->return_with_error( $this->as3cf->get_storage_provider()->get_needs_access_keys_desc() );
+		}
+
 		// None of the settings produced an error of their own.
 		// However, side effects may re-instate the notice after this.
 		$this->as3cf->notices->dismiss_notice( 'save-settings-error' );
@@ -282,6 +289,8 @@ class Settings extends API {
 				$this->as3cf->notices->add_notice( $warning, $warning_args );
 			}
 		}
+
+		do_action( 'as3cf_post_save_settings', true );
 
 		return $changed_keys;
 	}
@@ -375,6 +384,8 @@ class Settings extends API {
 		$this->as3cf->get_settings( true );
 		$this->as3cf->set_storage_provider();
 		$this->as3cf->set_delivery_provider();
+
+		do_action( 'as3cf_post_save_settings', false );
 
 		return false;
 	}

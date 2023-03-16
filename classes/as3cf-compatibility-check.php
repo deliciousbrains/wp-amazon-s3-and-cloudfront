@@ -214,7 +214,7 @@ if ( ! class_exists( 'AS3CF_Compatibility_Check' ) ) {
 		 */
 		function get_parent_plugin_url() {
 			if ( ! is_null( $this->parent_plugin_slug ) ) {
-				$url = 'http://wordpress.org/extend/plugins/' . $this->parent_plugin_slug . '/';
+				$url = 'https://wordpress.org/extend/plugins/' . $this->parent_plugin_slug . '/';
 				if ( ! is_null( $this->parent_plugin_url ) ) {
 					$url = $this->parent_plugin_url;
 				}

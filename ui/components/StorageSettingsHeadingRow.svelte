@@ -23,7 +23,7 @@
 <PanelRow header gradient class="storage {$storage_provider.provider_key_name}">
 	<img src="{$storage_provider.icon}" alt={$storage_provider.provider_service_name}/>
 	<div class="provider-details">
-		<h4>{$storage_provider.provider_service_name}</h4>
+		<h3>{$storage_provider.provider_service_name}</h3>
 		<p class="console-details">
 			<a href={$urls.storage_provider_console_url} class="console" target="_blank" title={$strings.view_provider_console}>{$settings.bucket}</a>
 			<span class="region" title={$settings.region}>{$region_name}</span>
@@ -46,7 +46,7 @@
 		z-index: 1;
 	}
 
-	:global(#as3cf-settings.wpome div.panel) .provider-details h4 {
+	:global(#as3cf-settings.wpome div.panel) .provider-details h3 {
 		margin-left: 0;
 		margin-bottom: 0.5rem;
 	}
