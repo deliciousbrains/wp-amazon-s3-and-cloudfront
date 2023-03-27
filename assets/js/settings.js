@@ -12,8 +12,10 @@
             tar[k] = src[k];
         return tar;
     }
+    // Adapted from https://github.com/then/is-promise/blob/master/index.js
+    // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
     function is_promise(value) {
-        return value && typeof value === 'object' && typeof value.then === 'function';
+        return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
     }
     function add_location(element, file, line, column, char) {
         element.__svelte_meta = {
@@ -180,12 +182,15 @@
     }
     function append_stylesheet(node, style) {
         append(node.head || node, style);
+        return style.sheet;
     }
     function insert(target, node, anchor) {
         target.insertBefore(node, anchor || null);
     }
     function detach(node) {
-        node.parentNode.removeChild(node);
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
     }
     function destroy_each(iterations, detaching) {
         for (let i = 0; i < iterations.length; i += 1) {
@@ -225,6 +230,18 @@
         else if (node.getAttribute(attribute) !== value)
             node.setAttribute(attribute, value);
     }
+    function init_binding_group(group) {
+        let _inputs;
+        return {
+            /* push */ p(...inputs) {
+                _inputs = inputs;
+                _inputs.forEach(input => group.push(input));
+            },
+            /* remove */ r() {
+                _inputs.forEach(input => group.splice(group.indexOf(input), 1));
+            }
+        };
+    }
     function children(element) {
         return Array.from(element.childNodes);
     }
@@ -239,7 +256,7 @@
             node.style.setProperty(key, value, important ? 'important' : '');
         }
     }
-    function select_option(select, value) {
+    function select_option(select, value, mounting) {
         for (let i = 0; i < select.options.length; i += 1) {
             const option = select.options[i];
             if (option.__value === value) {
@@ -247,10 +264,12 @@
                 return;
             }
         }
-        select.selectedIndex = -1; // no option should be selected
+        if (!mounting || value !== undefined) {
+            select.selectedIndex = -1; // no option should be selected
+        }
     }
     function select_value(select) {
-        const selected_option = select.querySelector(':checked') || select.options[0];
+        const selected_option = select.querySelector(':checked');
         return selected_option && selected_option.__value;
     }
     // unfortunately this can't be a constant as that wouldn't be tree-shakeable
@@ -293,6 +312,9 @@
             iframe.src = 'about:blank';
             iframe.onload = () => {
                 unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+                // make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+                // see https://github.com/sveltejs/svelte/issues/4233
+                fn();
             };
         }
         append(node, iframe);
@@ -327,16 +349,17 @@
             if (!this.e) {
                 if (this.is_svg)
                     this.e = svg_element(target.nodeName);
+                /** #7364  target for <template> may be provided as #document-fragment(11) */
                 else
-                    this.e = element(target.nodeName);
-                this.t = target;
+                    this.e = element((target.nodeType === 11 ? 'TEMPLATE' : target.nodeName));
+                this.t = target.tagName !== 'TEMPLATE' ? target : target.content;
                 this.c(html);
             }
             this.i(anchor);
         }
         h(html) {
             this.e.innerHTML = html;
-            this.n = Array.from(this.e.childNodes);
+            this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? this.e.content.childNodes : this.e.childNodes);
         }
         i(anchor) {
             for (let i = 0; i < this.n.length; i += 1) {
@@ -409,11 +432,10 @@
             if (active$1)
                 return;
             managed_styles.forEach(info => {
-                const { stylesheet } = info;
-                let i = stylesheet.cssRules.length;
-                while (i--)
-                    stylesheet.deleteRule(i);
-                info.rules = {};
+                const { ownerNode } = info.stylesheet;
+                // there is no ownerNode if it runs on jsdom.
+                if (ownerNode)
+                    detach(ownerNode);
             });
             managed_styles.clear();
         });
@@ -428,15 +450,49 @@
             throw new Error('Function called outside component initialization');
         return current_component;
     }
+    /**
+     * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
+     * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
+     * it can be called from an external module).
+     *
+     * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
+     *
+     * https://svelte.dev/docs#run-time-svelte-onmount
+     */
     function onMount(fn) {
         get_current_component().$$.on_mount.push(fn);
     }
+    /**
+     * Schedules a callback to run immediately after the component has been updated.
+     *
+     * The first time the callback runs will be after the initial `onMount`
+     */
     function afterUpdate(fn) {
         get_current_component().$$.after_update.push(fn);
     }
+    /**
+     * Schedules a callback to run immediately before the component is unmounted.
+     *
+     * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
+     * only one that runs inside a server-side component.
+     *
+     * https://svelte.dev/docs#run-time-svelte-ondestroy
+     */
     function onDestroy(fn) {
         get_current_component().$$.on_destroy.push(fn);
     }
+    /**
+     * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
+     * Event dispatchers are functions that can take two arguments: `name` and `detail`.
+     *
+     * Component events created with `createEventDispatcher` create a
+     * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent).
+     * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
+     * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail)
+     * property and can contain any type of data.
+     *
+     * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
+     */
     function createEventDispatcher() {
         const component = get_current_component();
         return (type, detail, { cancelable = false } = {}) => {
@@ -453,13 +509,34 @@
             return true;
         };
     }
+    /**
+     * Associates an arbitrary `context` object with the current component and the specified `key`
+     * and returns that object. The context is then available to children of the component
+     * (including slotted content) with `getContext`.
+     *
+     * Like lifecycle functions, this must be called during component initialisation.
+     *
+     * https://svelte.dev/docs#run-time-svelte-setcontext
+     */
     function setContext(key, context) {
         get_current_component().$$.context.set(key, context);
         return context;
     }
+    /**
+     * Retrieves the context that belongs to the closest parent component with the specified `key`.
+     * Must be called during component initialisation.
+     *
+     * https://svelte.dev/docs#run-time-svelte-getcontext
+     */
     function getContext(key) {
         return get_current_component().$$.context.get(key);
     }
+    /**
+     * Checks whether a given `key` has been set in the context of a parent component.
+     * Must be called during component initialisation.
+     *
+     * https://svelte.dev/docs#run-time-svelte-hascontext
+     */
     function hasContext(key) {
         return get_current_component().$$.context.has(key);
     }
@@ -476,9 +553,9 @@
 
     const dirty_components = [];
     const binding_callbacks = [];
-    const render_callbacks = [];
+    let render_callbacks = [];
     const flush_callbacks = [];
-    const resolved_promise = Promise.resolve();
+    const resolved_promise = /* @__PURE__ */ Promise.resolve();
     let update_scheduled = false;
     function schedule_update() {
         if (!update_scheduled) {
@@ -517,15 +594,29 @@
     const seen_callbacks = new Set();
     let flushidx = 0; // Do *not* move this inside the flush() function
     function flush() {
+        // Do not reenter flush while dirty components are updated, as this can
+        // result in an infinite loop. Instead, let the inner flush handle it.
+        // Reentrancy is ok afterwards for bindings etc.
+        if (flushidx !== 0) {
+            return;
+        }
         const saved_component = current_component;
         do {
             // first, call beforeUpdate functions
             // and update components
-            while (flushidx < dirty_components.length) {
-                const component = dirty_components[flushidx];
-                flushidx++;
-                set_current_component(component);
-                update(component.$$);
+            try {
+                while (flushidx < dirty_components.length) {
+                    const component = dirty_components[flushidx];
+                    flushidx++;
+                    set_current_component(component);
+                    update(component.$$);
+                }
+            }
+            catch (e) {
+                // reset dirty state to not end up in a deadlocked state and then rethrow
+                dirty_components.length = 0;
+                flushidx = 0;
+                throw e;
             }
             set_current_component(null);
             dirty_components.length = 0;
@@ -561,6 +652,16 @@
             $$.fragment && $$.fragment.p($$.ctx, dirty);
             $$.after_update.forEach(add_render_callback);
         }
+    }
+    /**
+     * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
+     */
+    function flush_render_callbacks(fns) {
+        const filtered = [];
+        const targets = [];
+        render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+        targets.forEach((c) => c());
+        render_callbacks = filtered;
     }
 
     let promise;
@@ -618,7 +719,8 @@
     }
     const null_transition = { duration: 0 };
     function create_bidirectional_transition(node, fn, params, intro) {
-        let config = fn(node, params);
+        const options = { direction: 'both' };
+        let config = fn(node, params, options);
         let t = intro ? 0 : 1;
         let running_program = null;
         let pending_program = null;
@@ -708,7 +810,7 @@
                 if (is_function(config)) {
                     wait().then(() => {
                         // @ts-ignore
-                        config = config();
+                        config = config(options);
                         go(b);
                     });
                 }
@@ -830,6 +932,7 @@
         const new_blocks = [];
         const new_lookup = new Map();
         const deltas = new Map();
+        const updates = [];
         i = n;
         while (i--) {
             const child_ctx = get_context(ctx, list, i);
@@ -840,7 +943,8 @@
                 block.c();
             }
             else if (dynamic) {
-                block.p(child_ctx, dirty);
+                // defer updates until all the DOM shuffling is done
+                updates.push(() => block.p(child_ctx, dirty));
             }
             new_lookup.set(key, new_blocks[i] = block);
             if (key in old_indexes)
@@ -893,6 +997,7 @@
         }
         while (n)
             insert(new_blocks[n - 1]);
+        run_all(updates);
         return new_blocks;
     }
     function validate_each_keys(ctx, list, get_context, get_key) {
@@ -954,14 +1059,17 @@
         block && block.c();
     }
     function mount_component(component, target, anchor, customElement) {
-        const { fragment, on_mount, on_destroy, after_update } = component.$$;
+        const { fragment, after_update } = component.$$;
         fragment && fragment.m(target, anchor);
         if (!customElement) {
             // onMount happens before the initial afterUpdate
             add_render_callback(() => {
-                const new_on_destroy = on_mount.map(run).filter(is_function);
-                if (on_destroy) {
-                    on_destroy.push(...new_on_destroy);
+                const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
+                // if the component was destroyed immediately
+                // it will update the `$$.on_destroy` reference to `null`.
+                // the destructured on_destroy may still reference to the old array
+                if (component.$$.on_destroy) {
+                    component.$$.on_destroy.push(...new_on_destroy);
                 }
                 else {
                     // Edge case - component was destroyed immediately,
@@ -976,6 +1084,7 @@
     function destroy_component(component, detaching) {
         const $$ = component.$$;
         if ($$.fragment !== null) {
+            flush_render_callbacks($$.after_update);
             run_all($$.on_destroy);
             $$.fragment && $$.fragment.d(detaching);
             // TODO null out other refs, including component.$$ (but need to
@@ -997,7 +1106,7 @@
         set_current_component(component);
         const $$ = component.$$ = {
             fragment: null,
-            ctx: null,
+            ctx: [],
             // state
             props,
             update: noop,
@@ -1062,6 +1171,9 @@
             this.$destroy = noop;
         }
         $on(type, callback) {
+            if (!is_function(callback)) {
+                return noop;
+            }
             const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
             callbacks.push(callback);
             return () => {
@@ -1080,7 +1192,7 @@
     }
 
     function dispatch_dev(type, detail) {
-        document.dispatchEvent(custom_event(type, Object.assign({ version: '3.49.0' }, detail), { bubbles: true }));
+        document.dispatchEvent(custom_event(type, Object.assign({ version: '3.57.0' }, detail), { bubbles: true }));
     }
     function append_dev(target, node) {
         dispatch_dev('SvelteDOMInsert', { target, node });
@@ -1094,12 +1206,14 @@
         dispatch_dev('SvelteDOMRemove', { node });
         detach(node);
     }
-    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation) {
+    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation, has_stop_immediate_propagation) {
         const modifiers = options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
         if (has_prevent_default)
             modifiers.push('preventDefault');
         if (has_stop_propagation)
             modifiers.push('stopPropagation');
+        if (has_stop_immediate_propagation)
+            modifiers.push('stopImmediatePropagation');
         dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
         const dispose = listen(node, event, handler, options);
         return () => {
@@ -1138,6 +1252,25 @@
         for (const slot_key of Object.keys(slot)) {
             if (!~keys.indexOf(slot_key)) {
                 console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
+            }
+        }
+    }
+    function construct_svelte_component_dev(component, props) {
+        const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
+        try {
+            const instance = new component(props);
+            if (!instance.$$ || !instance.$set || !instance.$on || !instance.$destroy) {
+                throw new Error(error_message);
+            }
+            return instance;
+        }
+        catch (err) {
+            const { message } = err;
+            if (typeof message === 'string' && message.indexOf('is not a constructor') !== -1) {
+                throw new Error(error_message);
+            }
+            else {
+                throw err;
             }
         }
     }
@@ -1210,7 +1343,7 @@
             run(value);
             return () => {
                 subscribers.delete(subscriber);
-                if (subscribers.size === 0) {
+                if (subscribers.size === 0 && stop) {
                     stop();
                     stop = null;
                 }
@@ -1225,7 +1358,7 @@
             : stores;
         const auto = fn.length < 2;
         return readable(initial_value, (set) => {
-            let inited = false;
+            let started = false;
             const values = [];
             let pending = 0;
             let cleanup = noop;
@@ -1245,17 +1378,21 @@
             const unsubscribers = stores_array.map((store, i) => subscribe(store, (value) => {
                 values[i] = value;
                 pending &= ~(1 << i);
-                if (inited) {
+                if (started) {
                     sync();
                 }
             }, () => {
                 pending |= (1 << i);
             }));
-            inited = true;
+            started = true;
             sync();
             return function stop() {
                 run_all(unsubscribers);
                 cleanup();
+                // We need to set this to false because callbacks can still happen despite having unsubscribed:
+                // Callbacks might already be placed in the queue which doesn't know it should no longer
+                // invoke this derived store.
+                started = false;
             };
         });
     }
@@ -2128,7 +2265,7 @@
     	};
     }
 
-    /* node_modules/svelte-spa-router/Router.svelte generated by Svelte v3.49.0 */
+    /* node_modules/svelte-spa-router/Router.svelte generated by Svelte v3.57.0 */
 
     const { Error: Error_1, Object: Object_1$4, console: console_1 } = globals;
 
@@ -2154,7 +2291,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     		switch_instance.$on("routeEvent", /*routeEvent_handler_1*/ ctx[7]);
     	}
 
@@ -2164,10 +2301,7 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
@@ -2176,7 +2310,7 @@
     			? get_spread_update(switch_instance_spread_levels, [get_spread_object(/*props*/ ctx[2])])
     			: {};
 
-    			if (switch_value !== (switch_value = /*component*/ ctx[0])) {
+    			if (dirty & /*component*/ 1 && switch_value !== (switch_value = /*component*/ ctx[0])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -2189,7 +2323,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					switch_instance.$on("routeEvent", /*routeEvent_handler_1*/ ctx[7]);
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
@@ -2249,7 +2383,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     		switch_instance.$on("routeEvent", /*routeEvent_handler*/ ctx[6]);
     	}
 
@@ -2259,10 +2393,7 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
@@ -2274,7 +2405,7 @@
     				])
     			: {};
 
-    			if (switch_value !== (switch_value = /*component*/ ctx[0])) {
+    			if (dirty & /*component*/ 1 && switch_value !== (switch_value = /*component*/ ctx[0])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -2287,7 +2418,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					switch_instance.$on("routeEvent", /*routeEvent_handler*/ ctx[6]);
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
@@ -3053,8 +3184,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Page.svelte generated by Svelte v3.49.0 */
-    const file$O = "src/amazon-s3-and-cloudfront/ui/components/Page.svelte";
+    /* ui/components/Page.svelte generated by Svelte v3.57.0 */
+    const file$O = "ui/components/Page.svelte";
 
     function create_fragment$X(ctx) {
     	let div;
@@ -3103,7 +3234,7 @@
     				attr_dev(div, "class", div_class_value);
     			}
 
-    			if (dirty & /*name, subpage*/ 3) {
+    			if (!current || dirty & /*name, subpage*/ 3) {
     				toggle_class(div, "subpage", /*subpage*/ ctx[1]);
     			}
     		},
@@ -3240,8 +3371,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Button.svelte generated by Svelte v3.49.0 */
-    const file$N = "src/amazon-s3-and-cloudfront/ui/components/Button.svelte";
+    /* ui/components/Button.svelte generated by Svelte v3.57.0 */
+    const file$N = "ui/components/Button.svelte";
 
     // (72:1) {#if refresh}
     function create_if_block$s(ctx) {
@@ -3339,9 +3470,9 @@
 
     			if (!mounted) {
     				dispose = [
-    					listen_dev(button, "click", prevent_default(/*click_handler*/ ctx[18]), false, true, false),
-    					listen_dev(button, "focusout", /*focusout_handler*/ ctx[19], false, false, false),
-    					listen_dev(button, "keyup", /*handleKeyup*/ ctx[14], false, false, false)
+    					listen_dev(button, "click", prevent_default(/*click_handler*/ ctx[18]), false, true, false, false),
+    					listen_dev(button, "focusout", /*focusout_handler*/ ctx[19], false, false, false, false),
+    					listen_dev(button, "keyup", /*handleKeyup*/ ctx[14], false, false, false, false)
     				];
 
     				mounted = true;
@@ -3384,47 +3515,47 @@
     				prop_dev(button, "disabled", button_disabled_value);
     			}
 
-    			if (dirty & /*extraSmall*/ 2) {
+    			if (!current || dirty & /*extraSmall*/ 2) {
     				toggle_class(button, "btn-xs", /*extraSmall*/ ctx[1]);
     			}
 
-    			if (dirty & /*small*/ 4) {
+    			if (!current || dirty & /*small*/ 4) {
     				toggle_class(button, "btn-sm", /*small*/ ctx[2]);
     			}
 
-    			if (dirty & /*medium*/ 16) {
+    			if (!current || dirty & /*medium*/ 16) {
     				toggle_class(button, "btn-md", /*medium*/ ctx[4]);
     			}
 
-    			if (dirty & /*large*/ 8) {
+    			if (!current || dirty & /*large*/ 8) {
     				toggle_class(button, "btn-lg", /*large*/ ctx[3]);
     			}
 
-    			if (dirty & /*primary*/ 32) {
+    			if (!current || dirty & /*primary*/ 32) {
     				toggle_class(button, "btn-primary", /*primary*/ ctx[5]);
     			}
 
-    			if (dirty & /*outline*/ 256) {
+    			if (!current || dirty & /*outline*/ 256) {
     				toggle_class(button, "btn-outline", /*outline*/ ctx[8]);
     			}
 
-    			if (dirty & /*expandable*/ 64) {
+    			if (!current || dirty & /*expandable*/ 64) {
     				toggle_class(button, "btn-expandable", /*expandable*/ ctx[6]);
     			}
 
-    			if (dirty & /*disabled*/ 512) {
+    			if (!current || dirty & /*disabled*/ 512) {
     				toggle_class(button, "btn-disabled", /*disabled*/ ctx[9]);
     			}
 
-    			if (dirty & /*expanded*/ 1024) {
+    			if (!current || dirty & /*expanded*/ 1024) {
     				toggle_class(button, "btn-expanded", /*expanded*/ ctx[10]);
     			}
 
-    			if (dirty & /*refresh*/ 128) {
+    			if (!current || dirty & /*refresh*/ 128) {
     				toggle_class(button, "btn-refresh", /*refresh*/ ctx[7]);
     			}
 
-    			if (dirty & /*refreshing*/ 2048) {
+    			if (!current || dirty & /*refreshing*/ 2048) {
     				toggle_class(button, "btn-refreshing", /*refreshing*/ ctx[11]);
     			}
     		},
@@ -3733,8 +3864,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Notification.svelte generated by Svelte v3.49.0 */
-    const file$M = "src/amazon-s3-and-cloudfront/ui/components/Notification.svelte";
+    /* ui/components/Notification.svelte generated by Svelte v3.57.0 */
+    const file$M = "ui/components/Notification.svelte";
     const get_details_slot_changes = dirty => ({});
     const get_details_slot_context = ctx => ({});
 
@@ -4041,7 +4172,7 @@
     			insert_dev(target, button, anchor);
 
     			if (!mounted) {
-    				dispose = listen_dev(button, "click", prevent_default(/*click_handler_2*/ ctx[28]), false, true, false);
+    				dispose = listen_dev(button, "click", prevent_default(/*click_handler_2*/ ctx[28]), false, true, false, false);
     				mounted = true;
     			}
     		},
@@ -4180,6 +4311,7 @@
     					}),
     					false,
     					true,
+    					false,
     					false
     				);
 
@@ -4465,39 +4597,39 @@
     				}
     			}
 
-    			if (dirty[0] & /*inline*/ 8) {
+    			if (!current || dirty[0] & /*inline*/ 8) {
     				toggle_class(div2, "inline", /*inline*/ ctx[3]);
     			}
 
-    			if (dirty[0] & /*wordpress*/ 16) {
+    			if (!current || dirty[0] & /*wordpress*/ 16) {
     				toggle_class(div2, "wordpress", /*wordpress*/ ctx[4]);
     			}
 
-    			if (dirty[0] & /*success*/ 32) {
+    			if (!current || dirty[0] & /*success*/ 32) {
     				toggle_class(div2, "success", /*success*/ ctx[5]);
     			}
 
-    			if (dirty[0] & /*warning*/ 64) {
+    			if (!current || dirty[0] & /*warning*/ 64) {
     				toggle_class(div2, "warning", /*warning*/ ctx[6]);
     			}
 
-    			if (dirty[0] & /*error*/ 128) {
+    			if (!current || dirty[0] & /*error*/ 128) {
     				toggle_class(div2, "error", /*error*/ ctx[7]);
     			}
 
-    			if (dirty[0] & /*info*/ 32768) {
+    			if (!current || dirty[0] & /*info*/ 32768) {
     				toggle_class(div2, "info", /*info*/ ctx[15]);
     			}
 
-    			if (dirty[0] & /*multiline*/ 131072) {
+    			if (!current || dirty[0] & /*multiline*/ 131072) {
     				toggle_class(div2, "multiline", /*multiline*/ ctx[17]);
     			}
 
-    			if (dirty[0] & /*expandable*/ 4096) {
+    			if (!current || dirty[0] & /*expandable*/ 4096) {
     				toggle_class(div2, "expandable", /*expandable*/ ctx[12]);
     			}
 
-    			if (dirty[0] & /*expanded*/ 2) {
+    			if (!current || dirty[0] & /*expanded*/ 2) {
     				toggle_class(div2, "expanded", /*expanded*/ ctx[1]);
     			}
     		},
@@ -4926,10 +5058,10 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Notifications.svelte generated by Svelte v3.49.0 */
+    /* ui/components/Notifications.svelte generated by Svelte v3.57.0 */
 
     const { Object: Object_1$3 } = globals;
-    const file$L = "src/amazon-s3-and-cloudfront/ui/components/Notifications.svelte";
+    const file$L = "ui/components/Notifications.svelte";
 
     function get_each_context$9(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -4970,7 +5102,9 @@
     			insert_dev(target, div, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(div, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div, null);
+    				}
     			}
 
     			current = true;
@@ -5040,7 +5174,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props(ctx));
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props(ctx));
     	}
 
     	const block = {
@@ -5049,10 +5183,7 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
@@ -5064,7 +5195,7 @@
     				switch_instance_changes.$$scope = { dirty, ctx };
     			}
 
-    			if (switch_value !== (switch_value = /*component*/ ctx[0])) {
+    			if (dirty & /*component*/ 1 && switch_value !== (switch_value = /*component*/ ctx[0])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -5077,7 +5208,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props(ctx));
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props(ctx));
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
     					mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
@@ -5435,8 +5566,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SubNavItem.svelte generated by Svelte v3.49.0 */
-    const file$K = "src/amazon-s3-and-cloudfront/ui/components/SubNavItem.svelte";
+    /* ui/components/SubNavItem.svelte generated by Svelte v3.57.0 */
+    const file$K = "ui/components/SubNavItem.svelte";
 
     // (26:2) {#if showIcon}
     function create_if_block$p(ctx) {
@@ -5532,10 +5663,10 @@
     			if (!mounted) {
     				dispose = [
     					action_destroyer(link.call(null, a)),
-    					listen_dev(a, "focusin", /*focusin_handler*/ ctx[7], false, false, false),
-    					listen_dev(a, "focusout", /*focusout_handler*/ ctx[8], false, false, false),
-    					listen_dev(a, "mouseenter", /*mouseenter_handler*/ ctx[9], false, false, false),
-    					listen_dev(a, "mouseleave", /*mouseleave_handler*/ ctx[10], false, false, false)
+    					listen_dev(a, "focusin", /*focusin_handler*/ ctx[7], false, false, false, false),
+    					listen_dev(a, "focusout", /*focusout_handler*/ ctx[8], false, false, false, false),
+    					listen_dev(a, "mouseenter", /*mouseenter_handler*/ ctx[9], false, false, false, false),
+    					listen_dev(a, "mouseleave", /*mouseleave_handler*/ ctx[10], false, false, false, false)
     				];
 
     				mounted = true;
@@ -5616,6 +5747,13 @@
     	let { page } = $$props;
     	let focus = false;
     	let hover = false;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (page === undefined && !('page' in $$props || $$self.$$.bound[$$self.$$.props['page']])) {
+    			console.warn("<SubNavItem> was created without expected prop 'page'");
+    		}
+    	});
+
     	const writable_props = ['page'];
 
     	Object.keys($$props).forEach(key => {
@@ -5694,13 +5832,6 @@
     			options,
     			id: create_fragment$T.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*page*/ ctx[0] === undefined && !('page' in props)) {
-    			console.warn("<SubNavItem> was created without expected prop 'page'");
-    		}
     	}
 
     	get page() {
@@ -5712,8 +5843,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SubNav.svelte generated by Svelte v3.49.0 */
-    const file$J = "src/amazon-s3-and-cloudfront/ui/components/SubNav.svelte";
+    /* ui/components/SubNav.svelte generated by Svelte v3.57.0 */
+    const file$J = "ui/components/SubNav.svelte";
 
     function get_each_context$8(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -5756,7 +5887,9 @@
     			insert_dev(target, ul, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(ul, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(ul, null);
+    				}
     			}
 
     			current = true;
@@ -5794,11 +5927,11 @@
     				attr_dev(ul, "class", ul_class_value);
     			}
 
-    			if (dirty & /*name, subpage*/ 3) {
+    			if (!current || dirty & /*name, subpage*/ 3) {
     				toggle_class(ul, "subpage", /*subpage*/ ctx[1]);
     			}
 
-    			if (dirty & /*name, progress*/ 5) {
+    			if (!current || dirty & /*name, progress*/ 5) {
     				toggle_class(ul, "progress", /*progress*/ ctx[2]);
     			}
     		},
@@ -6131,8 +6264,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SubPages.svelte generated by Svelte v3.49.0 */
-    const file$I = "src/amazon-s3-and-cloudfront/ui/components/SubPages.svelte";
+    /* ui/components/SubPages.svelte generated by Svelte v3.57.0 */
+    const file$I = "ui/components/SubPages.svelte";
 
     // (9:0) {#if routes}
     function create_if_block$n(ctx) {
@@ -6480,8 +6613,8 @@
         }
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SubPage.svelte generated by Svelte v3.49.0 */
-    const file$H = "src/amazon-s3-and-cloudfront/ui/components/SubPage.svelte";
+    /* ui/components/SubPage.svelte generated by Svelte v3.57.0 */
+    const file$H = "ui/components/SubPage.svelte";
 
     function create_fragment$Q(ctx) {
     	let div;
@@ -6641,29 +6774,32 @@
             css: t => `opacity: ${t * o}`
         };
     }
-    function slide(node, { delay = 0, duration = 400, easing = cubicOut } = {}) {
+    function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis = 'y' } = {}) {
         const style = getComputedStyle(node);
         const opacity = +style.opacity;
-        const height = parseFloat(style.height);
-        const padding_top = parseFloat(style.paddingTop);
-        const padding_bottom = parseFloat(style.paddingBottom);
-        const margin_top = parseFloat(style.marginTop);
-        const margin_bottom = parseFloat(style.marginBottom);
-        const border_top_width = parseFloat(style.borderTopWidth);
-        const border_bottom_width = parseFloat(style.borderBottomWidth);
+        const primary_property = axis === 'y' ? 'height' : 'width';
+        const primary_property_value = parseFloat(style[primary_property]);
+        const secondary_properties = axis === 'y' ? ['top', 'bottom'] : ['left', 'right'];
+        const capitalized_secondary_properties = secondary_properties.map((e) => `${e[0].toUpperCase()}${e.slice(1)}`);
+        const padding_start_value = parseFloat(style[`padding${capitalized_secondary_properties[0]}`]);
+        const padding_end_value = parseFloat(style[`padding${capitalized_secondary_properties[1]}`]);
+        const margin_start_value = parseFloat(style[`margin${capitalized_secondary_properties[0]}`]);
+        const margin_end_value = parseFloat(style[`margin${capitalized_secondary_properties[1]}`]);
+        const border_width_start_value = parseFloat(style[`border${capitalized_secondary_properties[0]}Width`]);
+        const border_width_end_value = parseFloat(style[`border${capitalized_secondary_properties[1]}Width`]);
         return {
             delay,
             duration,
             easing,
             css: t => 'overflow: hidden;' +
                 `opacity: ${Math.min(t * 20, 1) * opacity};` +
-                `height: ${t * height}px;` +
-                `padding-top: ${t * padding_top}px;` +
-                `padding-bottom: ${t * padding_bottom}px;` +
-                `margin-top: ${t * margin_top}px;` +
-                `margin-bottom: ${t * margin_bottom}px;` +
-                `border-top-width: ${t * border_top_width}px;` +
-                `border-bottom-width: ${t * border_bottom_width}px;`
+                `${primary_property}: ${t * primary_property_value}px;` +
+                `padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
+                `padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
+                `margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
+                `margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
+                `border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
+                `border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
         };
     }
     function scale(node, { delay = 0, duration = 400, easing = cubicOut, start = 0, opacity = 0 } = {}) {
@@ -6683,9 +6819,9 @@
         };
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/PanelContainer.svelte generated by Svelte v3.49.0 */
+    /* ui/components/PanelContainer.svelte generated by Svelte v3.57.0 */
 
-    const file$G = "src/amazon-s3-and-cloudfront/ui/components/PanelContainer.svelte";
+    const file$G = "ui/components/PanelContainer.svelte";
 
     function create_fragment$P(ctx) {
     	let div;
@@ -6792,9 +6928,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/PanelRow.svelte generated by Svelte v3.49.0 */
+    /* ui/components/PanelRow.svelte generated by Svelte v3.57.0 */
 
-    const file$F = "src/amazon-s3-and-cloudfront/ui/components/PanelRow.svelte";
+    const file$F = "ui/components/PanelRow.svelte";
 
     // (10:1) {#if gradient}
     function create_if_block$m(ctx) {
@@ -6885,11 +7021,11 @@
     				}
     			}
 
-    			if (dirty & /*header*/ 1) {
+    			if (!current || dirty & /*header*/ 1) {
     				toggle_class(div, "header", /*header*/ ctx[0]);
     			}
 
-    			if (dirty & /*footer*/ 2) {
+    			if (!current || dirty & /*footer*/ 2) {
     				toggle_class(div, "footer", /*footer*/ ctx[1]);
     			}
     		},
@@ -6991,8 +7127,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/DefinedInWPConfig.svelte generated by Svelte v3.49.0 */
-    const file$E = "src/amazon-s3-and-cloudfront/ui/components/DefinedInWPConfig.svelte";
+    /* ui/components/DefinedInWPConfig.svelte generated by Svelte v3.57.0 */
+    const file$E = "ui/components/DefinedInWPConfig.svelte";
 
     // (7:0) {#if defined}
     function create_if_block$l(ctx) {
@@ -7131,9 +7267,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/ToggleSwitch.svelte generated by Svelte v3.49.0 */
+    /* ui/components/ToggleSwitch.svelte generated by Svelte v3.57.0 */
 
-    const file$D = "src/amazon-s3-and-cloudfront/ui/components/ToggleSwitch.svelte";
+    const file$D = "ui/components/ToggleSwitch.svelte";
 
     function create_fragment$M(ctx) {
     	let div;
@@ -7217,7 +7353,7 @@
     				attr_dev(label, "for", /*name*/ ctx[1]);
     			}
 
-    			if (dirty & /*disabled*/ 4) {
+    			if (!current || dirty & /*disabled*/ 4) {
     				toggle_class(div, "locked", /*disabled*/ ctx[2]);
     			}
     		},
@@ -7326,8 +7462,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/HelpButton.svelte generated by Svelte v3.49.0 */
-    const file$C = "src/amazon-s3-and-cloudfront/ui/components/HelpButton.svelte";
+    /* ui/components/HelpButton.svelte generated by Svelte v3.57.0 */
+    const file$C = "ui/components/HelpButton.svelte";
 
     // (13:0) {#if url}
     function create_if_block$k(ctx) {
@@ -7539,8 +7675,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Panel.svelte generated by Svelte v3.49.0 */
-    const file$B = "src/amazon-s3-and-cloudfront/ui/components/Panel.svelte";
+    /* ui/components/Panel.svelte generated by Svelte v3.57.0 */
+    const file$B = "ui/components/Panel.svelte";
 
     // (84:1) {#if !multi && heading}
     function create_if_block_6$3(ctx) {
@@ -7919,7 +8055,7 @@
     			current = true;
 
     			if (!mounted) {
-    				dispose = listen_dev(h3, "click", /*headingClickHandler*/ ctx[21], false, false, false);
+    				dispose = listen_dev(h3, "click", /*headingClickHandler*/ ctx[21], false, false, false, false);
     				mounted = true;
     			}
     		},
@@ -7941,7 +8077,7 @@
     			toggleswitch.$set(toggleswitch_changes);
     			if (!current || dirty[0] & /*heading*/ 8) set_data_dev(t1, /*heading*/ ctx[3]);
 
-    			if (dirty[0] & /*toggleDisabled*/ 262144) {
+    			if (!current || dirty[0] & /*toggleDisabled*/ 262144) {
     				toggle_class(h3, "toggleDisabled", /*toggleDisabled*/ ctx[18]);
     			}
     		},
@@ -8632,12 +8768,12 @@
 
     			if (!mounted) {
     				dispose = [
-    					listen_dev(div, "focusout", /*focusout_handler*/ ctx[26], false, false, false),
-    					listen_dev(div, "mouseenter", /*mouseenter_handler*/ ctx[27], false, false, false),
-    					listen_dev(div, "mouseleave", /*mouseleave_handler*/ ctx[28], false, false, false),
-    					listen_dev(div, "mousedown", /*mousedown_handler*/ ctx[29], false, false, false),
-    					listen_dev(div, "click", /*click_handler*/ ctx[30], false, false, false),
-    					listen_dev(div, "keyup", /*handleKeyup*/ ctx[22], false, false, false)
+    					listen_dev(div, "focusout", /*focusout_handler*/ ctx[26], false, false, false, false),
+    					listen_dev(div, "mouseenter", /*mouseenter_handler*/ ctx[27], false, false, false, false),
+    					listen_dev(div, "mouseleave", /*mouseleave_handler*/ ctx[28], false, false, false, false),
+    					listen_dev(div, "mousedown", /*mousedown_handler*/ ctx[29], false, false, false, false),
+    					listen_dev(div, "click", /*click_handler*/ ctx[30], false, false, false, false),
+    					listen_dev(div, "keyup", /*handleKeyup*/ ctx[22], false, false, false, false)
     				];
 
     				mounted = true;
@@ -8681,15 +8817,15 @@
     				attr_dev(div, "class", div_class_value);
     			}
 
-    			if (dirty[0] & /*name, multi*/ 36) {
+    			if (!current || dirty[0] & /*name, multi*/ 36) {
     				toggle_class(div, "multi", /*multi*/ ctx[5]);
     			}
 
-    			if (dirty[0] & /*name, flyout*/ 68) {
+    			if (!current || dirty[0] & /*name, flyout*/ 68) {
     				toggle_class(div, "flyout", /*flyout*/ ctx[6]);
     			}
 
-    			if (dirty[0] & /*name, locked*/ 65540) {
+    			if (!current || dirty[0] & /*name, locked*/ 65540) {
     				toggle_class(div, "locked", /*locked*/ ctx[16]);
     			}
     		},
@@ -8700,6 +8836,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!div_transition) div_transition = create_bidirectional_transition(div, fade, { duration: /*flyout*/ ctx[6] ? 200 : 0 }, true);
     					div_transition.run(1);
     				});
@@ -9152,8 +9289,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/StorageSettingsHeadingRow.svelte generated by Svelte v3.49.0 */
-    const file$A = "src/amazon-s3-and-cloudfront/ui/components/StorageSettingsHeadingRow.svelte";
+    /* ui/components/StorageSettingsHeadingRow.svelte generated by Svelte v3.57.0 */
+    const file$A = "ui/components/StorageSettingsHeadingRow.svelte";
 
     // (32:1) <Button outline on:click={() => push('/storage/provider')} title={$strings.edit_storage_provider} disabled={$settingsLocked}>
     function create_default_slot_1$c(ctx) {
@@ -9510,8 +9647,8 @@
     	return new Promise( ( resolve ) => setTimeout( resolve, minTime - elapsed ) );
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/CheckAgain.svelte generated by Svelte v3.49.0 */
-    const file$z = "src/amazon-s3-and-cloudfront/ui/components/CheckAgain.svelte";
+    /* ui/components/CheckAgain.svelte generated by Svelte v3.57.0 */
+    const file$z = "ui/components/CheckAgain.svelte";
 
     // (41:1) {:else}
     function create_else_block$4(ctx) {
@@ -9901,8 +10038,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SettingsValidationStatusRow.svelte generated by Svelte v3.49.0 */
-    const file$y = "src/amazon-s3-and-cloudfront/ui/components/SettingsValidationStatusRow.svelte";
+    /* ui/components/SettingsValidationStatusRow.svelte generated by Svelte v3.57.0 */
+    const file$y = "ui/components/SettingsValidationStatusRow.svelte";
 
     function create_fragment$H(ctx) {
     	let div3;
@@ -9982,19 +10119,19 @@
     				attr_dev(div3, "class", div3_class_value);
     			}
 
-    			if (dirty & /*section, success*/ 129) {
+    			if (!current || dirty & /*section, success*/ 129) {
     				toggle_class(div3, "success", /*success*/ ctx[7]);
     			}
 
-    			if (dirty & /*section, warning*/ 65) {
+    			if (!current || dirty & /*section, warning*/ 65) {
     				toggle_class(div3, "warning", /*warning*/ ctx[6]);
     			}
 
-    			if (dirty & /*section, error*/ 33) {
+    			if (!current || dirty & /*section, error*/ 33) {
     				toggle_class(div3, "error", /*error*/ ctx[5]);
     			}
 
-    			if (dirty & /*section, info*/ 17) {
+    			if (!current || dirty & /*section, info*/ 17) {
     				toggle_class(div3, "info", /*info*/ ctx[4]);
     			}
     		},
@@ -10148,8 +10285,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SettingNotifications.svelte generated by Svelte v3.49.0 */
-    const file$x = "src/amazon-s3-and-cloudfront/ui/components/SettingNotifications.svelte";
+    /* ui/components/SettingNotifications.svelte generated by Svelte v3.57.0 */
+    const file$x = "ui/components/SettingNotifications.svelte";
 
     function get_each_context$7(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -10184,7 +10321,9 @@
     		},
     		m: function mount(target, anchor) {
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
     			}
 
     			insert_dev(target, each_1_anchor, anchor);
@@ -10449,6 +10588,13 @@
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('SettingNotifications', slots, []);
     	let { settingKey } = $$props;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (settingKey === undefined && !('settingKey' in $$props || $$self.$$.bound[$$self.$$.props['settingKey']])) {
+    			console.warn("<SettingNotifications> was created without expected prop 'settingKey'");
+    		}
+    	});
+
     	const writable_props = ['settingKey'];
 
     	Object.keys($$props).forEach(key => {
@@ -10489,13 +10635,6 @@
     			options,
     			id: create_fragment$G.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*settingKey*/ ctx[0] === undefined && !('settingKey' in props)) {
-    			console.warn("<SettingNotifications> was created without expected prop 'settingKey'");
-    		}
     	}
 
     	get settingKey() {
@@ -10507,8 +10646,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SettingsPanelOption.svelte generated by Svelte v3.49.0 */
-    const file$w = "src/amazon-s3-and-cloudfront/ui/components/SettingsPanelOption.svelte";
+    /* ui/components/SettingsPanelOption.svelte generated by Svelte v3.57.0 */
+    const file$w = "ui/components/SettingsPanelOption.svelte";
 
     // (102:2) {:else}
     function create_else_block$3(ctx) {
@@ -10603,7 +10742,7 @@
     			current = true;
 
     			if (!mounted) {
-    				dispose = listen_dev(h4, "click", /*headingClickHandler*/ ctx[19], false, false, false);
+    				dispose = listen_dev(h4, "click", /*headingClickHandler*/ ctx[19], false, false, false, false);
     				mounted = true;
     			}
     		},
@@ -10629,7 +10768,7 @@
     				attr_dev(h4, "id", /*headingName*/ ctx[17]);
     			}
 
-    			if (dirty & /*toggleDisabled*/ 16384) {
+    			if (!current || dirty & /*toggleDisabled*/ 16384) {
     				toggle_class(h4, "toggleDisabled", /*toggleDisabled*/ ctx[14]);
     			}
     		},
@@ -10952,7 +11091,7 @@
     			if (!mounted) {
     				dispose = [
     					listen_dev(input_1, "input", /*input_1_input_handler*/ ctx[26]),
-    					listen_dev(input_1, "input", /*onTextInput*/ ctx[18], false, false, false)
+    					listen_dev(input_1, "input", /*onTextInput*/ ctx[18], false, false, false, false)
     				];
 
     				mounted = true;
@@ -11040,6 +11179,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!p_transition) p_transition = create_bidirectional_transition(p, slide, {}, true);
     					p_transition.run(1);
     				});
@@ -11344,11 +11484,11 @@
     				}
     			}
 
-    			if (dirty & /*nested*/ 32) {
+    			if (!current || dirty & /*nested*/ 32) {
     				toggle_class(div, "nested", /*nested*/ ctx[5]);
     			}
 
-    			if (dirty & /*first*/ 64) {
+    			if (!current || dirty & /*first*/ 64) {
     				toggle_class(div, "first", /*first*/ ctx[6]);
     			}
     		},
@@ -11772,7 +11912,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/StorageSettingsPanel.svelte generated by Svelte v3.49.0 */
+    /* ui/components/StorageSettingsPanel.svelte generated by Svelte v3.57.0 */
 
     // (10:0) <Panel name="settings" heading={$strings.storage_settings_title} helpKey="storage-provider">
     function create_default_slot$k(ctx) {
@@ -12217,7 +12357,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/StorageSettingsSubPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/StorageSettingsSubPage.svelte generated by Svelte v3.57.0 */
 
     // (6:0) <SubPage name="storage-settings">
     function create_default_slot$j(ctx) {
@@ -12343,8 +12483,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/DeliverySettingsHeadingRow.svelte generated by Svelte v3.49.0 */
-    const file$v = "src/amazon-s3-and-cloudfront/ui/components/DeliverySettingsHeadingRow.svelte";
+    /* ui/components/DeliverySettingsHeadingRow.svelte generated by Svelte v3.57.0 */
+    const file$v = "ui/components/DeliverySettingsHeadingRow.svelte";
 
     // (34:1) <Button outline on:click={() => push('/delivery/provider')} title={$strings.edit_delivery_provider} disabled={$settingsLocked}>
     function create_default_slot_1$9(ctx) {
@@ -12691,7 +12831,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/DeliverySettingsPanel.svelte generated by Svelte v3.49.0 */
+    /* ui/components/DeliverySettingsPanel.svelte generated by Svelte v3.57.0 */
 
     // (43:1) {#if $delivery_provider.delivery_domain_allowed}
     function create_if_block$f(ctx) {
@@ -13503,7 +13643,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/DeliverySettingsSubPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/DeliverySettingsSubPage.svelte generated by Svelte v3.57.0 */
 
     // (6:0) <SubPage name="delivery-settings" route="/media/delivery">
     function create_default_slot$g(ctx) {
@@ -13630,7 +13770,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/MediaSettings.svelte generated by Svelte v3.49.0 */
+    /* ui/components/MediaSettings.svelte generated by Svelte v3.57.0 */
 
     function create_fragment$z(ctx) {
     	let storagesettingssubpage;
@@ -13740,8 +13880,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/UrlPreview.svelte generated by Svelte v3.49.0 */
-    const file$u = "src/amazon-s3-and-cloudfront/ui/components/UrlPreview.svelte";
+    /* ui/components/UrlPreview.svelte generated by Svelte v3.57.0 */
+    const file$u = "ui/components/UrlPreview.svelte";
 
     function get_each_context$6(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -13898,6 +14038,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!div_transition) div_transition = create_bidirectional_transition(div, scale, {}, true);
     					div_transition.run(1);
     				});
@@ -13961,7 +14102,9 @@
     			insert_dev(target, dl, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(dl, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(dl, null);
+    				}
     			}
 
     			current = true;
@@ -14275,8 +14418,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Footer.svelte generated by Svelte v3.49.0 */
-    const file$t = "src/amazon-s3-and-cloudfront/ui/components/Footer.svelte";
+    /* ui/components/Footer.svelte generated by Svelte v3.57.0 */
+    const file$t = "ui/components/Footer.svelte";
 
     // (68:0) {#if $settingsChangedStore}
     function create_if_block$d(ctx) {
@@ -14355,6 +14498,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!div1_transition) div1_transition = create_bidirectional_transition(div1, slide, {}, true);
     					div1_transition.run(1);
     				});
@@ -14691,7 +14835,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/MediaPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/MediaPage.svelte generated by Svelte v3.57.0 */
 
     // (59:1) {#if render}
     function create_if_block_1$7(ctx) {
@@ -14875,7 +15019,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     	}
 
     	const block = {
@@ -14884,15 +15028,12 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
     		p: function update(ctx, dirty) {
-    			if (switch_value !== (switch_value = /*sidebar*/ ctx[1])) {
+    			if (dirty & /*sidebar*/ 2 && switch_value !== (switch_value = /*sidebar*/ ctx[1])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -14905,7 +15046,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
     					mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
@@ -15203,7 +15344,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/StoragePage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/StoragePage.svelte generated by Svelte v3.57.0 */
 
     // (46:0) <Page {name} subpage on:routeEvent>
     function create_default_slot$c(ctx) {
@@ -15512,8 +15653,8 @@
     	return objectsDiffer( [previousDefines, currentDefines] );
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/TabButton.svelte generated by Svelte v3.49.0 */
-    const file$s = "src/amazon-s3-and-cloudfront/ui/components/TabButton.svelte";
+    /* ui/components/TabButton.svelte generated by Svelte v3.57.0 */
+    const file$s = "ui/components/TabButton.svelte";
 
     // (20:1) {#if icon}
     function create_if_block_2$4(ctx) {
@@ -15670,7 +15811,7 @@
     			if (if_block2) if_block2.m(a, null);
 
     			if (!mounted) {
-    				dispose = listen_dev(a, "click", prevent_default(/*click_handler*/ ctx[8]), false, true, false);
+    				dispose = listen_dev(a, "click", prevent_default(/*click_handler*/ ctx[8]), false, true, false, false);
     				mounted = true;
     			}
     		},
@@ -15886,9 +16027,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/RadioButton.svelte generated by Svelte v3.49.0 */
+    /* ui/components/RadioButton.svelte generated by Svelte v3.57.0 */
 
-    const file$r = "src/amazon-s3-and-cloudfront/ui/components/RadioButton.svelte";
+    const file$r = "ui/components/RadioButton.svelte";
 
     // (16:0) {#if selected === value && desc}
     function create_if_block$a(ctx) {
@@ -15926,15 +16067,18 @@
     	let div;
     	let label;
     	let input;
+    	let value_has_changed = false;
     	let t0;
     	let t1;
     	let if_block_anchor;
     	let current;
+    	let binding_group;
     	let mounted;
     	let dispose;
     	const default_slot_template = /*#slots*/ ctx[7].default;
     	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[6], null);
     	let if_block = /*selected*/ ctx[0] === /*value*/ ctx[4] && /*desc*/ ctx[5] && create_if_block$a(ctx);
+    	binding_group = init_binding_group(/*$$binding_groups*/ ctx[9][0]);
 
     	const block = {
     		c: function create() {
@@ -15951,13 +16095,13 @@
     			input.__value = /*value*/ ctx[4];
     			input.value = input.__value;
     			input.disabled = /*disabled*/ ctx[2];
-    			/*$$binding_groups*/ ctx[9][0].push(input);
     			add_location(input, file$r, 11, 2, 241);
     			add_location(label, file$r, 10, 1, 231);
     			attr_dev(div, "class", "radio-btn");
     			toggle_class(div, "list", /*list*/ ctx[1]);
     			toggle_class(div, "disabled", /*disabled*/ ctx[2]);
     			add_location(div, file$r, 9, 0, 180);
+    			binding_group.p(input);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -15991,13 +16135,14 @@
     			if (!current || dirty & /*value*/ 16) {
     				prop_dev(input, "__value", /*value*/ ctx[4]);
     				input.value = input.__value;
+    				value_has_changed = true;
     			}
 
     			if (!current || dirty & /*disabled*/ 4) {
     				prop_dev(input, "disabled", /*disabled*/ ctx[2]);
     			}
 
-    			if (dirty & /*selected*/ 1) {
+    			if (value_has_changed || dirty & /*selected*/ 1) {
     				input.checked = input.__value === /*selected*/ ctx[0];
     			}
 
@@ -16016,11 +16161,11 @@
     				}
     			}
 
-    			if (dirty & /*list*/ 2) {
+    			if (!current || dirty & /*list*/ 2) {
     				toggle_class(div, "list", /*list*/ ctx[1]);
     			}
 
-    			if (dirty & /*disabled*/ 4) {
+    			if (!current || dirty & /*disabled*/ 4) {
     				toggle_class(div, "disabled", /*disabled*/ ctx[2]);
     			}
 
@@ -16048,11 +16193,11 @@
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
-    			/*$$binding_groups*/ ctx[9][0].splice(/*$$binding_groups*/ ctx[9][0].indexOf(input), 1);
     			if (default_slot) default_slot.d(detaching);
     			if (detaching) detach_dev(t1);
     			if (if_block) if_block.d(detaching);
     			if (detaching) detach_dev(if_block_anchor);
+    			binding_group.r();
     			mounted = false;
     			dispose();
     		}
@@ -16207,9 +16352,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/AccessKeysDefine.svelte generated by Svelte v3.49.0 */
+    /* ui/components/AccessKeysDefine.svelte generated by Svelte v3.57.0 */
 
-    const file$q = "src/amazon-s3-and-cloudfront/ui/components/AccessKeysDefine.svelte";
+    const file$q = "ui/components/AccessKeysDefine.svelte";
 
     function create_fragment$s(ctx) {
     	let p;
@@ -16265,6 +16410,13 @@
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('AccessKeysDefine', slots, []);
     	let { provider } = $$props;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (provider === undefined && !('provider' in $$props || $$self.$$.bound[$$self.$$.props['provider']])) {
+    			console.warn("<AccessKeysDefine> was created without expected prop 'provider'");
+    		}
+    	});
+
     	const writable_props = ['provider'];
 
     	Object.keys($$props).forEach(key => {
@@ -16299,13 +16451,6 @@
     			options,
     			id: create_fragment$s.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*provider*/ ctx[0] === undefined && !('provider' in props)) {
-    			console.warn("<AccessKeysDefine> was created without expected prop 'provider'");
-    		}
     	}
 
     	get provider() {
@@ -16317,8 +16462,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/BackNextButtonsRow.svelte generated by Svelte v3.49.0 */
-    const file$p = "src/amazon-s3-and-cloudfront/ui/components/BackNextButtonsRow.svelte";
+    /* ui/components/BackNextButtonsRow.svelte generated by Svelte v3.57.0 */
+    const file$p = "ui/components/BackNextButtonsRow.svelte";
 
     // (27:1) {#if backVisible}
     function create_if_block_1$5(ctx) {
@@ -16896,9 +17041,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/KeyFileDefine.svelte generated by Svelte v3.49.0 */
+    /* ui/components/KeyFileDefine.svelte generated by Svelte v3.57.0 */
 
-    const file$o = "src/amazon-s3-and-cloudfront/ui/components/KeyFileDefine.svelte";
+    const file$o = "ui/components/KeyFileDefine.svelte";
 
     function create_fragment$q(ctx) {
     	let p;
@@ -16954,6 +17099,13 @@
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('KeyFileDefine', slots, []);
     	let { provider } = $$props;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (provider === undefined && !('provider' in $$props || $$self.$$.bound[$$self.$$.props['provider']])) {
+    			console.warn("<KeyFileDefine> was created without expected prop 'provider'");
+    		}
+    	});
+
     	const writable_props = ['provider'];
 
     	Object.keys($$props).forEach(key => {
@@ -16988,13 +17140,6 @@
     			options,
     			id: create_fragment$q.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*provider*/ ctx[0] === undefined && !('provider' in props)) {
-    			console.warn("<KeyFileDefine> was created without expected prop 'provider'");
-    		}
     	}
 
     	get provider() {
@@ -17006,9 +17151,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/UseServerRolesDefine.svelte generated by Svelte v3.49.0 */
+    /* ui/components/UseServerRolesDefine.svelte generated by Svelte v3.57.0 */
 
-    const file$n = "src/amazon-s3-and-cloudfront/ui/components/UseServerRolesDefine.svelte";
+    const file$n = "ui/components/UseServerRolesDefine.svelte";
 
     function create_fragment$p(ctx) {
     	let p;
@@ -17064,6 +17209,13 @@
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('UseServerRolesDefine', slots, []);
     	let { provider } = $$props;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (provider === undefined && !('provider' in $$props || $$self.$$.bound[$$self.$$.props['provider']])) {
+    			console.warn("<UseServerRolesDefine> was created without expected prop 'provider'");
+    		}
+    	});
+
     	const writable_props = ['provider'];
 
     	Object.keys($$props).forEach(key => {
@@ -17098,13 +17250,6 @@
     			options,
     			id: create_fragment$p.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*provider*/ ctx[0] === undefined && !('provider' in props)) {
-    			console.warn("<UseServerRolesDefine> was created without expected prop 'provider'");
-    		}
     	}
 
     	get provider() {
@@ -17116,8 +17261,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/AccessKeysEntry.svelte generated by Svelte v3.49.0 */
-    const file$m = "src/amazon-s3-and-cloudfront/ui/components/AccessKeysEntry.svelte";
+    /* ui/components/AccessKeysEntry.svelte generated by Svelte v3.57.0 */
+    const file$m = "ui/components/AccessKeysEntry.svelte";
 
     function create_fragment$o(ctx) {
     	let p;
@@ -17269,6 +17414,13 @@
     	let accessKeyIdLabel = $strings.access_key_id;
     	let secretAccessKeyName = "secret-access-key";
     	let secretAccessKeyLabel = $strings.secret_access_key;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (provider === undefined && !('provider' in $$props || $$self.$$.bound[$$self.$$.props['provider']])) {
+    			console.warn("<AccessKeysEntry> was created without expected prop 'provider'");
+    		}
+    	});
+
     	const writable_props = ['provider', 'accessKeyId', 'secretAccessKey', 'disabled'];
 
     	Object.keys($$props).forEach(key => {
@@ -17351,13 +17503,6 @@
     			options,
     			id: create_fragment$o.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*provider*/ ctx[2] === undefined && !('provider' in props)) {
-    			console.warn("<AccessKeysEntry> was created without expected prop 'provider'");
-    		}
     	}
 
     	get provider() {
@@ -17393,8 +17538,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/KeyFileEntry.svelte generated by Svelte v3.49.0 */
-    const file$l = "src/amazon-s3-and-cloudfront/ui/components/KeyFileEntry.svelte";
+    /* ui/components/KeyFileEntry.svelte generated by Svelte v3.57.0 */
+    const file$l = "ui/components/KeyFileEntry.svelte";
 
     function create_fragment$n(ctx) {
     	let p;
@@ -17493,6 +17638,13 @@
     	let { disabled = false } = $$props;
     	let name = "key-file";
     	let label = $strings.key_file;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (provider === undefined && !('provider' in $$props || $$self.$$.bound[$$self.$$.props['provider']])) {
+    			console.warn("<KeyFileEntry> was created without expected prop 'provider'");
+    		}
+    	});
+
     	const writable_props = ['provider', 'value', 'disabled'];
 
     	Object.keys($$props).forEach(key => {
@@ -17546,13 +17698,6 @@
     			options,
     			id: create_fragment$n.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*provider*/ ctx[1] === undefined && !('provider' in props)) {
-    			console.warn("<KeyFileEntry> was created without expected prop 'provider'");
-    		}
     	}
 
     	get provider() {
@@ -17580,10 +17725,10 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/StorageProviderSubPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/StorageProviderSubPage.svelte generated by Svelte v3.57.0 */
 
     const { Object: Object_1$2 } = globals;
-    const file$k = "src/amazon-s3-and-cloudfront/ui/components/StorageProviderSubPage.svelte";
+    const file$k = "ui/components/StorageProviderSubPage.svelte";
 
     function get_each_context$5(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -17816,7 +17961,9 @@
     		},
     		m: function mount(target, anchor) {
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
     			}
 
     			insert_dev(target, t, anchor);
@@ -19942,8 +20089,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Loading.svelte generated by Svelte v3.49.0 */
-    const file$j = "src/amazon-s3-and-cloudfront/ui/components/Loading.svelte";
+    /* ui/components/Loading.svelte generated by Svelte v3.57.0 */
+    const file$j = "ui/components/Loading.svelte";
 
     function create_fragment$l(ctx) {
     	let p;
@@ -20014,10 +20161,10 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/BucketSettingsSubPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/BucketSettingsSubPage.svelte generated by Svelte v3.57.0 */
 
     const { Object: Object_1$1 } = globals;
-    const file$i = "src/amazon-s3-and-cloudfront/ui/components/BucketSettingsSubPage.svelte";
+    const file$i = "ui/components/BucketSettingsSubPage.svelte";
 
     function get_each_context$4(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -20386,7 +20533,7 @@
     				set_input_value(input, /*newBucket*/ ctx[2]);
     			}
 
-    			if (dirty[0] & /*disabled*/ 2048) {
+    			if (!current || dirty[0] & /*disabled*/ 2048) {
     				toggle_class(input, "disabled", /*disabled*/ ctx[11]);
     			}
 
@@ -20504,10 +20651,12 @@
     			append_dev(div, select);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(select, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(select, null);
+    				}
     			}
 
-    			select_option(select, /*newRegion*/ ctx[8]);
+    			select_option(select, /*newRegion*/ ctx[8], true);
     			current = true;
 
     			if (!mounted) {
@@ -20553,7 +20702,7 @@
     				select_option(select, /*newRegion*/ ctx[8]);
     			}
 
-    			if (dirty[0] & /*newRegionDisabled*/ 4096) {
+    			if (!current || dirty[0] & /*newRegionDisabled*/ 4096) {
     				toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
     			}
     		},
@@ -20803,10 +20952,12 @@
     			insert_dev(target, select, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(select, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(select, null);
+    				}
     			}
 
-    			select_option(select, /*newRegion*/ ctx[8]);
+    			select_option(select, /*newRegion*/ ctx[8], true);
     			current = true;
 
     			if (!mounted) {
@@ -20852,7 +21003,7 @@
     				select_option(select, /*newRegion*/ ctx[8]);
     			}
 
-    			if (dirty[0] & /*newRegionDisabled*/ 4096) {
+    			if (!current || dirty[0] & /*newRegionDisabled*/ 4096) {
     				toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
     			}
     		},
@@ -21077,7 +21228,9 @@
     		},
     		m: function mount(target, anchor) {
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
     			}
 
     			insert_dev(target, each_1_anchor, anchor);
@@ -21221,7 +21374,7 @@
 
     			if (!mounted) {
     				dispose = [
-    					listen_dev(li, "click", click_handler, false, false, false),
+    					listen_dev(li, "click", click_handler, false, false, false, false),
     					action_destroyer(scrollIntoView_action = scrollIntoView.call(null, li, /*newBucket*/ ctx[2] === /*bucket*/ ctx[45].Name))
     				];
 
@@ -21350,6 +21503,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!p_transition) p_transition = create_bidirectional_transition(p, slide, {}, true);
     					p_transition.run(1);
     				});
@@ -21813,6 +21967,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!p_transition) p_transition = create_bidirectional_transition(p, slide, {}, true);
     					p_transition.run(1);
     				});
@@ -21955,10 +22110,12 @@
     			append_dev(div1, select);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(select, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(select, null);
+    				}
     			}
 
-    			select_option(select, /*newRegion*/ ctx[8]);
+    			select_option(select, /*newRegion*/ ctx[8], true);
     			insert_dev(target, t6, anchor);
     			if (if_block) if_block.m(target, anchor);
     			insert_dev(target, if_block_anchor, anchor);
@@ -21988,7 +22145,7 @@
     				set_input_value(input, /*newBucket*/ ctx[2]);
     			}
 
-    			if (dirty[0] & /*disabled*/ 2048) {
+    			if (!current || dirty[0] & /*disabled*/ 2048) {
     				toggle_class(input, "disabled", /*disabled*/ ctx[11]);
     			}
 
@@ -22029,7 +22186,7 @@
     				select_option(select, /*newRegion*/ ctx[8]);
     			}
 
-    			if (dirty[0] & /*newRegionDisabled*/ 4096) {
+    			if (!current || dirty[0] & /*newRegionDisabled*/ 4096) {
     				toggle_class(select, "disabled", /*newRegionDisabled*/ ctx[12]);
     			}
 
@@ -22816,9 +22973,9 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Checkbox.svelte generated by Svelte v3.49.0 */
+    /* ui/components/Checkbox.svelte generated by Svelte v3.57.0 */
 
-    const file$h = "src/amazon-s3-and-cloudfront/ui/components/Checkbox.svelte";
+    const file$h = "ui/components/Checkbox.svelte";
 
     function create_fragment$j(ctx) {
     	let div;
@@ -22903,11 +23060,11 @@
     				attr_dev(label, "for", /*name*/ ctx[1]);
     			}
 
-    			if (dirty & /*disabled*/ 4) {
+    			if (!current || dirty & /*disabled*/ 4) {
     				toggle_class(div, "locked", /*disabled*/ ctx[2]);
     			}
 
-    			if (dirty & /*disabled*/ 4) {
+    			if (!current || dirty & /*disabled*/ 4) {
     				toggle_class(div, "disabled", /*disabled*/ ctx[2]);
     			}
     		},
@@ -23016,8 +23173,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SecuritySubPage.svelte generated by Svelte v3.49.0 */
-    const file$g = "src/amazon-s3-and-cloudfront/ui/components/SecuritySubPage.svelte";
+    /* ui/components/SecuritySubPage.svelte generated by Svelte v3.57.0 */
+    const file$g = "ui/components/SecuritySubPage.svelte";
 
     // (232:3) {:else}
     function create_else_block_1$1(ctx) {
@@ -23396,6 +23553,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!div_transition) div_transition = create_bidirectional_transition(div, slide, {}, true);
     					div_transition.run(1);
     				});
@@ -24010,6 +24168,7 @@
 
     			if (local) {
     				add_render_callback(() => {
+    					if (!current) return;
     					if (!div_transition) div_transition = create_bidirectional_transition(div, slide, {}, true);
     					div_transition.run(1);
     				});
@@ -24764,10 +24923,10 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/DeliveryPage.svelte generated by Svelte v3.49.0 */
+    /* ui/components/DeliveryPage.svelte generated by Svelte v3.57.0 */
 
     const { Object: Object_1 } = globals;
-    const file$f = "src/amazon-s3-and-cloudfront/ui/components/DeliveryPage.svelte";
+    const file$f = "ui/components/DeliveryPage.svelte";
 
     function get_each_context$3(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -24911,7 +25070,9 @@
     		},
     		m: function mount(target, anchor) {
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
     			}
 
     			insert_dev(target, each_1_anchor, anchor);
@@ -25876,8 +26037,8 @@
     	},
     ];
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Upsell.svelte generated by Svelte v3.49.0 */
-    const file$e = "src/amazon-s3-and-cloudfront/ui/components/Upsell.svelte";
+    /* ui/components/Upsell.svelte generated by Svelte v3.57.0 */
+    const file$e = "ui/components/Upsell.svelte";
     const get_call_to_action_note_slot_changes = dirty => ({});
     const get_call_to_action_note_slot_context = ctx => ({});
     const get_call_to_action_slot_changes = dirty => ({});
@@ -26048,7 +26209,9 @@
     			append_dev(div6, div3);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(div3, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div3, null);
+    				}
     			}
 
     			append_dev(div6, t3);
@@ -26253,6 +26416,13 @@
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Upsell', slots, ['heading','description','call-to-action','call-to-action-note']);
     	let { benefits } = $$props;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (benefits === undefined && !('benefits' in $$props || $$self.$$.bound[$$self.$$.props['benefits']])) {
+    			console.warn("<Upsell> was created without expected prop 'benefits'");
+    		}
+    	});
+
     	const writable_props = ['benefits'];
 
     	Object.keys($$props).forEach(key => {
@@ -26288,13 +26458,6 @@
     			options,
     			id: create_fragment$g.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*benefits*/ ctx[0] === undefined && !('benefits' in props)) {
-    			console.warn("<Upsell> was created without expected prop 'benefits'");
-    		}
     	}
 
     	get benefits() {
@@ -26306,8 +26469,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/AssetsUpgrade.svelte generated by Svelte v3.49.0 */
-    const file$d = "src/amazon-s3-and-cloudfront/ui/components/AssetsUpgrade.svelte";
+    /* ui/components/AssetsUpgrade.svelte generated by Svelte v3.57.0 */
+    const file$d = "ui/components/AssetsUpgrade.svelte";
 
     // (25:1) 
     function create_heading_slot$1(ctx) {
@@ -26566,8 +26729,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/AssetsPage.svelte generated by Svelte v3.49.0 */
-    const file$c = "src/amazon-s3-and-cloudfront/ui/components/AssetsPage.svelte";
+    /* ui/components/AssetsPage.svelte generated by Svelte v3.57.0 */
+    const file$c = "ui/components/AssetsPage.svelte";
 
     // (9:0) <Page {name} on:routeEvent>
     function create_default_slot$5(ctx) {
@@ -26748,8 +26911,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/ToolsUpgrade.svelte generated by Svelte v3.49.0 */
-    const file$b = "src/amazon-s3-and-cloudfront/ui/components/ToolsUpgrade.svelte";
+    /* ui/components/ToolsUpgrade.svelte generated by Svelte v3.57.0 */
+    const file$b = "ui/components/ToolsUpgrade.svelte";
 
     // (30:1) 
     function create_heading_slot(ctx) {
@@ -27013,8 +27176,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/ToolsPage.svelte generated by Svelte v3.49.0 */
-    const file$a = "src/amazon-s3-and-cloudfront/ui/components/ToolsPage.svelte";
+    /* ui/components/ToolsPage.svelte generated by Svelte v3.57.0 */
+    const file$a = "ui/components/ToolsPage.svelte";
 
     // (10:0) <Page {name} on:routeEvent>
     function create_default_slot$4(ctx) {
@@ -27215,8 +27378,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/SupportPage.svelte generated by Svelte v3.49.0 */
-    const file$9 = "src/amazon-s3-and-cloudfront/ui/components/SupportPage.svelte";
+    /* ui/components/SupportPage.svelte generated by Svelte v3.57.0 */
+    const file$9 = "ui/components/SupportPage.svelte";
     const get_footer_slot_changes$1 = dirty => ({});
     const get_footer_slot_context$1 = ctx => ({});
     const get_content_slot_changes = dirty => ({});
@@ -27808,8 +27971,8 @@
     	}
     };
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Header.svelte generated by Svelte v3.49.0 */
-    const file$8 = "src/amazon-s3-and-cloudfront/ui/components/Header.svelte";
+    /* ui/components/Header.svelte generated by Svelte v3.57.0 */
+    const file$8 = "ui/components/Header.svelte";
 
     function create_fragment$a(ctx) {
     	let div2;
@@ -27980,7 +28143,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Settings.svelte generated by Svelte v3.49.0 */
+    /* ui/components/Settings.svelte generated by Svelte v3.57.0 */
 
     // (29:0) {#if header}
     function create_if_block_1$1(ctx) {
@@ -27994,7 +28157,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     	}
 
     	const block = {
@@ -28003,15 +28166,12 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
     		p: function update(ctx, dirty) {
-    			if (switch_value !== (switch_value = /*header*/ ctx[0])) {
+    			if (dirty & /*header*/ 1 && switch_value !== (switch_value = /*header*/ ctx[0])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -28024,7 +28184,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
     					mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
@@ -28071,7 +28231,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     	}
 
     	const block = {
@@ -28080,15 +28240,12 @@
     			switch_instance_anchor = empty();
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
     		p: function update(ctx, dirty) {
-    			if (switch_value !== (switch_value = /*footer*/ ctx[1])) {
+    			if (dirty & /*footer*/ 2 && switch_value !== (switch_value = /*footer*/ ctx[1])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -28101,7 +28258,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
     					mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
@@ -28360,8 +28517,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/lite/Header.svelte generated by Svelte v3.49.0 */
-    const file$7 = "src/amazon-s3-and-cloudfront/ui/lite/Header.svelte";
+    /* ui/lite/Header.svelte generated by Svelte v3.57.0 */
+    const file$7 = "ui/lite/Header.svelte";
 
     // (6:0) <Header>
     function create_default_slot$2(ctx) {
@@ -28495,8 +28652,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/NavItem.svelte generated by Svelte v3.49.0 */
-    const file$6 = "src/amazon-s3-and-cloudfront/ui/components/NavItem.svelte";
+    /* ui/components/NavItem.svelte generated by Svelte v3.57.0 */
+    const file$6 = "ui/components/NavItem.svelte";
 
     function create_fragment$7(ctx) {
     	let li;
@@ -28533,10 +28690,10 @@
     			if (!mounted) {
     				dispose = [
     					action_destroyer(link.call(null, a)),
-    					listen_dev(a, "focusin", /*focusin_handler*/ ctx[3], false, false, false),
-    					listen_dev(a, "focusout", /*focusout_handler*/ ctx[4], false, false, false),
-    					listen_dev(a, "mouseenter", /*mouseenter_handler*/ ctx[5], false, false, false),
-    					listen_dev(a, "mouseleave", /*mouseleave_handler*/ ctx[6], false, false, false),
+    					listen_dev(a, "focusin", /*focusin_handler*/ ctx[3], false, false, false, false),
+    					listen_dev(a, "focusout", /*focusout_handler*/ ctx[4], false, false, false, false),
+    					listen_dev(a, "mouseenter", /*mouseenter_handler*/ ctx[5], false, false, false, false),
+    					listen_dev(a, "mouseleave", /*mouseleave_handler*/ ctx[6], false, false, false, false),
     					action_destroyer(active_action = active.call(null, li, /*tab*/ ctx[0].routeMatcher
     					? /*tab*/ ctx[0].routeMatcher
     					: /*tab*/ ctx[0].route))
@@ -28594,6 +28751,13 @@
     	let { tab } = $$props;
     	let focus = false;
     	let hover = false;
+
+    	$$self.$$.on_mount.push(function () {
+    		if (tab === undefined && !('tab' in $$props || $$self.$$.bound[$$self.$$.props['tab']])) {
+    			console.warn("<NavItem> was created without expected prop 'tab'");
+    		}
+    	});
+
     	const writable_props = ['tab'];
 
     	Object.keys($$props).forEach(key => {
@@ -28643,13 +28807,6 @@
     			options,
     			id: create_fragment$7.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*tab*/ ctx[0] === undefined && !('tab' in props)) {
-    			console.warn("<NavItem> was created without expected prop 'tab'");
-    		}
     	}
 
     	get tab() {
@@ -28780,8 +28937,8 @@
         };
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/ProgressBar.svelte generated by Svelte v3.49.0 */
-    const file$5 = "src/amazon-s3-and-cloudfront/ui/components/ProgressBar.svelte";
+    /* ui/components/ProgressBar.svelte generated by Svelte v3.57.0 */
+    const file$5 = "ui/components/ProgressBar.svelte";
 
     function create_fragment$6(ctx) {
     	let div;
@@ -28813,9 +28970,9 @@
 
     			if (!mounted) {
     				dispose = [
-    					listen_dev(div, "click", prevent_default(/*click_handler*/ ctx[8]), false, true, false),
-    					listen_dev(div, "mouseenter", /*mouseenter_handler*/ ctx[9], false, false, false),
-    					listen_dev(div, "mouseleave", /*mouseleave_handler*/ ctx[10], false, false, false)
+    					listen_dev(div, "click", prevent_default(/*click_handler*/ ctx[8]), false, true, false, false),
+    					listen_dev(div, "mouseenter", /*mouseenter_handler*/ ctx[9], false, false, false, false),
+    					listen_dev(div, "mouseleave", /*mouseleave_handler*/ ctx[10], false, false, false, false)
     				];
 
     				mounted = true;
@@ -29031,8 +29188,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/OffloadStatusFlyout.svelte generated by Svelte v3.49.0 */
-    const file$4 = "src/amazon-s3-and-cloudfront/ui/components/OffloadStatusFlyout.svelte";
+    /* ui/components/OffloadStatusFlyout.svelte generated by Svelte v3.57.0 */
+    const file$4 = "ui/components/OffloadStatusFlyout.svelte";
     const get_footer_slot_changes = dirty => ({});
     const get_footer_slot_context = ctx => ({});
 
@@ -29541,7 +29698,9 @@
     			append_dev(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(tbody, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(tbody, null);
+    				}
     			}
 
     			append_dev(table, t6);
@@ -30223,8 +30382,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/OffloadStatus.svelte generated by Svelte v3.49.0 */
-    const file$3 = "src/amazon-s3-and-cloudfront/ui/components/OffloadStatus.svelte";
+    /* ui/components/OffloadStatus.svelte generated by Svelte v3.57.0 */
+    const file$3 = "ui/components/OffloadStatus.svelte";
     const get_flyout_slot_changes = dirty => ({});
     const get_flyout_slot_context = ctx => ({});
 
@@ -30459,9 +30618,9 @@
 
     			if (!mounted) {
     				dispose = [
-    					listen_dev(div0, "click", prevent_default(/*handleClick*/ ctx[8]), false, true, false),
-    					listen_dev(div0, "mouseenter", /*handleMouseEnter*/ ctx[9], false, false, false),
-    					listen_dev(div0, "mouseleave", /*handleMouseLeave*/ ctx[10], false, false, false)
+    					listen_dev(div0, "click", prevent_default(/*handleClick*/ ctx[8]), false, true, false, false),
+    					listen_dev(div0, "mouseenter", /*handleMouseEnter*/ ctx[9], false, false, false, false),
+    					listen_dev(div0, "mouseleave", /*handleMouseLeave*/ ctx[10], false, false, false, false)
     				];
 
     				mounted = true;
@@ -30515,7 +30674,7 @@
     				}
     			}
 
-    			if (dirty & /*complete*/ 64) {
+    			if (!current || dirty & /*complete*/ 64) {
     				toggle_class(div1, "complete", /*complete*/ ctx[6]);
     			}
     		},
@@ -30765,8 +30924,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Nav.svelte generated by Svelte v3.49.0 */
-    const file$2 = "src/amazon-s3-and-cloudfront/ui/components/Nav.svelte";
+    /* ui/components/Nav.svelte generated by Svelte v3.57.0 */
+    const file$2 = "ui/components/Nav.svelte";
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -30987,7 +31146,9 @@
     			append_dev(div0, ul);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(ul, null);
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(ul, null);
+    				}
     			}
 
     			append_dev(div0, t);
@@ -31097,8 +31258,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/components/Pages.svelte generated by Svelte v3.49.0 */
-    const file$1 = "src/amazon-s3-and-cloudfront/ui/components/Pages.svelte";
+    /* ui/components/Pages.svelte generated by Svelte v3.57.0 */
+    const file$1 = "ui/components/Pages.svelte";
 
     function create_fragment$2(ctx) {
     	let switch_instance;
@@ -31114,7 +31275,7 @@
     	}
 
     	if (switch_value) {
-    		switch_instance = new switch_value(switch_props());
+    		switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     	}
 
     	router = new Router({
@@ -31141,10 +31302,7 @@
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			if (switch_instance) {
-    				mount_component(switch_instance, target, anchor);
-    			}
-
+    			if (switch_instance) mount_component(switch_instance, target, anchor);
     			insert_dev(target, t0, anchor);
     			insert_dev(target, div, anchor);
     			mount_component(router, div, null);
@@ -31157,7 +31315,7 @@
     			current = true;
     		},
     		p: function update(ctx, [dirty]) {
-    			if (switch_value !== (switch_value = /*nav*/ ctx[0])) {
+    			if (dirty & /*nav*/ 1 && switch_value !== (switch_value = /*nav*/ ctx[0])) {
     				if (switch_instance) {
     					group_outros();
     					const old_component = switch_instance;
@@ -31170,7 +31328,7 @@
     				}
 
     				if (switch_value) {
-    					switch_instance = new switch_value(switch_props());
+    					switch_instance = construct_svelte_component_dev(switch_value, switch_props());
     					create_component(switch_instance.$$.fragment);
     					transition_in(switch_instance.$$.fragment, 1);
     					mount_component(switch_instance, t0.parentNode, t0);
@@ -31311,8 +31469,8 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/lite/Sidebar.svelte generated by Svelte v3.49.0 */
-    const file = "src/amazon-s3-and-cloudfront/ui/lite/Sidebar.svelte";
+    /* ui/lite/Sidebar.svelte generated by Svelte v3.57.0 */
+    const file = "ui/lite/Sidebar.svelte";
 
     function create_fragment$1(ctx) {
     	let div2;
@@ -31525,7 +31683,7 @@
     	}
     }
 
-    /* src/amazon-s3-and-cloudfront/ui/lite/Settings.svelte generated by Svelte v3.49.0 */
+    /* ui/lite/Settings.svelte generated by Svelte v3.57.0 */
 
     // (118:0) <Settings header={Header}>
     function create_default_slot(ctx) {

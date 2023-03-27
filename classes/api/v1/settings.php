@@ -132,6 +132,9 @@ class Settings extends API {
 		// Only needed to allow for validation, during save defined settings are removed from array anyway.
 		$new_settings = array_merge( $new_settings, $this->as3cf->get_defined_settings() );
 
+		// Keep track of whether the delivery provider has changed and signed url settings need to be checked.
+		$check_signed_urls_settings = $this->check_signed_urls_settings( $new_settings, $old_settings );
+
 		foreach ( $allowed as $key ) {
 			// Special case for when Secret Access Key is not changed.
 			if (
@@ -173,28 +176,30 @@ class Settings extends API {
 				}
 			}
 
-			if ( 'signed-urls-key-id' === $key && empty( $value ) && ! empty( $new_settings['enable-signed-urls'] ) ) {
-				return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_key_id_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
-			}
-
 			if ( 'signed-urls-key-file-path' === $key && is_string( $value ) && ! empty( $value ) ) {
 				// Can be a Windows path with backslashes, so need to undo what PUT does to them.
 				$value = stripslashes( $value );
 			}
 
-			if ( 'signed-urls-key-file-path' === $key && ! empty( $new_settings['enable-signed-urls'] ) ) {
-				if ( empty( $value ) ) {
-					return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_key_file_path_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
+			if ( $check_signed_urls_settings ) {
+				if ( 'signed-urls-key-id' === $key && empty( $value ) ) {
+					return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_key_id_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
 				}
 
-				if ( ! $this->as3cf->get_delivery_provider()->validate_signed_urls_key_file_path( $value ) ) {
-					// A notice is created by the validation function, we just want the rollback.
-					return $this->return_with_error();
-				}
-			}
+				if ( 'signed-urls-key-file-path' === $key ) {
+					if ( empty( $value ) ) {
+						return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_key_file_path_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
+					}
 
-			if ( 'signed-urls-object-prefix' === $key && empty( $value ) && ! empty( $new_settings['enable-signed-urls'] ) ) {
-				return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_object_prefix_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
+					if ( ! $this->as3cf->get_delivery_provider()->validate_signed_urls_key_file_path( $value ) ) {
+						// A notice is created by the validation function, we just want the rollback.
+						return $this->return_with_error();
+					}
+				}
+
+				if ( 'signed-urls-object-prefix' === $key && empty( $value ) ) {
+					return $this->return_with_error( $this->as3cf->get_delivery_provider()->signed_urls_object_prefix_name() . _x( ' not provided.', 'missing form field', 'amazon-s3-and-cloudfront' ) );
+				}
 			}
 
 			$this->as3cf->set_setting( $key, $value );
@@ -254,13 +259,6 @@ class Settings extends API {
 			$changed_keys     = array_unique( array_merge( $changed_keys, array( 'delivery-provider' ) ) );
 			$storage_provider = $this->as3cf->get_storage_provider();
 			$warnings[]       = sprintf( __( 'Delivery Provider has been reset to the default for %s', 'amazon-s3-and-cloudfront' ), $storage_provider->get_provider_service_name() );
-		}
-
-		// Last chance check that credentials in place,
-		// even if nothing else has changed,
-		// e.g. that defines are doing their job.
-		if ( $this->as3cf->get_storage_provider()->needs_access_keys() ) {
-			return $this->return_with_error( $this->as3cf->get_storage_provider()->get_needs_access_keys_desc() );
 		}
 
 		// None of the settings produced an error of their own.
@@ -357,6 +355,25 @@ class Settings extends API {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Check if we need to test signed URL settings and potentially prevent the save operation. We only need to test
+	 * this if:
+	 * - The delivery provider has not changed.
+	 * - And signed URLs are enabled in the new settings.
+	 * - And the delivery provider allows the use of signed URLs with a key file.
+	 *
+	 * @param array $new_settings
+	 * @param array $old_settings
+	 *
+	 * @return bool
+	 */
+	private function check_signed_urls_settings( array $new_settings, array $old_settings ): bool {
+		$delivery_provider_changed = ! empty( $new_settings['delivery-provider'] ) && $this->setting_changed( $old_settings, 'delivery-provider', $new_settings['delivery-provider'] );
+		$signed_urls_enabled       = ! empty( $new_settings['enable-delivery-domain'] ) && ! empty( $new_settings['enable-signed-urls'] );
+
+		return ! $delivery_provider_changed && $signed_urls_enabled ? $this->as3cf->get_delivery_provider()->use_signed_urls_key_file_allowed() : false;
 	}
 
 	/**
