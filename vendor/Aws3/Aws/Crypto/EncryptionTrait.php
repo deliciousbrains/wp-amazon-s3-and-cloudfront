@@ -97,7 +97,7 @@ trait EncryptionTrait
         switch ($cipherOptions['Cipher']) {
             case 'gcm':
                 $cipherOptions['TagLength'] = 16;
-                $cipherTextStream = new AesGcmEncryptingStream($plaintext, $cek, $cipherOptions['Iv'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : null, $cipherOptions['TagLength'], $cipherOptions['KeySize']);
+                $cipherTextStream = new AesGcmEncryptingStream($plaintext, $cek, $cipherOptions['Iv'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : '', $cipherOptions['TagLength'], $cipherOptions['KeySize']);
                 if (!empty($cipherOptions['Aad'])) {
                     \trigger_error("'Aad' has been supplied for content encryption" . " with " . $cipherTextStream->getAesName() . ". The" . " PHP SDK encryption client can decrypt an object" . " encrypted in this way, but other AWS SDKs may not be" . " able to.", \E_USER_WARNING);
                 }

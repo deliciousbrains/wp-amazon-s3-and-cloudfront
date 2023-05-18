@@ -17,14 +17,23 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Logger;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\LogRecord;
 /**
  * Shared trait to enrich and format a record with
  * App Engine Flex specific information.
  */
 trait FormatterTrait
 {
-    protected function formatPayload(array $record, $message)
+    /**
+     * @param array|LogRecord $record
+     * @param string $message
+     * @return string
+     */
+    protected function formatPayload($record, $message)
     {
+        if ($record instanceof LogRecord) {
+            $record = $record->toArray();
+        }
         list($usec, $sec) = \explode(' ', \microtime());
         $usec = (int) ((float) $usec * 1000000000);
         $sec = (int) $sec;

@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message;
 
 /**
@@ -181,7 +182,7 @@ interface UriInterface
      * @return static A new instance with the specified scheme.
      * @throws \InvalidArgumentException for invalid or unsupported schemes.
      */
-    public function withScheme($scheme);
+    public function withScheme(string $scheme);
     /**
      * Return an instance with the specified user information.
      *
@@ -196,7 +197,7 @@ interface UriInterface
      * @param null|string $password The password associated with $user.
      * @return static A new instance with the specified user information.
      */
-    public function withUserInfo($user, $password = null);
+    public function withUserInfo(string $user, ?string $password = null);
     /**
      * Return an instance with the specified host.
      *
@@ -209,7 +210,7 @@ interface UriInterface
      * @return static A new instance with the specified host.
      * @throws \InvalidArgumentException for invalid hostnames.
      */
-    public function withHost($host);
+    public function withHost(string $host);
     /**
      * Return an instance with the specified port.
      *
@@ -227,7 +228,7 @@ interface UriInterface
      * @return static A new instance with the specified port.
      * @throws \InvalidArgumentException for invalid ports.
      */
-    public function withPort($port);
+    public function withPort(?int $port);
     /**
      * Return an instance with the specified path.
      *
@@ -250,7 +251,7 @@ interface UriInterface
      * @return static A new instance with the specified path.
      * @throws \InvalidArgumentException for invalid paths.
      */
-    public function withPath($path);
+    public function withPath(string $path);
     /**
      * Return an instance with the specified query string.
      *
@@ -266,7 +267,7 @@ interface UriInterface
      * @return static A new instance with the specified query string.
      * @throws \InvalidArgumentException for invalid query strings.
      */
-    public function withQuery($query);
+    public function withQuery(string $query);
     /**
      * Return an instance with the specified URI fragment.
      *
@@ -281,7 +282,7 @@ interface UriInterface
      * @param string $fragment The fragment to use with the new instance.
      * @return static A new instance with the specified fragment.
      */
-    public function withFragment($fragment);
+    public function withFragment(string $fragment);
     /**
      * Return the string representation as a URI reference.
      *

@@ -141,12 +141,15 @@ class Bucket
      * }
      * ```
      *
+     * @param array $options [optional] {
+     *     Configuration options.
+     * }
      * @return bool
      */
-    public function exists()
+    public function exists(array $options = [])
     {
         try {
-            $this->connection->getBucket($this->identity + ['fields' => 'name']);
+            $this->connection->getBucket($options + $this->identity + ['fields' => 'name']);
         } catch (NotFoundException $ex) {
             return \false;
         }
@@ -266,8 +269,8 @@ class Bucket
         if ($this->isObjectNameRequired($data) && !isset($options['name'])) {
             throw new \InvalidArgumentException('A name is required when data is of type string or null.');
         }
-        $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
-        $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
+        $encryptionKey = $options['encryptionKey'] ?? null;
+        $encryptionKeySHA256 = $options['encryptionKeySHA256'] ?? null;
         $response = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data])->upload();
         return new StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
     }
@@ -353,8 +356,8 @@ class Bucket
         if ($this->isObjectNameRequired($data) && !isset($options['name'])) {
             throw new \InvalidArgumentException('A name is required when data is of type string or null.');
         }
-        $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
-        $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
+        $encryptionKey = $options['encryptionKey'] ?? null;
+        $encryptionKeySHA256 = $options['encryptionKeySHA256'] ?? null;
         $promise = $this->connection->insertObject($this->formatEncryptionHeaders($options) + $this->identity + ['data' => $data, 'resumable' => \false])->uploadAsync();
         return $promise->then(function (array $response) use($encryptionKey, $encryptionKeySHA256) {
             return new StorageObject($this->connection, $response['name'], $this->identity['bucket'], $response['generation'], $response, $encryptionKey, $encryptionKeySHA256);
@@ -517,9 +520,9 @@ class Bucket
      */
     public function object($name, array $options = [])
     {
-        $generation = isset($options['generation']) ? $options['generation'] : null;
-        $encryptionKey = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
-        $encryptionKeySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
+        $generation = $options['generation'] ?? null;
+        $encryptionKey = $options['encryptionKey'] ?? null;
+        $encryptionKeySHA256 = $options['encryptionKeySHA256'] ?? null;
         return new StorageObject($this->connection, $name, $this->identity['bucket'], $generation, \array_filter(['requesterProjectId' => $this->identity['userProject']]), $encryptionKey, $encryptionKeySHA256);
     }
     /**
@@ -807,6 +810,10 @@ class Bucket
      *           more information, refer to the
      *           [Storage Classes](https://cloud.google.com/storage/docs/storage-classes)
      *           documentation. **Defaults to** `"STANDARD"`.
+     *     @type array $autoclass The bucket's autoclass configuration.
+     *           Buckets can have either StorageClass OLM rules or Autoclass,
+     *           but not both. When Autoclass is enabled on a bucket, adding
+     *           StorageClass OLM rules will result in failure.
      *     @type array $versioning The bucket's versioning configuration.
      *     @type array $website The bucket's website configuration.
      *     @type array $billing The bucket's billing configuration.
@@ -914,7 +921,7 @@ class Bucket
             $generation = null;
             if ($sourceObject instanceof StorageObject) {
                 $name = $sourceObject->name();
-                $generation = isset($sourceObject->identity()['generation']) ? $sourceObject->identity()['generation'] : null;
+                $generation = $sourceObject->identity()['generation'] ?? null;
             }
             return \array_filter(['name' => $name ?: $sourceObject, 'generation' => $generation]);
         }, $sourceObjects)];

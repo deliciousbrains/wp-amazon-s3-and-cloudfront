@@ -30,35 +30,42 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\PHPSlicedBy4;
 \define('DeliciousBrains\\WP_Offload_Media\\Gcp\\min_iterations', 10000);
 // Min number of iterations.
 /*
-Tested on my mid-2014 MacBook Pro (with SSE4.2)
+Tested on my 2018 MacBook Pro (12 X 2900 MHz CPU s)
+
 Google CRC Benchmarks
-CRC32CBenchmark/Public/256               214 ns          213 ns      3152131 bytes_per_second=1.11688G/s
-CRC32CBenchmark/Public/4096             1975 ns         1974 ns       346883 bytes_per_second=1.9328G/s
-CRC32CBenchmark/Public/65536           31805 ns        31782 ns        21701 bytes_per_second=1.92044G/s
-CRC32CBenchmark/Public/1048576        508704 ns       508373 ns         1312 bytes_per_second=1.92096G/s
-CRC32CBenchmark/Public/16777216      8526064 ns      8516872 ns           78 bytes_per_second=1.83459G/s
-CRC32CBenchmark/Portable/256             363 ns          363 ns      1900480 bytes_per_second=672.139M/s
-CRC32CBenchmark/Portable/4096           4610 ns         4607 ns       150221 bytes_per_second=847.9M/s
-CRC32CBenchmark/Portable/65536         72886 ns        72815 ns         9168 bytes_per_second=858.341M/s
-CRC32CBenchmark/Portable/1048576     1151197 ns      1150417 ns          585 bytes_per_second=869.25M/s
-CRC32CBenchmark/Portable/16777216   18655381 ns     18640083 ns           36 bytes_per_second=858.365M/s
-CRC32CBenchmark/Sse42/256                211 ns          211 ns      3245158 bytes_per_second=1.13004G/s
-CRC32CBenchmark/Sse42/4096              1959 ns         1958 ns       347583 bytes_per_second=1.94816G/s
-CRC32CBenchmark/Sse42/65536            32041 ns        32013 ns        21616 bytes_per_second=1.90658G/s
-CRC32CBenchmark/Sse42/1048576         514282 ns       514035 ns         1296 bytes_per_second=1.8998G/s
-CRC32CBenchmark/Sse42/16777216       8437749 ns      8433051 ns           78 bytes_per_second=1.85283G/s
-CRC32_PHP              256       1500      11.48 MB/s
-CRC32_Builtin          256       1500     315.81 MB/s
-CRC32C_Google          256       1500    1078.78 MB/s
-CRC32_PHP             4096       1500      11.65 MB/s
-CRC32_Builtin         4096       1500     457.41 MB/s
-CRC32C_Google         4096       1500   10836.76 MB/s
-CRC32_PHP          1048576        118      12.27 MB/s
-CRC32_Builtin      1048576       1500     468.74 MB/s
-CRC32C_Google      1048576       1500   24684.46 MB/s
-CRC32_PHP         16777216          8      12.24 MB/s
-CRC32_Builtin     16777216        276     461.51 MB/s
-CRC32C_Google     16777216       1500   20221.71 MB/s
+ext/crc32c/build$ ./crc32c_bench
+
+CRC32CBenchmark/Public/256               126 ns          125 ns      5578000 bytes_per_second=1.90185G/s
+CRC32CBenchmark/Public/4096             1469 ns         1463 ns       466275 bytes_per_second=2.60714G/s
+CRC32CBenchmark/Public/65536           22504 ns        22492 ns        30160 bytes_per_second=2.71366G/s
+CRC32CBenchmark/Public/1048576        360615 ns       360225 ns         1831 bytes_per_second=2.71098G/s
+CRC32CBenchmark/Public/16777216      6020873 ns      6014408 ns          103 bytes_per_second=2.59793G/s
+CRC32CBenchmark/Portable/256             240 ns          239 ns      2965172 bytes_per_second=1019.9M/s
+CRC32CBenchmark/Portable/4096           2940 ns         2937 ns       225872 bytes_per_second=1.29904G/s
+CRC32CBenchmark/Portable/65536         45557 ns        45519 ns        15170 bytes_per_second=1.34087G/s
+CRC32CBenchmark/Portable/1048576      742592 ns       741764 ns          943 bytes_per_second=1.31654G/s
+CRC32CBenchmark/Portable/16777216   11921962 ns     11895712 ns           59 bytes_per_second=1.3135G/s
+CRC32CBenchmark/Sse42/256                123 ns          123 ns      5506348 bytes_per_second=1.93846G/s
+CRC32CBenchmark/Sse42/4096              1412 ns         1411 ns       487560 bytes_per_second=2.70391G/s
+CRC32CBenchmark/Sse42/65536            23721 ns        23688 ns        31011 bytes_per_second=2.57664G/s
+CRC32CBenchmark/Sse42/1048576         366351 ns       366043 ns         1903 bytes_per_second=2.66789G/s
+CRC32CBenchmark/Sse42/16777216       6071023 ns      6064640 ns          114 bytes_per_second=2.57641G/s
+
+$ make benchmark
+Google\CRC32\PHP           256    441318      22.60 MB/s
+Google\CRC32\Builtin       256  33575674    1719.07 MB/s
+
+# This is actually slower :( due to some regression that I've not debugged.
+Google\CRC32\Google        256  20126340    1030.47 MB/s
+Google\CRC32\PHP          4096     27775      22.75 MB/s
+Google\CRC32\Builtin      4096  14879237   12189.07 MB/s
+Google\CRC32\Google       4096   3137860    2570.53 MB/s
+Google\CRC32\PHP       1048576       653      22.81 MB/s
+Google\CRC32\Builtin   1048576    102606   21517.87 MB/s
+Google\CRC32\Google    1048576     13566    2844.80 MB/s
+Google\CRC32\PHP      16777216        41      22.87 MB/s
+Google\CRC32\Builtin  16777216     10000   11265.23 MB/s
+Google\CRC32\Google   16777216      4903    2741.83 MB/s
 */
 function test($crc, $chunk_size)
 {
@@ -91,8 +98,7 @@ function test($crc, $chunk_size)
 }
 foreach (array(256, 4096, 1048576, 16777216) as $chunk_size) {
     test(new PHP(CRC32::CASTAGNOLI), $chunk_size);
-    test(new PHPSlicedBy4(CRC32::CASTAGNOLI), $chunk_size);
-    // Using IEEE, avoiding the CASTAGNOLI version crc32c.so adds.
-    test(new Builtin(CRC32::IEEE), $chunk_size);
+    //test(new PHPSlicedBy4(CRC32::CASTAGNOLI), $chunk_size);
+    test(new Builtin(CRC32::CASTAGNOLI), $chunk_size);
     test(new Google(), $chunk_size);
 }

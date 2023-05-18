@@ -2,10 +2,10 @@
 
 **Contributors:** wpengine, deliciousbrains, ianmjones, eriktorsner, kevinwhoffman, tysonreeder, dalewilliams, lewisia32, mattshaw, aaemnnosttv, a5hleyrich, polevaultweb, bradt, joetan \
 **Tags:** uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google cloud storage, gcs, mirror, admin, media, cdn, cloudfront \
-**Requires at least:** 5.3 \
+**Requires at least:** 5.5 \
 **Tested up to:** 6.2 \
 **Requires PHP:** 7.2 \
-**Stable tag:** 3.2.1 \
+**Stable tag:** 3.2.2 \
 **License:** GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -102,6 +102,10 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 ## Changelog
+
+### WP Offload Media Lite 3.2.2 - 2023-05-16
+
+* Security: Updated AWS SDK and Google Cloud SDK to address a vulnerability in `guzzlehttp/psr7` as reported in [CVE-2023-29197](https://nvd.nist.gov/vuln/detail/CVE-2023-29197)
 
 ### WP Offload Media Lite 3.2.1 - 2023-03-27
 

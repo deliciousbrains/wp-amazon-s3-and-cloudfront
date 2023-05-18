@@ -10,6 +10,8 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\StreamInterface;
 class HashingStream implements StreamInterface
 {
     use StreamDecoratorTrait;
+    /** @var StreamInterface */
+    private $stream;
     /** @var HashInterface */
     private $hash;
     /** @var callable|null */

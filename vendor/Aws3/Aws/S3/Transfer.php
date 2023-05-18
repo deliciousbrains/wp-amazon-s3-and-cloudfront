@@ -27,6 +27,7 @@ class Transfer implements PromisorInterface
     private $mupThreshold;
     private $before;
     private $s3Args = [];
+    private $addContentMD5;
     /**
      * When providing the $source argument, you may provide a string referencing
      * the path to a directory on disk to upload, an s3 scheme URI that contains
@@ -113,6 +114,8 @@ class Transfer implements PromisorInterface
                 $this->addDebugToBefore($options['debug']);
             }
         }
+        // Handle "add_content_md5" option.
+        $this->addContentMD5 = isset($options['add_content_md5']) && $options['add_content_md5'] === \true;
     }
     /**
      * Transfers the files.
@@ -273,6 +276,7 @@ class Transfer implements PromisorInterface
         $args = $this->s3Args;
         $args['SourceFile'] = $filename;
         $args['Key'] = $this->createS3Key($filename);
+        $args['AddContentMD5'] = $this->addContentMD5;
         $command = $this->client->getCommand('PutObject', $args);
         $this->before and \call_user_func($this->before, $command);
         return $this->client->executeAsync($command);
@@ -282,7 +286,7 @@ class Transfer implements PromisorInterface
         $args = $this->s3Args;
         $args['Key'] = $this->createS3Key($filename);
         $filename = $filename instanceof \SplFileInfo ? $filename->getPathname() : $filename;
-        return (new MultipartUploader($this->client, $filename, ['bucket' => $args['Bucket'], 'key' => $args['Key'], 'before_initiate' => $this->before, 'before_upload' => $this->before, 'before_complete' => $this->before, 'concurrency' => $this->concurrency]))->promise();
+        return (new MultipartUploader($this->client, $filename, ['bucket' => $args['Bucket'], 'key' => $args['Key'], 'before_initiate' => $this->before, 'before_upload' => $this->before, 'before_complete' => $this->before, 'concurrency' => $this->concurrency, 'add_content_md5' => $this->addContentMD5]))->promise();
     }
     private function createS3Key($filename)
     {

@@ -10,6 +10,8 @@ class Operation extends AbstractModel
     private $input;
     private $output;
     private $errors;
+    private $staticContextParams = [];
+    private $contextParams;
     public function __construct(array $definition, ShapeMap $shapeMap)
     {
         $definition['type'] = 'structure';
@@ -19,7 +21,11 @@ class Operation extends AbstractModel
         if (!isset($definition['http']['requestUri'])) {
             $definition['http']['requestUri'] = '/';
         }
+        if (isset($definition['staticContextParams'])) {
+            $this->staticContextParams = $definition['staticContextParams'];
+        }
         parent::__construct($definition, $shapeMap);
+        $this->contextParams = $this->setContextParams();
     }
     /**
      * Returns an associative array of the HTTP attribute of the operation:
@@ -83,5 +89,36 @@ class Operation extends AbstractModel
             }
         }
         return $this->errors;
+    }
+    /**
+     * Gets static modeled static values used for
+     * endpoint resolution.
+     *
+     * @return array
+     */
+    public function getStaticContextParams()
+    {
+        return $this->staticContextParams;
+    }
+    /**
+     * Gets definition of modeled dynamic values used
+     * for endpoint resolution
+     *
+     * @return array
+     */
+    public function getContextParams()
+    {
+        return $this->contextParams;
+    }
+    private function setContextParams()
+    {
+        $members = $this->getInput()->getMembers();
+        $contextParams = [];
+        foreach ($members as $name => $shape) {
+            if (!empty($contextParam = $shape->getContextParam())) {
+                $contextParams[$contextParam['name']] = ['shape' => $name, 'type' => $shape->getType()];
+            }
+        }
+        return $contextParams;
     }
 }

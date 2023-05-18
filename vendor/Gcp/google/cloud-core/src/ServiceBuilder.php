@@ -17,7 +17,6 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
-use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle5HttpHandler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\Guzzle6HttpHandler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\BigQuery\BigQueryClient;
@@ -414,8 +413,7 @@ class ServiceBuilder
             $config['httpHandler'] = HttpHandlerFactory::build();
         }
         if (!isset($config['asyncHttpHandler'])) {
-            $isGuzzleHandler = $config['httpHandler'] instanceof Guzzle6HttpHandler || $config['httpHandler'] instanceof Guzzle5HttpHandler;
-            $config['asyncHttpHandler'] = $isGuzzleHandler ? [$config['httpHandler'], 'async'] : [HttpHandlerFactory::build(), 'async'];
+            $config['asyncHttpHandler'] = $config['httpHandler'] instanceof Guzzle6HttpHandler ? [$config['httpHandler'], 'async'] : [HttpHandlerFactory::build(), 'async'];
         }
         return \array_merge($this->config, $config);
     }

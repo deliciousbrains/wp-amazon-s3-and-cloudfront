@@ -72,7 +72,7 @@ class SigningHelper
      */
     public function sign(ConnectionInterface $connection, $expires, $resource, $generation, array $options)
     {
-        $version = isset($options['version']) ? $options['version'] : self::DEFAULT_URL_SIGNING_VERSION;
+        $version = $options['version'] ?? self::DEFAULT_URL_SIGNING_VERSION;
         unset($options['version']);
         switch (\strtolower($version)) {
             case 'v2':
@@ -550,7 +550,7 @@ class SigningHelper
      */
     private function getSigningCredentials(ConnectionInterface $connection, array $options)
     {
-        $keyFilePath = isset($options['keyFilePath']) ? $options['keyFilePath'] : null;
+        $keyFilePath = $options['keyFilePath'] ?? null;
         if ($keyFilePath) {
             if (!\file_exists($keyFilePath)) {
                 throw new \InvalidArgumentException(\sprintf('Keyfile path %s does not exist.', $keyFilePath));
@@ -558,9 +558,9 @@ class SigningHelper
             $options['keyFile'] = self::jsonDecode(\file_get_contents($keyFilePath), \true);
         }
         $rw = $connection->requestWrapper();
-        $keyFile = isset($options['keyFile']) ? $options['keyFile'] : null;
+        $keyFile = $options['keyFile'] ?? null;
         if ($keyFile) {
-            $scopes = isset($options['scopes']) ? $options['scopes'] : $rw->scopes();
+            $scopes = $options['scopes'] ?? $rw->scopes();
             $credentials = CredentialsLoader::makeCredentials($scopes, $keyFile);
         } else {
             $credentials = $rw->getCredentialsFetcher();

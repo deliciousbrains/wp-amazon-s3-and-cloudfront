@@ -184,6 +184,12 @@ class OAuth2 implements FetchAuthTokenInterface
      */
     private $idToken;
     /**
+     * The scopes granted to the current access token
+     *
+     * @var string
+     */
+    private $grantedScope;
+    /**
      * The lifetime in seconds of the current access token.
      *
      * @var ?int
@@ -451,6 +457,9 @@ class OAuth2 implements FetchAuthTokenInterface
         $response = $httpHandler($this->generateCredentialsRequest());
         $credentials = $this->parseTokenResponse($response);
         $this->updateToken($credentials);
+        if (isset($credentials['scope'])) {
+            $this->setGrantedScope($credentials['scope']);
+        }
         return $credentials;
     }
     /**
@@ -529,7 +538,7 @@ class OAuth2 implements FetchAuthTokenInterface
      */
     public function updateToken(array $config)
     {
-        $opts = \array_merge(['extensionParams' => [], 'access_token' => null, 'id_token' => null, 'expires_in' => null, 'expires_at' => null, 'issued_at' => null], $config);
+        $opts = \array_merge(['extensionParams' => [], 'access_token' => null, 'id_token' => null, 'expires_in' => null, 'expires_at' => null, 'issued_at' => null, 'scope' => null], $config);
         $this->setExpiresAt($opts['expires_at']);
         $this->setExpiresIn($opts['expires_in']);
         // By default, the token is issued at `Time.now` when `expiresIn` is set,
@@ -1129,6 +1138,25 @@ class OAuth2 implements FetchAuthTokenInterface
     public function setIdToken($idToken)
     {
         $this->idToken = $idToken;
+    }
+    /**
+     * Get the granted scopes (if they exist) for the last fetched token.
+     *
+     * @return string|null
+     */
+    public function getGrantedScope()
+    {
+        return $this->grantedScope;
+    }
+    /**
+     * Sets the current ID token.
+     *
+     * @param string $grantedScope
+     * @return void
+     */
+    public function setGrantedScope($grantedScope)
+    {
+        $this->grantedScope = $grantedScope;
     }
     /**
      * Gets the refresh token associated with the current access token.

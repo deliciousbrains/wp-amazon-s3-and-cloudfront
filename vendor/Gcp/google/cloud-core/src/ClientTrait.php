@@ -43,7 +43,7 @@ trait ClientTrait
     {
         $isGrpcExtensionLoaded = $this->isGrpcLoaded();
         $defaultTransport = $isGrpcExtensionLoaded ? 'grpc' : 'rest';
-        $transport = isset($config['transport']) ? \strtolower($config['transport']) : $defaultTransport;
+        $transport = \strtolower($config['transport'] ?? $defaultTransport);
         if ($transport === 'grpc') {
             if (!$isGrpcExtensionLoaded) {
                 throw new GoogleException('gRPC support has been requested but required dependencies ' . 'have not been found. ' . $this->getGrpcInstallationMessage());
@@ -74,6 +74,7 @@ trait ClientTrait
      *
      * @param  array $config
      * @return array
+     * @throws GoogleException
      */
     private function configureAuthentication(array $config)
     {
@@ -167,6 +168,7 @@ trait ClientTrait
         if ($config['projectIdRequired']) {
             throw new GoogleException('No project ID was provided, ' . 'and we were unable to detect a default project ID.');
         }
+        return '';
     }
     /**
      * Abstract the GCECredentials call so we can mock it in the unit tests!

@@ -14,6 +14,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Handler;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\FormatterInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Formatter\LineFormatter;
 use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Utils;
+use DeliciousBrains\WP_Offload_Media\Gcp\Monolog\Logger;
 use function count;
 use function headers_list;
 use function stripos;
@@ -155,12 +156,16 @@ class BrowserConsoleHandler extends AbstractProcessingHandler
             $context = static::dump('Context', $record['context']);
             $extra = static::dump('Extra', $record['extra']);
             if (empty($context) && empty($extra)) {
-                $script[] = static::call_array('log', static::handleStyles($record['formatted']));
+                $script[] = static::call_array(static::getConsoleMethodForLevel($record['level']), static::handleStyles($record['formatted']));
             } else {
                 $script = \array_merge($script, [static::call_array('groupCollapsed', static::handleStyles($record['formatted']))], $context, $extra, [static::call('groupEnd')]);
             }
         }
         return "(function (c) {if (c && c.groupCollapsed) {\n" . \implode("\n", $script) . "\n}})(console);";
+    }
+    private static function getConsoleMethodForLevel(int $level) : string
+    {
+        return [Logger::DEBUG => 'debug', Logger::INFO => 'info', Logger::NOTICE => 'info', Logger::WARNING => 'warn', Logger::ERROR => 'error', Logger::CRITICAL => 'error', Logger::ALERT => 'error', Logger::EMERGENCY => 'error'][$level] ?? 'log';
     }
     /**
      * @return string[]

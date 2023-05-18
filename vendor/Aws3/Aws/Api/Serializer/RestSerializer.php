@@ -9,7 +9,10 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\Shape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\StructureShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Api\TimestampShape;
 use DeliciousBrains\WP_Offload_Media\Aws3\Aws\CommandInterface;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointV2\EndpointProviderV2;
+use DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointV2\EndpointV2SerializerTrait;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7;
+use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Uri;
 use DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\UriResolver;
 use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
@@ -19,9 +22,10 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Psr\Http\Message\RequestInterface;
  */
 abstract class RestSerializer
 {
+    use EndpointV2SerializerTrait;
     /** @var Service */
     private $api;
-    /** @var Psr7\Uri */
+    /** @var Uri */
     private $endpoint;
     /**
      * @param Service $api      Service API description
@@ -33,17 +37,24 @@ abstract class RestSerializer
         $this->endpoint = Psr7\Utils::uriFor($endpoint);
     }
     /**
-     * @param CommandInterface $command Command to serialized
+     * @param CommandInterface $command Command to serialize into a request.
+     * @param $endpointProvider Provider used for dynamic endpoint resolution.
+     * @param $clientArgs Client arguments used for dynamic endpoint resolution.
      *
      * @return RequestInterface
      */
-    public function __invoke(CommandInterface $command)
+    public function __invoke(CommandInterface $command, $endpointProvider = null, $clientArgs = null)
     {
         $operation = $this->api->getOperation($command->getName());
-        $args = $command->toArray();
-        $opts = $this->serialize($operation, $args);
-        $uri = $this->buildEndpoint($operation, $args, $opts);
-        return new Psr7\Request($operation['http']['method'], $uri, isset($opts['headers']) ? $opts['headers'] : [], isset($opts['body']) ? $opts['body'] : null);
+        $commandArgs = $command->toArray();
+        $opts = $this->serialize($operation, $commandArgs);
+        $headers = isset($opts['headers']) ? $opts['headers'] : [];
+        if ($endpointProvider instanceof EndpointProviderV2) {
+            $this->setRequestOptions($endpointProvider, $command, $operation, $commandArgs, $clientArgs, $headers);
+            $this->endpoint = new Uri($this->endpoint);
+        }
+        $uri = $this->buildEndpoint($operation, $commandArgs, $opts);
+        return new Request($operation['http']['method'], $uri, $headers, isset($opts['body']) ? $opts['body'] : null);
     }
     /**
      * Modifies a hash of request options for a payload body.
@@ -143,33 +154,40 @@ abstract class RestSerializer
     }
     private function buildEndpoint(Operation $operation, array $args, array $opts)
     {
-        $varspecs = [];
-        // Create an associative array of varspecs used in expansions
-        foreach ($operation->getInput()->getMembers() as $name => $member) {
-            if ($member['location'] == 'uri') {
-                $varspecs[$member['locationName'] ?: $name] = isset($args[$name]) ? $args[$name] : null;
-            }
-        }
-        $relative = \preg_replace_callback('/\\{([^\\}]+)\\}/', function (array $matches) use($varspecs) {
+        // Create an associative array of variable definitions used in expansions
+        $varDefinitions = $this->getVarDefinitions($operation, $args);
+        $relative = \preg_replace_callback('/\\{([^\\}]+)\\}/', function (array $matches) use($varDefinitions) {
             $isGreedy = \substr($matches[1], -1, 1) == '+';
             $k = $isGreedy ? \substr($matches[1], 0, -1) : $matches[1];
-            if (!isset($varspecs[$k])) {
+            if (!isset($varDefinitions[$k])) {
                 return '';
             }
             if ($isGreedy) {
-                return \str_replace('%2F', '/', \rawurlencode($varspecs[$k]));
+                return \str_replace('%2F', '/', \rawurlencode($varDefinitions[$k]));
             }
-            return \rawurlencode($varspecs[$k]);
+            return \rawurlencode($varDefinitions[$k]);
         }, $operation['http']['requestUri']);
         // Add the query string variables or appending to one if needed.
         if (!empty($opts['query'])) {
-            $append = Psr7\Query::build($opts['query']);
-            $relative .= \strpos($relative, '?') ? "&{$append}" : "?{$append}";
+            $relative = $this->appendQuery($opts['query'], $relative);
+        }
+        $path = $this->endpoint->getPath();
+        //Accounts for trailing '/' in path when custom endpoint
+        //is provided to endpointProviderV2
+        if ($this->api->isModifiedModel() && $this->api->getServiceName() === 's3') {
+            if (\substr($path, -1) === '/' && $relative[0] === '/') {
+                $path = \rtrim($path, '/');
+            }
+            $relative = $path . $relative;
         }
         // If endpoint has path, remove leading '/' to preserve URI resolution.
-        $path = $this->endpoint->getPath();
         if ($path && $relative[0] === '/') {
             $relative = \substr($relative, 1);
+        }
+        //Append path to endpoint when leading '//...' present
+        // as uri cannot be properly resolved
+        if ($this->api->isModifiedModel() && \strpos($relative, '//') === 0) {
+            return new Uri($this->endpoint . $relative);
         }
         // Expand path place holders using Amazon's slightly different URI
         // template syntax.
@@ -196,5 +214,20 @@ abstract class RestSerializer
             }
         }
         return \false;
+    }
+    private function appendQuery($query, $endpoint)
+    {
+        $append = Psr7\Query::build($query);
+        return $endpoint .= \strpos($endpoint, '?') !== \false ? "&{$append}" : "?{$append}";
+    }
+    private function getVarDefinitions($command, $args)
+    {
+        $varDefinitions = [];
+        foreach ($command->getInput()->getMembers() as $name => $member) {
+            if ($member['location'] == 'uri') {
+                $varDefinitions[$member['locationName'] ?: $name] = isset($args[$name]) ? $args[$name] : null;
+            }
+        }
+        return $varDefinitions;
     }
 }

@@ -20,6 +20,8 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestBuilder;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RequestWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\RestTrait;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Retry;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\RetryTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\AbstractUploader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\MultipartUploader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Upload\ResumableUploader;
@@ -29,19 +31,31 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\Connection\Connect
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Storage\StorageClient;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\Builtin;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRC32;
+use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\RequestException;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\MimeType;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
+use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\RequestInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\ResponseInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message\StreamInterface;
+use DeliciousBrains\WP_Offload_Media\Gcp\Ramsey\Uuid\Uuid;
 /**
  * Implementation of the
  * [Google Cloud Storage JSON API](https://cloud.google.com/storage/docs/json_api/).
  */
 class Rest implements ConnectionInterface
 {
-    use RestTrait;
+    use RestTrait {
+        send as private traitSend;
+    }
+    use RetryTrait;
     use UriTrait;
+    /**
+     * Header and value that helps us identify a transcoded obj
+     * w/o making a metadata(info) call.
+     */
+    private const TRANSCODED_OBJ_HEADER_KEY = 'X-Goog-Stored-Content-Encoding';
+    private const TRANSCODED_OBJ_HEADER_VAL = 'gzip';
     /**
      * @deprecated
      */
@@ -66,15 +80,28 @@ class Rest implements ConnectionInterface
      */
     private $apiEndpoint;
     /**
+     * @var callable
+     * value null accepted
+     */
+    private $restRetryFunction;
+    /**
      * @param array $config
      */
     public function __construct(array $config = [])
     {
-        $config += ['serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json', 'componentVersion' => StorageClient::VERSION, 'apiEndpoint' => self::DEFAULT_API_ENDPOINT];
+        $config += [
+            'serviceDefinitionPath' => __DIR__ . '/ServiceDefinition/storage-v1.json',
+            'componentVersion' => StorageClient::VERSION,
+            'apiEndpoint' => self::DEFAULT_API_ENDPOINT,
+            // Cloud Storage needs to provide a default scope because the Storage
+            // API does not accept JWTs with "audience"
+            'scopes' => StorageClient::FULL_CONTROL_SCOPE,
+        ];
         $this->apiEndpoint = $this->getApiEndpoint(self::DEFAULT_API_ENDPOINT, $config);
         $this->setRequestWrapper(new RequestWrapper($config));
         $this->setRequestBuilder(new RequestBuilder($config['serviceDefinitionPath'], $this->apiEndpoint));
         $this->projectId = $this->pluck('projectId', $config, \false);
+        $this->restRetryFunction = isset($config['restRetryFunction']) ? $config['restRetryFunction'] : null;
     }
     /**
      * @return string
@@ -207,8 +234,47 @@ class Rest implements ConnectionInterface
      */
     public function downloadObject(array $args = [])
     {
+        // This makes sure we honour the range headers specified by the user
+        $requestedBytes = $this->getRequestedBytes($args);
+        $resultStream = Utils::streamFor(null);
+        $transcodedObj = \false;
         list($request, $requestOptions) = $this->buildDownloadObjectParams($args);
-        return $this->requestWrapper->send($request, $requestOptions)->getBody();
+        $invocationId = Uuid::uuid4()->toString();
+        $requestOptions['retryHeaders'] = self::getRetryHeaders($invocationId, 1);
+        $requestOptions['restRetryFunction'] = $this->getRestRetryFunction('objects', 'get', $requestOptions);
+        // We try to deduce if the object is a transcoded object when we receive the headers.
+        $requestOptions['restOptions']['on_headers'] = function ($response) use(&$transcodedObj) {
+            $header = $response->getHeader(self::TRANSCODED_OBJ_HEADER_KEY);
+            if (\is_array($header) && \in_array(self::TRANSCODED_OBJ_HEADER_VAL, $header)) {
+                $transcodedObj = \true;
+            }
+        };
+        $requestOptions['restRetryListener'] = function (\Exception $e, $retryAttempt, &$arguments) use($resultStream, $requestedBytes, $invocationId) {
+            // if the exception has a response for us to use
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                $msg = (string) $e->getResponse()->getBody();
+                $fetchedStream = Utils::streamFor($msg);
+                // add the partial response to our stream that we will return
+                Utils::copyToStream($fetchedStream, $resultStream);
+                // Start from the byte that was last fetched
+                $startByte = \intval($requestedBytes['startByte']) + $resultStream->getSize();
+                $endByte = $requestedBytes['endByte'];
+                // modify the range headers to fetch the remaining data
+                $arguments[1]['headers']['Range'] = \sprintf('bytes=%s-%s', $startByte, $endByte);
+                $arguments[0] = $this->modifyRequestForRetry($arguments[0], $retryAttempt, $invocationId);
+            }
+        };
+        $fetchedStream = $this->requestWrapper->send($request, $requestOptions)->getBody();
+        // If our object is a transcoded object, then Range headers are not honoured.
+        // That means even if we had a partial download available, the final obj
+        // that was fetched will contain the complete object. So, we don't need to copy
+        // the partial stream, we can just return the stream we fetched.
+        if ($transcodedObj) {
+            return $fetchedStream;
+        }
+        Utils::copyToStream($fetchedStream, $resultStream);
+        $resultStream->seek(0);
+        return $resultStream;
     }
     /**
      * @param array $args
@@ -240,6 +306,14 @@ class Rest implements ConnectionInterface
             $uploadType = AbstractUploader::UPLOAD_TYPE_MULTIPART;
         }
         $uriParams = ['bucket' => $args['bucket'], 'query' => ['predefinedAcl' => $args['predefinedAcl'], 'uploadType' => $uploadType, 'userProject' => $args['userProject']]];
+        // Passing the preconditions we want to extract out of arguments
+        // into our query params.
+        $preconditions = self::$condIdempotentOps['objects.insert'];
+        foreach ($preconditions as $precondition) {
+            if (isset($args[$precondition])) {
+                $uriParams['query'][$precondition] = $args[$precondition];
+            }
+        }
         return new $uploaderClass($this->requestWrapper, $args['data'], $this->expandUri($this->apiEndpoint . self::UPLOAD_PATH, $uriParams), $args['uploaderOptions']);
     }
     /**
@@ -263,10 +337,14 @@ class Rest implements ConnectionInterface
         }
         $args['metadata']['name'] = $args['name'];
         unset($args['name']);
-        $args['contentType'] = isset($args['metadata']['contentType']) ? $args['metadata']['contentType'] : MimeType::fromFilename($args['metadata']['name']);
-        $uploaderOptionKeys = ['restOptions', 'retries', 'requestTimeout', 'chunkSize', 'contentType', 'metadata', 'uploadProgressCallback'];
+        $args['contentType'] = $args['metadata']['contentType'] ?? MimeType::fromFilename($args['metadata']['name']);
+        $uploaderOptionKeys = ['restOptions', 'retries', 'requestTimeout', 'chunkSize', 'contentType', 'metadata', 'uploadProgressCallback', 'restDelayFunction', 'restCalcDelayFunction'];
         $args['uploaderOptions'] = \array_intersect_key($args, \array_flip($uploaderOptionKeys));
         $args = \array_diff_key($args, \array_flip($uploaderOptionKeys));
+        // Passing on custom retry function to $args['uploaderOptions']
+        $retryFunc = $this->getRestRetryFunction('objects', 'insert', $args);
+        $args['uploaderOptions']['restRetryFunction'] = $retryFunc;
+        $args['uploaderOptions'] = $this->addRetryHeaderLogic($args['uploaderOptions']);
         return $args;
     }
     /**
@@ -450,5 +528,79 @@ class Rest implements ConnectionInterface
     protected function supportsBuiltinCrc32c()
     {
         return Builtin::supports(CRC32::CASTAGNOLI);
+    }
+    /**
+     * Add the required retry function and send the request.
+     *
+     * @param string $resource resource name, eg: buckets.
+     * @param string $method method name, eg: get
+     * @param array $options [optional] Options used to build out the request.
+     * @param array $whitelisted [optional]
+     */
+    public function send($resource, $method, array $options = [], $whitelisted = \false)
+    {
+        $retryMap = ['projects.resources.serviceAccount' => 'serviceaccount', 'projects.resources.hmacKeys' => 'hmacKey', 'bucketAccessControls' => 'bucket_acl', 'defaultObjectAccessControls' => 'default_object_acl', 'objectAccessControls' => 'object_acl'];
+        $retryResource = isset($retryMap[$resource]) ? $retryMap[$resource] : $resource;
+        $options['restRetryFunction'] = $this->restRetryFunction ?? $this->getRestRetryFunction($retryResource, $method, $options);
+        $options = $this->addRetryHeaderLogic($options);
+        return $this->traitSend($resource, $method, $options);
+    }
+    /**
+     * Adds the retry headers to $args which amends retry hash and attempt
+     * count to the required header.
+     * @param array $args
+     * @return array
+     */
+    private function addRetryHeaderLogic(array $args)
+    {
+        $invocationId = Uuid::uuid4()->toString();
+        $args['retryHeaders'] = self::getRetryHeaders($invocationId, 1);
+        // Adding callback logic to update headers while retrying
+        $args['restRetryListener'] = function (\Exception $e, $retryAttempt, &$arguments) use($invocationId) {
+            $arguments[0] = $this->modifyRequestForRetry($arguments[0], $retryAttempt, $invocationId);
+        };
+        return $args;
+    }
+    private function modifyRequestForRetry(RequestInterface $request, int $retryAttempt, string $invocationId)
+    {
+        $changes = self::getRetryHeaders($invocationId, $retryAttempt + 1);
+        $headerLine = $request->getHeaderLine(Retry::RETRY_HEADER_KEY);
+        // An associative array to contain final header values as
+        // $headerValueKey => $headerValue
+        $headerElements = [];
+        // Adding existing values
+        $headerLineValues = \explode(' ', $headerLine);
+        foreach ($headerLineValues as $value) {
+            $key = \explode('/', $value)[0];
+            $headerElements[$key] = $value;
+        }
+        // Adding changes with replacing value if $key already present
+        foreach ($changes as $change) {
+            $key = \explode('/', $change)[0];
+            $headerElements[$key] = $change;
+        }
+        return $request->withHeader(Retry::RETRY_HEADER_KEY, \implode(' ', $headerElements));
+    }
+    /**
+     * Util function to compute the bytes requested for a download request.
+     *
+     * @param array $options Request options
+     * @return array
+     */
+    private function getRequestedBytes(array $options)
+    {
+        $startByte = 0;
+        $endByte = '';
+        if (isset($options['restOptions']) && isset($options['restOptions']['headers'])) {
+            $headers = $options['restOptions']['headers'];
+            if (isset($headers['Range']) || isset($headers['range'])) {
+                $header = isset($headers['Range']) ? $headers['Range'] : $headers['range'];
+                $range = \explode('=', $header);
+                $bytes = \explode('-', $range[1]);
+                $startByte = $bytes[0];
+                $endByte = $bytes[1];
+            }
+        }
+        return \compact('startByte', 'endByte');
     }
 }

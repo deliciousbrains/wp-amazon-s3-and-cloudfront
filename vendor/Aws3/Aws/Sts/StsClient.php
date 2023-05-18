@@ -53,6 +53,7 @@ class StsClient extends AwsClient
         if (!isset($args['sts_regional_endpoints']) || $args['sts_regional_endpoints'] instanceof CacheInterface) {
             $args['sts_regional_endpoints'] = ConfigurationProvider::defaultProvider($args);
         }
+        $this->addBuiltIns($args);
         parent::__construct($args);
     }
     /**
@@ -70,5 +71,33 @@ class StsClient extends AwsClient
         }
         $c = $result['Credentials'];
         return new Credentials($c['AccessKeyId'], $c['SecretAccessKey'], isset($c['SessionToken']) ? $c['SessionToken'] : null, isset($c['Expiration']) && $c['Expiration'] instanceof \DateTimeInterface ? (int) $c['Expiration']->format('U') : null);
+    }
+    /**
+     * Adds service-specific client built-in value
+     *
+     * @return void
+     */
+    private function addBuiltIns($args)
+    {
+        $key = 'AWS::STS::UseGlobalEndpoint';
+        $result = $args['sts_regional_endpoints'] instanceof \Closure ? $args['sts_regional_endpoints']()->wait() : $args['sts_regional_endpoints'];
+        if (\is_string($result)) {
+            if ($result === 'regional') {
+                $value = \false;
+            } else {
+                if ($result === 'legacy') {
+                    $value = \true;
+                } else {
+                    return;
+                }
+            }
+        } else {
+            if ($result->getEndpointsType() === 'regional') {
+                $value = \false;
+            } else {
+                $value = \true;
+            }
+        }
+        $this->clientBuiltIns[$key] = $value;
     }
 }

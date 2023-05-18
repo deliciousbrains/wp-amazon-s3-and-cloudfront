@@ -39,22 +39,22 @@ class CRC32
      * IEEE polynomial as used by ethernet (IEEE 802.3), v.42, fddi, gzip,
      * zip, png, ...
      */
-    const IEEE = 0xedb88320;
+    public const IEEE = 0xedb88320;
     /**
      * Castagnoli's polynomial, used in iSCSI, SCTP, Google Cloud Storage,
      * Apache Kafka, and has hardware-accelerated in modern intel CPUs.
      * https://doi.org/10.1109/26.231911
      */
-    const CASTAGNOLI = 0x82f63b78;
+    public const CASTAGNOLI = 0x82f63b78;
     /**
      * Koopman's polynomial.
      * https://doi.org/10.1109/DSN.2002.1028931
      */
-    const KOOPMAN = 0xeb31d82e;
+    public const KOOPMAN = 0xeb31d82e;
     /**
      * The size of the checksum in bytes.
      */
-    const SIZE = 4;
+    public const SIZE = 4;
     private static $mapping = [self::IEEE => 'IEEE', self::CASTAGNOLI => 'Castagnoli', self::KOOPMAN => 'Koopman'];
     private function __construct()
     {

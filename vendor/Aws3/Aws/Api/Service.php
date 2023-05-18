@@ -16,12 +16,16 @@ class Service extends AbstractModel
     private $serviceName;
     /** @var string */
     private $apiVersion;
+    /** @var array */
+    private $clientContextParams = [];
     /** @var Operation[] */
     private $operations = [];
     /** @var array */
     private $paginators = null;
     /** @var array */
     private $waiters = null;
+    /** @var boolean */
+    private $modifiedModel = \false;
     /**
      * @param array    $definition
      * @param callable $provider
@@ -30,7 +34,7 @@ class Service extends AbstractModel
      */
     public function __construct(array $definition, callable $provider)
     {
-        static $defaults = ['operations' => [], 'shapes' => [], 'metadata' => []], $defaultMeta = ['apiVersion' => null, 'serviceFullName' => null, 'serviceId' => null, 'endpointPrefix' => null, 'signingName' => null, 'signatureVersion' => null, 'protocol' => null, 'uid' => null];
+        static $defaults = ['operations' => [], 'shapes' => [], 'metadata' => [], 'clientContextParams' => []], $defaultMeta = ['apiVersion' => null, 'serviceFullName' => null, 'serviceId' => null, 'endpointPrefix' => null, 'signingName' => null, 'signatureVersion' => null, 'protocol' => null, 'uid' => null];
         $definition += $defaults;
         $definition['metadata'] += $defaultMeta;
         $this->definition = $definition;
@@ -42,6 +46,9 @@ class Service extends AbstractModel
             $this->serviceName = $this->getEndpointPrefix();
         }
         $this->apiVersion = $this->getApiVersion();
+        if (isset($definition['clientContextParams'])) {
+            $this->clientContextParams = $definition['clientContextParams'];
+        }
     }
     /**
      * Creates a request serializer for the provided API object.
@@ -210,6 +217,10 @@ class Service extends AbstractModel
                 throw new \InvalidArgumentException("Unknown operation: {$name}");
             }
             $this->operations[$name] = new Operation($this->definition['operations'][$name], $this->shapeMap);
+        } else {
+            if ($this->modifiedModel) {
+                $this->operations[$name] = new Operation($this->definition['operations'][$name], $this->shapeMap);
+            }
         }
         return $this->operations[$name];
     }
@@ -353,5 +364,57 @@ class Service extends AbstractModel
     public function getShapeMap()
     {
         return $this->shapeMap;
+    }
+    /**
+     * Get all the context params of the description.
+     *
+     * @return array
+     */
+    public function getClientContextParams()
+    {
+        return $this->clientContextParams;
+    }
+    /**
+     * Get the service's api provider.
+     *
+     * @return callable
+     */
+    public function getProvider()
+    {
+        return $this->apiProvider;
+    }
+    /**
+     * Get the service's definition.
+     *
+     * @return callable
+     */
+    public function getDefinition()
+    {
+        return $this->definition;
+    }
+    /**
+     * Sets the service's api definition.
+     * Intended for internal use only.
+     *
+     * @return void
+     *
+     * @internal
+     */
+    public function setDefinition($definition)
+    {
+        $this->definition = $definition;
+        $this->modifiedModel = \true;
+    }
+    /**
+     * Denotes whether or not a service's definition has
+     * been modified.  Intended for internal use only.
+     *
+     * @return bool
+     *
+     * @internal
+     */
+    public function isModifiedModel()
+    {
+        return $this->modifiedModel;
     }
 }

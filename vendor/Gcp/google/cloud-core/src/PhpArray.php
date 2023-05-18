@@ -27,6 +27,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\google\protobuf\Struct;
  * used for REST.
  * @deprecated
  * @codeCoverageIgnore
+ * @internal
  */
 class PhpArray extends Protobuf\Codec\PhpArray
 {

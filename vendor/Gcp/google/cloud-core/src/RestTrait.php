@@ -18,6 +18,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException;
 /**
  * Provides shared functionality for REST service implementations.
  */
@@ -72,11 +73,12 @@ trait RestTrait
      * @param array $options [optional] Options used to build out the request.
      * @param array $whitelisted [optional]
      * @return array
+     * @throws ServiceException
      */
     public function send($resource, $method, array $options = [], $whitelisted = \false)
     {
         $options += ['prettyPrint' => \false];
-        $requestOptions = $this->pluckArray(['restOptions', 'retries', 'requestTimeout'], $options);
+        $requestOptions = $this->pluckArray(['restOptions', 'retries', 'retryHeaders', 'requestTimeout', 'restRetryFunction', 'restRetryListener'], $options);
         try {
             return \json_decode($this->requestWrapper->send($this->requestBuilder->build($resource, $method, $options), $requestOptions)->getBody(), \true);
         } catch (NotFoundException $e) {
@@ -95,7 +97,7 @@ trait RestTrait
      */
     private function getApiEndpoint($default, array $config)
     {
-        $res = isset($config['apiEndpoint']) ? $config['apiEndpoint'] : $default;
+        $res = $config['apiEndpoint'] ?? $default;
         if (\substr($res, -1) !== '/') {
             $res = $res . '/';
         }

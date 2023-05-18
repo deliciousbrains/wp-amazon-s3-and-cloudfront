@@ -27,7 +27,11 @@
 
 #include "crc32c/crc32c.h"
 
-PHP_HASH_API void CRC32CInit(PHP_CRC32_CTX *context)
+PHP_HASH_API void CRC32CInit(PHP_CRC32_CTX *context
+#if PHP_API_VERSION >= 20201213
+, ZEND_ATTRIBUTE_UNUSED HashTable *args
+#endif
+)
 {
 	context->state = 0;
 }
@@ -50,10 +54,18 @@ PHP_HASH_API int CRC32CCopy(const php_hash_ops *ops, PHP_CRC32_CTX *orig_context
 }
 
 const php_hash_ops crc32_ops = {
+#if PHP_API_VERSION >= 20200620
+    "crc32c",
+#endif
 	(php_hash_init_func_t) CRC32CInit,
 	(php_hash_update_func_t) CRC32CUpdate,
 	(php_hash_final_func_t) CRC32CFinal,
 	(php_hash_copy_func_t) CRC32CCopy,
+#if PHP_API_VERSION >= 20200620
+    php_hash_serialize,
+    php_hash_unserialize,
+    PHP_CRC32_SPEC,
+#endif
 	4, /* what to say here? */
 	4,
 	sizeof(PHP_CRC32_CTX),

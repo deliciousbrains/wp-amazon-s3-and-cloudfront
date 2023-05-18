@@ -22,6 +22,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\GetQuotaProjectInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpClientCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\HttpHandler\HttpHandlerFactory;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Iam;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\IamSignerTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ProjectIdProviderInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\SignBlobInterface;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Exception\ClientException;
@@ -56,6 +57,7 @@ use InvalidArgumentException;
  */
 class GCECredentials extends CredentialsLoader implements SignBlobInterface, ProjectIdProviderInterface, GetQuotaProjectInterface
 {
+    use IamSignerTrait;
     // phpcs:disable
     const cacheKey = 'GOOGLE_AUTH_PHP_GCE';
     // phpcs:enable
@@ -124,10 +126,6 @@ class GCECredentials extends CredentialsLoader implements SignBlobInterface, Pro
      * @var string|null
      */
     private $projectId;
-    /**
-     * @var Iam|null
-     */
-    private $iam;
     /**
      * @var string
      */
@@ -359,34 +357,6 @@ class GCECredentials extends CredentialsLoader implements SignBlobInterface, Pro
         return $this->clientName;
     }
     /**
-     * Sign a string using the default service account private key.
-     *
-     * This implementation uses IAM's signBlob API.
-     *
-     * @see https://cloud.google.com/iam/credentials/reference/rest/v1/projects.serviceAccounts/signBlob SignBlob
-     *
-     * @param string $stringToSign The string to sign.
-     * @param bool $forceOpenSsl [optional] Does not apply to this credentials
-     *        type.
-     * @param string $accessToken The access token to use to sign the blob. If
-     *        provided, saves a call to the metadata server for a new access
-     *        token. **Defaults to** `null`.
-     * @return string
-     */
-    public function signBlob($stringToSign, $forceOpenSsl = \false, $accessToken = null)
-    {
-        $httpHandler = HttpHandlerFactory::build(HttpClientCache::getHttpClient());
-        // Providing a signer is useful for testing, but it's undocumented
-        // because it's not something a user would generally need to do.
-        $signer = $this->iam ?: new Iam($httpHandler);
-        $email = $this->getClientName($httpHandler);
-        if (\is_null($accessToken)) {
-            $previousToken = $this->getLastReceivedToken();
-            $accessToken = $previousToken ? $previousToken['access_token'] : $this->fetchAuthToken($httpHandler)['access_token'];
-        }
-        return $signer->signBlob($email, $accessToken, $stringToSign);
-    }
-    /**
      * Fetch the default Project ID from compute engine.
      *
      * Returns null if called outside GCE.
@@ -430,5 +400,19 @@ class GCECredentials extends CredentialsLoader implements SignBlobInterface, Pro
     public function getQuotaProject()
     {
         return $this->quotaProject;
+    }
+    /**
+     * Set whether or not we've already checked the GCE environment.
+     *
+     * @param bool $isOnGce
+     *
+     * @return void
+     */
+    public function setIsOnGce($isOnGce)
+    {
+        // Implicitly set hasCheckedGce to true
+        $this->hasCheckedOnGce = \true;
+        // Set isOnGce
+        $this->isOnGce = $isOnGce;
     }
 }

@@ -80,7 +80,7 @@ class ServiceAccountJwtAccessCredentials extends CredentialsLoader implements Ge
             $this->quotaProject = (string) $jsonKey['quota_project_id'];
         }
         $this->auth = new OAuth2(['issuer' => $jsonKey['client_email'], 'sub' => $jsonKey['client_email'], 'signingAlgorithm' => 'RS256', 'signingKey' => $jsonKey['private_key'], 'scope' => $scope]);
-        $this->projectId = isset($jsonKey['project_id']) ? $jsonKey['project_id'] : null;
+        $this->projectId = $jsonKey['project_id'] ?? null;
     }
     /**
      * Updates metadata with the authorization token.

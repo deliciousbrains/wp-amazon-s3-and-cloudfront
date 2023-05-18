@@ -50,19 +50,19 @@ class ServiceException extends GoogleException
     /**
      * Handle previous exceptions differently here.
      *
-     * @param string $message
+     * @param string|null $message
      * @param int $code
      * @param Exception|null $serviceException
      * @param array $metadata [optional] Exception metadata.
      */
-    public function __construct($message, $code = 0, Exception $serviceException = null, array $metadata = [])
+    public function __construct($message = null, $code = 0, Exception $serviceException = null, array $metadata = [])
     {
         $this->serviceException = $serviceException;
         $this->metadata = $metadata;
         $this->errorInfo = null;
         $this->errorInfoMetadata = null;
         $this->errorReason = null;
-        parent::__construct($message, $code);
+        parent::__construct($message ?: '', $code);
     }
     /**
      * If $serviceException is set, return true.
@@ -105,7 +105,7 @@ class ServiceException extends GoogleException
             }
             $errorInfo = $this->getErrorInfoFromRestException();
             // Cache the result to be reused if needed
-            $this->errorInfoMetadata = isset($errorInfo['metadata']) ? $errorInfo['metadata'] : [];
+            $this->errorInfoMetadata = $errorInfo['metadata'] ?? [];
         }
         return $this->errorInfoMetadata;
     }
@@ -125,9 +125,24 @@ class ServiceException extends GoogleException
             }
             $errorInfo = $this->getErrorInfoFromRestException();
             // Cache the result to be reused if needed
-            $this->errorReason = isset($errorInfo['reason']) ? $errorInfo['reason'] : '';
+            $this->errorReason = $errorInfo['reason'] ?? '';
         }
         return $this->errorReason;
+    }
+    /**
+     * Return the delay in seconds and nanos before retrying the failed request.
+     *
+     * @return array
+     */
+    public function getRetryDelay()
+    {
+        $metadata = \array_filter($this->metadata, function ($metadataItem) {
+            return \array_key_exists('retryDelay', $metadataItem);
+        });
+        if (\count($metadata) === 0) {
+            return ['seconds' => 0, 'nanos' => 0];
+        }
+        return $metadata[0]['retryDelay'] + ['seconds' => 0, 'nanos' => 0];
     }
     /**
      * Helper to return the error info from an exception

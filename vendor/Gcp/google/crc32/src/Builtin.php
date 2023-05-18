@@ -25,6 +25,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface;
 final class Builtin implements CRCInterface
 {
     private $hc;
+    private $algo;
     private static $mapping = [CRC32::IEEE => 'crc32b', CRC32::CASTAGNOLI => 'crc32c'];
     /**
      * Returns true if this $polynomial is supported by the builtin PHP hash function.
@@ -57,7 +58,7 @@ final class Builtin implements CRCInterface
     {
         \hash_update($this->hc, $data);
     }
-    public function hash($raw_output = null)
+    public function hash($raw_output = \false)
     {
         // hash_final will destory the Hash Context resource, so operate on a copy.
         $hc = \hash_copy($this->hc);

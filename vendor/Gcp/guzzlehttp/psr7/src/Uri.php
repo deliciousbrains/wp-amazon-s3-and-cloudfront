@@ -130,6 +130,9 @@ class Uri implements UriInterface, \JsonSerializable
         if ($authority != '' || $scheme === 'file') {
             $uri .= '//' . $authority;
         }
+        if ($authority != '' && $path != '' && $path[0] != '/') {
+            $path = '/' . $path;
+        }
         $uri .= $path;
         if ($query != '') {
             $uri .= '?' . $query;
@@ -562,8 +565,6 @@ class Uri implements UriInterface, \JsonSerializable
             if ($this->scheme === '' && \false !== \strpos(\explode('/', $this->path, 2)[0], ':')) {
                 throw new MalformedUriException('A relative URI must not have a path beginning with a segment containing a colon');
             }
-        } elseif (isset($this->path[0]) && $this->path[0] !== '/') {
-            throw new MalformedUriException('The path of a URI with an authority must start with a slash "/" or be empty');
         }
     }
 }

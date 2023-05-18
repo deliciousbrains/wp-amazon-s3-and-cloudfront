@@ -25,6 +25,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
  */
 class Retry
 {
+    const RETRY_HEADER_KEY = 'x-goog-api-client';
     /**
      * @var int
      */

@@ -27,6 +27,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32\CRCInterface;
  */
 final class Google implements CRCInterface
 {
+    private $crc;
     public static function supports($algo)
     {
         return $algo === CRC32::CASTAGNOLI;
@@ -46,7 +47,7 @@ final class Google implements CRCInterface
     {
         $this->crc = crc32c($data, $this->crc);
     }
-    public function hash($raw_output = null)
+    public function hash($raw_output = \false)
     {
         if ($raw_output === \true) {
             return $this->crc;

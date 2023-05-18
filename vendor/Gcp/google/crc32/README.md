@@ -1,13 +1,15 @@
 # php-crc32
 
-[![Build Status](https://travis-ci.org/google/php-crc32.svg?branch=master)](https://travis-ci.org/google/php-crc32)
+![Build Status](https://github.com/google/php-crc32/actions/workflows/test.yml/badge.svg)
 
 by [Andrew Brampton](https://bramp.net)
+
+**Deprecated**: Since PHP 8.0, the crc32 algorithms within PHP are using [hardware accelerated instructions](https://github.com/php/php-src/commit/c3299d7dab15aeed52a34535f1967d426f5327de), and are surprisingly fast. Thus this extension is not needed anymore!
 
 CRC32 implementations, that support all crc32 polynomials, as well as (if you
 install the pecl extension) hardware accelerated versions of CRC32C (Castagnoli).
 
-Supports PHP 5.4 though PHP 7.4.
+Supports PHP 7.4 though PHP 8.2. Older PHP versions are supported with "v0.1.0".
 
 # Usage
 
@@ -22,7 +24,7 @@ echo $crc->hash();
 ```
 
 Depending on the environment and the polynomial, `CRC32::create` will choose
-the fastest available verison, and return one of the following classes:
+the fastest available version, and return one of the following classes:
 
 * `Google\CRC32\PHP` - A pure PHP implementation.
 * `Google\CRC32\Builtin` - A [PHP Hash framework](http://php.net/manual/en/book.hash.php) implementation.
@@ -120,7 +122,7 @@ To compare the performance of the different `CRC32C` implementations, run `make 
 *This is not an official Google product (experimental or otherwise), it is just code that happens to be owned by Google.*
 
 ```
-Copyright 2019 Google Inc. All Rights Reserved.
+Copyright 2023 Google Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

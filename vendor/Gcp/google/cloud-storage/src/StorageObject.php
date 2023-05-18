@@ -282,8 +282,8 @@ class StorageObject
      */
     public function copy($destination, array $options = [])
     {
-        $key = isset($options['encryptionKey']) ? $options['encryptionKey'] : null;
-        $keySHA256 = isset($options['encryptionKeySHA256']) ? $options['encryptionKeySHA256'] : null;
+        $key = $options['encryptionKey'] ?? null;
+        $keySHA256 = $options['encryptionKeySHA256'] ?? null;
         $response = $this->connection->copyObject($this->formatDestinationRequest($destination, $options));
         return new StorageObject($this->connection, $response['name'], $response['bucket'], $response['generation'], $response + ['requesterProjectId' => $this->identity['userProject']], $key, $keySHA256);
     }
@@ -398,12 +398,12 @@ class StorageObject
     public function rewrite($destination, array $options = [])
     {
         $options['useCopySourceHeaders'] = \true;
-        $destinationKey = isset($options['destinationEncryptionKey']) ? $options['destinationEncryptionKey'] : null;
-        $destinationKeySHA256 = isset($options['destinationEncryptionKeySHA256']) ? $options['destinationEncryptionKeySHA256'] : null;
+        $destinationKey = $options['destinationEncryptionKey'] ?? null;
+        $destinationKeySHA256 = $options['destinationEncryptionKeySHA256'] ?? null;
         $options = $this->formatDestinationRequest($destination, $options);
         do {
             $response = $this->connection->rewriteObject($options);
-            $options['rewriteToken'] = isset($response['rewriteToken']) ? $response['rewriteToken'] : null;
+            $options['rewriteToken'] = $response['rewriteToken'] ?? null;
         } while ($options['rewriteToken']);
         return new StorageObject($this->connection, $response['resource']['name'], $response['resource']['bucket'], $response['resource']['generation'], $response['resource'] + ['requesterProjectId' => $this->identity['userProject']], $destinationKey, $destinationKeySHA256);
     }
@@ -468,7 +468,7 @@ class StorageObject
      */
     public function rename($name, array $options = [])
     {
-        $destinationBucket = isset($options['destinationBucket']) ? $options['destinationBucket'] : $this->identity['bucket'];
+        $destinationBucket = $options['destinationBucket'] ?? $this->identity['bucket'];
         unset($options['destinationBucket']);
         $copiedObject = $this->copy($destinationBucket, ['name' => $name] + $options);
         $this->delete(\array_intersect_key($options, ['restOptions' => null, 'retries' => null]));
@@ -539,13 +539,17 @@ class StorageObject
      */
     public function downloadToFile($path, array $options = [])
     {
+        $source = $this->downloadAsStream($options);
         $destination = Utils::streamFor(\fopen($path, 'w'));
-        Utils::copyToStream($this->downloadAsStream($options), $destination);
+        Utils::copyToStream($source, $destination);
         $destination->seek(0);
         return $destination;
     }
     /**
-     * Download an object as a stream.
+     * Download an object as a stream. The library will attempt to resume the download
+     * if a retry-able error is thrown. An attempt to fetch the remaining file will
+     * be made only if the user has not supplied a custom retry
+     * function of their own.
      *
      * Please note Google Cloud Storage respects the Range header as specified
      * by [RFC7233](https://tools.ietf.org/html/rfc7233#section-3.1). See below
@@ -1108,8 +1112,8 @@ class StorageObject
         if (!\is_string($destination) && !$destination instanceof Bucket) {
             throw new \InvalidArgumentException('$destination must be either a string or an instance of Bucket.');
         }
-        $destAcl = isset($options['predefinedAcl']) ? $options['predefinedAcl'] : null;
-        $destObject = isset($options['name']) ? $options['name'] : $this->identity['object'];
+        $destAcl = $options['predefinedAcl'] ?? null;
+        $destObject = $options['name'] ?? $this->identity['object'];
         unset($options['name']);
         unset($options['predefinedAcl']);
         return \array_filter(['destinationBucket' => $destination instanceof Bucket ? $destination->name() : $destination, 'destinationObject' => $destObject, 'destinationPredefinedAcl' => $destAcl, 'sourceBucket' => $this->identity['bucket'], 'sourceObject' => $this->identity['object'], 'sourceGeneration' => $this->identity['generation'], 'userProject' => $this->identity['userProject']]) + $this->formatEncryptionHeaders($options + $this->encryptionData);

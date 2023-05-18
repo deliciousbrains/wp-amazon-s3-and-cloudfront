@@ -40,13 +40,27 @@ class ExponentialBackoff
      */
     private $calcDelayFunction;
     /**
-     * @param int $retries [optional] Number of retries for a failed request.
-     * @param callable $retryFunction [optional] returns bool for whether or not to retry
+     * @var callable|null
      */
-    public function __construct($retries = null, callable $retryFunction = null)
+    private $retryListener;
+    /**
+     * @param int $retries [optional] Number of retries for a failed request.
+     * @param callable $retryFunction [optional] returns bool for whether or not
+     *        to retry
+     * @param callable $retryListener [optional] Runs after the
+     *        $retryFunction. Unlike the $retryFunction,this function isn't
+     *        responsible to decide if a retry should happen or not, but it gives the
+     *        users flexibility to consume exception messages and add custom logic.
+     *        Function definition should match:
+     *            function (\Exception $e, int $attempt, array $arguments): array
+     *        Ex: One might want to change headers on every retry, this function can
+     *        be used to achieve such a functionality.
+     */
+    public function __construct($retries = null, callable $retryFunction = null, callable $retryListener = null)
     {
         $this->retries = $retries !== null ? (int) $retries : 3;
         $this->retryFunction = $retryFunction;
+        $this->retryListener = $retryListener;
         // @todo revisit this approach
         // @codeCoverageIgnoreStart
         $this->delayFunction = static function ($delay) {
@@ -82,6 +96,11 @@ class ExponentialBackoff
                 }
                 $delayFunction($calcDelayFunction($retryAttempt));
                 $retryAttempt++;
+                if ($this->retryListener) {
+                    // Developer can modify the $arguments using the retryListener
+                    // callback.
+                    \call_user_func_array($this->retryListener, [$exception, $retryAttempt, &$arguments]);
+                }
             }
         }
         throw $exception;

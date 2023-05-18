@@ -19,6 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core;
 
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\ApplicationDefaultCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Cache\MemoryCacheItemPool;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\CredentialsLoader;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenCache;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\FetchAuthTokenInterface;
@@ -139,16 +140,26 @@ trait RequestWrapperTrait
         $fetcher = null;
         if ($this->credentialsFetcher) {
             $fetcher = $this->credentialsFetcher;
-        } elseif ($this->keyFile) {
-            if ($this->quotaProject) {
-                $this->keyFile['quota_project_id'] = $this->quotaProject;
-            }
-            $fetcher = CredentialsLoader::makeCredentials($this->scopes, $this->keyFile);
         } else {
-            try {
-                $fetcher = $this->getADC();
-            } catch (\DomainException $ex) {
-                $fetcher = new AnonymousCredentials();
+            if ($this->keyFile) {
+                if ($this->quotaProject) {
+                    $this->keyFile['quota_project_id'] = $this->quotaProject;
+                }
+                $fetcher = CredentialsLoader::makeCredentials($this->scopes, $this->keyFile);
+            } else {
+                try {
+                    $fetcher = $this->getADC();
+                } catch (\DomainException $ex) {
+                    $fetcher = new AnonymousCredentials();
+                }
+            }
+            // Note: If authCache is set and keyFile is not set, the resulting
+            // credentials instance will be FetchAuthTokenCache, and we will be
+            // unable to enable "useJwtAccessWithScope". This is unlikely, as
+            // keyFile is automatically set in ClientTrait::configureAuthentication,
+            // and so should always exist when ServiceAccountCredentials are in use.
+            if ($fetcher instanceof ServiceAccountCredentials) {
+                $fetcher->useJwtAccessWithScope();
             }
         }
         if ($fetcher instanceof FetchAuthTokenCache) {

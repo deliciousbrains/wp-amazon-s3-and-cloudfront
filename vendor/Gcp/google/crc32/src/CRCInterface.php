@@ -46,7 +46,7 @@ interface CRCInterface
      *                 which case the raw binary representation of the CRC is
      *                 returned.
      */
-    public function hash($raw_output = null);
+    public function hash($raw_output = \false);
     /**
      * Returns information about the CRC implementation and polynomial.
      *

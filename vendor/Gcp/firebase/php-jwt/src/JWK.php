@@ -24,7 +24,11 @@ class JWK
     private const ASN1_SEQUENCE = 0x10;
     // also defined in JWT
     private const ASN1_BIT_STRING = 0x3;
-    private const EC_CURVES = ['P-256' => '1.2.840.10045.3.1.7'];
+    private const EC_CURVES = [
+        'P-256' => '1.2.840.10045.3.1.7',
+        // Len: 64
+        'secp256k1' => '1.3.132.0.10',
+    ];
     /**
      * Parse a set of JWK keys
      *

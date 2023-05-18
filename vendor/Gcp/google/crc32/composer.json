@@ -11,12 +11,11 @@
         }
     ],
     "require": {
-        "php": ">=5.4"
+        "php": ">=7.4"
     },
     "require-dev": {
-        "paragonie\/random_compat": ">=2",
-        "friendsofphp\/php-cs-fixer": "^1.13 || v2.14.2",
-        "phpunit\/phpunit": "^4"
+        "friendsofphp\/php-cs-fixer": "v3.15",
+        "phpunit\/phpunit": "^9"
     },
     "autoload": {
         "psr-4": {

@@ -129,7 +129,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
     public static function fallback()
     {
         return function () {
-            return Promise\Create::promiseFor(new Configuration(self::DEFAULT_ENDPOINTS_TYPE));
+            return Promise\Create::promiseFor(new Configuration(self::DEFAULT_ENDPOINTS_TYPE, \true));
         };
     }
     /**

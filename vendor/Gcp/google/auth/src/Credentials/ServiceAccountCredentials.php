@@ -127,7 +127,7 @@ class ServiceAccountCredentials extends CredentialsLoader implements GetQuotaPro
             $additionalClaims = ['target_audience' => $targetAudience];
         }
         $this->auth = new OAuth2(['audience' => self::TOKEN_CREDENTIAL_URI, 'issuer' => $jsonKey['client_email'], 'scope' => $scope, 'signingAlgorithm' => 'RS256', 'signingKey' => $jsonKey['private_key'], 'sub' => $sub, 'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI, 'additionalClaims' => $additionalClaims]);
-        $this->projectId = isset($jsonKey['project_id']) ? $jsonKey['project_id'] : null;
+        $this->projectId = $jsonKey['project_id'] ?? null;
     }
     /**
      * When called, the ServiceAccountCredentials will use an instance of

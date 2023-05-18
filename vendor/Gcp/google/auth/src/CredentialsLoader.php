@@ -17,6 +17,7 @@
  */
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth;
 
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ImpersonatedServiceAccountCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\InsecureCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\ServiceAccountCredentials;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Auth\Credentials\UserRefreshCredentials;
@@ -111,7 +112,7 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface, UpdateMetad
      *   user-defined scopes exist, expressed either as an Array or as a
      *   space-delimited string.
      *
-     * @return ServiceAccountCredentials|UserRefreshCredentials
+     * @return ServiceAccountCredentials|UserRefreshCredentials|ImpersonatedServiceAccountCredentials
      */
     public static function makeCredentials($scope, array $jsonKey, $defaultScope = null)
     {
@@ -125,6 +126,10 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface, UpdateMetad
         if ($jsonKey['type'] == 'authorized_user') {
             $anyScope = $scope ?: $defaultScope;
             return new UserRefreshCredentials($anyScope, $jsonKey);
+        }
+        if ($jsonKey['type'] == 'impersonated_service_account') {
+            $anyScope = $scope ?: $defaultScope;
+            return new ImpersonatedServiceAccountCredentials($anyScope, $jsonKey);
         }
         throw new \InvalidArgumentException('invalid value in the type field');
     }

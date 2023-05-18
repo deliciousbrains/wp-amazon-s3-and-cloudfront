@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace DeliciousBrains\WP_Offload_Media\Gcp\Psr\Http\Message;
 
 /**
@@ -54,10 +55,10 @@ interface RequestInterface extends MessageInterface
      *
      * @link http://tools.ietf.org/html/rfc7230#section-5.3 (for the various
      *     request-target forms allowed in request messages)
-     * @param mixed $requestTarget
+     * @param string $requestTarget
      * @return static
      */
-    public function withRequestTarget($requestTarget);
+    public function withRequestTarget(string $requestTarget);
     /**
      * Retrieves the HTTP method of the request.
      *
@@ -79,7 +80,7 @@ interface RequestInterface extends MessageInterface
      * @return static
      * @throws \InvalidArgumentException for invalid HTTP methods.
      */
-    public function withMethod($method);
+    public function withMethod(string $method);
     /**
      * Retrieves the URI instance.
      *
@@ -120,5 +121,5 @@ interface RequestInterface extends MessageInterface
      * @param bool $preserveHost Preserve the original state of the Host header.
      * @return static
      */
-    public function withUri(UriInterface $uri, $preserveHost = \false);
+    public function withUri(UriInterface $uri, bool $preserveHost = \false);
 }

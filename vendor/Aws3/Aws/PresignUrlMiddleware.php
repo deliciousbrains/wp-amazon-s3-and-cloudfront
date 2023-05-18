@@ -24,7 +24,7 @@ class PresignUrlMiddleware
     private $presignParam;
     /** @var bool */
     private $requireDifferentRegion;
-    public function __construct(array $options, callable $endpointProvider, AwsClientInterface $client, callable $nextHandler)
+    public function __construct(array $options, $endpointProvider, AwsClientInterface $client, callable $nextHandler)
     {
         $this->endpointProvider = $endpointProvider;
         $this->client = $client;
@@ -35,7 +35,7 @@ class PresignUrlMiddleware
         $this->extraQueryParams = !empty($options['extra_query_params']) ? $options['extra_query_params'] : [];
         $this->requireDifferentRegion = !empty($options['require_different_region']);
     }
-    public static function wrap(AwsClientInterface $client, callable $endpointProvider, array $options = [])
+    public static function wrap(AwsClientInterface $client, $endpointProvider, array $options = [])
     {
         return function (callable $handler) use($endpointProvider, $client, $options) {
             $f = new PresignUrlMiddleware($options, $endpointProvider, $client, $handler);
@@ -66,7 +66,12 @@ class PresignUrlMiddleware
         // Serialize a request for the operation.
         $request = \DeliciousBrains\WP_Offload_Media\Aws3\Aws\serialize($newCmd);
         // Create the new endpoint for the target endpoint.
-        $endpoint = EndpointProvider::resolve($this->endpointProvider, ['region' => $cmd['SourceRegion'], 'service' => $this->serviceName])['endpoint'];
+        if ($this->endpointProvider instanceof \DeliciousBrains\WP_Offload_Media\Aws3\Aws\EndpointV2\EndpointProviderV2) {
+            $providerArgs = \array_merge($this->client->getEndpointProviderArgs(), ['Region' => $cmd['SourceRegion']]);
+            $endpoint = $this->endpointProvider->resolveEndpoint($providerArgs)->getUrl();
+        } else {
+            $endpoint = EndpointProvider::resolve($this->endpointProvider, ['region' => $cmd['SourceRegion'], 'service' => $this->serviceName])['endpoint'];
+        }
         // Set the request to hit the target endpoint.
         $uri = $request->getUri()->withHost((new Uri($endpoint))->getHost());
         $request = $request->withUri($uri);

@@ -5,9 +5,11 @@ namespace DeliciousBrains\WP_Offload_Media\Aws3\Aws\Sts\RegionalEndpoints;
 class Configuration implements ConfigurationInterface
 {
     private $endpointsType;
-    public function __construct($endpointsType)
+    private $isFallback;
+    public function __construct($endpointsType, $isFallback = \false)
     {
         $this->endpointsType = \strtolower($endpointsType);
+        $this->isFallback = $isFallback;
         if (!\in_array($this->endpointsType, ['legacy', 'regional'])) {
             throw new \InvalidArgumentException("Configuration parameter must either be 'legacy' or 'regional'.");
         }
@@ -25,5 +27,9 @@ class Configuration implements ConfigurationInterface
     public function toArray()
     {
         return ['endpoints_type' => $this->getEndpointsType()];
+    }
+    public function isFallback()
+    {
+        return $this->isFallback;
     }
 }

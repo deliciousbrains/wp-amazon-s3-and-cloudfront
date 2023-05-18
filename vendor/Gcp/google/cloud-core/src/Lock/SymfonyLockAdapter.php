@@ -20,6 +20,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Lock;
 use DeliciousBrains\WP_Offload_Media\Gcp\Symfony\Component\Lock\LockInterface as SymfonyLockInterface;
 /**
  * Symfony lock component adapter.
+ * @deprecated
  */
 class SymfonyLockAdapter implements LockInterface
 {

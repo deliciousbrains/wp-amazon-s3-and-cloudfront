@@ -19,7 +19,7 @@ namespace DeliciousBrains\WP_Offload_Media\Gcp\Google\CRC32;
 
 final class Table
 {
-    private static $tables = array();
+    private static $tables = [];
     /**
      * Echos the given table. Useful for building a static table to include in source code.
      *

@@ -129,7 +129,7 @@ trait DecryptionTraitV2
         switch ($cipherOptions['Cipher']) {
             case 'gcm':
                 $cipherOptions['Tag'] = $this->getTagFromCiphertextStream($cipherTextStream, $cipherOptions['TagLength']);
-                return new AesGcmDecryptingStream($this->getStrippedCiphertextStream($cipherTextStream, $cipherOptions['TagLength']), $cek, $cipherOptions['Iv'], $cipherOptions['Tag'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : null, $cipherOptions['TagLength'] ?: null, $cipherOptions['KeySize']);
+                return new AesGcmDecryptingStream($this->getStrippedCiphertextStream($cipherTextStream, $cipherOptions['TagLength']), $cek, $cipherOptions['Iv'], $cipherOptions['Tag'], $cipherOptions['Aad'] = isset($cipherOptions['Aad']) ? $cipherOptions['Aad'] : '', $cipherOptions['TagLength'] ?: null, $cipherOptions['KeySize']);
             default:
                 $cipherMethod = $this->buildCipherMethod($cipherOptions['Cipher'], $cipherOptions['Iv'], $cipherOptions['KeySize']);
                 return new AesDecryptingStream($cipherTextStream, $cek, $cipherMethod);

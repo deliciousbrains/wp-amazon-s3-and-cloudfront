@@ -30,7 +30,9 @@ use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Request;
 use DeliciousBrains\WP_Offload_Media\Gcp\GuzzleHttp\Psr7\Utils;
 use InvalidArgumentException;
 use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib\Crypt\RSA;
-use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib\Math\BigInteger;
+use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib\Math\BigInteger as BigInteger2;
+use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib3\Crypt\PublicKeyLoader;
+use DeliciousBrains\WP_Offload_Media\Gcp\phpseclib3\Math\BigInteger as BigInteger3;
 use DeliciousBrains\WP_Offload_Media\Gcp\Psr\Cache\CacheItemPoolInterface;
 use RuntimeException;
 use DeliciousBrains\WP_Offload_Media\Gcp\SimpleJWT\InvalidTokenException;
@@ -100,11 +102,11 @@ class AccessToken
      */
     public function verify($token, array $options = [])
     {
-        $audience = isset($options['audience']) ? $options['audience'] : null;
-        $issuer = isset($options['issuer']) ? $options['issuer'] : null;
-        $certsLocation = isset($options['certsLocation']) ? $options['certsLocation'] : self::FEDERATED_SIGNON_CERT_URL;
-        $cacheKey = isset($options['cacheKey']) ? $options['cacheKey'] : $this->getCacheKeyFromCertLocation($certsLocation);
-        $throwException = isset($options['throwException']) ? $options['throwException'] : \false;
+        $audience = $options['audience'] ?? null;
+        $issuer = $options['issuer'] ?? null;
+        $certsLocation = $options['certsLocation'] ?? self::FEDERATED_SIGNON_CERT_URL;
+        $cacheKey = $options['cacheKey'] ?? $this->getCacheKeyFromCertLocation($certsLocation);
+        $throwException = $options['throwException'] ?? \false;
         // for backwards compatibility
         // Check signature against each available cert.
         $certs = $this->getCerts($certsLocation, $cacheKey, $options);
@@ -210,10 +212,9 @@ class AccessToken
             if (empty($cert['n']) || empty($cert['e'])) {
                 throw new InvalidArgumentException('RSA certs expects "n" and "e" to be set');
             }
-            $rsa = new RSA();
-            $rsa->loadKey(['n' => new BigInteger($this->callJwtStatic('urlsafeB64Decode', [$cert['n']]), 256), 'e' => new BigInteger($this->callJwtStatic('urlsafeB64Decode', [$cert['e']]), 256)]);
+            $publicKey = $this->loadPhpsecPublicKey($cert['n'], $cert['e']);
             // create an array of key IDs to certs for the JWT library
-            $keys[$cert['kid']] = new Key($rsa->getPublicKey(), 'RS256');
+            $keys[$cert['kid']] = new Key($publicKey, 'RS256');
         }
         $payload = $this->callJwtStatic('decode', [$token, $keys]);
         if ($audience) {
@@ -267,7 +268,6 @@ class AccessToken
     {
         $cacheItem = $this->cache->getItem($cacheKey);
         $certs = $cacheItem ? $cacheItem->get() : null;
-        // @phpstan-ignore-line
         $gotNewCerts = \false;
         if (!$certs) {
             $certs = $this->retrieveCertsFromLocation($location, $options);
@@ -318,12 +318,53 @@ class AccessToken
      */
     private function checkAndInitializePhpsec()
     {
-        // @codeCoverageIgnoreStart
-        if (!\class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\phpseclib\\Crypt\\RSA')) {
-            throw new RuntimeException('Please require phpseclib/phpseclib v2 to use this utility.');
+        if (!$this->checkAndInitializePhpsec2() && !$this->checkPhpsec3()) {
+            throw new RuntimeException('Please require phpseclib/phpseclib v2 or v3 to use this utility.');
         }
-        // @codeCoverageIgnoreEnd
-        $this->setPhpsecConstants();
+    }
+    private function loadPhpsecPublicKey(string $modulus, string $exponent) : string
+    {
+        if (\class_exists(RSA::class) && \class_exists(BigInteger2::class)) {
+            $key = new RSA();
+            $key->loadKey(['n' => new BigInteger2($this->callJwtStatic('urlsafeB64Decode', [$modulus]), 256), 'e' => new BigInteger2($this->callJwtStatic('urlsafeB64Decode', [$exponent]), 256)]);
+            return $key->getPublicKey();
+        }
+        $key = PublicKeyLoader::load(['n' => new BigInteger3($this->callJwtStatic('urlsafeB64Decode', [$modulus]), 256), 'e' => new BigInteger3($this->callJwtStatic('urlsafeB64Decode', [$exponent]), 256)]);
+        return $key->toString('PKCS1');
+    }
+    /**
+     * @return bool
+     */
+    private function checkAndInitializePhpsec2() : bool
+    {
+        if (!\class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\phpseclib\\Crypt\\RSA')) {
+            return \false;
+        }
+        /**
+         * phpseclib calls "phpinfo" by default, which requires special
+         * whitelisting in the AppEngine VM environment. This function
+         * sets constants to bypass the need for phpseclib to check phpinfo
+         *
+         * @see phpseclib/Math/BigInteger
+         * @see https://github.com/GoogleCloudPlatform/getting-started-php/issues/85
+         * @codeCoverageIgnore
+         */
+        if (\filter_var(\getenv('GAE_VM'), \FILTER_VALIDATE_BOOLEAN)) {
+            if (!\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\MATH_BIGINTEGER_OPENSSL_ENABLED')) {
+                \define('DeliciousBrains\\WP_Offload_Media\\Gcp\\MATH_BIGINTEGER_OPENSSL_ENABLED', \true);
+            }
+            if (!\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\CRYPT_RSA_MODE')) {
+                \define('DeliciousBrains\\WP_Offload_Media\\Gcp\\CRYPT_RSA_MODE', RSA::MODE_OPENSSL);
+            }
+        }
+        return \true;
+    }
+    /**
+     * @return bool
+     */
+    private function checkPhpsec3() : bool
+    {
+        return \class_exists('DeliciousBrains\\WP_Offload_Media\\Gcp\\phpseclib3\\Crypt\\RSA');
     }
     /**
      * @return void
@@ -335,28 +376,6 @@ class AccessToken
             throw new RuntimeException('Please require kelvinmo/simplejwt ^0.2 to use this utility.');
         }
         // @codeCoverageIgnoreEnd
-    }
-    /**
-     * phpseclib calls "phpinfo" by default, which requires special
-     * whitelisting in the AppEngine VM environment. This function
-     * sets constants to bypass the need for phpseclib to check phpinfo
-     *
-     * @see phpseclib/Math/BigInteger
-     * @see https://github.com/GoogleCloudPlatform/getting-started-php/issues/85
-     * @codeCoverageIgnore
-     *
-     * @return void
-     */
-    private function setPhpsecConstants()
-    {
-        if (\filter_var(\getenv('GAE_VM'), \FILTER_VALIDATE_BOOLEAN)) {
-            if (!\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\MATH_BIGINTEGER_OPENSSL_ENABLED')) {
-                \define('DeliciousBrains\\WP_Offload_Media\\Gcp\\MATH_BIGINTEGER_OPENSSL_ENABLED', \true);
-            }
-            if (!\defined('DeliciousBrains\\WP_Offload_Media\\Gcp\\CRYPT_RSA_MODE')) {
-                \define('DeliciousBrains\\WP_Offload_Media\\Gcp\\CRYPT_RSA_MODE', RSA::MODE_OPENSSL);
-            }
-        }
     }
     /**
      * Provide a hook to mock calls to the JWT static methods.

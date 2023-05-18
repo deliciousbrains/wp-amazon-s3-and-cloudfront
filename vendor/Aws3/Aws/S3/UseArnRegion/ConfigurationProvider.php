@@ -45,7 +45,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider implements Con
 {
     const ENV_USE_ARN_REGION = 'AWS_S3_USE_ARN_REGION';
     const INI_USE_ARN_REGION = 's3_use_arn_region';
-    const DEFAULT_USE_ARN_REGION = \false;
+    const DEFAULT_USE_ARN_REGION = \true;
     public static $cacheKey = 'aws_s3_use_arn_region_config';
     protected static $interfaceClass = ConfigurationInterface::class;
     protected static $exceptionClass = ConfigurationException::class;

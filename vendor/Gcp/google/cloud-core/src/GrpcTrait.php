@@ -21,6 +21,7 @@ use DeliciousBrains\WP_Offload_Media\Gcp\Google\ApiCore\CredentialsWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\ArrayTrait;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Duration;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\NotFoundException;
+use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\Exception\ServiceException;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Cloud\Core\GrpcRequestWrapper;
 use DeliciousBrains\WP_Offload_Media\Gcp\Google\Protobuf\NullValue;
 /**
@@ -61,10 +62,11 @@ trait GrpcTrait
      * @param array $args
      * @param bool $whitelisted
      * @return \Generator|array
+     * @throws ServiceException
      */
     public function send(callable $request, array $args, $whitelisted = \false)
     {
-        $requestOptions = $this->pluckArray(['grpcOptions', 'retries', 'requestTimeout'], $args[\count($args) - 1]);
+        $requestOptions = $this->pluckArray(['grpcOptions', 'retries', 'requestTimeout', 'grpcRetryFunction'], $args[\count($args) - 1]);
         try {
             return $this->requestWrapper->send($request, $args, $requestOptions);
         } catch (NotFoundException $e) {
@@ -193,6 +195,7 @@ trait GrpcTrait
                 }
                 return ['list_value' => $this->formatListForApi($value)];
         }
+        return [];
     }
     /**
      * Format a gRPC timestamp to match the format returned by the REST API.

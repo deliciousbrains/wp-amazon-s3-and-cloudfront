@@ -161,6 +161,8 @@ class ApplicationDefaultCredentials
             $creds = new AppIdentityCredentials($anyScope);
         } elseif (self::onGce($httpHandler, $cacheConfig, $cache)) {
             $creds = new GCECredentials(null, $anyScope, null, $quotaProject);
+            $creds->setIsOnGce(\true);
+            // save the credentials a trip to the metadata server
         }
         if (\is_null($creds)) {
             throw new DomainException(self::notFound());
@@ -250,6 +252,8 @@ class ApplicationDefaultCredentials
             $creds = new ServiceAccountCredentials(null, $jsonKey, null, $targetAudience);
         } elseif (self::onGce($httpHandler, $cacheConfig, $cache)) {
             $creds = new GCECredentials(null, null, $targetAudience);
+            $creds->setIsOnGce(\true);
+            // save the credentials a trip to the metadata server
         }
         if (\is_null($creds)) {
             throw new DomainException(self::notFound());
@@ -264,10 +268,9 @@ class ApplicationDefaultCredentials
      */
     private static function notFound()
     {
-        $msg = 'Could not load the default credentials. Browse to ';
-        $msg .= 'https://developers.google.com';
-        $msg .= '/accounts/docs/application-default-credentials';
-        $msg .= ' for more information';
+        $msg = 'Your default credentials were not found. To set up ';
+        $msg .= 'Application Default Credentials, see ';
+        $msg .= 'https://cloud.google.com/docs/authentication/external/set-up-adc';
         return $msg;
     }
     /**
