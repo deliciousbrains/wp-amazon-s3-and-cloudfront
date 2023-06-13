@@ -494,7 +494,7 @@ abstract class Item {
 	 *
 	 * @return string
 	 */
-	protected static function items_table() {
+	public static function items_table(): string {
 		global $wpdb;
 
 		/* @var Amazon_S3_And_CloudFront $as3cf */

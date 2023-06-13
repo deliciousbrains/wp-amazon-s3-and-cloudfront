@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
+use AS3CF_Utils;
 use Exception;
 
 /**
@@ -57,12 +58,28 @@ class Upgrade_Meta_WP_Error extends Upgrade {
 	 * @return bool
 	 */
 	protected function upgrade_item( $item ) {
-		$provider_object = unserialize( $item->provider_object );
+		$provider_object = AS3CF_Utils::maybe_fix_serialized_string( $item->provider_object );
+		$fixed           = $item->provider_object !== $provider_object;
+
+		$provider_object = unserialize( $provider_object );
+
 		if ( false === $provider_object ) {
 			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $item->ID . ': ' . $item->provider_object );
 			$this->error_count++;
 
 			return false;
+		}
+
+		if ( $fixed ) {
+			if ( update_post_meta( $item->ID, 'amazonS3_info', $provider_object ) ) {
+				$msg = sprintf( __( 'Fixed legacy amazonS3_info metadata when rebuilding corrupted attachment metadata, please check bucket and path for attachment ID %1$s', 'amazon-s3-and-cloudfront' ), $item->ID );
+				AS3CF_Error::log( $msg );
+			} else {
+				AS3CF_Error::log( 'Failed to fix broken serialized legacy offload metadata for attachment ' . $item->ID . ': ' . $item->provider_object );
+				$this->error_count++;
+
+				return false;
+			}
 		}
 
 		$file = get_attached_file( $item->ID, true );

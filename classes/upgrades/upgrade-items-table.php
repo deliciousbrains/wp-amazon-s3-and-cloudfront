@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
+use AS3CF_Utils;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 
 /**
@@ -55,8 +56,11 @@ class Upgrade_Items_Table extends Upgrade {
 	 * @return bool
 	 */
 	protected function upgrade_item( $item ) {
+		$provider_object = AS3CF_Utils::maybe_fix_serialized_string( $item->provider_object );
+		$fixed           = $item->provider_object !== $provider_object;
+
 		// Make sure legacy metadata isn't broken.
-		$provider_object = unserialize( $item->provider_object );
+		$provider_object = unserialize( $provider_object );
 
 		if ( false === $provider_object ) {
 			AS3CF_Error::log( 'Failed to unserialize legacy offload metadata for attachment ' . $item->ID . ': ' . $item->provider_object );
@@ -70,6 +74,18 @@ class Upgrade_Items_Table extends Upgrade {
 			$this->error_count++;
 
 			return false;
+		}
+
+		if ( $fixed ) {
+			if ( update_post_meta( $item->ID, 'amazonS3_info', $provider_object ) ) {
+				$msg = sprintf( __( 'Fixed legacy amazonS3_info metadata when moved to %1$s table, please check bucket and path for attachment ID %2$s', 'amazon-s3-and-cloudfront' ), Media_Library_Item::items_table(), $item->ID );
+				AS3CF_Error::log( $msg );
+			} else {
+				AS3CF_Error::log( 'Failed to fix broken serialized legacy offload metadata for attachment ' . $item->ID . ': ' . $item->provider_object );
+				$this->error_count++;
+
+				return false;
+			}
 		}
 
 		// Using Media_Library_Item::get_by_source_id falls back to legacy metadata and substitutes in defaults and potentially missing values.

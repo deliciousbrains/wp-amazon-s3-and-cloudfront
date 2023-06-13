@@ -813,7 +813,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 				return $input;
 			}
 
-			$output = preg_replace_callback( '/s:(\d+):"(.*?)";/',
+			$output = preg_replace_callback( '/s:(\d+):"(.*?)"\s?;/',
 				array( __CLASS__, 'fix_serialized_matches' ),
 				$output
 			);
