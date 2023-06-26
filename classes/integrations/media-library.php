@@ -153,10 +153,20 @@ class Media_Library extends Integration {
 			$new_sizes = wp_get_registered_image_subsizes();
 			$new_sizes = apply_filters( 'intermediate_image_sizes_advanced', $new_sizes, $data, $post_id );
 
-			// Some images, particularly SVGs, don't create thumbnails but do have
+			// If an image has been rotated, remove original image from metadata so that
+			// `wp_get_missing_image_subsizes()` doesn't use non-rotated image for
+			// generating missing thumbnail sizes.
+			// Also, some images, particularly SVGs, don't create thumbnails but do have
 			// metadata for them. At the time `wp_get_missing_image_subsizes()` checks
 			// the saved metadata, it isn't there, but we already have it.
 			$func = function ( $value, $object_id, $meta_key, $single, $meta_type ) use ( $post_id, $data ) {
+				if ( ! empty( $value['image_meta']['orientation'] ) ) {
+					unset( $value['original_image'] );
+				}
+				if ( ! empty( $data['image_meta']['orientation'] ) ) {
+					unset( $data['original_image'] );
+				}
+
 				if (
 					is_null( $value ) &&
 					$object_id === $post_id &&
