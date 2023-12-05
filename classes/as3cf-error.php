@@ -39,6 +39,11 @@ class AS3CF_Error {
 
 		$prefix .= ': ';
 
+		$message = apply_filters( 'as3cf_error_log_message', $message, $prefix );
+		if ( empty( $message ) ) {
+			return;
+		}
+
 		if ( is_array( $message ) || is_object( $message ) ) {
 			error_log( $prefix . print_r( $message, true ) );
 		} else {
