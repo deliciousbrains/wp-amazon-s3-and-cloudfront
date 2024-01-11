@@ -967,7 +967,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			$broken = false;
 
 			if ( is_serialized( $data ) ) {
-				$value = @unserialize( $data ); // @phpcs:ignore
+				$value = self::maybe_unserialize( $data );
 
 				if ( false === $value && serialize( false ) !== $data ) {
 					$broken = true;
@@ -1044,6 +1044,21 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			}
 
 			return $is_json;
+		}
+
+		/**
+		 * Maybe unserialize data, but not if an object.
+		 *
+		 * @param mixed $data
+		 *
+		 * @return mixed
+		 */
+		public static function maybe_unserialize( $data ) {
+			if ( is_serialized( $data ) ) {
+				return @unserialize( $data, array( 'allowed_classes' => false ) ); // @phpcs:ignore
+			}
+
+			return $data;
 		}
 	}
 }

@@ -748,7 +748,7 @@ abstract class Item {
 		$extra_info = array();
 
 		if ( ! empty( $object->extra_info ) ) {
-			$extra_info = unserialize( $object->extra_info );
+			$extra_info = AS3CF_Utils::maybe_unserialize( $object->extra_info );
 			static::maybe_update_extra_info( $extra_info, $object->source_id, $object->is_private );
 		}
 

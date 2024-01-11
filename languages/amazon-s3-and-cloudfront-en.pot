@@ -2,16 +2,16 @@
 # # This file is distributed under the same license as the amazon-s3-and-cloudfront package.
 msgid ""
 msgstr ""
-"Project-Id-Version: amazon-s3-and-cloudfront 3.2.5\n"
+"Project-Id-Version: amazon-s3-and-cloudfront 3.2.6\n"
 "Report-Msgid-Bugs-To: mailto:nom@deliciousbrains.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-08-24T10:27:02+00:00\n"
+"POT-Creation-Date: 2024-01-11T09:23:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.8.1\n"
+"X-Generator: WP-CLI 2.9.0\n"
 "X-Domain: amazon-s3-and-cloudfront\n"
 
 #. Plugin Name of the plugin
@@ -41,7 +41,7 @@ msgstr ""
 
 #: classes/amazon-s3-and-cloudfront.php:570
 #: classes/amazon-s3-and-cloudfront.php:587
-#: classes/amazon-s3-and-cloudfront.php:4628
+#: classes/amazon-s3-and-cloudfront.php:4632
 msgid "Unknown"
 msgstr ""
 
@@ -952,19 +952,19 @@ msgstr ""
 msgid "You had the \"Always non-SSL\" option selected in your settings, but we've removed this option in version 1.3. We'll now use HTTPS when the request is HTTPS and regular HTTP when the request is HTTP. This should work fine for your site, but please take a poke around and make sure things are working ok. See %s for more details on why we did this and how you can revert back to the old behavior."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4434
+#: classes/amazon-s3-and-cloudfront.php:4438
 msgid "<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of version 1.6 of WP Offload Media, the <a href=\"%1$s\">Amazon Web Services</a> plugin is no longer required. We have removed the dependency by bundling a small portion of the AWS SDK into WP Offload Media. As long as none of your other active plugins or themes depend on the Amazon Web Services plugin, it should be safe to deactivate and delete it. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4466
+#: classes/amazon-s3-and-cloudfront.php:4470
 msgid "<strong>WP Offload Media Settings Moved</strong> &mdash; You now define your AWS keys for WP Offload Media in the new <a href=\"%1$s\">Settings tab</a>. Saving settings in the form below will have no effect on WP Offload Media. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4779
+#: classes/amazon-s3-and-cloudfront.php:4783
 msgid "Upgrade to offload %d remaining media item"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4781
+#: classes/amazon-s3-and-cloudfront.php:4785
 msgid "Upgrade to offload %d remaining media items"
 msgstr ""
 
@@ -1734,16 +1734,16 @@ msgid "Public"
 msgstr ""
 
 #: classes/settings/delivery-check.php:104
-#: classes/settings/delivery-check.php:132
-#: classes/settings/delivery-check.php:167
+#: classes/settings/delivery-check.php:137
+#: classes/settings/delivery-check.php:171
 msgid "Internal error"
 msgstr ""
 
-#: classes/settings/delivery-check.php:183
+#: classes/settings/delivery-check.php:192
 msgid "Private file accessible using an unsigned URL."
 msgstr ""
 
-#: classes/settings/delivery-check.php:287
+#: classes/settings/delivery-check.php:296
 msgid "This is a test file to check delivery. Delete me if found."
 msgstr ""
 
@@ -1775,15 +1775,15 @@ msgstr ""
 msgid "An error was encountered while testing the domain: <code>Invalid response type: %s</code>."
 msgstr ""
 
-#: classes/settings/domain-check.php:309
+#: classes/settings/domain-check.php:313
 msgid "An error was encountered while testing the domain: <code>Malformed response from endpoint</code>."
 msgstr ""
 
-#: classes/settings/domain-check.php:315
+#: classes/settings/domain-check.php:319
 msgid "An error was encountered while testing the domain: <code>Query string missing \"ver\" parameter</code>."
 msgstr ""
 
-#: classes/settings/domain-check.php:330
+#: classes/settings/domain-check.php:334
 msgid "An error was encountered while testing the domain: <code>S3 bucket set as CDN origin</code>."
 msgstr ""
 
@@ -1810,15 +1810,15 @@ msgstr ""
 msgid "and clear old post meta cache items."
 msgstr ""
 
-#: classes/upgrades/upgrade-content-replace-urls.php:36
+#: classes/upgrades/upgrade-content-replace-urls.php:38
 msgid "and ensuring that only the local URL exists in post content."
 msgstr ""
 
-#: classes/upgrades/upgrade-content-replace-urls.php:45
+#: classes/upgrades/upgrade-content-replace-urls.php:47
 msgid "<strong>Running Content Upgrade%1$s</strong><br>A find &amp; replace is running in the background to update URLs in your post content. %2$s"
 msgstr ""
 
-#: classes/upgrades/upgrade-edd-replace-urls.php:38
+#: classes/upgrades/upgrade-edd-replace-urls.php:39
 msgid "and ensuring that only the local URL exists in EDD post meta."
 msgstr ""
 

@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Integrations;
 
 use AS3CF_Error;
+use AS3CF_Utils;
 use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use DeliciousBrains\WP_Offload_Media\Items\Remove_Local_Handler;
 use Exception;
@@ -186,7 +187,7 @@ class Advanced_Custom_Fields extends Integration {
 	 */
 	public function acf_load_config( array $config ): array {
 		try {
-			$filtered_config = unserialize( $this->as3cf->filter_local->filter_post( serialize( $config ) ) );
+			$filtered_config = AS3CF_Utils::maybe_unserialize( $this->as3cf->filter_local->filter_post( serialize( $config ) ) );
 		} catch ( Exception $e ) {
 			AS3CF_Error::log( __METHOD__ . ' ' . $e->getMessage() );
 
