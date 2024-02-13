@@ -801,7 +801,7 @@ abstract class AS3CF_Filter {
 	 * @return bool
 	 */
 	protected function should_filter_content() {
-		if ( $this->as3cf->is_plugin_setup() && $this->as3cf->get_setting( 'serve-from-s3' ) ) {
+		if ( $this->as3cf->get_setting( 'serve-from-s3' ) ) {
 			return true;
 		}
 

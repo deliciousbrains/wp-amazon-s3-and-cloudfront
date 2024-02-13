@@ -995,7 +995,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 				return false;
 			}
 
-			$pattern    = '/\\\";(s|a|o|i|b|d|})./';
+			$pattern    = '/\\\";(s|a|o|i|b|d|N|})./';
 			$end_quotes = preg_match_all( $pattern, $data, $matches );
 			if ( $end_quotes == 0 ) {
 				return false;
