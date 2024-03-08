@@ -1564,8 +1564,8 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	function does_file_exist_local( $filename, $time ) {
 		global $wpdb;
 
-		$path = wp_upload_dir( $time );
-		$path = ltrim( $path['subdir'], '/' );
+		$upload_dir = wp_upload_dir( $time );
+		$path =  isset( $upload_dir['subdir'] ) ? ltrim( $upload_dir['subdir'], '/' ) : '';
 
 		if ( '' !== $path ) {
 			$path = trailingslashit( $path );
