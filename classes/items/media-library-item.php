@@ -623,7 +623,7 @@ class Media_Library_Item extends Item {
 		update_post_meta( $this->source_id(), 'as3cf_filesize_total', $total_size );
 
 		if ( 0 < $original_size && ( $data = get_post_meta( $this->source_id(), '_wp_attachment_metadata', true ) ) ) {
-			if ( empty( $data['filesize'] ) ) {
+			if ( is_array( $data ) && empty( $data['filesize'] ) ) {
 				$data['filesize'] = $original_size;
 
 				// Update metadata with filesize

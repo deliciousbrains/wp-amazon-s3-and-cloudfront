@@ -1036,7 +1036,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 *
 		 * @return bool
 		 */
-		private static function is_json( string $value ): bool {
+		public static function is_json( string $value ): bool {
 			$is_json = false;
 
 			if ( 0 < strlen( trim( $value ) ) && ! is_numeric( $value ) && null !== json_decode( $value ) ) {

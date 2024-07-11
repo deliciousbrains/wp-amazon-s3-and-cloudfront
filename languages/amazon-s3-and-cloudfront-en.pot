@@ -2,14 +2,14 @@
 # # This file is distributed under the same license as the amazon-s3-and-cloudfront package.
 msgid ""
 msgstr ""
-"Project-Id-Version: amazon-s3-and-cloudfront 3.2.7\n"
+"Project-Id-Version: amazon-s3-and-cloudfront 3.2.8\n"
 "Report-Msgid-Bugs-To: mailto:nom@deliciousbrains.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-02-13T11:02:13+00:00\n"
+"POT-Creation-Date: 2024-07-11T09:21:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.9.0\n"
 "X-Domain: amazon-s3-and-cloudfront\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: classes/amazon-s3-and-cloudfront.php:570
 #: classes/amazon-s3-and-cloudfront.php:587
-#: classes/amazon-s3-and-cloudfront.php:4632
+#: classes/amazon-s3-and-cloudfront.php:4638
 msgid "Unknown"
 msgstr ""
 
@@ -243,7 +243,7 @@ msgid "No"
 msgstr ""
 
 #: classes/amazon-s3-and-cloudfront.php:2295
-#: classes/amazon-s3-and-cloudfront.php:4184
+#: classes/amazon-s3-and-cloudfront.php:4190
 msgctxt "Help icon alt text"
 msgid "Click to view help doc on our site"
 msgstr ""
@@ -924,47 +924,47 @@ msgstr ""
 msgid "<strong>Missing Table</strong> &mdash; One or more required database tables are missing, please check the Diagnostic Info in the Support tab for details. %s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4032
+#: classes/amazon-s3-and-cloudfront.php:4038
 msgid "WP Offload Media Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4033
+#: classes/amazon-s3-and-cloudfront.php:4039
 msgid "WP Offload Media Lite and WP Offload Media cannot both be active. We've automatically deactivated WP Offload Media Lite."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4035
+#: classes/amazon-s3-and-cloudfront.php:4041
 msgid "WP Offload Media Lite Activation"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4036
+#: classes/amazon-s3-and-cloudfront.php:4042
 msgid "WP Offload Media Lite and WP Offload Media cannot both be active. We've automatically deactivated WP Offload Media."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4101
+#: classes/amazon-s3-and-cloudfront.php:4107
 msgid "More&nbsp;info"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4245
+#: classes/amazon-s3-and-cloudfront.php:4251
 msgid "WP Offload Media Feature Removed"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4246
+#: classes/amazon-s3-and-cloudfront.php:4252
 msgid "You had the \"Always non-SSL\" option selected in your settings, but we've removed this option in version 1.3. We'll now use HTTPS when the request is HTTPS and regular HTTP when the request is HTTP. This should work fine for your site, but please take a poke around and make sure things are working ok. See %s for more details on why we did this and how you can revert back to the old behavior."
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4438
+#: classes/amazon-s3-and-cloudfront.php:4444
 msgid "<strong>Amazon Web Services Plugin No Longer Required</strong> &mdash; As of version 1.6 of WP Offload Media, the <a href=\"%1$s\">Amazon Web Services</a> plugin is no longer required. We have removed the dependency by bundling a small portion of the AWS SDK into WP Offload Media. As long as none of your other active plugins or themes depend on the Amazon Web Services plugin, it should be safe to deactivate and delete it. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4470
+#: classes/amazon-s3-and-cloudfront.php:4476
 msgid "<strong>WP Offload Media Settings Moved</strong> &mdash; You now define your AWS keys for WP Offload Media in the new <a href=\"%1$s\">Settings tab</a>. Saving settings in the form below will have no effect on WP Offload Media. %2$s"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4783
+#: classes/amazon-s3-and-cloudfront.php:4789
 msgid "Upgrade to offload %d remaining media item"
 msgstr ""
 
-#: classes/amazon-s3-and-cloudfront.php:4785
+#: classes/amazon-s3-and-cloudfront.php:4791
 msgid "Upgrade to offload %d remaining media items"
 msgstr ""
 
@@ -1396,37 +1396,32 @@ msgstr ""
 msgid "Private offloaded media URLs may be broken. %1$s <a href=\"%2$s\" target=\"_blank\">Read more</a>"
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:625
-msgid "Private media is currently exposed through unsigned URLs. Restore privacy by verifying the configuration of private media settings. <a href=\"%1$s\" target=\"_blank\">Read more</a>"
+#: classes/providers/delivery/delivery-provider.php:631
+msgid "Delivery provider is connected, but private media is currently exposed through unsigned URLs. Restore privacy by verifying the configuration of private media settings. <a href=\"%1$s\" target=\"_blank\">Read more</a>"
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:702
+#: classes/providers/delivery/delivery-provider.php:709
 msgid "Delivery of offloaded media cannot be tested until the storage provider is successfully connected. See \"Storage Settings\" for more information."
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:714
+#: classes/providers/delivery/delivery-provider.php:721
 msgctxt "Delivery setting notice for issue with BAPA enabled on Storage Provider"
 msgid "Offloaded media cannot be delivered because <strong>Block All Public Access</strong> is enabled. <a href=\"%1$s\">Edit bucket security</a>"
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:729
-msgctxt "Delivery setting notice for issue with Object Ownership enforced on Storage Provider"
-msgid "Offloaded media cannot be delivered due to the current <strong>Object Ownership</strong> configuration. <a href=\"%1$s\">Edit bucket security</a>"
-msgstr ""
-
-#: classes/providers/delivery/delivery-provider.php:785
+#: classes/providers/delivery/delivery-provider.php:777
 msgid "An invalid delivery provider has been defined for the active storage provider. Please use %1$s."
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:812
+#: classes/providers/delivery/delivery-provider.php:804
 msgid "Delivery provider is successfully connected, but offloaded media will not be served until <strong>Deliver Offloaded Media</strong> is enabled. In the meantime, local media is being served if available."
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:840
+#: classes/providers/delivery/delivery-provider.php:832
 msgid "Offloaded media cannot be delivered from the CDN until a delivery domain is set. <a href=\"%1$s\" target=\"_blank\">Read more</a>"
 msgstr ""
 
-#: classes/providers/delivery/delivery-provider.php:856
+#: classes/providers/delivery/delivery-provider.php:848
 msgid "Offloaded media URLs may be broken due to an invalid delivery domain. %1$s <a href=\"%2$s\">How to set a delivery domain</a>"
 msgstr ""
 
@@ -1478,72 +1473,76 @@ msgctxt "Default provider console link text"
 msgid "Provider Console"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:251
+#: classes/providers/storage/aws-provider.php:238
+msgid "Delivery provider is connected, but private media is currently exposed through unsigned URLs. Because Object Ownership is enforced on the bucket, access can only be controlled by editing the Amazon S3 bucket policy or by using a CDN that supports private media. <a href=\"%1$s\" target=\"_blank\">Read more</a>"
+msgstr ""
+
+#: classes/providers/storage/aws-provider.php:292
 msgid "Media cannot be offloaded due to an invalid Access Key ID. <a href=\"%1$s\">Update access keys</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:258
+#: classes/providers/storage/aws-provider.php:299
 msgid "Media cannot be offloaded due to an invalid Secret Access Key. <a href=\"%1$s\">Update access keys</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:267
+#: classes/providers/storage/aws-provider.php:308
 msgid "The bucket name already exists in your account. To confirm you'd like to use it, please select \"Use Existing Bucket\". Alternatively, enter a different bucket name."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:274
+#: classes/providers/storage/aws-provider.php:315
 msgid "The bucket name already exists in another account. Please enter a different bucket name."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:282
+#: classes/providers/storage/aws-provider.php:323
 #: classes/providers/storage/gcp-provider.php:862
 msgid "Media cannot be offloaded because a bucket with the configured name does not exist. <a href=\"%1$s\">Enter a different bucket</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:292
+#: classes/providers/storage/aws-provider.php:333
 msgid "Media cannot be offloaded because the bucket name is not valid. <a href=\"%1$s\">Enter a different bucket name</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:914
+#: classes/providers/storage/aws-provider.php:955
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br> If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">disable Block All Public Access</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:920
+#: classes/providers/storage/aws-provider.php:961
 #: classes/providers/storage/storage-provider.php:792
 msgctxt "warning heading"
 msgid "Block All Public Access is Enabled"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:933
+#: classes/providers/storage/aws-provider.php:974
 msgid "Block All Public Access should only been enabled when Amazon CloudFront is configured for delivery."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:959
+#: classes/providers/storage/aws-provider.php:1000
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue. If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">disable Block All Public Access</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:973
+#: classes/providers/storage/aws-provider.php:1014
 msgid "Since you're not using Amazon CloudFront for delivery, we recommend you keep Block All Public Access disabled unless you have a very good reason to enable it."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:996
+#: classes/providers/storage/aws-provider.php:1037
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">turn off Object Ownership enforcement</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1002
+#: classes/providers/storage/aws-provider.php:1043
 #: classes/providers/storage/storage-provider.php:806
 msgctxt "warning heading"
 msgid "Object Ownership is Enforced"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1015
+#: classes/providers/storage/aws-provider.php:1056
 msgid "Object Ownership should only been enforced when Amazon CloudFront is configured for delivery."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1041
+#: classes/providers/storage/aws-provider.php:1082
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you're not planning on using Amazon CloudFront for delivery, you need to edit the bucket's Object Ownership setting and <a href=\"%2$s\">enable ACLs</a> or add a <a href=\"%3$s\">Bucket Policy</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1056
+#: classes/providers/storage/aws-provider.php:1097
 msgid "Since you're not using Amazon CloudFront for delivery, we recommend you do not enforce Object Ownership unless you have a very good reason to do so."
 msgstr ""
 

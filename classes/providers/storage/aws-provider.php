@@ -200,6 +200,47 @@ class AWS_Provider extends Storage_Provider {
 		if ( ! function_exists( 'idn_to_ascii' ) && ! defined( 'IDNA_DEFAULT' ) ) {
 			define( 'IDNA_DEFAULT', 0 );
 		}
+
+		add_filter(
+			'as3cf_get_unsigned_url_can_access_private_file_desc_aws',
+			array( $this, 'get_unsigned_url_can_access_private_file_desc' )
+		);
+	}
+
+	/**
+	 * Optionally modify the description for the "Can access private file" warning from the delivery provider
+	 * validation if OOE is enabled on the current bucket.
+	 *
+	 * @handles as3cf_get_unsigned_url_can_access_private_file_desc_aws
+	 *
+	 * @param string $message
+	 *
+	 * @return string
+	 */
+	public function get_unsigned_url_can_access_private_file_desc( $message ): string {
+		$bucket = $this->as3cf->get_setting( 'bucket' );
+		$region = $this->as3cf->get_setting( 'region' );
+
+		// Return default message if no bucket is defined.
+		if ( empty( $bucket ) ) {
+			return $message;
+		}
+
+		// Ensure we have a valid client.
+		$this->get_client( array( 'region' => $region ) );
+
+		// Return default message if OOE not enabled.
+		if ( ! $this->object_ownership_enforced( $bucket ) ) {
+			return $message;
+		}
+
+		return sprintf(
+			__(
+				'Delivery provider is connected, but private media is currently exposed through unsigned URLs. Because Object Ownership is enforced on the bucket, access can only be controlled by editing the Amazon S3 bucket policy or by using a CDN that supports private media. <a href="%1$s" target="_blank">Read more</a>',
+				'amazon-s3-and-cloudfront'
+			),
+			static::get_provider_service_quick_start_url() . '#object-ownership'
+		);
 	}
 
 	/**
