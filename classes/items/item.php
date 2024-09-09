@@ -1426,9 +1426,9 @@ abstract class Item {
 		}
 
 		$sql = $wpdb->prepare(
-			"SELECT * FROM " . static::items_table() . " WHERE (path LIKE %s OR original_path LIKE %s);",
-			'%' . $path,
-			'%' . $path
+			"SELECT * FROM " . static::items_table() . " WHERE (path = %s OR original_path = %s);",
+			'app/' . $path,
+			'app/' . $path
 		);
 
 		$results = $wpdb->get_results( $sql );
