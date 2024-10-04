@@ -41,7 +41,7 @@ use DeliciousBrains\WP_Offload_Media\Aws3\Aws\Token\BearerTokenAuthorization;
  */
 class SignatureProvider
 {
-    private static $s3v4SignedServices = ['s3' => \true, 's3control' => \true, 's3-object-lambda' => \true, 's3express' => \true];
+    private static $s3v4SignedServices = ['s3' => \true, 's3control' => \true, 's3-outposts' => \true, 's3-object-lambda' => \true, 's3express' => \true];
     /**
      * Resolves and signature provider and ensures a non-null return value.
      *

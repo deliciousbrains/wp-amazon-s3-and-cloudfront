@@ -1,11 +1,12 @@
 <?php
 /*
 Plugin Name: WP Offload Media Lite
-Plugin URI: http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/
+Plugin URI: https://deliciousbrains.com
 Description: Automatically copies media uploads to Amazon S3, DigitalOcean Spaces or Google Cloud Storage for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery.
 Author: Delicious Brains
-Version: 3.2.8
+Version: 3.2.9
 Author URI: https://deliciousbrains.com/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting
+Update URI: false
 Network: True
 Text Domain: amazon-s3-and-cloudfront
 Domain Path: /languages/
@@ -28,7 +29,7 @@ Domain Path: /languages/
 
 // phpcs:disable SlevomatCodingStandard.Variables.UnusedVariable
 
-$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '3.2.8';
+$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '3.2.9';
 
 require_once dirname( __FILE__ ) . '/classes/as3cf-compatibility-check.php';
 
@@ -95,3 +96,17 @@ add_action( 'init', 'as3cf_init' );
 
 // If AWS still active need to be around to satisfy addon version checks until upgraded.
 add_action( 'aws_init', 'as3cf_init', 11 );
+
+/**
+ * Initialize the checking for plugin updates.
+ */
+function as3cf_check_for_upgrades() {
+	$properties = array(
+		'plugin_slug'     => 'amazon-s3-and-cloudfront',
+		'plugin_basename' => plugin_basename( __FILE__ ),
+	);
+
+	require_once __DIR__ . '/classes/as3cf-plugin-updater.php';
+	new DeliciousBrains\WP_Offload_Media\AS3CF_Plugin_Updater( $properties );
+}
+add_action( 'admin_init', 'as3cf_check_for_upgrades' );

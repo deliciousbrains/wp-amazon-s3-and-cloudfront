@@ -21,9 +21,25 @@ class EventParsingIterator implements Iterator
     private $parser;
     public function __construct(StreamInterface $stream, StructureShape $shape, AbstractParser $parser)
     {
-        $this->decodingIterator = new DecodingEventStreamIterator($stream);
+        $this->decodingIterator = $this->chooseDecodingIterator($stream);
         $this->shape = $shape;
         $this->parser = $parser;
+    }
+    /**
+     * This method choose a decoding iterator implementation based on if the stream
+     * is seekable or not.
+     *
+     * @param $stream
+     *
+     * @return Iterator
+     */
+    private function chooseDecodingIterator($stream)
+    {
+        if ($stream->isSeekable()) {
+            return new DecodingEventStreamIterator($stream);
+        } else {
+            return new NonSeekableStreamDecodingEventStreamIterator($stream);
+        }
     }
     #[\ReturnTypeWillChange]
     public function current()
@@ -64,8 +80,11 @@ class EventParsingIterator implements Iterator
         if (empty($eventType)) {
             throw new ParserException('Failed to parse without event type.');
         }
-        $eventShape = $this->shape->getMember($eventType);
         $eventPayload = $event['payload'];
+        if ($eventType === 'initial-response') {
+            return $this->parseInitialResponseEvent($eventPayload);
+        }
+        $eventShape = $this->shape->getMember($eventType);
         return [$eventType => \array_merge($this->parseEventHeaders($event['headers'], $eventShape), $this->parseEventPayload($eventPayload, $eventShape))];
     }
     /**
@@ -116,5 +135,9 @@ class EventParsingIterator implements Iterator
     private function parseError(array $event)
     {
         throw new EventStreamDataException($event['headers'][':error-code'], $event['headers'][':error-message']);
+    }
+    private function parseInitialResponseEvent($payload) : array
+    {
+        return ['initial-response' => \json_decode($payload, \true)];
     }
 }

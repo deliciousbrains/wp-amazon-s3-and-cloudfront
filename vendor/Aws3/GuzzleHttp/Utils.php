@@ -64,7 +64,7 @@ final class Utils
         if (\defined('STDOUT')) {
             return \STDOUT;
         }
-        return \DeliciousBrains\WP_Offload_Media\Aws3\GuzzleHttp\Psr7\Utils::tryFopen('php://output', 'w');
+        return Psr7\Utils::tryFopen('php://output', 'w');
     }
     /**
      * Chooses and creates a default handler to use based on the environment.
@@ -78,7 +78,7 @@ final class Utils
     public static function chooseHandler() : callable
     {
         $handler = null;
-        if (\defined('CURLOPT_CUSTOMREQUEST')) {
+        if (\defined('CURLOPT_CUSTOMREQUEST') && \function_exists('curl_version') && \version_compare(\curl_version()['version'], '7.21.2') >= 0) {
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
                 $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
             } elseif (\function_exists('curl_exec')) {

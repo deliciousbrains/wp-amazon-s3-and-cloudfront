@@ -34,7 +34,7 @@ class S3ExpressIdentityProvider
     private function getS3Client()
     {
         if (\is_null($this->s3Client)) {
-            $this->s3Client = isset($this->config['client']) ? $this->config['client'] : new Aws\S3\S3Client(['region' => $this->region, 'disable_express_session_auth' => \true]);
+            $this->s3Client = $this->config['client'] ?? new Aws\S3\S3Client(['region' => $this->region, 'disable_express_session_auth' => \true]);
         }
         return $this->s3Client;
     }

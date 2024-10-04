@@ -2,36 +2,41 @@
 # # This file is distributed under the same license as the amazon-s3-and-cloudfront package.
 msgid ""
 msgstr ""
-"Project-Id-Version: amazon-s3-and-cloudfront 3.2.8\n"
+"Project-Id-Version: amazon-s3-and-cloudfront 3.2.9\n"
 "Report-Msgid-Bugs-To: mailto:nom@deliciousbrains.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-07-11T09:21:29+00:00\n"
+"POT-Creation-Date: 2024-10-04T13:53:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.9.0\n"
+"X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: amazon-s3-and-cloudfront\n"
 
 #. Plugin Name of the plugin
+#: wordpress-s3.php
 #: classes/amazon-s3-and-cloudfront.php:223
 msgid "WP Offload Media Lite"
 msgstr ""
 
 #. Plugin URI of the plugin
-msgid "http://wordpress.org/extend/plugins/amazon-s3-and-cloudfront/"
+#: wordpress-s3.php
+msgid "https://deliciousbrains.com"
 msgstr ""
 
 #. Description of the plugin
+#: wordpress-s3.php
 msgid "Automatically copies media uploads to Amazon S3, DigitalOcean Spaces or Google Cloud Storage for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery."
 msgstr ""
 
 #. Author of the plugin
+#: wordpress-s3.php
 msgid "Delicious Brains"
 msgstr ""
 
 #. Author URI of the plugin
+#: wordpress-s3.php
 msgid "https://deliciousbrains.com/?utm_campaign=WP%2BOffload%2BS3&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting"
 msgstr ""
 
@@ -1473,76 +1478,76 @@ msgctxt "Default provider console link text"
 msgid "Provider Console"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:238
+#: classes/providers/storage/aws-provider.php:239
 msgid "Delivery provider is connected, but private media is currently exposed through unsigned URLs. Because Object Ownership is enforced on the bucket, access can only be controlled by editing the Amazon S3 bucket policy or by using a CDN that supports private media. <a href=\"%1$s\" target=\"_blank\">Read more</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:292
+#: classes/providers/storage/aws-provider.php:293
 msgid "Media cannot be offloaded due to an invalid Access Key ID. <a href=\"%1$s\">Update access keys</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:299
+#: classes/providers/storage/aws-provider.php:300
 msgid "Media cannot be offloaded due to an invalid Secret Access Key. <a href=\"%1$s\">Update access keys</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:308
+#: classes/providers/storage/aws-provider.php:309
 msgid "The bucket name already exists in your account. To confirm you'd like to use it, please select \"Use Existing Bucket\". Alternatively, enter a different bucket name."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:315
+#: classes/providers/storage/aws-provider.php:316
 msgid "The bucket name already exists in another account. Please enter a different bucket name."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:323
+#: classes/providers/storage/aws-provider.php:324
 #: classes/providers/storage/gcp-provider.php:862
 msgid "Media cannot be offloaded because a bucket with the configured name does not exist. <a href=\"%1$s\">Enter a different bucket</a>"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:333
+#: classes/providers/storage/aws-provider.php:334
 msgid "Media cannot be offloaded because the bucket name is not valid. <a href=\"%1$s\">Enter a different bucket name</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:955
+#: classes/providers/storage/aws-provider.php:956
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br> If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">disable Block All Public Access</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:961
+#: classes/providers/storage/aws-provider.php:962
 #: classes/providers/storage/storage-provider.php:792
 msgctxt "warning heading"
 msgid "Block All Public Access is Enabled"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:974
+#: classes/providers/storage/aws-provider.php:975
 msgid "Block All Public Access should only been enabled when Amazon CloudFront is configured for delivery."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1000
+#: classes/providers/storage/aws-provider.php:1001
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue. If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">disable Block All Public Access</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1014
+#: classes/providers/storage/aws-provider.php:1015
 msgid "Since you're not using Amazon CloudFront for delivery, we recommend you keep Block All Public Access disabled unless you have a very good reason to enable it."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1037
+#: classes/providers/storage/aws-provider.php:1038
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you're not planning on using Amazon CloudFront for delivery, you need to <a href=\"%2$s\">turn off Object Ownership enforcement</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1043
+#: classes/providers/storage/aws-provider.php:1044
 #: classes/providers/storage/storage-provider.php:806
 msgctxt "warning heading"
 msgid "Object Ownership is Enforced"
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1056
+#: classes/providers/storage/aws-provider.php:1057
 msgid "Object Ownership should only been enforced when Amazon CloudFront is configured for delivery."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1082
+#: classes/providers/storage/aws-provider.php:1083
 msgid "If you're following our documentation on <a href=\"%1$s\">setting up Amazon CloudFront</a> for delivery, you can ignore this warning and continue.<br>If you're not planning on using Amazon CloudFront for delivery, you need to edit the bucket's Object Ownership setting and <a href=\"%2$s\">enable ACLs</a> or add a <a href=\"%3$s\">Bucket Policy</a>."
 msgstr ""
 
-#: classes/providers/storage/aws-provider.php:1097
+#: classes/providers/storage/aws-provider.php:1098
 msgid "Since you're not using Amazon CloudFront for delivery, we recommend you do not enforce Object Ownership unless you have a very good reason to do so."
 msgstr ""
 

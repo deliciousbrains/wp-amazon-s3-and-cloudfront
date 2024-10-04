@@ -24,7 +24,7 @@ class Response implements ResponseInterface
      * @param string                               $version Protocol version
      * @param string|null                          $reason  Reason phrase (when empty a default will be used based on the status code)
      */
-    public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', string $reason = null)
+    public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', ?string $reason = null)
     {
         $this->assertStatusCodeRange($status);
         $this->statusCode = $status;

@@ -348,7 +348,7 @@ class SignatureV4 implements SignatureInterface
     protected function signWithV4a(CredentialsInterface $credentials, RequestInterface $request, $signingService, SigningConfigAWS $signingConfig = null)
     {
         $this->verifyCRTLoaded();
-        $signingConfig = $signingConfig ?? new SigningConfigAWS(['algorithm' => SigningAlgorithm::SIGv4_ASYMMETRIC, 'signature_type' => SignatureType::HTTP_REQUEST_HEADERS, 'credentials_provider' => $this->createCRTStaticCredentialsProvider($credentials), 'signed_body_value' => $this->getPayload($request), 'should_normalize_uri_path' => \true, 'use_double_uri_encode' => \true, 'region' => "*", 'service' => $signingService, 'date' => \time()]);
+        $signingConfig = $signingConfig ?? new SigningConfigAWS(['algorithm' => SigningAlgorithm::SIGv4_ASYMMETRIC, 'signature_type' => SignatureType::HTTP_REQUEST_HEADERS, 'credentials_provider' => $this->createCRTStaticCredentialsProvider($credentials), 'signed_body_value' => $this->getPayload($request), 'should_normalize_uri_path' => \true, 'use_double_uri_encode' => \true, 'region' => $this->region, 'service' => $signingService, 'date' => \time()]);
         $removedIllegalHeaders = $this->removeIllegalV4aHeaders($request);
         $http_request = $this->CRTRequestFromGuzzleRequest($request);
         Signing::signRequestAws(Signable::fromHttpRequest($http_request), $signingConfig, function ($signing_result, $error_code) use(&$http_request) {
