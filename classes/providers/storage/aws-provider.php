@@ -131,6 +131,7 @@ class AWS_Provider extends Storage_Provider {
 		'ap-southeast-3' => 'Asia Pacific (Jakarta)',
 		'ap-southeast-4' => 'Asia Pacific (Melbourne)',
 		'ap-southeast-5' => 'Asia Pacific (Malaysia)',
+		'ap-southeast-7' => 'Asia Pacific (Thailand)',
 		'cn-north-1'     => 'China (Beijing)',
 		'cn-northwest-1' => 'China (Ningxia)',
 		'eu-central-1'   => 'EU (Frankfurt)',
@@ -144,6 +145,7 @@ class AWS_Provider extends Storage_Provider {
 		'il-central-1'   => 'Israel (Tel Aviv)',
 		'me-south-1'     => 'Middle East (Bahrain)',
 		'me-central-1'   => 'Middle East (UAE)',
+		'mx-central-1'   => 'Mexico (Central)',
 		'sa-east-1'      => 'South America (São Paulo)',
 	);
 

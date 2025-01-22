@@ -4,7 +4,7 @@ Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google 
 Requires at least: 5.5
 Tested up to: 6.7
 Requires PHP: 7.2
-Stable tag: 3.2.10
+Stable tag: 3.2.11
 License: GPLv3
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -84,6 +84,9 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 3.2.11 - 2025-01-22 =
+* New: Amazon S3 regions Asia Pacific (Thailand) and Mexico (Central) are now selectable
 
 = WP Offload Media Lite 3.2.10 - 2024-12-12 =
 * New: DigitalOcean regions Toronto (TOR1) and London (LON1) are now selectable
