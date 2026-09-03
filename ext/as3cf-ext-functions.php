@@ -1,5 +1,10 @@
 <?php
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 if ( ! function_exists( 'as3cf_check_for_upgrades' ) ) {
 	/**
 	 * Initialize the checking for plugin updates.
