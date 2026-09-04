@@ -5,7 +5,7 @@
  * Description: Automatically copies media uploads to Amazon S3, DigitalOcean Spaces or Google Cloud Storage for storage and delivery. Optionally configure Amazon CloudFront or another CDN for even faster delivery.
  * Author: Delicious Brains
  * License: GPLv2
- * Version: 3.4.0
+ * Version: 3.4.1
  * Requires at least: 5.9
  * Tested up to: 7.1
  * Requires PHP: 8.1
@@ -46,7 +46,7 @@ if ( ! function_exists( 'as3cf_init' ) ) {
 	define( 'AS3CF_PATH', plugin_dir_path( AS3CF_FILE ) );
 
 	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- inherited
-	$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '3.4.0';
+	$GLOBALS['aws_meta']['amazon-s3-and-cloudfront']['version'] = '3.4.1';
 
 	require_once AS3CF_PATH . 'classes/as3cf-compatibility-check.php';
 

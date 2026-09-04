@@ -4,7 +4,7 @@ Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google 
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 License: GPLv2
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -87,6 +87,9 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 3.4.1 - 2026-09-04 =
+* Bug fix: Rejecting non-string content in AS3CF_Filter::process_content() no longer results in a fatal error
 
 = WP Offload Media Lite 3.4.0 - 2026-09-03 =
 * [Release Summary Blog Post](https://deliciousbrains.com/wp-offload-media-3-4-released/?utm_campaign=changelogs&utm_source=wordpress.org&utm_medium=free%2Bplugin%2Blisting)

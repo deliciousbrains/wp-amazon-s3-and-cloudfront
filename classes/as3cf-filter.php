@@ -205,9 +205,9 @@ abstract class AS3CF_Filter {
 	 * @param array $cache
 	 * @param array $to_cache
 	 *
-	 * @return string
+	 * @return mixed
 	 */
-	protected function process_content( mixed $content, array $cache, array &$to_cache ): string {
+	protected function process_content( mixed $content, array $cache, array &$to_cache ): mixed {
 		if ( empty( $content ) || ! is_string( $content ) ) {
 			// Nothing to filter, return.
 			return $content;
