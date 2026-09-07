@@ -126,7 +126,7 @@ abstract class Upgrade {
 	/**
 	 * @var int The current blog ID.
 	 */
-	protected int $blog_id;
+	protected int $blog_id = 0;
 
 	/**
 	 * @var string The wpdb prefix for the current blog.

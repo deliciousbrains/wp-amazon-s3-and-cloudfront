@@ -1144,13 +1144,18 @@ class Media_Library extends Integration {
 	 * @handles wp_get_original_image_path
 	 *
 	 * @param string $file
-	 * @param int    $attachment_id
+	 * @param mixed  $attachment_id
 	 *
 	 * @return string
 	 */
 	public function get_attached_file( $file, $attachment_id ) {
 		// During the deletion of an attachment, stream wrapper URLs should not be returned.
 		if ( $this->deleting_attachment ) {
+			return $file;
+		}
+
+		// Some plugins call get_attached_file() without a usable attachment ID.
+		if ( ! is_numeric( $attachment_id ) || $attachment_id < 1 ) {
 			return $file;
 		}
 
