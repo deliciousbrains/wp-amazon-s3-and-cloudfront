@@ -68,13 +68,12 @@ trait Custom_Table_Trait {
 			if (
 				version_compare( $schema_version, $plugin_version, '<' ) ||
 				$schema_upgrade_routine < $upgrade_routine ||
-				! self::table_exists()
+				! self::table_exists( $table_name, $plugin_version, $upgrade_routine )
 			) {
 				static::install_table( $table_name, $plugin_version, $upgrade_routine );
 
 				// We've potentially changed format of stored cached data or their keys, so flush cache.
-				// We don't care whether it was successful or not, at least we tried.
-				wp_cache_flush();
+				self::flush_object_cache();
 
 				update_option( $table_name . '_schema_version', $plugin_version );
 				update_option( $table_name . '_schema_upgrade_routine', $upgrade_routine );
@@ -82,6 +81,27 @@ trait Custom_Table_Trait {
 		}
 
 		return $table_name;
+	}
+
+	/**
+	 * Flush our cached data from the object cache.
+	 *
+	 * Only our own group where the cache can do that, as the cache may be shared with
+	 * everything else on the site, and WordPress before 6.1 has no group flush at all.
+	 * We don't care whether it was successful or not, at least we tried.
+	 *
+	 * @return void
+	 */
+	private static function flush_object_cache(): void {
+		if (
+			function_exists( 'wp_cache_supports' ) &&
+			function_exists( 'wp_cache_flush_group' ) &&
+			wp_cache_supports( 'flush_group' )
+		) {
+			wp_cache_flush_group( static::get_object_cache_group() );
+		} else {
+			wp_cache_flush();
+		}
 	}
 
 	/**
@@ -98,13 +118,51 @@ trait Custom_Table_Trait {
 	/**
 	 * Does the custom table exist?
 	 *
+	 * @param string $table_name           Full table name to install.
+	 * @param string $plugin_version       Current plugin version.
+	 * @param int    $last_upgrade_routine Last completed upgrade routine.
+	 *
 	 * @return bool
 	 */
-	private static function table_exists(): bool {
+	private static function table_exists(
+		string $table_name,
+		string $plugin_version,
+		int $last_upgrade_routine
+	): bool {
 		global $wpdb;
 
+		if (
+			! defined( 'DB_NAME' ) ||
+			empty( DB_NAME ) ||
+			empty( $table_name ) ||
+			empty( $plugin_version ) ||
+			0 > $last_upgrade_routine
+		) {
+			return false;
+		}
+
+		// We'll only actually test the table exists periodically.
+		if ( get_transient( $table_name . '_table_exists' ) ) {
+			return true;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', self::get_prefixed_table_name() ) ) ) {
+		if (
+			$wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+					$wpdb->dbname,
+					$table_name
+				)
+			)
+		) {
+			// Randomize transient expiry so that checks on a large multisite don't all run at once.
+			set_transient(
+				$table_name . '_table_exists',
+				true,
+				wp_rand( 12 * HOUR_IN_SECONDS, DAY_IN_SECONDS )
+			);
+
 			return true;
 		}
 

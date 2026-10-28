@@ -430,10 +430,7 @@ abstract class Upgrade {
 	 * Adds notices about issues with upgrades allowing user to restart them.
 	 */
 	public function maybe_display_notices(): void {
-		$action_url = $this->as3cf->get_plugin_page_url( array(
-			'action' => 'restart_update',
-			'update' => $this->upgrade_name,
-		), 'self' );
+		$action_url = $this->get_action_url( 'restart_update' );
 		$msg_type   = 'notice-info';
 		$custom_id  = 'as3cf-upgrade-notice-' . $this->upgrade_name;
 
@@ -441,10 +438,7 @@ abstract class Upgrade {
 			case self::STATUS_RUNNING:
 				$msg         = $this->get_running_message();
 				$action_text = __( 'Pause Update', 'amazon-s3-and-cloudfront' );
-				$action_url  = $this->as3cf->get_plugin_page_url( array(
-					'action' => 'pause_update',
-					'update' => $this->upgrade_name,
-				), 'self' );
+				$action_url  = $this->get_action_url( 'pause_update' );
 				break;
 			case self::STATUS_PAUSED:
 				$msg         = $this->get_paused_message();
@@ -582,30 +576,78 @@ abstract class Upgrade {
 	}
 
 	/**
+	 * Nonce action string for one of this upgrade's control actions.
+	 *
+	 * @param string $action
+	 *
+	 * @return string
+	 */
+	protected function get_action_nonce_action( string $action ): string {
+		return 'as3cf-upgrade-' . $this->upgrade_name . '-' . $action;
+	}
+
+	/**
+	 * Build a nonce-protected settings page URL for one of this upgrade's control actions.
+	 *
+	 * @param string $action
+	 *
+	 * @return string
+	 */
+	protected function get_action_url( string $action ): string {
+		$url = $this->as3cf->get_plugin_page_url(
+			array(
+				'action' => $action,
+				'update' => $this->upgrade_name,
+			),
+			'self',
+			false
+		);
+
+		// wp_nonce_url() escapes the result, hence $escape = false above.
+		return wp_nonce_url( $url, $this->get_action_nonce_action( $action ) );
+	}
+
+	/**
 	 * Handler for the running upgrade actions
 	 */
 	public function maybe_handle_action(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- existence/equality check, admin_init
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only, authorization is enforced below before dispatch
 		if ( ! isset( $_GET['page'] ) || sanitize_key( $_GET['page'] ) !== $this->as3cf->get_plugin_slug() ) { // input var okay
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- existence check, admin_init
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only, authorization is enforced below before dispatch
 		if ( ! isset( $_GET['action'] ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- existence/equality check, admin_init
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only, authorization is enforced below before dispatch
 		if ( ! isset( $_GET['update'] ) || sanitize_key( $_GET['update'] ) !== $this->upgrade_name ) { // input var okay
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- sanitized, admin_init
-		$method_name = 'action_' . sanitize_key( $_GET['action'] ); // input var okay
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce is verified below before dispatch
+		$action      = sanitize_key( $_GET['action'] ); // input var okay
+		$method_name = 'action_' . $action;
 
-		if ( method_exists( $this, $method_name ) ) {
-			call_user_func( array( $this, $method_name ) );
+		if ( ! method_exists( $this, $method_name ) ) {
+			return;
 		}
+
+		// Require network or single site install admin to manage upgrade.
+		if ( ! current_user_can( Amazon_S3_And_CloudFront::get_default_admin_capability() ) ) {
+			return;
+		}
+
+		/*
+		 * Past the capability check it is safe to be noisy. Only users who can already
+		 * see the settings screen reach this line, so the standard "link has expired"
+		 * screen discloses nothing and is better than a button that silently does
+		 * nothing when a nonce has aged out.
+		 */
+		check_admin_referer( $this->get_action_nonce_action( $action ) );
+
+		call_user_func( array( $this, $method_name ) );
 	}
 
 	/**

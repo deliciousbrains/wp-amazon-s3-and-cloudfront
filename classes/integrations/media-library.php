@@ -836,6 +836,11 @@ class Media_Library extends Integration {
 	 * @return bool|array
 	 */
 	public function filter_image_downsize( $downsize, $id, $size ) {
+		// Higher priority filter already handled image downsize.
+		if ( ! empty( $downsize ) ) {
+			return $downsize;
+		}
+
 		$width           = 0;
 		$height          = 0;
 		$is_intermediate = false;

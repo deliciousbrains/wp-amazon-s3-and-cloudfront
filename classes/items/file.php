@@ -38,18 +38,46 @@ class File {
 	private string $size;
 
 	/**
-	 * The Item associated with this File.
+	 * ID of the Item associated with this File.
 	 *
-	 * @var Item
+	 * Null until a new Item is saved, see set_item_id().
+	 *
+	 * @var int|null
 	 */
-	private Item $as3cf_item;
+	private ?int $item_id;
+
+	/**
+	 * Items that Files have been associated with this request, keyed by table
+	 * name and item ID.
+	 *
+	 * A File only keeps its Item's ID, so that caching a File does not cache
+	 * the Item, and with it every other File of the attachment, alongside it.
+	 * Items are kept here instead so that all the Files of an Item find it
+	 * without loading it again. Keyed by table name as item IDs are only
+	 * unique within a site.
+	 *
+	 * @var array
+	 */
+	private static array $items = array();
+
+	/**
+	 * File records fetched ahead of the Items that own them, keyed by item ID.
+	 *
+	 * A File can only be built once its Item exists, so a caller loading a batch
+	 * of Items fetches their file records up front and leaves them here for each
+	 * Item's constructor to claim, rather than each constructor running its own
+	 * query.
+	 *
+	 * @var array
+	 */
+	private static array $prefetched_records = array();
 
 	/**
 	 * File constructor.
 	 *
 	 * Not for public use, use a create_* function instead.
 	 *
-	 * @param Item     $as3cf_item     Associated Item.
+	 * @param int|null $item_id        ID of the associated Item, null if it is not yet saved.
 	 * @param string   $path           Path in bucket for object, a.k.a. key.
 	 * @param bool     $is_private     Is the object private in the bucket?
 	 * @param string   $private_prefix Private prefix that might have been prepended to the path.
@@ -58,7 +86,7 @@ class File {
 	 * @param int|null $id             Optional ID for the File, if already saved.
 	 */
 	protected function __construct(
-		Item $as3cf_item,
+		?int $item_id,
 		string $path,
 		bool $is_private,
 		string $private_prefix,
@@ -66,8 +94,7 @@ class File {
 		string $size,
 		?int $id = null
 	) {
-		$this->as3cf_item = $as3cf_item;
-
+		$this->item_id        = $item_id;
 		$this->path           = $path;
 		$this->is_private     = $is_private;
 		$this->private_prefix = $private_prefix;
@@ -77,6 +104,43 @@ class File {
 		if ( ! empty( $id ) ) {
 			$this->id = $id;
 		}
+	}
+
+	/**
+	 * Remember an Item so that its Files find it without loading it again.
+	 *
+	 * Not for public use, called by Item whenever it builds or saves its Files.
+	 *
+	 * @param Item $as3cf_item
+	 */
+	public static function remember_item( Item $as3cf_item ): void {
+		if ( empty( $as3cf_item->id() ) ) {
+			return;
+		}
+
+		self::$items[ Item::get_table_name() ][ $as3cf_item->id() ] = $as3cf_item;
+	}
+
+	/**
+	 * Get a File from the object cache, as long as its Item still exists.
+	 *
+	 * A File's cache entries can outlive the Item it belongs to, and a File
+	 * without its Item is no use to anything, so it is treated as not cached
+	 * and the caller falls back to the database.
+	 *
+	 * @param string $key   The base of the key that makes up the lookup.
+	 * @param mixed  $value Value for the key.
+	 *
+	 * @return File|false
+	 */
+	private static function get_from_object_cache_with_item( string $key, mixed $value ): File|false {
+		$as3cf_file = static::get_from_object_cache( $key, $value );
+
+		if ( ! $as3cf_file instanceof File || empty( $as3cf_file->item() ) ) {
+			return false;
+		}
+
+		return $as3cf_file;
 	}
 
 	/**
@@ -98,6 +162,52 @@ class File {
 	 */
 	public static function init_cache(): void {
 		self::$checked_table_exists = array();
+		self::$prefetched_records   = array();
+		self::$items                = array();
+	}
+
+	/**
+	 * Fetch the file records for a batch of items in one query.
+	 *
+	 * Each record is held until the matching item is constructed, at which point
+	 * get_by_item_id() claims it instead of querying for it.
+	 *
+	 * @param array $item_ids Item IDs whose files are about to be needed.
+	 */
+	public static function prefetch_by_item_ids( array $item_ids ): void {
+		global $wpdb;
+
+		$item_ids = array_unique( array_filter( array_map( 'intval', $item_ids ) ) );
+
+		if ( empty( $item_ids ) ) {
+			return;
+		}
+
+		$sql = 'SELECT * FROM ' . static::get_table_name() . ' WHERE item_id IN (' . join( ',', $item_ids ) . ')';
+
+		// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- ints only, must not be cached
+		$results = $wpdb->get_results( $sql );
+
+		// An item with no files still has an answer, so record the empty result too.
+		$records = array_fill_keys( $item_ids, array() );
+
+		foreach ( $results as $result ) {
+			$records[ (int) $result->item_id ][] = $result;
+		}
+
+		self::$prefetched_records = $records + self::$prefetched_records;
+	}
+
+	/**
+	 * Throw away any prefetched file records that were not claimed.
+	 *
+	 * Callers of prefetch_by_item_ids() must call this once they have finished
+	 * constructing their items. A record is only good for the batch it was
+	 * fetched with, and holding one past that risks handing stale rows to an
+	 * item constructed later in the request.
+	 */
+	public static function discard_prefetched_records(): void {
+		self::$prefetched_records = array();
 	}
 
 	/**
@@ -337,7 +447,7 @@ class File {
 		?Item $as3cf_item = null
 	): File|bool {
 		if ( empty( $as3cf_item ) ) {
-			$as3cf_item = Item::get_by_id( $object->item_id );
+			$as3cf_item = Item::get_by_id( (int) $object->item_id );
 		}
 
 		if ( empty( $as3cf_item ) || ! is_a( $as3cf_item, Item::class ) ) {
@@ -352,8 +462,10 @@ class File {
 			return false;
 		}
 
+		static::remember_item( $as3cf_item );
+
 		$as3cf_file = new static(
-			$as3cf_item,
+			$as3cf_item->id(),
 			$object->path,
 			$object->is_private,
 			$object->private_prefix,
@@ -393,7 +505,7 @@ class File {
 		string $source_path,
 		string $size
 	): File|bool {
-		return new static( $as3cf_item, $path, $is_private, $private_prefix, $source_path, $size );
+		return new static( $as3cf_item->id(), $path, $is_private, $private_prefix, $source_path, $size );
 	}
 
 	/**
@@ -407,7 +519,7 @@ class File {
 	 */
 	public function clone_for_item( Item $as3cf_item ): File|bool {
 		return new static(
-			$as3cf_item,
+			$as3cf_item->id(),
 			$this->path,
 			$this->is_private,
 			$this->private_prefix,
@@ -431,8 +543,7 @@ class File {
 			return false;
 		}
 
-		/** @var File|bool $as3cf_file */
-		$as3cf_file = static::get_from_object_cache( 'id', $id );
+		$as3cf_file = self::get_from_object_cache_with_item( 'id', $id );
 
 		if ( ! empty( $as3cf_file ) ) {
 			return $as3cf_file;
@@ -474,12 +585,18 @@ class File {
 			return $as3cf_files;
 		}
 
-		$sql = "SELECT * FROM " . static::get_table_name() . " WHERE item_id = %d";
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$sql = $wpdb->prepare( $sql, $item_id );
+		if ( array_key_exists( $item_id, self::$prefetched_records ) ) {
+			$results = self::$prefetched_records[ $item_id ];
 
-		// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- already prepared, must not be cached
-		$results = $wpdb->get_results( $sql );
+			unset( self::$prefetched_records[ $item_id ] );
+		} else {
+			$sql = "SELECT * FROM " . static::get_table_name() . " WHERE item_id = %d";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$sql = $wpdb->prepare( $sql, $item_id );
+
+			// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- already prepared, must not be cached
+			$results = $wpdb->get_results( $sql );
+		}
 
 		// Nothing found, shortcut out.
 		if ( 0 === count( $results ) ) {
@@ -512,8 +629,7 @@ class File {
 			return false;
 		}
 
-		/** @var File|bool $as3cf_file */
-		$as3cf_file = static::get_from_object_cache( 'source_path', array( $source_path, $size ) );
+		$as3cf_file = self::get_from_object_cache_with_item( 'source_path', array( $source_path, $size ) );
 
 		if ( ! empty( $as3cf_file ) && ! empty( $as3cf_file->id() ) ) {
 			return $as3cf_file;
@@ -653,8 +769,7 @@ class File {
 			return false;
 		}
 
-		/** @var File|bool $as3cf_file */
-		$as3cf_file = static::get_from_object_cache( 'bucket_path', array( $bucket, $path ) );
+		$as3cf_file = self::get_from_object_cache_with_item( 'bucket_path', array( $bucket, $path ) );
 
 		if ( ! empty( $as3cf_file ) ) {
 			return $as3cf_file;
@@ -798,10 +913,22 @@ class File {
 	/**
 	 * Getter for file's item_id value.
 	 *
-	 * @return int
+	 * @return int|null Null if the Item is not yet saved.
 	 */
-	public function item_id(): int {
-		return $this->item()->id();
+	public function item_id(): ?int {
+		return $this->item_id;
+	}
+
+	/**
+	 * Setter for file's item_id value.
+	 *
+	 * Not for public use, called by Item when it saves its Files, as a new
+	 * Item has no ID until then.
+	 *
+	 * @param int $item_id
+	 */
+	public function set_item_id( int $item_id ): void {
+		$this->item_id = $item_id;
 	}
 
 	/**
@@ -948,10 +1075,23 @@ class File {
 	/**
 	 * Getter for file's associated Item.
 	 *
-	 * @return Item
+	 * Found among the Items remembered this request where possible, otherwise
+	 * loaded by its ID, from the object cache where possible.
+	 *
+	 * @return Item|false False if the Item is not yet saved or no longer exists.
 	 */
-	public function item(): Item {
-		return $this->as3cf_item;
+	public function item(): Item|false {
+		if ( empty( $this->item_id ) ) {
+			return false;
+		}
+
+		$table = Item::get_table_name();
+
+		if ( empty( self::$items[ $table ][ $this->item_id ] ) ) {
+			self::$items[ $table ][ $this->item_id ] = Item::get_by_id( $this->item_id );
+		}
+
+		return self::$items[ $table ][ $this->item_id ];
 	}
 
 	/**
@@ -960,7 +1100,9 @@ class File {
 	 * @return string
 	 */
 	public function source_type(): string {
-		return $this->item()::source_type();
+		$as3cf_item = $this->item();
+
+		return empty( $as3cf_item ) ? '' : $as3cf_item::source_type();
 	}
 
 	/**
@@ -969,7 +1111,9 @@ class File {
 	 * @return string
 	 */
 	public function bucket(): string {
-		return $this->item()->bucket();
+		$as3cf_item = $this->item();
+
+		return empty( $as3cf_item ) ? '' : $as3cf_item->bucket();
 	}
 
 	/**
@@ -978,7 +1122,9 @@ class File {
 	 * @return int
 	 */
 	public function source_id(): int {
-		return $this->item()->source_id();
+		$as3cf_item = $this->item();
+
+		return empty( $as3cf_item ) ? 0 : $as3cf_item->source_id();
 	}
 
 	/**
@@ -987,6 +1133,8 @@ class File {
 	 * @return array
 	 */
 	public function item_source_array(): array {
-		return $this->item()->get_item_source_array();
+		$as3cf_item = $this->item();
+
+		return empty( $as3cf_item ) ? array() : $as3cf_item->get_item_source_array();
 	}
 }

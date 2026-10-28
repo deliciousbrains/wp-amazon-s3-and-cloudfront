@@ -48,6 +48,20 @@ abstract class Item {
 	protected static array $item_counts      = array();
 	protected static array $item_count_skips = array();
 
+	/**
+	 * Source ids known to have no item row, keyed by table name, source type and
+	 * source id.
+	 *
+	 * Rendering a page asks for the same attachment many times over, and most
+	 * libraries are only partly offloaded. Finding no row is as much an answer
+	 * as finding one, but there is no item to put in the object cache, so it is
+	 * remembered here for the rest of the request instead. Deliberately not
+	 * persistent, as every source id a site renders would otherwise get an entry.
+	 *
+	 * @var array
+	 */
+	private static array $missing_by_source_id = array();
+
 	private ?int $id = null;
 
 	private string $provider;
@@ -179,6 +193,8 @@ abstract class Item {
 		if ( ! empty( $id ) ) {
 			$this->id = $id;
 
+			File::remember_item( $this );
+
 			$this->files = File::get_by_item_id( $this->id(), true, $this );
 		}
 
@@ -304,6 +320,7 @@ abstract class Item {
 	 */
 	public static function init_cache(): void {
 		self::$checked_table_exists = array();
+		self::$missing_by_source_id = array();
 
 		static::$item_counts      = array();
 		static::$item_count_skips = array();
@@ -473,6 +490,8 @@ abstract class Item {
 	public function save( bool $update_duplicates = true ): int|WP_Error {
 		global $wpdb;
 
+		$this->forget_missing_by_source_id();
+
 		$update = false;
 
 		if ( empty( $this->id() ) ) {
@@ -513,13 +532,17 @@ abstract class Item {
 			$old_as3cf_files = File::get_by_item_id( $this->id(), false, $this );
 		}
 
+		// Files find this Item by its ID, which a new Item has only just been given.
+		File::remember_item( $this );
+
 		// Reconcile current Files with previous, and save.
 		foreach ( $this->files() as $size => $as3cf_file ) {
 			if ( ! empty( $old_as3cf_files[ $size ] ) ) {
 				unset( $old_as3cf_files[ $size ] );
 			}
 
-			// Make sure last_upgrade_routine matches Item's.
+			// Make sure item_id and last_upgrade_routine match Item's.
+			$as3cf_file->set_item_id( $this->id() );
 			$as3cf_file->set_last_upgrade_routine( $this->last_upgrade_routine() );
 
 			$result = $as3cf_file->save();
@@ -590,6 +613,7 @@ abstract class Item {
 		global $wpdb;
 
 		static::remove_from_object_cache( $this );
+		$this->forget_missing_by_source_id();
 
 		if ( empty( $this->id() ) ) {
 			return new WP_Error( 'item_delete', 'Error trying to delete item with no id.' );
@@ -743,7 +767,13 @@ abstract class Item {
 			return $item;
 		}
 
-		$sql = "SELECT * FROM " . static::get_table_name() . " WHERE source_id = %d AND source_type = %s";
+		$table_name = static::get_table_name();
+
+		if ( isset( self::$missing_by_source_id[ $table_name ][ static::$source_type ][ $source_id ] ) ) {
+			return false;
+		}
+
+		$sql = "SELECT * FROM " . $table_name . " WHERE source_id = %d AND source_type = %s";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$sql = $wpdb->prepare( $sql, $source_id, static::$source_type );
 
@@ -751,10 +781,85 @@ abstract class Item {
 		$object = $wpdb->get_row( $sql );
 
 		if ( empty( $object ) ) {
+			self::$missing_by_source_id[ $table_name ][ static::$source_type ][ $source_id ] = true;
+
 			return false;
 		}
 
 		return static::create( $object, true );
+	}
+
+	/**
+	 * Load the items for a batch of source ids ahead of them being asked for one at a time.
+	 *
+	 * A following get_by_source_id() for any of these source ids then finds its
+	 * item in the object cache, or already knows there is none, rather than
+	 * querying. It costs one query for the items and one for their files,
+	 * whatever the size of the batch.
+	 *
+	 * @param array $source_ids
+	 */
+	public static function prime_by_source_ids( array $source_ids ): void {
+		global $wpdb;
+
+		// With nowhere to keep them, loading items early only adds queries.
+		if ( ! self::$cache_enabled || empty( static::$source_type ) ) {
+			return;
+		}
+
+		$table_name = static::get_table_name();
+		$to_load    = array();
+
+		foreach ( $source_ids as $source_id ) {
+			if ( ! is_numeric( $source_id ) || (int) $source_id < 0 ) {
+				continue;
+			}
+
+			$source_id = (int) $source_id;
+
+			if ( isset( self::$missing_by_source_id[ $table_name ][ static::$source_type ][ $source_id ] ) ) {
+				continue;
+			}
+
+			/** @var Item|bool $item */
+			$item = static::get_from_object_cache( 'source_id', array( static::$source_type, $source_id ) );
+
+			if ( empty( $item ) || empty( $item->id() ) ) {
+				$to_load[ $source_id ] = $source_id;
+			}
+		}
+
+		if ( empty( $to_load ) ) {
+			return;
+		}
+
+		$sql = "SELECT * FROM " . $table_name . " WHERE source_type = %s AND source_id IN (" . join( ',', $to_load ) . ")";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$sql = $wpdb->prepare( $sql, static::$source_type );
+
+		// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- already prepared, must not be cached
+		$objects = $wpdb->get_results( $sql );
+
+		File::prefetch_by_item_ids( wp_list_pluck( $objects, 'id' ) );
+
+		foreach ( $objects as $object ) {
+			static::create( $object, true );
+
+			unset( $to_load[ (int) $object->source_id ] );
+		}
+
+		File::discard_prefetched_records();
+
+		foreach ( $to_load as $source_id ) {
+			self::$missing_by_source_id[ $table_name ][ static::$source_type ][ $source_id ] = true;
+		}
+	}
+
+	/**
+	 * Forget that this item's source was known to have no item row.
+	 */
+	private function forget_missing_by_source_id(): void {
+		unset( self::$missing_by_source_id[ static::get_table_name() ][ $this->source_type() ][ $this->source_id() ] );
 	}
 
 	/**
@@ -2092,7 +2197,16 @@ abstract class Item {
 		}
 
 		// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- safe query, must not be cached
-		$as3cf_items = array_map( static::class . '::create', $wpdb->get_results( $sql ) );
+		$objects = $wpdb->get_results( $sql );
+
+		File::prefetch_by_item_ids( wp_list_pluck( $objects, 'id' ) );
+
+		$as3cf_items = array_map(
+			static fn( $object ) => static::create( $object, true ),
+			$objects
+		);
+
+		File::discard_prefetched_records();
 
 		/** @var Amazon_S3_And_CloudFront $as3cf */
 		global $as3cf;
@@ -2200,7 +2314,18 @@ abstract class Item {
 		}
 
 		// phpcs:ignore WordPress.DB,PluginCheck.Security.DirectDB.UnescapedDBParameter -- safe query, must not be cached
-		return array_map( static::class . '::create', $wpdb->get_results( $sql ) );
+		$objects = $wpdb->get_results( $sql );
+
+		File::prefetch_by_item_ids( wp_list_pluck( $objects, 'id' ) );
+
+		$as3cf_items = array_map(
+			static fn( $object ) => static::create( $object, true ),
+			$objects
+		);
+
+		File::discard_prefetched_records();
+
+		return $as3cf_items;
 	}
 
 	/**

@@ -278,6 +278,7 @@ abstract class AS3CF_Filter {
 
 		$matches = array_unique( $matches[0] );
 		$urls    = array();
+		$known   = array();
 
 		foreach ( $matches as $url ) {
 			// Remove trailing punctuation, quotes, etc.
@@ -318,6 +319,14 @@ abstract class AS3CF_Filter {
 				// Attachment ID not cached, need to search by URL.
 				$urls[] = $bare_url;
 			} else {
+				$known[] = array( $bare_url, $item_source );
+			}
+		}
+
+		if ( ! empty( $known ) ) {
+			$this->prime_items( wp_list_pluck( $known, 1 ) );
+
+			foreach ( $known as list( $bare_url, $item_source ) ) {
 				$this->push_to_url_pairs( $url_pairs, $item_source, $bare_url, $to_cache );
 			}
 		}
@@ -338,6 +347,34 @@ abstract class AS3CF_Filter {
 		}
 
 		return $url_pairs;
+	}
+
+	/**
+	 * Load the items behind a batch of item sources together.
+	 *
+	 * Building the URL for an item source loads its item, which costs queries
+	 * for every URL on a page when done one at a time. Loading them together
+	 * first means each of those lookups finds its item in the object cache.
+	 *
+	 * @param array $item_sources
+	 */
+	protected function prime_items( array $item_sources ): void {
+		$source_ids = array();
+
+		foreach ( $item_sources as $item_source ) {
+			if ( ! Item::is_empty_item_source( $item_source ) ) {
+				$source_ids[ $item_source['source_type'] ][] = $item_source['id'];
+			}
+		}
+
+		foreach ( $source_ids as $source_type => $ids ) {
+			/** @var class-string<Item>|false $class */
+			$class = $this->as3cf->get_source_type_class( $source_type );
+
+			if ( ! empty( $class ) ) {
+				$class::prime_by_source_ids( $ids );
+			}
+		}
 	}
 
 	/**

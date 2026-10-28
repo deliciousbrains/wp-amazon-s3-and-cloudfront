@@ -1827,13 +1827,13 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 	/**
 	 * Ensure AJAX request from expected route and user with capability to handle offloaded media.
 	 *
-	 * @param string $capability Defaults to 'manage_options'.
+	 * @param string $capability Defaults to 'manage_options', or 'manage_network_options' for multisite.
 	 * @param bool   $return
 	 *
 	 * @return bool
 	 */
-	function verify_ajax_request( $capability = null, $return = false ) {
-		$capability = empty( $capability ) ? 'manage_options' : $capability;
+	public function verify_ajax_request( $capability = null, $return = false ) {
+		$capability = empty( $capability ) ? self::get_default_admin_capability() : $capability;
 
 		if ( ! is_admin() ) { // input var okay
 			$msg = __( 'This action can only be performed through an admin screen.', 'amazon-s3-and-cloudfront' );
@@ -1858,6 +1858,15 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get the default required capability for performing admin actions.
+	 *
+	 * @return string
+	 */
+	public static function get_default_admin_capability(): string {
+		return is_multisite() ? 'manage_network_options' : 'manage_options';
 	}
 
 	/**
@@ -1910,7 +1919,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			$this->get_plugin_pagenow(),
 			$this->get_plugin_page_title(),
 			$this->get_plugin_menu_title(),
-			'manage_options',
+			self::get_default_admin_capability(),
 			$this->plugin_slug,
 			array( $this, 'render_page' )
 		);
@@ -1952,7 +1961,7 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 		$aws->add_page(
 			$this->get_plugin_page_title(),
 			$this->get_plugin_menu_title(),
-			'manage_options',
+			self::get_default_admin_capability(),
 			$this->plugin_slug,
 			array( $this, 'render_page' )
 		);
@@ -3138,13 +3147,14 @@ class Amazon_S3_And_CloudFront extends AS3CF_Plugin_Base {
 			'counts'                           => $this->media_counts(),
 			'summary_counts'                   => $this->get_summary_counts(),
 			'offload_remaining_upsell'         => $this->get_offload_remaining_upsell_message(),
-			'notifications'                    => $this->get_notifications( '', true ),
 			'upgrades'                         => $this->get_upgrades_info(),
 			'is_plugin_setup'                  => $this->is_plugin_setup(),
 			'is_plugin_setup_with_credentials' => $this->is_plugin_setup( true ),
 			'needs_access_keys'                => $this->get_storage_provider()->needs_access_keys(),
 			'bucket_writable'                  => $this->bucket_writable(),
 			'settings_validation'              => $this->settings_validation_status(),
+			// Get notifications last in case any before creates a notice.
+			'notifications'                    => $this->get_notifications( '', true ),
 		);
 
 		// Where the magic happens.

@@ -4,7 +4,7 @@ Tags: uploads, amazon, s3, amazon s3, digitalocean, digitalocean spaces, google 
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.4.3
+Stable tag: 3.4.4
 License: GPLv2
 
 Copies files to Amazon S3, DigitalOcean Spaces or Google Cloud Storage as they are uploaded to the Media Library. Optionally configure Amazon CloudFront or another CDN for faster delivery.
@@ -87,6 +87,17 @@ This is a major change, which ensures S3 URLs are no longer saved in post conten
 This version requires PHP 5.3.3+ and the Amazon Web Services plugin
 
 == Changelog ==
+
+= WP Offload Media Lite 3.4.4 - 2026-10-28 =
+* Security: It's no longer possible for a site administrator without network management privileges to craft REST requests to alter options
+* Security: Authentication is now required to pause & resume the current upgrade routine, thanks Asif Masood
+* Bug fix: The image_downsize filter is no longer handled if another plugin has already handled it
+* Bug fix: Offloaded images in post content are now looked up together rather than one at a time, reducing database queries on pages with many images
+* Bug fix: Media that has not been offloaded is no longer looked up in the database again every time a page asks for it
+* Bug fix: Offloaded media data held in a persistent object cache now takes up far less room, particularly for images with many sizes
+* Bug fix: Updating the plugin no longer clears the entire persistent object cache, only the plugin's own cached data, where the cache supports it
+* Bug fix: Checking whether the custom tables exist is now much faster for large multisites, and happens periodically
+* Bug fix: SVG files offloaded to Google Cloud Storage no longer fail with rate limit errors
 
 = WP Offload Media Lite 3.4.3 - 2026-09-21 =
 * Bug fix: A non-numeric attachment ID passed to wp_get_attachment_image_src() by a theme or plugin no longer results in a fatal error
